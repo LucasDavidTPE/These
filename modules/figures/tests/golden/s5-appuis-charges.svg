@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="160mm" height="80mm" viewBox="0 0 160 80" font-family="'Latin Modern Roman', 'CMU Serif', 'Times New Roman', serif" font-size="2.82" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Figure générée par Figurine (figurine/1, thème « these ») -->
+  <defs>
+    <pattern id="fig-hachure-granulaire" patternUnits="userSpaceOnUse" width="1.6" height="1.6"><circle cx="0.8" cy="0.8" r="0.22" fill="#4d4d4d"/></pattern>
+  </defs>
+  <!-- sol : Sol hachuré — longueur 140 mm -->
+  <g id="sol" data-type="ground">
+    <path d="M10 60L150 60" fill="none" stroke="black" stroke-width="0.3"/>
+    <path d="M12.5 60L10 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M15 60L12.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M17.5 60L15 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M20 60L17.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M22.5 60L20 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M25 60L22.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M27.5 60L25 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M30 60L27.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M32.5 60L30 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M35 60L32.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M37.5 60L35 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M40 60L37.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M42.5 60L40 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M45 60L42.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M47.5 60L45 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M50 60L47.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M52.5 60L50 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M55 60L52.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M57.5 60L55 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M60 60L57.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M62.5 60L60 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M65 60L62.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M67.5 60L65 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M70 60L67.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M72.5 60L70 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M75 60L72.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M77.5 60L75 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M80 60L77.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M82.5 60L80 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M85 60L82.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M87.5 60L85 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M90 60L87.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M92.5 60L90 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M95 60L92.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M97.5 60L95 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M100 60L97.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M102.5 60L100 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M105 60L102.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M107.5 60L105 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M110 60L107.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M112.5 60L110 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M115 60L112.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M117.5 60L115 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M120 60L117.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M122.5 60L120 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M125 60L122.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M127.5 60L125 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M130 60L127.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M132.5 60L130 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M135 60L132.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M137.5 60L135 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M140 60L137.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M142.5 60L140 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M145 60L142.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M147.5 60L145 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M150 60L147.5 62.5" fill="none" stroke="black" stroke-width="0.18"/>
+  </g>
+  <!-- roue : Roue / pneu en coupe — pneu 22 × 14 mm, pneu -->
+  <g id="roue" data-type="wheel_section">
+    <path d="M23.2 46L36.8 46C39.12 46 41 47.88 41 50.2L41 55.8C41 58.12 39.12 60 36.8 60L23.2 60C20.88 60 19 58.12 19 55.8L19 50.2C19 47.88 20.88 46 23.2 46Z" fill="white" stroke="black" stroke-width="0.3"/>
+    <path d="M23.2 60L36.8 60" fill="none" stroke="black" stroke-width="0.5"/>
+    <rect x="23" y="44.5" width="14" height="7.1" fill="#e6e6e6" stroke="black" stroke-width="0.3"/>
+    <text x="42.5" y="53" text-anchor="start" dominant-baseline="central" fill="black">pneu</text>
+  </g>
+  <!-- Q : Force ponctuelle — $Q$, direction 270° -->
+  <g id="Q" data-type="force">
+    <line x1="30" y1="32.5" x2="30" y2="43.3" fill="none" stroke="black" stroke-width="0.3"/><path d="M30 44.5L29.4 42.9L30 43.3L30.6 42.9Z" fill="black"/>
+    <g transform="translate(28.88 30.95) scale(0.00282)"><g stroke="black" fill="black" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mi"><path data-c="1D444" d="M399 -80Q399 -47 400 -30T402 -11V-7L387 -11Q341 -22 303 -22Q208 -22 138 35T51 201Q50 209 50 244Q50 346 98 438T227 601Q351 704 476 704Q514 704 524 703Q621 689 680 617T740 435Q740 255 592 107Q529 47 461 16L444 8V3Q444 2 449 -24T470 -66T516 -82Q551 -82 583 -60T625 -3Q631 11 638 11Q647 11 649 2Q649 -6 639 -34T611 -100T557 -165T481 -194Q399 -194 399 -87V-80ZM636 468Q636 523 621 564T580 625T530 655T477 665Q429 665 379 640Q277 591 215 464T153 216Q153 110 207 59Q231 38 236 38V46Q236 86 269 120T347 155Q372 155 390 144T417 114T429 82T435 55L448 64Q512 108 557 185T619 334T636 468ZM314 18Q362 18 404 39L403 49Q399 104 366 115Q354 117 347 117Q344 117 341 117T337 118Q317 118 296 98T274 52Q274 18 314 18Z"></path></g></g></g></g>
+  </g>
+  <!-- q : Charge répartie uniforme — $q = 0{,}662$ MPa sur 35 mm -->
+  <g id="q" data-type="uniform_load">
+    <path d="M60 50L95 50" fill="none" stroke="black" stroke-width="0.3"/>
+    <line x1="60" y1="50" x2="60" y2="58.8" fill="none" stroke="black" stroke-width="0.18"/><path d="M60 60L59.4 58.4L60 58.8L60.6 58.4Z" fill="black"/>
+    <line x1="65" y1="50" x2="65" y2="58.8" fill="none" stroke="black" stroke-width="0.18"/><path d="M65 60L64.4 58.4L65 58.8L65.6 58.4Z" fill="black"/>
+    <line x1="70" y1="50" x2="70" y2="58.8" fill="none" stroke="black" stroke-width="0.18"/><path d="M70 60L69.4 58.4L70 58.8L70.6 58.4Z" fill="black"/>
+    <line x1="75" y1="50" x2="75" y2="58.8" fill="none" stroke="black" stroke-width="0.18"/><path d="M75 60L74.4 58.4L75 58.8L75.6 58.4Z" fill="black"/>
+    <line x1="80" y1="50" x2="80" y2="58.8" fill="none" stroke="black" stroke-width="0.18"/><path d="M80 60L79.4 58.4L80 58.8L80.6 58.4Z" fill="black"/>
+    <line x1="85" y1="50" x2="85" y2="58.8" fill="none" stroke="black" stroke-width="0.18"/><path d="M85 60L84.4 58.4L85 58.8L85.6 58.4Z" fill="black"/>
+    <line x1="90" y1="50" x2="90" y2="58.8" fill="none" stroke="black" stroke-width="0.18"/><path d="M90 60L89.4 58.4L90 58.8L90.6 58.4Z" fill="black"/>
+    <line x1="95" y1="50" x2="95" y2="58.8" fill="none" stroke="black" stroke-width="0.18"/><path d="M95 60L94.4 58.4L95 58.8L95.6 58.4Z" fill="black"/>
+    <g transform="translate(68.45 48.45) scale(0.00282)"><g stroke="black" fill="black" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mi"><path data-c="1D45E" d="M33 157Q33 258 109 349T280 441Q340 441 372 389Q373 390 377 395T388 406T404 418Q438 442 450 442Q454 442 457 439T460 434Q460 425 391 149Q320 -135 320 -139Q320 -147 365 -148H390Q396 -156 396 -157T393 -175Q389 -188 383 -194H370Q339 -192 262 -192Q234 -192 211 -192T174 -192T157 -193Q143 -193 143 -185Q143 -182 145 -170Q149 -154 152 -151T172 -148Q220 -148 230 -141Q238 -136 258 -53T279 32Q279 33 272 29Q224 -10 172 -10Q117 -10 75 30T33 157ZM352 326Q329 405 277 405Q242 405 210 374T160 293Q131 214 119 129Q119 126 119 118T118 106Q118 61 136 44T179 26Q233 26 290 98L298 109L352 326Z"></path></g><g data-mml-node="mo" transform="translate(737.8,0)"><path data-c="3D" d="M56 347Q56 360 70 367H707Q722 359 722 347Q722 336 708 328L390 327H72Q56 332 56 347ZM56 153Q56 168 72 173H708Q722 163 722 153Q722 140 707 133H70Q56 140 56 153Z"></path></g><g data-mml-node="mn" transform="translate(1793.6,0)"><path data-c="30" d="M96 585Q152 666 249 666Q297 666 345 640T423 548Q460 465 460 320Q460 165 417 83Q397 41 362 16T301 -15T250 -22Q224 -22 198 -16T137 16T82 83Q39 165 39 320Q39 494 96 585ZM321 597Q291 629 250 629Q208 629 178 597Q153 571 145 525T137 333Q137 175 145 125T181 46Q209 16 250 16Q290 16 318 46Q347 76 354 130T362 333Q362 478 354 524T321 597Z"></path><path data-c="2C" d="M78 35T78 60T94 103T137 121Q165 121 187 96T210 8Q210 -27 201 -60T180 -117T154 -158T130 -185T117 -194Q113 -194 104 -185T95 -172Q95 -168 106 -156T131 -126T157 -76T173 -3V9L172 8Q170 7 167 6T161 3T152 1T140 0Q113 0 96 17Z" transform="translate(500,0)"></path><path data-c="36" d="M42 313Q42 476 123 571T303 666Q372 666 402 630T432 550Q432 525 418 510T379 495Q356 495 341 509T326 548Q326 592 373 601Q351 623 311 626Q240 626 194 566Q147 500 147 364L148 360Q153 366 156 373Q197 433 263 433H267Q313 433 348 414Q372 400 396 374T435 317Q456 268 456 210V192Q456 169 451 149Q440 90 387 34T253 -22Q225 -22 199 -14T143 16T92 75T56 172T42 313ZM257 397Q227 397 205 380T171 335T154 278T148 216Q148 133 160 97T198 39Q222 21 251 21Q302 21 329 59Q342 77 347 104T352 209Q352 289 347 316T329 361Q302 397 257 397Z" transform="translate(778,0)"></path><path data-c="36" d="M42 313Q42 476 123 571T303 666Q372 666 402 630T432 550Q432 525 418 510T379 495Q356 495 341 509T326 548Q326 592 373 601Q351 623 311 626Q240 626 194 566Q147 500 147 364L148 360Q153 366 156 373Q197 433 263 433H267Q313 433 348 414Q372 400 396 374T435 317Q456 268 456 210V192Q456 169 451 149Q440 90 387 34T253 -22Q225 -22 199 -14T143 16T92 75T56 172T42 313ZM257 397Q227 397 205 380T171 335T154 278T148 216Q148 133 160 97T198 39Q222 21 251 21Q302 21 329 59Q342 77 347 104T352 209Q352 289 347 316T329 361Q302 397 257 397Z" transform="translate(1278,0)"></path><path data-c="32" d="M109 429Q82 429 66 447T50 491Q50 562 103 614T235 666Q326 666 387 610T449 465Q449 422 429 383T381 315T301 241Q265 210 201 149L142 93L218 92Q375 92 385 97Q392 99 409 186V189H449V186Q448 183 436 95T421 3V0H50V19V31Q50 38 56 46T86 81Q115 113 136 137Q145 147 170 174T204 211T233 244T261 278T284 308T305 340T320 369T333 401T340 431T343 464Q343 527 309 573T212 619Q179 619 154 602T119 569T109 550Q109 549 114 549Q132 549 151 535T170 489Q170 464 154 447T109 429Z" transform="translate(1778,0)"></path></g><g data-mml-node="mtext" transform="translate(4071.6,0)"><path data-c="A0" d=""></path><path data-c="4D" d="M132 622Q125 629 121 631T105 634T62 637H29V683H135Q221 683 232 682T249 675Q250 674 354 398L458 124L562 398Q666 674 668 675Q671 681 683 682T781 683H887V637H854Q814 636 803 634T785 622V61Q791 51 802 49T854 46H887V0H876Q855 3 736 3Q605 3 596 0H585V46H618Q660 47 669 49T688 61V347Q688 424 688 461T688 546T688 613L687 632Q454 14 450 7Q446 1 430 1T410 7Q409 9 292 316L176 624V606Q175 588 175 543T175 463T175 356L176 86Q187 50 261 46H278V0H269Q254 3 154 3Q52 3 37 0H29V46H46Q78 48 98 56T122 69T132 86V622Z" transform="translate(250,0)"></path><path data-c="50" d="M130 622Q123 629 119 631T103 634T60 637H27V683H214Q237 683 276 683T331 684Q419 684 471 671T567 616Q624 563 624 489Q624 421 573 372T451 307Q429 302 328 301H234V181Q234 62 237 58Q245 47 304 46H337V0H326Q305 3 182 3Q47 3 38 0H27V46H60Q102 47 111 49T130 61V622ZM507 488Q507 514 506 528T500 564T483 597T450 620T397 635Q385 637 307 637H286Q237 637 234 628Q231 624 231 483V342H302H339Q390 342 423 349T481 382Q507 411 507 488Z" transform="translate(1167,0)"></path><path data-c="61" d="M137 305T115 305T78 320T63 359Q63 394 97 421T218 448Q291 448 336 416T396 340Q401 326 401 309T402 194V124Q402 76 407 58T428 40Q443 40 448 56T453 109V145H493V106Q492 66 490 59Q481 29 455 12T400 -6T353 12T329 54V58L327 55Q325 52 322 49T314 40T302 29T287 17T269 6T247 -2T221 -8T190 -11Q130 -11 82 20T34 107Q34 128 41 147T68 188T116 225T194 253T304 268H318V290Q318 324 312 340Q290 411 215 411Q197 411 181 410T156 406T148 403Q170 388 170 359Q170 334 154 320ZM126 106Q126 75 150 51T209 26Q247 26 276 49T315 109Q317 116 318 175Q318 233 317 233Q309 233 296 232T251 223T193 203T147 166T126 106Z" transform="translate(1848,0)"></path></g></g></g></g>
+  </g>
+  <!-- a1 : Appui simple — fixe, taille 5 mm -->
+  <g id="a1" data-type="simple_support">
+    <path d="M110 45L107.5 49.35L112.5 49.35Z" fill="white" stroke="black" stroke-width="0.3"/>
+    <path d="M106.5 49.35L113.5 49.35" fill="none" stroke="black" stroke-width="0.3"/>
+    <path d="M107.5 49.35L106.5 50.35" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M108.5 49.35L107 50.85" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M109.5 49.35L108 50.85" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M110.5 49.35L109 50.85" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M111.5 49.35L110 50.85" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M112.5 49.35L111 50.85" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M113.5 49.35L112 50.85" fill="none" stroke="black" stroke-width="0.18"/>
+  </g>
+  <!-- a2 : Appui simple — glissant, taille 5 mm -->
+  <g id="a2" data-type="simple_support">
+    <path d="M135 45L132.5 49.35L137.5 49.35Z" fill="white" stroke="black" stroke-width="0.3"/>
+    <circle cx="133.33" cy="49.95" r="0.6" fill="white" stroke="black" stroke-width="0.18"/>
+    <circle cx="135" cy="49.95" r="0.6" fill="white" stroke="black" stroke-width="0.18"/>
+    <circle cx="136.67" cy="49.95" r="0.6" fill="white" stroke="black" stroke-width="0.18"/>
+    <path d="M131.5 50.55L138.5 50.55" fill="none" stroke="black" stroke-width="0.3"/>
+    <path d="M132.5 50.55L131.5 51.55" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M133.5 50.55L132 52.05" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M134.5 50.55L133 52.05" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M135.5 50.55L134 52.05" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M136.5 50.55L135 52.05" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M137.5 50.55L136 52.05" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M138.5 50.55L137 52.05" fill="none" stroke="black" stroke-width="0.18"/>
+  </g>
+  <!-- poutre : Liaison rigide — longueur 25 mm -->
+  <g id="poutre" data-type="link">
+    <path d="M110 45L135 45" fill="none" stroke="black" stroke-width="0.5"/>
+  </g>
+  <!-- enc : Encastrement — longueur 20 mm -->
+  <g id="enc" data-type="fixed_support">
+    <path d="M150 10L150 30" fill="none" stroke="black" stroke-width="0.5"/>
+    <path d="M150 11.82L151.82 10" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M150 13.64L152.5 11.14" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M150 15.45L152.5 12.95" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M150 17.27L152.5 14.77" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M150 19.09L152.5 16.59" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M150 20.91L152.5 18.41" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M150 22.73L152.5 20.23" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M150 24.55L152.5 22.05" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M150 26.36L152.5 23.86" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M150 28.18L152.5 25.68" fill="none" stroke="black" stroke-width="0.18"/>
+    <path d="M150 30L152.5 27.5" fill="none" stroke="black" stroke-width="0.18"/>
+  </g>
+  <!-- e1 : Empreinte (vue en plan) — rectangle, 12 × 18 mm -->
+  <g id="e1" data-type="footprint">
+    <rect x="14" y="6" width="12" height="18" fill="#e6e6e6" stroke="black" stroke-width="0.3"/>
+    <text x="20" y="15" text-anchor="middle" dominant-baseline="central" fill="black" stroke="white" stroke-width="0.8" paint-order="stroke">rect.</text>
+  </g>
+  <!-- e2 : Empreinte (vue en plan) — cercle, 16 × 16 mm -->
+  <g id="e2" data-type="footprint">
+    <circle cx="45" cy="15" r="8" fill="#e6e6e6" stroke="black" stroke-width="0.3"/>
+  </g>
+  <!-- e3 : Empreinte (vue en plan) — ellipse, 12 × 20 mm -->
+  <g id="e3" data-type="footprint">
+    <path d="M76 15C76 20.52 73.31 25 70 25C66.69 25 64 20.52 64 15C64 9.48 66.69 5 70 5C73.31 5 76 9.48 76 15Z" fill="url(#fig-hachure-granulaire)" stroke="black" stroke-width="0.3"/>
+  </g>
+</svg>

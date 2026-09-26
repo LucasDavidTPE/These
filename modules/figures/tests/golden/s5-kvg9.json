@@ -1,0 +1,10 @@
+{
+  "format": "figurine/1",
+  "canvas": { "unit": "mm", "width": 220, "height": 40, "grid": 1 },
+  "theme": "these",
+  "items": [
+    { "id": "bati", "type": "fixed_support", "from": [6, 32], "to": [6, 8], "params": { "side": "gauche" } },
+    { "id": "kvg", "type": "kvg", "from": [6, 20], "to": [196, 20], "params": { "n": 9, "coils": 3, "amplitude": 1.5, "width": 4 } },
+    { "id": "F", "type": "force", "on": "kvg.end", "params": { "angle": 0, "length": 10, "label": "$\\sigma(t)$", "applied_at": "queue" } }
+  ]
+}

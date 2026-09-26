@@ -1,0 +1,31 @@
+% Figure générée par Figurine -- format figurine/1, thème « these ».
+% Nécessite \usepackage{figurine} (figurine.sty, copiable depuis l'appli).
+% Unités : mm ; origine en bas à gauche de la planche (90 × 50 mm).
+\begin{tikzpicture}[figurine]
+\useasboundingbox (0,0) rectangle (90,50);
+
+% mur : Rectangle -- 3 × 34 mm
+\filldraw[fig/trait, fig/hachure sol] (5,8) rectangle (8,42);
+
+% barre : Rectangle -- 2 × 22 mm
+\filldraw[fig/trait, fig/fond gris] (55,14) rectangle (57,36);
+
+% k1 : Ressort -- 6 spires, longueur 47 mm, $E_1$
+\draw[fig/trait, decorate, decoration={zigzag, segment length=6.83mm, amplitude=2mm, pre length=3mm, post length=3mm}] (8,32) -- (55,32);
+\node[fig/texte, anchor=south] at (31.5,35) {$E_1$};
+
+% d1 : Amortisseur -- longueur 47 mm, $\eta_1$
+\draw[fig/trait] (8,18) -- (28.5,18);
+\draw[fig/trait] (34.5,20.5) -- (28.5,20.5) -- (28.5,15.5) -- (34.5,15.5);
+\draw[fig/trait] (31.8,19.75) -- (31.8,16.25);
+\draw[fig/trait] (31.8,18) -- (55,18);
+\node[fig/texte, anchor=north] at (31.5,14.5) {$\eta_1$};
+
+% k2 : Ressort -- 4 spires, longueur 28 mm, $E_\infty$
+\draw[fig/trait, decorate, decoration={zigzag, segment length=5.49mm, amplitude=1.5mm, pre length=3mm, post length=3mm}] (57,25) -- (85,25);
+\node[fig/texte, anchor=south] at (71,27.5) {$E_\infty$};
+
+% kv : Ressort -- 3 spires, longueur 14 mm, $k$
+\draw[fig/trait, decorate, decoration={zigzag, segment length=2.66mm, amplitude=2mm, pre length=3mm, post length=3mm}] (70,5) -- (70,19);
+\node[fig/texte, anchor=east] at (67,12) {$k$};
+\end{tikzpicture}

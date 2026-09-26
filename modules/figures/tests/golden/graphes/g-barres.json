@@ -1,0 +1,51 @@
+{
+  "format": "figurine-graph/1",
+  "width": 100,
+  "height": 70,
+  "theme": "these",
+  "x": {
+    "label": "Couche",
+    "log": false
+  },
+  "y": {
+    "label": "Épaisseur (cm)",
+    "log": false
+  },
+  "legend": "north west",
+  "grid": false,
+  "bar_width": 4,
+  "series": [
+    {
+      "name": "Souple",
+      "type": "bar",
+      "x": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "y": [
+        8,
+        12,
+        20,
+        35
+      ]
+    },
+    {
+      "name": "Bitumineuse épaisse",
+      "type": "bar",
+      "x": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "y": [
+        6,
+        15,
+        25,
+        30
+      ]
+    }
+  ]
+}

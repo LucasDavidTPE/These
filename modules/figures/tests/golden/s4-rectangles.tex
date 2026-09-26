@@ -1,0 +1,24 @@
+% Figure générée par Figurine -- format figurine/1, thème « these ».
+% Nécessite \usepackage{figurine} (figurine.sty, copiable depuis l'appli).
+% Unités : mm ; origine en bas à gauche de la planche (80 × 40 mm).
+\begin{tikzpicture}[figurine]
+\useasboundingbox (0,0) rectangle (80,40);
+
+% a : Rectangle -- 20 × 12 mm, « Bloc »
+\draw[fig/trait] (5,23) rectangle (25,35);
+\node[fig/texte, anchor=center] at (15,29) {Bloc};
+
+% b : Rectangle -- 20 × 12 mm, « $E_1$ »
+\filldraw[fig/trait, fig/fond gris] (30,23) rectangle (50,35);
+\node[fig/texte, anchor=center] at (40,29) {$E_1$};
+
+% c : Rectangle -- 20 × 12 mm, « 50 % & plus »
+\filldraw[fig/trait, fig/hachure bitumineux] (55,23) rectangle (75,35);
+\node[fig/etiquette, anchor=center] at (65,29) {50 \% \& plus};
+
+% d : Rectangle -- 16 × 6 mm
+\filldraw[fig/trait, fig/hachure granulaire] (20,6) -- (33.86,14) -- (36.86,8.8) -- (23,0.8) -- cycle;
+
+% e : Rectangle -- 10 × 5 mm
+\filldraw[fig/trait, fig/hachure sol] (55,18) rectangle (65,23);
+\end{tikzpicture}

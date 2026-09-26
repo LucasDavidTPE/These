@@ -1,0 +1,12 @@
+{
+  "format": "figurine/1",
+  "canvas": { "unit": "mm", "width": 120, "height": 45, "grid": 1 },
+  "theme": "these",
+  "items": [
+    { "id": "l", "type": "line", "from": [5, 40], "to": [115, 40], "params": { "dashed": true, "stroke": "trait fin" } },
+    { "id": "pl", "type": "polyline", "at": [10, 30], "params": { "points": [[0, 0], [15, -18], [30, 0]], "closed": true, "fill": "granulaire" } },
+    { "id": "pf", "type": "polyline", "at": [50, 30], "params": { "points": [[0, 0], [5, -15], [15, -15], [20, -5]], "head": "end" } },
+    { "id": "c", "type": "circle", "at": [85, 20], "params": { "radius": 8, "fill": "bitumineux", "label": "$R$" } },
+    { "id": "bz", "type": "bezier", "from": [75, 35], "to": [110, 35], "params": { "bend": 10, "asymmetry": 0.4, "head": "end" } }
+  ]
+}

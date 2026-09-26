@@ -1,0 +1,13 @@
+{
+  "format": "figurine/1",
+  "canvas": { "unit": "mm", "width": 90, "height": 50, "grid": 1 },
+  "theme": "these",
+  "items": [
+    { "id": "mur", "type": "rectangle", "at": [5, 8], "params": { "width": 3, "height": 34, "fill": "sol" } },
+    { "id": "barre", "type": "rectangle", "at": [55, 14], "params": { "width": 2, "height": 22, "fill": "gris" } },
+    { "id": "k1", "type": "spring", "from": [8, 18], "to": [55, 18], "params": { "coils": 6, "label": "$E_1$" } },
+    { "id": "d1", "type": "dashpot", "from": [8, 32], "to": [55, 32], "params": { "label": "$\\eta_1$", "label_side": "dessous" } },
+    { "id": "k2", "type": "spring", "from": "barre.right", "to": [85, 25], "params": { "coils": 4, "amplitude": 1.5, "label": "$E_\\infty$" } },
+    { "id": "kv", "type": "spring", "at": [70, 45], "rotate": 90, "params": { "length": 14, "coils": 3, "label": "$k$" } }
+  ]
+}

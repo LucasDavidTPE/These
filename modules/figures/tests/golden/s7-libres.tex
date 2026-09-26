@@ -1,0 +1,24 @@
+% Figure générée par Figurine -- format figurine/1, thème « these ».
+% Nécessite \usepackage{figurine} (figurine.sty, copiable depuis l'appli).
+% Unités : mm ; origine en bas à gauche de la planche (120 × 45 mm).
+\begin{tikzpicture}[figurine]
+\useasboundingbox (0,0) rectangle (120,45);
+
+% l : Ligne -- 110 mm, pointillés
+\draw[fig/trait fin, dashed] (5,5) -- (115,5);
+
+% pl : Polyligne -- 3 points, fermée
+\filldraw[fig/trait, fig/hachure granulaire] (10,15) -- (25,33) -- (40,15) -- cycle;
+
+% pf : Polyligne -- 4 points
+\draw[fig/trait] (50,15) -- (55,30) -- (65,30) -- (70,20);
+\draw[fig/trait, fig/fleche] (69.78,20.45) -- (70,20);
+
+% c : Cercle -- rayon 8 mm
+\filldraw[fig/trait, fig/hachure bitumineux] (85,25) circle[radius=8];
+\node[fig/etiquette, anchor=center] at (85,25) {$R$};
+
+% bz : Courbe de Bézier -- 35 mm, courbure 10 mm
+\draw[fig/trait] (75,10) .. controls (86.67,24) and (98.33,16) .. (110,10);
+\draw[fig/trait, fig/fleche] (109.56,10.23) -- (110,10);
+\end{tikzpicture}

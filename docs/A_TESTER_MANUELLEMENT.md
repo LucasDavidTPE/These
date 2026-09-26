@@ -28,3 +28,21 @@ Installeur : artefact `these-installeurs` de la dernière exécution de *Actions
       réglages sont dans `%APPDATA%\fr.lucasdavid.these\poste.json`, pas dans OneDrive.
 - [ ] Déplacer (ou renommer) le dossier de l'espace puis relancer : l'écran de premier
       lancement revient avec le message « L'espace … est introuvable sur ce poste ».
+
+## P1 — Figures
+
+La liste détaillée de Figurine 1.0 reste valable : `docs/figurine/A_TESTER_MANUELLEMENT.md`.
+Ce qui change avec l'intégration :
+
+- [ ] Thèse : Réglages du poste → « Bibliothèque de figures » → choisir le dossier de
+      Figurine 1.0 ; l'onglet Bibliothèque de Figures montre les figures existantes.
+- [ ] Les vignettes s'affichent (protocole `asset:` autorisé sur le dossier).
+- [ ] Détourage : `Ctrl+V` d'une image copiée depuis le navigateur, fond retiré, « Copier »
+      puis collage dans Word avec la transparence.
+- [ ] Schéma : créer, enregistrer, rouvrir ; « Copier TikZ ».
+- [ ] Verrou : ouvrir la même figure sur les deux PC → le second est en lecture seule.
+- [ ] Installeur **Figurine 1.1.0** sur un poste qui a Figurine 1.0 : il remplace 1.0
+      (même identifiant), s'ouvre directement sur la bibliothèque déjà choisie, sans
+      barre latérale ni écran d'espace.
+- [ ] Figurine 1.1.0 et Thèse installés ensemble : chacun a ses propres réglages
+      (`%APPDATA%\fr.lucasdavid.figurine` et `%APPDATA%\fr.lucasdavid.these`).

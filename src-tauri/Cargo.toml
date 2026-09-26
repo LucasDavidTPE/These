@@ -15,7 +15,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["protocol-asset"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-opener = "2"
 tauri-plugin-window-state = "2"
@@ -23,9 +23,25 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 notify = "8"
+# Module Figures (détourage) : ONNX Runtime chargé dynamiquement depuis la DLL embarquée,
+# décodage et encodage d'images. Absent de l'installeur « Traitement 2S2P1D ».
+ort = { version = "=2.0.0-rc.13", default-features = false, features = ["std", "load-dynamic", "api-27"], optional = true }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp", "gif", "webp"], optional = true }
+
+[target.'cfg(windows)'.dependencies]
+clipboard-win = { version = "5", optional = true }
+
+[features]
+default = ["figures"]
+figures = ["dep:ort", "dep:image", "dep:clipboard-win"]
 
 [dev-dependencies]
 tempfile = "3"
+
+# Le redimensionnement d'images est ~4× plus lent sans optimisation : on l'active aussi
+# en développement pour ces seules dépendances.
+[profile.dev.package.image]
+opt-level = 3
 
 [profile.release]
 codegen-units = 1

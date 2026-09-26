@@ -42,8 +42,18 @@ jobs:
           workspaces: src-tauri
       - run: npm ci
 
+      # Modèle de détourage (≈ 178 Mo) et ONNX Runtime : téléchargés au build (sommes
+      # SHA-256 vérifiées), embarqués dans l'installeur, jamais téléchargés à l'exécution.
+      - uses: actions/cache@v4
+        with:
+          path: .cache/figurine-downloads
+          key: figurine-downloads-${{ hashFiles('outils/fetch-models.mjs') }}
+      - run: npm run fetch-models
+
       - run: cargo test
         working-directory: src-tauri
+        env:
+          THESE_EXIGER_MODELE: "1"
 
       - name: Build + release (tag)
         if: startsWith(github.ref, 'refs/tags/v')

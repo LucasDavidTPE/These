@@ -1,0 +1,37 @@
+{
+  "format": "figurine-graph/1",
+  "width": 120,
+  "height": 80,
+  "theme": "these",
+  "x": {
+    "label": "Température (°C)",
+    "log": false
+  },
+  "y": {
+    "label": "Module (MPa)",
+    "log": false
+  },
+  "legend": "none",
+  "grid": true,
+  "bar_width": 3,
+  "series": [
+    {
+      "name": "Module",
+      "type": "linepoints",
+      "x": [
+        -10.0,
+        0.0,
+        10.0,
+        20.0,
+        30.0
+      ],
+      "y": [
+        25000.5,
+        18200.0,
+        11400.0,
+        6300.25,
+        3100.0
+      ]
+    }
+  ]
+}

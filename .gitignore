@@ -5,3 +5,5 @@ src-tauri/gen
 *.tsbuildinfo
 .DS_Store
 *.log
+src-tauri/resources
+.cache

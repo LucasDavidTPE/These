@@ -1,0 +1,19 @@
+{
+  "format": "figurine/1",
+  "canvas": { "unit": "mm", "width": 140, "height": 95, "grid": 1 },
+  "theme": "these",
+  "items": [
+    { "id": "pav", "type": "layer_stack", "at": [10, 30],
+      "params": { "width": 120,
+        "layers": [
+          { "name": "BB",  "h": 8,  "hatch": "bitumineux" },
+          { "name": "GB",  "h": 12, "hatch": "bitumineux-dense" },
+          { "name": "GRH", "h": 20, "hatch": "granulaire" },
+          { "name": "PF",  "h": 18, "hatch": "sol", "semi_infinite": true }
+        ] } },
+    { "id": "p", "type": "pressure_profile", "on": "pav.top",
+      "params": { "model": "gaussians", "span": [-0.25, 0.25], "width": 80,
+                  "centers": [-0.16, -0.08, 0, 0.08, 0.16], "amplitudes": [1.8, 1.7, 1.67, 1.7, 1.8],
+                  "sigma": 0.0315, "height": 16, "arrows": 21, "label": "$p(y)$" } }
+  ]
+}

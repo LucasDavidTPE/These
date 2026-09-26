@@ -1,0 +1,55 @@
+% Figure générée par Figurine -- format figurine/1, thème « these ».
+% Nécessite \usepackage{figurine} (figurine.sty, copiable depuis l'appli).
+% Unités : mm ; origine en bas à gauche de la planche (110 × 45 mm).
+\begin{tikzpicture}[figurine]
+\useasboundingbox (0,0) rectangle (110,45);
+
+% bati : Encastrement -- longueur 27 mm
+\draw[fig/trait epais] (8,9) -- (8,36);
+\draw[fig/trait fin] (8,10.8) -- (6.2,9);
+\draw[fig/trait fin] (8,12.6) -- (5.5,10.1);
+\draw[fig/trait fin] (8,14.4) -- (5.5,11.9);
+\draw[fig/trait fin] (8,16.2) -- (5.5,13.7);
+\draw[fig/trait fin] (8,18) -- (5.5,15.5);
+\draw[fig/trait fin] (8,19.8) -- (5.5,17.3);
+\draw[fig/trait fin] (8,21.6) -- (5.5,19.1);
+\draw[fig/trait fin] (8,23.4) -- (5.5,20.9);
+\draw[fig/trait fin] (8,25.2) -- (5.5,22.7);
+\draw[fig/trait fin] (8,27) -- (5.5,24.5);
+\draw[fig/trait fin] (8,28.8) -- (5.5,26.3);
+\draw[fig/trait fin] (8,30.6) -- (5.5,28.1);
+\draw[fig/trait fin] (8,32.4) -- (5.5,29.9);
+\draw[fig/trait fin] (8,34.2) -- (5.5,31.7);
+\draw[fig/trait fin] (8,36) -- (5.5,33.5);
+
+% m : Modèle 2S2P1D -- 2 ressorts, 2 éléments paraboliques, 1 amortisseur (Olard et Di Benedetto), longueur 84 mm
+\draw[fig/trait] (8,22.5) -- (10,22.5);
+\draw[fig/trait] (90,22.5) -- (92,22.5);
+\draw[fig/trait] (10,27) -- (10,15);
+\draw[fig/trait] (90,27) -- (90,15);
+\draw[fig/trait] (10,27) -- (39,27);
+\draw[fig/trait] (61,27) -- (90,27);
+\draw[fig/trait, decorate, decoration={zigzag, segment length=3.99mm, amplitude=2mm, pre length=3mm, post length=3mm}] (39,27) -- (61,27);
+\node[fig/texte, anchor=south] at (50,30) {$E_{00}$};
+\draw[fig/trait, decorate, decoration={zigzag, segment length=3.49mm, amplitude=2mm, pre length=3mm, post length=3mm}] (10,15) -- (30,15);
+\node[fig/texte, anchor=south] at (20,18) {$E_0 - E_{00}$};
+\draw[fig/trait] (30,15) -- (37,15);
+\draw[fig/trait] (43,17.5) -- (37,17.5) -- (37,12.5) -- (43,12.5);
+\draw[fig/trait] (40.3,15) -- (50,15);
+\draw[fig/trait] (38.5,16.75) .. controls (40.9,15.58) and (40.9,14.42) .. (38.5,13.25);
+\node[fig/texte, anchor=south] at (40,18.5) {$k$};
+\draw[fig/trait] (50,15) -- (57,15);
+\draw[fig/trait] (63,17.5) -- (57,17.5) -- (57,12.5) -- (63,12.5);
+\draw[fig/trait] (60.3,15) -- (70,15);
+\draw[fig/trait] (58.5,16.75) .. controls (60.9,15.58) and (60.9,14.42) .. (58.5,13.25);
+\node[fig/texte, anchor=south] at (60,18.5) {$h$};
+\draw[fig/trait] (70,15) -- (77,15);
+\draw[fig/trait] (83,17.5) -- (77,17.5) -- (77,12.5) -- (83,12.5);
+\draw[fig/trait] (80.3,15) -- (90,15);
+\draw[fig/trait] (80.3,16.75) -- (80.3,13.25);
+\node[fig/texte, anchor=south] at (80,18.5) {$\eta$};
+
+% F : Force ponctuelle -- $\sigma$, direction 0°
+\draw[fig/trait, fig/fleche] (92,22.5) -- (102,22.5);
+\node[fig/texte, anchor=west] at (103,22.5) {$\sigma$};
+\end{tikzpicture}

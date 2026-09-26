@@ -1,0 +1,13 @@
+{
+  "format": "figurine/1",
+  "canvas": { "unit": "mm", "width": 170, "height": 40, "grid": 1 },
+  "theme": "these",
+  "items": [
+    { "id": "s1", "type": "ground", "from": [5, 30], "to": [55, 30], "params": {} },
+    { "id": "p1", "type": "pressure_profile", "at": [30, 30], "params": { "model": "uniform", "span": [-0.2, 0.2], "width": 40, "height": 10, "arrows": 9, "label": "$p_0$" } },
+    { "id": "s2", "type": "ground", "from": [60, 30], "to": [110, 30], "params": {} },
+    { "id": "p2", "type": "pressure_profile", "at": [85, 30], "params": { "model": "inverse_parabolic", "span": [-0.2, 0.2], "width": 40, "height": 10, "arrows": 9, "p_center": 0.5, "p_edge": 1 } },
+    { "id": "s3", "type": "ground", "from": [115, 30], "to": [165, 30], "params": {} },
+    { "id": "p3", "type": "pressure_profile", "at": [140, 30], "params": { "model": "function", "span": [-0.2, 0.2], "width": 40, "height": 10, "arrows": 9, "expression": "1 - (y/0,2)^4", "label": "$f(y)$" } }
+  ]
+}

@@ -1,0 +1,35 @@
+% Graphe généré par Figurine -- format figurine-graph/1, thème « these ».
+% Nécessite \usepackage{figurine} (charge pgfplots). Taille de la zone des axes imposée.
+\begin{tikzpicture}
+\begin{axis}[fig/graphe, width=81mm, height=55mm,
+  xmin=0.5, xmax=4.5,
+  xtick={1,2,3,4},
+  xticklabels={{$1$},{$2$},{$3$},{$4$}},
+  xlabel={Couche},
+  ymin=0, ymax=40,
+  ytick={0,10,20,30,40},
+  yticklabels={{$0$},{$10$},{$20$},{$30$},{$40$}},
+  ylabel={Épaisseur (cm)},
+  legend pos=north west]
+
+% Série 1 : Souple (4 points)
+\addplot[fig/barres 1, bar width=4mm, bar shift=-2mm] table[row sep=\\] {
+x y \\
+1 8 \\
+2 12 \\
+3 20 \\
+4 35 \\
+};
+\addlegendentry{Souple}
+
+% Série 2 : Bitumineuse épaisse (4 points)
+\addplot[fig/barres 2, bar width=4mm, bar shift=2mm] table[row sep=\\] {
+x y \\
+1 6 \\
+2 15 \\
+3 25 \\
+4 30 \\
+};
+\addlegendentry{Bitumineuse épaisse}
+\end{axis}
+\end{tikzpicture}

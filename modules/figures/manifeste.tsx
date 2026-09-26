@@ -8,7 +8,7 @@ const figures: Manifeste = {
   resume: "Bibliothèque de figures, détourage, schémas TikZ, recadrage, graphes",
   Icone: IconeFigures,
   Page: FiguresPage,
-  aVenir: "P1",
+  etat: async (ctx) => (ctx.reglages.figures ? `Bibliothèque : ${ctx.reglages.figures.split(/[\\/]/).filter(Boolean).pop()}` : "Bibliothèque à choisir"),
 };
 
 export default figures;

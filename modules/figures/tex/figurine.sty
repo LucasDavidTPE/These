@@ -1,0 +1,44 @@
+% figurine.sty -- styles TikZ partagés par tous les exports de Figurine.
+% FICHIER GÉNÉRÉ depuis le thème « these » (src/core/schema/theme.ts) :
+% ne pas le modifier à la main, il serait réécrit.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{figurine}[2026/09/25 v1.0 Styles TikZ de Figurine]
+\RequirePackage{tikz}
+\usetikzlibrary{patterns.meta, decorations.pathmorphing, arrows.meta}
+\definecolor{figgris}{HTML}{E6E6E6}
+\tikzset{
+  figurine/.style={x=1mm, y=1mm, line cap=round, line join=round, font=\footnotesize},
+  fig/trait/.style={draw=black, line width=0.3mm},
+  fig/trait fin/.style={draw=black, line width=0.18mm},
+  fig/trait epais/.style={draw=black, line width=0.5mm},
+  fig/interface/.style={draw=black, line width=0.3mm},
+  fig/fond blanc/.style={fill=white},
+  fig/fond gris/.style={fill=figgris},
+  fig/hachure bitumineux/.style={pattern={Lines[angle=45, distance=1.2mm, line width=0.12mm]}, pattern color=black!70},
+  fig/hachure bitumineux-dense/.style={pattern={Hatch[angle=45, distance=1.2mm, line width=0.12mm]}, pattern color=black!70},
+  fig/hachure granulaire/.style={pattern={Dots[distance=1.6mm, radius=0.22mm]}, pattern color=black!70},
+  fig/hachure beton/.style={pattern={Dots[distance=1mm, radius=0.15mm]}, pattern color=black!70},
+  fig/hachure sol/.style={pattern={Lines[angle=135, distance=2.4mm, line width=0.12mm]}, pattern color=black!70},
+  fig/fleche/.style={-{Stealth[length=1.6mm, width=1.2mm]}},
+  fig/double fleche/.style={{Stealth[length=1.6mm, width=1.2mm]}-{Stealth[length=1.6mm, width=1.2mm]}},
+  fig/texte/.style={inner sep=0.5mm},
+  fig/etiquette/.style={fig/texte, fill=white},
+}
+\RequirePackage{pgfplots}
+\providecommand{\figurinedatadir}{}
+\pgfplotsset{
+  fig/graphe/.style={scale only axis, axis line style={line width=0.18mm}, tick style={line width=0.18mm}, tick align=inside, tick pos=left, font=\footnotesize, label style={font=\footnotesize}, legend style={font=\footnotesize, draw=black, line width=0.18mm, fill=white, legend cell align=left}, major grid style={line width=0.18mm, draw=black!20}, scaled ticks=false},
+  fig/serie 1/.style={draw=black, line width=0.3mm, solid, mark=o, mark size=0.65mm, mark options={solid, fill=white}},
+  fig/barres 1/.style={ybar, area legend, draw=black, line width=0.18mm, fill=black!15, mark=none},
+  fig/serie 2/.style={draw=black, line width=0.3mm, dashed, mark=square, mark size=0.65mm, mark options={solid, fill=white}},
+  fig/barres 2/.style={ybar, area legend, draw=black, line width=0.18mm, fill=black!45, mark=none},
+  fig/serie 3/.style={draw=black!60, line width=0.3mm, solid, mark=triangle, mark size=0.65mm, mark options={solid, fill=white}},
+  fig/barres 3/.style={ybar, area legend, draw=black, line width=0.18mm, fill=black!75, mark=none},
+  fig/serie 4/.style={draw=black!60, line width=0.3mm, dashed, mark=x, mark size=0.65mm, mark options={solid, fill=white}},
+  fig/barres 4/.style={ybar, area legend, draw=black, line width=0.18mm, fill=white, mark=none},
+  fig/serie 5/.style={draw=black, line width=0.3mm, dotted, mark=diamond, mark size=0.65mm, mark options={solid, fill=white}},
+  fig/barres 5/.style={ybar, area legend, draw=black, line width=0.18mm, fill=black!30, mark=none},
+  fig/serie 6/.style={draw=black!40, line width=0.3mm, solid, mark=+, mark size=0.65mm, mark options={solid, fill=white}},
+  fig/barres 6/.style={ybar, area legend, draw=black, line width=0.18mm, fill=black!60, mark=none},
+}
+\endinput

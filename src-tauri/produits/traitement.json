@@ -13,5 +13,8 @@
         "minHeight": 500
       }
     ]
+  },
+  "bundle": {
+    "resources": null
   }
 }

@@ -1,0 +1,228 @@
+/**
+ * Mise en page d'un graphe en primitives (mm, y vers le bas), rendues en SVG par le même
+ * code que les schémas. Les bornes et graduations viennent de ticks.ts, partagées avec
+ * l'export pgfplots.
+ */
+import { measureLabel } from "../math/tex";
+import type { Primitive } from "../schema/geometry";
+import { THEMES, type Theme } from "../schema/theme";
+import type { Pt } from "../schema/types";
+import type { GraphDoc, Series } from "./model";
+import { formatTick, linearScale, logScale, project, type AxisScale } from "./ticks";
+
+export interface GraphLayout {
+  /** Boîte des axes (mm). */
+  box: { x: number; y: number; w: number; h: number };
+  xs: AxisScale;
+  ys: AxisScale;
+  primitives: Primitive[];
+}
+
+/** Marges autour de la boîte des axes (mm) : graduations et titres. */
+export const MARGINS = { left: 16, right: 3, top: 3, bottom: 12 };
+
+function dashOf(d: "dashed" | "dotted" | null): boolean | "dotted" | undefined {
+  return d === "dotted" ? "dotted" : d === "dashed" ? true : undefined;
+}
+
+function extent(values: number[]): [number, number] {
+  const v = values.filter(Number.isFinite);
+  return v.length ? [Math.min(...v), Math.max(...v)] : [0, 1];
+}
+
+export function scales(doc: GraphDoc): { xs: AxisScale; ys: AxisScale } {
+  const [x0, x1] = extent(doc.series.flatMap((s) => s.x));
+  let [y0, y1] = extent(doc.series.flatMap((s) => s.y));
+  // Les barres partent de 0 : on l'inclut en échelle linéaire.
+  if (!doc.y.log && doc.series.some((s) => s.type === "bar")) {
+    y0 = Math.min(y0, 0);
+    y1 = Math.max(y1, 0);
+  }
+  const hasBars = doc.series.some((s) => s.type === "bar");
+  const xs = doc.x.log ? logScale(x0, x1, doc.x) : hasBars ? barScale(doc) : linearScale(x0, x1, doc.x);
+  const ys = doc.y.log ? logScale(y0, y1, doc.y) : linearScale(y0, y1, doc.y, 5);
+  return { xs, ys };
+}
+
+/**
+ * Axe des x d'un diagramme en barres : graduations sur les catégories (valeurs de x
+ * distinctes) et une demi-catégorie de marge de chaque côté, pour que les barres tiennent.
+ */
+export function barScale(doc: GraphDoc): AxisScale {
+  const xsAll = [...new Set(doc.series.flatMap((s) => s.x))].sort((a, b) => a - b);
+  const gaps = xsAll.slice(1).map((v, i) => v - xsAll[i]!);
+  const gap = gaps.length ? Math.min(...gaps) : 1;
+  const min = doc.x.min ?? xsAll[0]! - gap / 2;
+  const max = doc.x.max ?? xsAll.at(-1)! + gap / 2;
+  if (xsAll.length > 25) return linearScale(min, max, { min, max });
+  const dec = Math.max(0, ...xsAll.map((v) => (String(v).split(".")[1] ?? "").length));
+  const ticks = xsAll.filter((v) => v >= min && v <= max);
+  return { min, max, ticks, labels: ticks.map((t) => formatTick(t, Math.min(dec, 6), ticks.some((v) => Math.abs(v) >= 10000))), log: false };
+}
+
+/** Découpe d'un segment par la boîte (Liang-Barsky) ; null s'il est dehors. */
+export function clipSegment(a: Pt, b: Pt, box: { x: number; y: number; w: number; h: number }): [Pt, Pt] | null {
+  let t0 = 0;
+  let t1 = 1;
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const checks: [number, number][] = [
+    [-dx, a[0] - box.x],
+    [dx, box.x + box.w - a[0]],
+    [-dy, a[1] - box.y],
+    [dy, box.y + box.h - a[1]],
+  ];
+  for (const [p, q] of checks) {
+    if (Math.abs(p) < 1e-12) {
+      if (q < 0) return null;
+    } else {
+      const r = q / p;
+      if (p < 0) t0 = Math.max(t0, r);
+      else t1 = Math.min(t1, r);
+      if (t0 > t1) return null;
+    }
+  }
+  return [
+    [a[0] + t0 * dx, a[1] + t0 * dy],
+    [a[0] + t1 * dx, a[1] + t1 * dy],
+  ];
+}
+
+function mark(kind: string, c: Pt, size: number, color: string): Primitive[] {
+  const h = size / 2;
+  const [x, y] = c;
+  const path = (pts: Pt[], closed: boolean): Primitive => ({
+    kind: "path",
+    segs: [...pts.map((p, i) => (i === 0 ? { op: "M" as const, p } : { op: "L" as const, p })), ...(closed ? [{ op: "Z" as const }] : [])],
+    stroke: "trait fin",
+    fill: "none",
+    color,
+    fillColor: closed ? "white" : undefined,
+  });
+  switch (kind) {
+    case "o":
+      return [{ kind: "circle", c, r: h, stroke: "trait fin", fill: "none", color, fillColor: "white" }];
+    case "square":
+      return [path([[x - h, y - h], [x + h, y - h], [x + h, y + h], [x - h, y + h]], true)];
+    case "triangle":
+      return [path([[x, y - h * 1.15], [x + h, y + h * 0.6], [x - h, y + h * 0.6]], true)];
+    case "diamond":
+      return [path([[x, y - h * 1.2], [x + h, y], [x, y + h * 1.2], [x - h, y]], true)];
+    case "x":
+      return [path([[x - h, y - h], [x + h, y + h]], false), path([[x - h, y + h], [x + h, y - h]], false)];
+    default:
+      return [path([[x - h, y], [x + h, y]], false), path([[x, y - h], [x, y + h]], false)];
+  }
+}
+
+export function graphLayout(doc: GraphDoc): GraphLayout {
+  const theme: Theme = THEMES[doc.theme] ?? THEMES.these!;
+  const box = { x: MARGINS.left, y: MARGINS.top, w: doc.width - MARGINS.left - MARGINS.right, h: doc.height - MARGINS.top - MARGINS.bottom };
+  const { xs, ys } = scales(doc);
+  const X = (v: number) => box.x + project(xs, v) * box.w;
+  const Y = (v: number) => box.y + (1 - project(ys, v)) * box.h;
+  const out: Primitive[] = [];
+  const line = (pts: Pt[], extra: Partial<Extract<Primitive, { kind: "path" }>> = {}): Primitive => ({
+    kind: "path",
+    segs: pts.map((p, i) => (i === 0 ? { op: "M", p } : { op: "L", p })),
+    stroke: "trait fin",
+    fill: "none",
+    ...extra,
+  });
+
+  // Grille.
+  if (doc.grid) {
+    for (const t of xs.ticks) out.push(line([[X(t), box.y], [X(t), box.y + box.h]], { color: theme.graph.gridSvg }));
+    for (const t of ys.ticks) out.push(line([[box.x, Y(t)], [box.x + box.w, Y(t)]], { color: theme.graph.gridSvg }));
+  }
+
+  // Séries (barres d'abord, sous les courbes).
+  const bars = doc.series.map((s, i) => ({ s, i })).filter(({ s }) => s.type === "bar");
+  const base = Y(ys.log ? ys.min : Math.min(Math.max(0, ys.min), ys.max));
+  bars.forEach(({ s, i }, k) => {
+    const st = theme.graph.series[i % theme.graph.series.length]!;
+    const shift = (k - (bars.length - 1) / 2) * doc.bar_width;
+    s.x.forEach((xv, j) => {
+      const cx = X(xv) + shift;
+      const top = Y(s.y[j]!);
+      out.push({ kind: "rect", x: cx - doc.bar_width / 2, y: Math.min(top, base), w: doc.bar_width, h: Math.abs(base - top), stroke: "trait fin", fill: "none", fillColor: st.barSvg });
+    });
+  });
+  doc.series.forEach((s, i) => {
+    if (s.type === "bar") return;
+    const st = theme.graph.series[i % theme.graph.series.length]!;
+    const pts: Pt[] = s.x.map((xv, j) => [X(xv), Y(s.y[j]!)]);
+    if (s.type === "line" || s.type === "linepoints") {
+      for (let j = 0; j + 1 < pts.length; j++) {
+        const seg = clipSegment(pts[j]!, pts[j + 1]!, box);
+        if (seg) out.push(line(seg, { stroke: "trait", color: st.svg, dash: dashOf(st.dash) }));
+      }
+    }
+    if (s.type === "points" || s.type === "linepoints") {
+      for (const p of pts) {
+        if (p[0] >= box.x - 1e-6 && p[0] <= box.x + box.w + 1e-6 && p[1] >= box.y - 1e-6 && p[1] <= box.y + box.h + 1e-6) {
+          out.push(...mark(st.mark, p, theme.graph.markSize, st.svg));
+        }
+      }
+    }
+  });
+
+  // Cadre, graduations (intérieures, en bas et à gauche) et libellés.
+  out.push({ kind: "rect", x: box.x, y: box.y, w: box.w, h: box.h, stroke: "trait fin", fill: "none" });
+  const tick = 1;
+  xs.ticks.forEach((t, i) => {
+    out.push(line([[X(t), box.y + box.h], [X(t), box.y + box.h - tick]]));
+    out.push({ kind: "text", at: [X(t), box.y + box.h + 1], text: xs.labels[i]!, anchor: "north", halo: false });
+  });
+  // Petites graduations des axes logarithmiques (2 à 9 × 10^k), comme pgfplots.
+  const minor = (s: AxisScale) => {
+    if (!s.log) return [];
+    const vals: number[] = [];
+    for (let k = Math.floor(Math.log10(s.min)); k < Math.ceil(Math.log10(s.max)); k++) {
+      for (let m = 2; m <= 9; m++) {
+        const v = m * 10 ** k;
+        if (v > s.min && v < s.max) vals.push(v);
+      }
+    }
+    return vals;
+  };
+  for (const v of minor(xs)) out.push(line([[X(v), box.y + box.h], [X(v), box.y + box.h - tick * 0.6]]));
+  for (const v of minor(ys)) out.push(line([[box.x, Y(v)], [box.x + tick * 0.6, Y(v)]]));
+  ys.ticks.forEach((t, i) => {
+    out.push(line([[box.x, Y(t)], [box.x + tick, Y(t)]]));
+    out.push({ kind: "text", at: [box.x - 1, Y(t)], text: ys.labels[i]!, anchor: "east", halo: false });
+  });
+  if (doc.x.label) out.push({ kind: "text", at: [box.x + box.w / 2, doc.height - 1], text: doc.x.label, anchor: "south", halo: false });
+  if (doc.y.label) out.push({ kind: "text", at: [1, box.y + box.h / 2], text: doc.y.label, anchor: "north", halo: false, rotate: 90 });
+
+  // Légende (dans un coin de la boîte).
+  const entries = doc.series.map((s, i) => ({ s, i })).filter(({ s }) => s.legend);
+  if (doc.legend !== "none" && entries.length > 0) out.push(...legend(doc, theme, box, entries));
+  return { box, xs, ys, primitives: out };
+}
+
+function legend(doc: GraphDoc, theme: Theme, box: GraphLayout["box"], entries: { s: Series; i: number }[]): Primitive[] {
+  const size = theme.text.sizeMm;
+  const rowH = Math.max(size * 1.4, 3.6);
+  const sample = 6;
+  const textW = Math.max(...entries.map(({ s }) => measureLabel(s.name, size).w));
+  const w = 1.5 + sample + 1.5 + textW + 1.5;
+  const h = rowH * entries.length + 1;
+  const pad = 1.5;
+  const x = doc.legend.includes("east") ? box.x + box.w - w - pad : box.x + pad;
+  const y = doc.legend.includes("south") ? box.y + box.h - h - pad : box.y + pad;
+  const out: Primitive[] = [{ kind: "rect", x, y, w, h, stroke: "trait fin", fill: "none", fillColor: "white" }];
+  entries.forEach(({ s, i }, k) => {
+    const st = theme.graph.series[i % theme.graph.series.length]!;
+    const cy = y + 0.5 + rowH * (k + 0.5);
+    const a: Pt = [x + 1.5, cy];
+    const b: Pt = [x + 1.5 + sample, cy];
+    if (s.type === "bar") out.push({ kind: "rect", x: a[0] + 1.5, y: cy - 1.2, w: 3, h: 2.4, stroke: "trait fin", fill: "none", fillColor: st.barSvg });
+    else {
+      if (s.type !== "points") out.push({ kind: "path", segs: [{ op: "M", p: a }, { op: "L", p: b }], stroke: "trait", fill: "none", color: st.svg, dash: dashOf(st.dash) });
+      if (s.type !== "line") out.push(...mark(st.mark, [(a[0] + b[0]) / 2, cy], theme.graph.markSize, st.svg));
+    }
+    out.push({ kind: "text", at: [b[0] + 1.5, cy], text: s.name, anchor: "west", halo: false });
+  });
+  return out;
+}

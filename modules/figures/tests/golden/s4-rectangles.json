@@ -1,0 +1,12 @@
+{
+  "format": "figurine/1",
+  "canvas": { "unit": "mm", "width": 80, "height": 40, "grid": 1 },
+  "theme": "these",
+  "items": [
+    { "id": "a", "type": "rectangle", "at": [5, 5], "params": { "width": 20, "height": 12, "label": "Bloc" } },
+    { "id": "b", "type": "rectangle", "at": [30, 5], "params": { "width": 20, "height": 12, "fill": "gris", "label": "$E_1$" } },
+    { "id": "c", "type": "rectangle", "at": [55, 5], "params": { "width": 20, "height": 12, "fill": "bitumineux", "label": "50 % & plus" } },
+    { "id": "d", "type": "rectangle", "at": [20, 34], "rotate": 30, "params": { "width": 16, "height": 6, "fill": "granulaire" } },
+    { "id": "e", "type": "rectangle", "on": "c.bottom.left", "params": { "width": 10, "height": 5, "fill": "sol" } }
+  ]
+}

@@ -11,6 +11,9 @@ use std::path::{Path, PathBuf};
 use tauri::Manager;
 
 const FICHIER_REGLAGES: &str = "poste.json";
+/// Réglages de Figurine 1.0 (`{"version":1,"libraryRoot":"…"}`), dans le même dossier
+/// de configuration pour l'installeur Figurine (même identifiant Windows).
+const REGLAGES_FIGURINE_1: &str = "settings.json";
 
 fn dossier_config(app: &tauri::AppHandle) -> LibResult<PathBuf> {
     app.path()
@@ -21,9 +24,24 @@ fn dossier_config(app: &tauri::AppHandle) -> LibResult<PathBuf> {
 pub fn lire_reglages_dans(dir: &Path) -> LibResult<Option<String>> {
     match fs::read_to_string(dir.join(FICHIER_REGLAGES)) {
         Ok(t) => Ok(Some(t)),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(reprendre_figurine_1(dir)),
         Err(e) => Err(LibError::io(FICHIER_REGLAGES, e)),
     }
+}
+
+/// Premier lancement après Figurine 1.0 : on reprend le dossier de sa bibliothèque, pour
+/// que la mise à jour ne redemande rien. Le fichier de 1.0 n'est ni modifié ni supprimé.
+fn reprendre_figurine_1(dir: &Path) -> Option<String> {
+    let texte = fs::read_to_string(dir.join(REGLAGES_FIGURINE_1)).ok()?;
+    let v: serde_json::Value = serde_json::from_str(texte.trim_start_matches('\u{feff}')).ok()?;
+    let racine = v.get("libraryRoot")?.as_str()?.trim();
+    if racine.is_empty() {
+        return None;
+    }
+    Some(
+        serde_json::json!({ "version": 1, "espace": null, "figures": racine, "racines": {} })
+            .to_string(),
+    )
 }
 
 pub fn ecrire_reglages_dans(dir: &Path, contenu: &str) -> LibResult<()> {
@@ -109,6 +127,33 @@ mod tests {
             lire_reglages_dans(&dir).unwrap().unwrap(),
             "{\"espace\":\"C:\\\\Users\\\\é\"}"
         );
+    }
+
+    #[test]
+    fn reprend_le_dossier_de_figurine_1() {
+        let t = TempDir::new().unwrap();
+        fs::write(
+            t.path().join("settings.json"),
+            "{\"version\":1,\"libraryRoot\":\"C:\\\\Users\\\\DAVID\\\\OneDrive\\\\Figurine\"}",
+        )
+        .unwrap();
+        let repris: serde_json::Value =
+            serde_json::from_str(&lire_reglages_dans(t.path()).unwrap().unwrap()).unwrap();
+        assert_eq!(repris["figures"], "C:\\Users\\DAVID\\OneDrive\\Figurine");
+        assert_eq!(repris["espace"], serde_json::Value::Null);
+        // poste.json, une fois écrit, prime ; settings.json n'est jamais touché.
+        ecrire_reglages_dans(t.path(), "{\"figures\":\"D:\\\\F\"}").unwrap();
+        assert_eq!(
+            lire_reglages_dans(t.path()).unwrap().unwrap(),
+            "{\"figures\":\"D:\\\\F\"}"
+        );
+        assert!(t.path().join("settings.json").exists());
+        // Réglages 1.0 sans bibliothèque ou abîmés : rien à reprendre.
+        let u = TempDir::new().unwrap();
+        fs::write(u.path().join("settings.json"), "{\"libraryRoot\":null}").unwrap();
+        assert_eq!(lire_reglages_dans(u.path()).unwrap(), None);
+        fs::write(u.path().join("settings.json"), "{").unwrap();
+        assert_eq!(lire_reglages_dans(u.path()).unwrap(), None);
     }
 
     #[test]

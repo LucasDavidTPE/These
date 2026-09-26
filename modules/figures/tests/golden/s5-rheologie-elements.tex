@@ -1,0 +1,121 @@
+% Figure générée par Figurine -- format figurine/1, thème « these ».
+% Nécessite \usepackage{figurine} (figurine.sty, copiable depuis l'appli).
+% Unités : mm ; origine en bas à gauche de la planche (150 × 110 mm).
+\begin{tikzpicture}[figurine]
+\useasboundingbox (0,0) rectangle (150,110);
+
+% mx : Maxwell -- ressort et amortisseur en série, longueur 36 mm
+\draw[fig/trait, decorate, decoration={zigzag, segment length=2.99mm, amplitude=2mm, pre length=3mm, post length=3mm}] (8,98) -- (26,98);
+\node[fig/texte, anchor=south] at (17,101) {$E$};
+\draw[fig/trait] (26,98) -- (32,98);
+\draw[fig/trait] (38,100.5) -- (32,100.5) -- (32,95.5) -- (38,95.5);
+\draw[fig/trait] (35.3,98) -- (44,98);
+\draw[fig/trait] (35.3,99.75) -- (35.3,96.25);
+\node[fig/texte, anchor=south] at (35,101.5) {$\eta$};
+
+% kv : Kelvin-Voigt -- ressort et amortisseur en parallèle, longueur 30 mm
+\draw[fig/trait] (60,96) -- (62,96);
+\draw[fig/trait] (88,96) -- (90,96);
+\draw[fig/trait] (62,100.5) -- (62,88.5);
+\draw[fig/trait] (88,100.5) -- (88,88.5);
+\draw[fig/trait] (62,100.5) -- (64,100.5);
+\draw[fig/trait] (86,100.5) -- (88,100.5);
+\draw[fig/trait, decorate, decoration={zigzag, segment length=3.99mm, amplitude=2mm, pre length=3mm, post length=3mm}] (64,100.5) -- (86,100.5);
+\node[fig/texte, anchor=south] at (75,103.5) {$E_1$};
+\draw[fig/trait] (62,88.5) -- (64,88.5);
+\draw[fig/trait] (86,88.5) -- (88,88.5);
+\draw[fig/trait] (64,88.5) -- (72,88.5);
+\draw[fig/trait] (78,91) -- (72,91) -- (72,86) -- (78,86);
+\draw[fig/trait] (75.3,88.5) -- (86,88.5);
+\draw[fig/trait] (75.3,90.25) -- (75.3,86.75);
+\node[fig/texte, anchor=south] at (75,92) {$\eta_1$};
+
+% par : Élément parabolique -- élément parabolique $k$, longueur 16 mm
+\draw[fig/trait] (105,98) -- (110,98);
+\draw[fig/trait] (116,100.5) -- (110,100.5) -- (110,95.5) -- (116,95.5);
+\draw[fig/trait] (113.3,98) -- (121,98);
+\draw[fig/trait] (111.5,99.75) .. controls (113.9,98.58) and (113.9,97.42) .. (111.5,96.25);
+\node[fig/texte, anchor=south] at (113,101.5) {$k$};
+
+% pat : Patin (frottement) -- patin $\sigma_s$, longueur 16 mm
+\draw[fig/trait] (105,80) -- (109.5,80);
+\draw[fig/trait] (109.5,78.25) rectangle (116.5,81.75);
+\draw[fig/trait] (116.5,80) -- (121,80);
+\draw[fig/trait] (108,78.25) -- (118,78.25);
+\draw[fig/trait fin] (108.5,78.25) -- (107.5,77.25);
+\draw[fig/trait fin] (110,78.25) -- (109,77.25);
+\draw[fig/trait fin] (111.5,78.25) -- (110.5,77.25);
+\draw[fig/trait fin] (113,78.25) -- (112,77.25);
+\draw[fig/trait fin] (114.5,78.25) -- (113.5,77.25);
+\draw[fig/trait fin] (116,78.25) -- (115,77.25);
+\draw[fig/trait fin] (117.5,78.25) -- (116.5,77.25);
+\node[fig/texte, anchor=south] at (113,82.75) {$\sigma_s$};
+
+% gm : Maxwell généralisé -- 3 branches de Maxwell + ressort d'équilibre, longueur 72 mm
+\draw[fig/trait] (8,38) -- (10,38);
+\draw[fig/trait] (78,38) -- (80,38);
+\draw[fig/trait] (10,55) -- (10,18);
+\draw[fig/trait] (78,55) -- (78,18);
+\draw[fig/trait] (10,55) -- (33,55);
+\draw[fig/trait] (55,55) -- (78,55);
+\draw[fig/trait, decorate, decoration={zigzag, segment length=3.99mm, amplitude=2mm, pre length=3mm, post length=3mm}] (33,55) -- (55,55);
+\node[fig/texte, anchor=south] at (44,58) {$E_\infty$};
+\draw[fig/trait] (10,43) -- (16,43);
+\draw[fig/trait] (38,43) -- (44,43);
+\draw[fig/trait, decorate, decoration={zigzag, segment length=3.99mm, amplitude=2mm, pre length=3mm, post length=3mm}] (16,43) -- (38,43);
+\node[fig/texte, anchor=south] at (27,46) {$E_{1}$};
+\draw[fig/trait] (44,43) -- (50,43);
+\draw[fig/trait] (72,43) -- (78,43);
+\draw[fig/trait] (50,43) -- (58,43);
+\draw[fig/trait] (64,45.5) -- (58,45.5) -- (58,40.5) -- (64,40.5);
+\draw[fig/trait] (61.3,43) -- (72,43);
+\draw[fig/trait] (61.3,44.75) -- (61.3,41.25);
+\node[fig/texte, anchor=south] at (61,46.5) {$\eta_{1}$};
+\draw[fig/trait] (10,30.5) -- (16,30.5);
+\draw[fig/trait] (38,30.5) -- (44,30.5);
+\draw[fig/trait, decorate, decoration={zigzag, segment length=3.99mm, amplitude=2mm, pre length=3mm, post length=3mm}] (16,30.5) -- (38,30.5);
+\node[fig/texte, anchor=south] at (27,33.5) {$E_{2}$};
+\draw[fig/trait] (44,30.5) -- (50,30.5);
+\draw[fig/trait] (72,30.5) -- (78,30.5);
+\draw[fig/trait] (50,30.5) -- (58,30.5);
+\draw[fig/trait] (64,33) -- (58,33) -- (58,28) -- (64,28);
+\draw[fig/trait] (61.3,30.5) -- (72,30.5);
+\draw[fig/trait] (61.3,32.25) -- (61.3,28.75);
+\node[fig/texte, anchor=south] at (61,34) {$\eta_{2}$};
+\draw[fig/trait] (10,18) -- (16,18);
+\draw[fig/trait] (38,18) -- (44,18);
+\draw[fig/trait, decorate, decoration={zigzag, segment length=3.99mm, amplitude=2mm, pre length=3mm, post length=3mm}] (16,18) -- (38,18);
+\node[fig/texte, anchor=south] at (27,21) {$E_{3}$};
+\draw[fig/trait] (44,18) -- (50,18);
+\draw[fig/trait] (72,18) -- (78,18);
+\draw[fig/trait] (50,18) -- (58,18);
+\draw[fig/trait] (64,20.5) -- (58,20.5) -- (58,15.5) -- (64,15.5);
+\draw[fig/trait] (61.3,18) -- (72,18);
+\draw[fig/trait] (61.3,19.75) -- (61.3,16.25);
+\node[fig/texte, anchor=south] at (61,21.5) {$\eta_{3}$};
+
+% l1 : Liaison rigide -- longueur 15 mm
+\draw[fig/trait epais] (80,38) -- (95,38);
+
+% n1 : Nœud -- point de jonction
+\filldraw[fig/trait fin, fig/fond blanc] (95,38) circle[radius=0.6];
+
+% sol : Sol hachuré -- longueur 40 mm
+\draw[fig/trait] (100,10) -- (140,10);
+\draw[fig/trait fin] (102.5,10) -- (100,7.5);
+\draw[fig/trait fin] (105,10) -- (102.5,7.5);
+\draw[fig/trait fin] (107.5,10) -- (105,7.5);
+\draw[fig/trait fin] (110,10) -- (107.5,7.5);
+\draw[fig/trait fin] (112.5,10) -- (110,7.5);
+\draw[fig/trait fin] (115,10) -- (112.5,7.5);
+\draw[fig/trait fin] (117.5,10) -- (115,7.5);
+\draw[fig/trait fin] (120,10) -- (117.5,7.5);
+\draw[fig/trait fin] (122.5,10) -- (120,7.5);
+\draw[fig/trait fin] (125,10) -- (122.5,7.5);
+\draw[fig/trait fin] (127.5,10) -- (125,7.5);
+\draw[fig/trait fin] (130,10) -- (127.5,7.5);
+\draw[fig/trait fin] (132.5,10) -- (130,7.5);
+\draw[fig/trait fin] (135,10) -- (132.5,7.5);
+\draw[fig/trait fin] (137.5,10) -- (135,7.5);
+\draw[fig/trait fin] (140,10) -- (137.5,7.5);
+\end{tikzpicture}

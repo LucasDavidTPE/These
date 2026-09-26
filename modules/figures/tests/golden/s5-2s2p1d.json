@@ -1,0 +1,10 @@
+{
+  "format": "figurine/1",
+  "canvas": { "unit": "mm", "width": 110, "height": 45, "grid": 1 },
+  "theme": "these",
+  "items": [
+    { "id": "bati", "type": "fixed_support", "from": [8, 36], "to": [8, 9], "params": { "side": "gauche" } },
+    { "id": "m", "type": "model_2s2p1d", "from": [8, 22.5], "to": [92, 22.5], "params": {} },
+    { "id": "F", "type": "force", "on": "m.end", "params": { "angle": 0, "length": 10, "label": "$\\sigma$", "applied_at": "queue" } }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "format": "figurine/1",
+  "canvas": { "unit": "mm", "width": 150, "height": 70, "grid": 1 },
+  "theme": "these",
+  "items": [
+    { "id": "rep", "type": "axes3d", "at": [15, 25], "params": { "length": 12 } },
+    { "id": "r", "type": "rectangle", "at": [40, 10], "params": { "width": 40, "height": 15, "fill": "gris" } },
+    { "id": "cl", "type": "dimension", "from": "r.bottom.left", "to": "r.bottom.right", "params": { "offset": -6, "label": "$2a = 0{,}40$ m" } },
+    { "id": "cv", "type": "dimension", "from": "r.top.left", "to": "r.bottom.left", "params": { "offset": -5 } },
+    { "id": "ang", "type": "angle_dimension", "at": [100, 50], "params": { "radius": 12, "from_angle": 0, "to_angle": 60, "label": "$\\theta$" } },
+    { "id": "l1", "type": "line", "from": [100, 50], "to": [125, 50], "params": {} },
+    { "id": "l2", "type": "line", "from": [100, 50], "to": [112.5, 28.35], "params": {} },
+    { "id": "acc", "type": "brace", "from": "r.top.left", "to": "r.top.right", "params": { "label": "zone chargée" } },
+    { "id": "f1", "type": "arrow", "from": [95, 15], "to": [125, 15], "params": { "head": "both", "label": "$\\varepsilon_{xx}$" } },
+    { "id": "t1", "type": "text", "at": [20, 55], "params": { "text": "Texte $\\sigma_{zz}(t)$ normal" } },
+    { "id": "t2", "type": "text", "at": [20, 62], "params": { "text": "petit", "size": "petit", "anchor": "west" } },
+    { "id": "t3", "type": "text", "at": [45, 62], "params": { "text": "Grand, fond blanc", "size": "grand", "anchor": "west", "background": true } },
+    { "id": "m1", "type": "measure_point", "at": [130, 35], "params": { "label": "J1" } },
+    { "id": "m2", "type": "measure_point", "at": [138, 42], "params": { "marker": "capteur", "size": 3 } },
+    { "id": "m3", "type": "measure_point", "at": [130, 48], "params": { "marker": "point" } }
+  ]
+}

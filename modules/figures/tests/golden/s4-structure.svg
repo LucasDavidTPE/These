@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="140mm" height="90mm" viewBox="0 0 140 90" font-family="'Latin Modern Roman', 'CMU Serif', 'Times New Roman', serif" font-size="2.82" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Figure générée par Figurine (figurine/1, thème « these ») -->
+  <defs>
+    <pattern id="fig-hachure-bitumineux" patternUnits="userSpaceOnUse" width="1.2" height="1.2" patternTransform="rotate(-45)"><line x1="0" y1="0.6" x2="1.2" y2="0.6" stroke="#4d4d4d" stroke-width="0.12"/></pattern>
+    <pattern id="fig-hachure-bitumineux-dense" patternUnits="userSpaceOnUse" width="1.2" height="1.2" patternTransform="rotate(-45)"><line x1="0" y1="0.6" x2="1.2" y2="0.6" stroke="#4d4d4d" stroke-width="0.12"/><line x1="0.6" y1="0" x2="0.6" y2="1.2" stroke="#4d4d4d" stroke-width="0.12"/></pattern>
+    <pattern id="fig-hachure-granulaire" patternUnits="userSpaceOnUse" width="1.6" height="1.6"><circle cx="0.8" cy="0.8" r="0.22" fill="#4d4d4d"/></pattern>
+    <pattern id="fig-hachure-sol" patternUnits="userSpaceOnUse" width="2.4" height="2.4" patternTransform="rotate(-135)"><line x1="0" y1="1.2" x2="2.4" y2="1.2" stroke="#4d4d4d" stroke-width="0.12"/></pattern>
+  </defs>
+  <!-- pav : Empilement de couches — 4 couches (BB, GB, GRH, PF), largeur 110 mm -->
+  <g id="pav" data-type="layer_stack">
+    <rect x="10" y="20" width="110" height="8" fill="url(#fig-hachure-bitumineux)" stroke="black" stroke-width="0.3"/>
+    <text x="12" y="24" text-anchor="start" dominant-baseline="central" fill="black" stroke="white" stroke-width="0.8" paint-order="stroke">BB</text>
+    <rect x="10" y="28" width="110" height="12" fill="url(#fig-hachure-bitumineux-dense)" stroke="black" stroke-width="0.3"/>
+    <text x="12" y="34" text-anchor="start" dominant-baseline="central" fill="black" stroke="white" stroke-width="0.8" paint-order="stroke">GB</text>
+    <rect x="10" y="40" width="110" height="20" fill="url(#fig-hachure-granulaire)" stroke="black" stroke-width="0.3"/>
+    <text x="12" y="50" text-anchor="start" dominant-baseline="central" fill="black" stroke="white" stroke-width="0.8" paint-order="stroke">GRH</text>
+    <path d="M10 60L120 60L120 75C117.96 73.93 115.93 73.93 113.89 75C111.85 76.07 109.81 76.07 107.78 75C105.74 73.93 103.7 73.93 101.67 75C99.63 76.07 97.59 76.07 95.56 75C93.52 73.93 91.48 73.93 89.44 75C87.41 76.07 85.37 76.07 83.33 75C81.3 73.93 79.26 73.93 77.22 75C75.19 76.07 73.15 76.07 71.11 75C69.07 73.93 67.04 73.93 65 75C62.96 76.07 60.93 76.07 58.89 75C56.85 73.93 54.81 73.93 52.78 75C50.74 76.07 48.7 76.07 46.67 75C44.63 73.93 42.59 73.93 40.56 75C38.52 76.07 36.48 76.07 34.44 75C32.41 73.93 30.37 73.93 28.33 75C26.3 76.07 24.26 76.07 22.22 75C20.19 73.93 18.15 73.93 16.11 75C14.07 76.07 12.04 76.07 10 75Z" fill="url(#fig-hachure-sol)"/>
+    <path d="M10 75L10 60L120 60L120 75" fill="none" stroke="black" stroke-width="0.3"/>
+    <path d="M120 75C117.96 73.93 115.93 73.93 113.89 75C111.85 76.07 109.81 76.07 107.78 75C105.74 73.93 103.7 73.93 101.67 75C99.63 76.07 97.59 76.07 95.56 75C93.52 73.93 91.48 73.93 89.44 75C87.41 76.07 85.37 76.07 83.33 75C81.3 73.93 79.26 73.93 77.22 75C75.19 76.07 73.15 76.07 71.11 75C69.07 73.93 67.04 73.93 65 75C62.96 76.07 60.93 76.07 58.89 75C56.85 73.93 54.81 73.93 52.78 75C50.74 76.07 48.7 76.07 46.67 75C44.63 73.93 42.59 73.93 40.56 75C38.52 76.07 36.48 76.07 34.44 75C32.41 73.93 30.37 73.93 28.33 75C26.3 76.07 24.26 76.07 22.22 75C20.19 73.93 18.15 73.93 16.11 75C14.07 76.07 12.04 76.07 10 75" fill="none" stroke="black" stroke-width="0.18"/>
+    <text x="12" y="67.5" text-anchor="start" dominant-baseline="central" fill="black" stroke="white" stroke-width="0.8" paint-order="stroke">PF</text>
+  </g>
+  <!-- roue : Rectangle — 12 × 8 mm, « $q$ » -->
+  <g id="roue" data-type="rectangle">
+    <rect x="65" y="20" width="12" height="8" fill="#e6e6e6" stroke="black" stroke-width="0.3"/>
+    <g transform="translate(70.35 24.35) scale(0.00282)"><g stroke="black" fill="black" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mi"><path data-c="1D45E" d="M33 157Q33 258 109 349T280 441Q340 441 372 389Q373 390 377 395T388 406T404 418Q438 442 450 442Q454 442 457 439T460 434Q460 425 391 149Q320 -135 320 -139Q320 -147 365 -148H390Q396 -156 396 -157T393 -175Q389 -188 383 -194H370Q339 -192 262 -192Q234 -192 211 -192T174 -192T157 -193Q143 -193 143 -185Q143 -182 145 -170Q149 -154 152 -151T172 -148Q220 -148 230 -141Q238 -136 258 -53T279 32Q279 33 272 29Q224 -10 172 -10Q117 -10 75 30T33 157ZM352 326Q329 405 277 405Q242 405 210 374T160 293Q131 214 119 129Q119 126 119 118T118 106Q118 61 136 44T179 26Q233 26 290 98L298 109L352 326Z"></path></g></g></g></g>
+  </g>
+  <!-- legende : Empilement de couches — 1 couche (Couche de roulement), largeur 20 mm -->
+  <g id="legende" data-type="layer_stack">
+    <rect x="10" y="80" width="20" height="4" fill="url(#fig-hachure-bitumineux)" stroke="black" stroke-width="0.3"/>
+    <text x="32" y="82" text-anchor="start" dominant-baseline="central" fill="black">BBSG 0/10 -- 8 cm</text>
+  </g>
+</svg>

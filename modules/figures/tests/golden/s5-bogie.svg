@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="120mm" height="70mm" viewBox="0 0 120 70" font-family="'Latin Modern Roman', 'CMU Serif', 'Times New Roman', serif" font-size="2.82" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Figure générée par Figurine (figurine/1, thème « these ») -->
+  <defs>
+    <pattern id="fig-hachure-bitumineux" patternUnits="userSpaceOnUse" width="1.2" height="1.2" patternTransform="rotate(-45)"><line x1="0" y1="0.6" x2="1.2" y2="0.6" stroke="#4d4d4d" stroke-width="0.12"/></pattern>
+  </defs>
+  <!-- a340 : Bogie (vue en plan) — 2 essieu(x) × 2 roue(s), entraxes 32 et 20 mm -->
+  <g id="a340" data-type="bogie">
+    <path d="M32 19L32 51" fill="none" stroke="black" stroke-width="0.5"/>
+    <path d="M26 19L38 19" fill="none" stroke="black" stroke-width="0.3"/>
+    <path d="M26 51L38 51" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="18" y="12.5" width="8" height="13" fill="#e6e6e6" stroke="black" stroke-width="0.3"/>
+    <rect x="38" y="12.5" width="8" height="13" fill="#e6e6e6" stroke="black" stroke-width="0.3"/>
+    <rect x="18" y="44.5" width="8" height="13" fill="#e6e6e6" stroke="black" stroke-width="0.3"/>
+    <rect x="38" y="44.5" width="8" height="13" fill="#e6e6e6" stroke="black" stroke-width="0.3"/>
+    <text x="48" y="35" text-anchor="start" dominant-baseline="central" fill="black">A340 (2 × 2)</text>
+  </g>
+  <!-- b777 : Bogie (vue en plan) — 3 essieu(x) × 2 roue(s), entraxes 18 et 18 mm -->
+  <g id="b777" data-type="bogie">
+    <path d="M88 17L88 53" fill="none" stroke="black" stroke-width="0.5"/>
+    <path d="M82.5 17L93.5 17" fill="none" stroke="black" stroke-width="0.3"/>
+    <path d="M82.5 35L93.5 35" fill="none" stroke="black" stroke-width="0.3"/>
+    <path d="M82.5 53L93.5 53" fill="none" stroke="black" stroke-width="0.3"/>
+    <rect x="75.5" y="11.5" width="7" height="11" fill="url(#fig-hachure-bitumineux)" stroke="black" stroke-width="0.3"/>
+    <rect x="93.5" y="11.5" width="7" height="11" fill="url(#fig-hachure-bitumineux)" stroke="black" stroke-width="0.3"/>
+    <rect x="75.5" y="29.5" width="7" height="11" fill="url(#fig-hachure-bitumineux)" stroke="black" stroke-width="0.3"/>
+    <rect x="93.5" y="29.5" width="7" height="11" fill="url(#fig-hachure-bitumineux)" stroke="black" stroke-width="0.3"/>
+    <rect x="75.5" y="47.5" width="7" height="11" fill="url(#fig-hachure-bitumineux)" stroke="black" stroke-width="0.3"/>
+    <rect x="93.5" y="47.5" width="7" height="11" fill="url(#fig-hachure-bitumineux)" stroke="black" stroke-width="0.3"/>
+  </g>
+</svg>

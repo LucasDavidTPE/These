@@ -1,0 +1,39 @@
+% Graphe généré par Figurine -- format figurine-graph/1, thème « these ».
+% Nécessite \usepackage{figurine} (charge pgfplots). Taille de la zone des axes imposée.
+\begin{tikzpicture}
+\begin{axis}[fig/graphe, width=101mm, height=65mm,
+  xmin=0.1, xmax=100,
+  xtick={0.1,1,10,100},
+  xticklabels={{$10^{-1}$},{$10^{0}$},{$10^{1}$},{$10^{2}$}},
+  xmode=log,
+  xlabel={Fréquence $f$ (Hz)},
+  ymin=1000, ymax=100000,
+  ytick={1000,10000,100000},
+  yticklabels={{$10^{3}$},{$10^{4}$},{$10^{5}$}},
+  ymode=log,
+  ylabel={$|E^*|$ (MPa)},
+  legend pos=south east]
+
+% Série 1 : 10 °C (5 points)
+\addplot[fig/serie 1] table[row sep=\\] {
+x y \\
+0.1 8200 \\
+1 11000 \\
+3 12500 \\
+10 14100 \\
+30 15600 \\
+};
+\addlegendentry{10 °C}
+
+% Série 2 : 30 °C (5 points)
+\addplot[fig/serie 2] table[row sep=\\] {
+x y \\
+0.1 1500 \\
+1 2600 \\
+3 3400 \\
+10 4600 \\
+30 5900 \\
+};
+\addlegendentry{30 °C}
+\end{axis}
+\end{tikzpicture}

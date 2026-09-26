@@ -1,0 +1,18 @@
+{
+  "format": "figurine/1",
+  "canvas": { "unit": "mm", "width": 160, "height": 80, "grid": 1 },
+  "theme": "these",
+  "items": [
+    { "id": "sol", "type": "ground", "from": [10, 60], "to": [150, 60], "params": {} },
+    { "id": "roue", "type": "wheel_section", "at": [30, 60], "params": { "label": "pneu" } },
+    { "id": "Q", "type": "force", "on": "roue.top", "params": { "length": 12, "label": "$Q$" } },
+    { "id": "q", "type": "uniform_load", "from": [60, 60], "to": [95, 60], "params": { "height": 10, "arrows": 8, "label": "$q = 0{,}662$ MPa" } },
+    { "id": "a1", "type": "simple_support", "at": [110, 45], "params": {} },
+    { "id": "a2", "type": "simple_support", "at": [135, 45], "params": { "variant": "glissant" } },
+    { "id": "poutre", "type": "link", "from": "a1.top", "to": "a2.top", "params": { "thick": true } },
+    { "id": "enc", "type": "fixed_support", "from": [150, 10], "to": [150, 30], "params": { "side": "gauche" } },
+    { "id": "e1", "type": "footprint", "at": [20, 15], "params": { "label": "rect." } },
+    { "id": "e2", "type": "footprint", "at": [45, 15], "params": { "shape": "cercle", "width": 16 } },
+    { "id": "e3", "type": "footprint", "at": [70, 15], "params": { "shape": "ellipse", "width": 12, "length": 20, "fill": "granulaire" } }
+  ]
+}

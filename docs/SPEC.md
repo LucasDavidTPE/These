@@ -194,7 +194,7 @@ L'écran d'ouverture. Il remplace le panneau Java du hub et la page `dashboard.h
 
 ## 6. Module Figures (Figurine)
 
-Repris **tel quel** de Figurine 1.0 (voir `docs/figurine/SPEC.md`, importé en P1) :
+Repris **tel quel** de Figurine 1.0 (voir `docs/figurine/SPEC.md`), ses cinq pages en onglets :
 bibliothèque, détourage, schéma, recadrage, graphes, exports TikZ / SVG / PNG /
 pgfplots, `figurine.sty`. Les tests golden de Figurine restent verts.
 

@@ -1,0 +1,19 @@
+{
+  "format": "figurine/1",
+  "canvas": { "unit": "mm", "width": 140, "height": 90, "grid": 1 },
+  "theme": "these",
+  "items": [
+    { "id": "pav", "type": "layer_stack", "at": [10, 20],
+      "params": { "width": 110,
+        "layers": [
+          { "name": "BB",  "h": 8,  "hatch": "bitumineux" },
+          { "name": "GB",  "h": 12, "hatch": "bitumineux-dense" },
+          { "name": "GRH", "h": 20, "hatch": "granulaire" },
+          { "name": "PF",  "h": 15, "hatch": "sol", "semi_infinite": true }
+        ] } },
+    { "id": "roue", "type": "rectangle", "on": "pav.top", "params": { "width": 12, "height": 8, "fill": "gris", "label": "$q$" } },
+    { "id": "legende", "type": "layer_stack", "at": [10, 80],
+      "params": { "width": 20, "labels": "droite",
+        "layers": [ { "name": "Couche de roulement", "h": 4, "hatch": "bitumineux", "label": "BBSG 0/10 -- 8 cm" } ] } }
+  ]
+}

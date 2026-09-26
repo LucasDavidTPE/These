@@ -1,0 +1,47 @@
+% Figure générée par Figurine -- format figurine/1, thème « these ».
+% Nécessite \usepackage{figurine} (figurine.sty, copiable depuis l'appli).
+% Unités : mm ; origine en bas à gauche de la planche (140 × 90 mm).
+\begin{tikzpicture}[figurine]
+\useasboundingbox (0,0) rectangle (140,90);
+
+% pav : Empilement de couches -- 4 couches (BB, GB, GRH, PF), largeur 110 mm
+\filldraw[fig/interface, fig/hachure bitumineux] (10,62) rectangle (120,70);
+\node[fig/etiquette, anchor=west] at (12,66) {BB};
+\filldraw[fig/interface, fig/hachure bitumineux-dense] (10,50) rectangle (120,62);
+\node[fig/etiquette, anchor=west] at (12,56) {GB};
+\filldraw[fig/interface, fig/hachure granulaire] (10,30) rectangle (120,50);
+\node[fig/etiquette, anchor=west] at (12,40) {GRH};
+\fill[fig/hachure sol] (10,30) -- (120,30) -- (120,15) .. controls (117.96,16.07) and (115.93,16.07) .. (113.89,15) .. controls (111.85,13.93) and (109.81,13.93) .. (107.78,15) .. controls (105.74,16.07) and (103.7,16.07) .. (101.67,15) .. controls (99.63,13.93) and (97.59,13.93) .. (95.56,15) .. controls (93.52,16.07) and (91.48,16.07) .. (89.44,15) .. controls (87.41,13.93) and (85.37,13.93) .. (83.33,15) .. controls (81.3,16.07) and (79.26,16.07) .. (77.22,15) .. controls (75.19,13.93) and (73.15,13.93) .. (71.11,15) .. controls (69.07,16.07) and (67.04,16.07) .. (65,15) .. controls (62.96,13.93) and (60.93,13.93) .. (58.89,15) .. controls (56.85,16.07) and (54.81,16.07) .. (52.78,15) .. controls (50.74,13.93) and (48.7,13.93) .. (46.67,15) .. controls (44.63,16.07) and (42.59,16.07) .. (40.56,15) .. controls (38.52,13.93) and (36.48,13.93) .. (34.44,15) .. controls (32.41,16.07) and (30.37,16.07) .. (28.33,15) .. controls (26.3,13.93) and (24.26,13.93) .. (22.22,15) .. controls (20.19,16.07) and (18.15,16.07) .. (16.11,15) .. controls (14.07,13.93) and (12.04,13.93) .. (10,15) -- cycle;
+\draw[fig/interface] (10,15) -- (10,30) -- (120,30) -- (120,15);
+\draw[fig/trait fin] (120,15) .. controls (117.96,16.07) and (115.93,16.07) .. (113.89,15) .. controls (111.85,13.93) and (109.81,13.93) .. (107.78,15) .. controls (105.74,16.07) and (103.7,16.07) .. (101.67,15) .. controls (99.63,13.93) and (97.59,13.93) .. (95.56,15) .. controls (93.52,16.07) and (91.48,16.07) .. (89.44,15) .. controls (87.41,13.93) and (85.37,13.93) .. (83.33,15) .. controls (81.3,16.07) and (79.26,16.07) .. (77.22,15) .. controls (75.19,13.93) and (73.15,13.93) .. (71.11,15) .. controls (69.07,16.07) and (67.04,16.07) .. (65,15) .. controls (62.96,13.93) and (60.93,13.93) .. (58.89,15) .. controls (56.85,16.07) and (54.81,16.07) .. (52.78,15) .. controls (50.74,13.93) and (48.7,13.93) .. (46.67,15) .. controls (44.63,16.07) and (42.59,16.07) .. (40.56,15) .. controls (38.52,13.93) and (36.48,13.93) .. (34.44,15) .. controls (32.41,16.07) and (30.37,16.07) .. (28.33,15) .. controls (26.3,13.93) and (24.26,13.93) .. (22.22,15) .. controls (20.19,16.07) and (18.15,16.07) .. (16.11,15) .. controls (14.07,13.93) and (12.04,13.93) .. (10,15);
+\node[fig/etiquette, anchor=west] at (12,22.5) {PF};
+
+% p : Profil de pression -- 3 gaussiennes, σ = 0.0315 m, y de -0.25 à 0.25 m
+\draw[fig/trait] (35,70) -- (35,70.2) -- (36.25,70.5) -- (37.5,71.08) -- (38.75,72.12) -- (40,73.72) -- (41.25,75.86) -- (42.5,78.26) -- (43.75,80.43) -- (45,81.82) -- (46.25,82) -- (47.5,80.92) -- (48.75,78.91) -- (50,76.52) -- (51.25,74.29) -- (52.5,72.56) -- (53.75,71.46) -- (55,70.96) -- (56.25,71.03) -- (57.5,71.67) -- (58.75,72.89) -- (60,74.69) -- (61.25,76.86) -- (62.5,79.01) -- (63.75,80.62) -- (65,81.21) -- (66.25,80.62) -- (67.5,79.01) -- (68.75,76.86) -- (70,74.69) -- (71.25,72.89) -- (72.5,71.67) -- (73.75,71.03) -- (75,70.96) -- (76.25,71.46) -- (77.5,72.56) -- (78.75,74.29) -- (80,76.52) -- (81.25,78.91) -- (82.5,80.92) -- (83.75,82) -- (85,81.82) -- (86.25,80.43) -- (87.5,78.26) -- (88.75,75.86) -- (90,73.72) -- (91.25,72.12) -- (92.5,71.08) -- (93.75,70.5) -- (95,70.2) -- (95,70);
+\draw[fig/trait fin, fig/fleche] (39.29,72.74) -- (39.29,70);
+\draw[fig/trait fin, fig/fleche] (43.57,80.16) -- (43.57,70);
+\draw[fig/trait fin, fig/fleche] (47.86,80.42) -- (47.86,70);
+\draw[fig/trait fin, fig/fleche] (52.14,72.99) -- (52.14,70);
+\draw[fig/trait fin, fig/fleche] (56.43,71.09) -- (56.43,70);
+\draw[fig/trait fin, fig/fleche] (60.71,75.9) -- (60.71,70);
+\draw[fig/trait fin, fig/fleche] (65,81.21) -- (65,70);
+\draw[fig/trait fin, fig/fleche] (69.29,75.9) -- (69.29,70);
+\draw[fig/trait fin, fig/fleche] (73.57,71.09) -- (73.57,70);
+\draw[fig/trait fin, fig/fleche] (77.86,72.99) -- (77.86,70);
+\draw[fig/trait fin, fig/fleche] (82.14,80.42) -- (82.14,70);
+\draw[fig/trait fin, fig/fleche] (86.43,80.16) -- (86.43,70);
+\draw[fig/trait fin, fig/fleche] (90.71,72.74) -- (90.71,70);
+\node[fig/texte, anchor=south] at (46.25,83) {$p(y)$};
+
+% ax : Repère 2D -- axes $x$ (right) et $z$ (down)
+\draw[fig/trait, fig/fleche] (8,72) -- (18,72);
+\node[fig/texte, anchor=west] at (19,72) {$x$};
+\draw[fig/trait, fig/fleche] (8,72) -- (8,62);
+\node[fig/texte, anchor=north] at (8,61) {$z$};
+
+% d1 : Cote linéaire -- $h_1$, décalage 6 mm
+\draw[fig/trait fin] (120.8,70) -- (127.2,70);
+\draw[fig/trait fin] (120.8,62) -- (127.2,62);
+\draw[fig/trait fin, fig/double fleche] (126,70) -- (126,62);
+\node[fig/etiquette, anchor=west] at (126.8,66) {$h_1$};
+\end{tikzpicture}

@@ -17,11 +17,18 @@ l'installeur de la phase est produit par GitHub Actions.
 - [x] Accueil minimal + « À régler » + Diagnostic
 - [x] GitHub Actions : tests Linux, installeur Windows `Thèse`
 
-## P1 — Figures (Figurine intégrée)
-- [ ] Import du code de `LucasDavidTPE/Trace` avec son historique (`git subtree`)
-- [ ] `src/core` → `modules/figures`, stockage branché sur `noyau/stockage`
-- [ ] Tous les tests Figurine verts (dont golden TikZ / SVG et `cargo test`)
-- [ ] Installeur `Figurine` seul, compatible avec la bibliothèque et les réglages 1.0
+## P1 — Figures (Figurine intégrée) ✔
+- [x] Code de `LucasDavidTPE/Trace` (Figurine 1.0.0, commit 1b85dc9) repris dans
+      `modules/figures` (`core/`, `ui/`, `tests/`, `tex/`) ; documentation dans
+      `docs/figurine/`. L'historique reste dans le dépôt Trace (pas de `git subtree`).
+- [x] Les cinq pages de Figurine en onglets ; le dossier de la bibliothèque est le champ
+      `figures` des réglages du poste ; commandes Rust communes (`fichiers_*`, `verrou_*`)
+- [x] Tous les tests Figurine verts (golden TikZ / SVG / pgfplots, `cargo test` avec le
+      modèle de détourage réel)
+- [x] Installeur `Figurine` seul (1.1.0) : reprend le dossier de bibliothèque des réglages
+      de Figurine 1.0 ; détourage derrière la *feature* Cargo `figures`
+- [ ] Action « Enregistrer dans Figures » offerte aux autres modules : à faire avec son
+      premier utilisateur (Traitement, P2)
 
 ## P2 — Traitement 2S2P1D
 - [ ] Portage JS → TypeScript de `src/coeur` et `src/io` dans `packages/noyau`

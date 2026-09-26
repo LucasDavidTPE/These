@@ -1,0 +1,15 @@
+{
+  "format": "figurine/1",
+  "canvas": { "unit": "mm", "width": 150, "height": 110, "grid": 1 },
+  "theme": "these",
+  "items": [
+    { "id": "mx", "type": "maxwell", "at": [8, 12], "params": {} },
+    { "id": "kv", "type": "kelvin_voigt", "at": [60, 14], "params": { "spring_label": "$E_1$", "dashpot_label": "$\\eta_1$" } },
+    { "id": "par", "type": "parabolic", "at": [105, 12], "params": { "label": "$k$" } },
+    { "id": "pat", "type": "slider", "at": [105, 30], "params": { "label": "$\\sigma_s$" } },
+    { "id": "gm", "type": "generalized_maxwell", "from": [8, 72], "to": [80, 72], "params": { "n": 3 } },
+    { "id": "l1", "type": "link", "from": "gm.end", "to": [95, 72], "params": { "thick": true } },
+    { "id": "n1", "type": "node", "on": "l1.end", "params": {} },
+    { "id": "sol", "type": "ground", "from": [100, 100], "to": [140, 100], "params": {} }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "format": "figurine/1",
+  "canvas": { "unit": "mm", "width": 120, "height": 70, "grid": 1 },
+  "theme": "these",
+  "items": [
+    { "id": "a340", "type": "bogie", "at": [32, 35], "params": { "axles": 2, "wheels": 2, "axle_spacing": 32, "wheel_spacing": 20, "tyre_width": 8, "tyre_length": 13, "label": "A340 (2 × 2)" } },
+    { "id": "b777", "type": "bogie", "at": [88, 35], "params": { "axles": 3, "wheels": 2, "axle_spacing": 18, "wheel_spacing": 18, "tyre_width": 7, "tyre_length": 11, "fill": "bitumineux" } }
+  ]
+}

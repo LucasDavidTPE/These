@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="80mm" height="40mm" viewBox="0 0 80 40" font-family="'Latin Modern Roman', 'CMU Serif', 'Times New Roman', serif" font-size="2.82" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Figure générée par Figurine (figurine/1, thème « these ») -->
+  <defs>
+    <pattern id="fig-hachure-bitumineux" patternUnits="userSpaceOnUse" width="1.2" height="1.2" patternTransform="rotate(-45)"><line x1="0" y1="0.6" x2="1.2" y2="0.6" stroke="#4d4d4d" stroke-width="0.12"/></pattern>
+    <pattern id="fig-hachure-granulaire" patternUnits="userSpaceOnUse" width="1.6" height="1.6"><circle cx="0.8" cy="0.8" r="0.22" fill="#4d4d4d"/></pattern>
+    <pattern id="fig-hachure-sol" patternUnits="userSpaceOnUse" width="2.4" height="2.4" patternTransform="rotate(-135)"><line x1="0" y1="1.2" x2="2.4" y2="1.2" stroke="#4d4d4d" stroke-width="0.12"/></pattern>
+  </defs>
+  <!-- a : Rectangle — 20 × 12 mm, « Bloc » -->
+  <g id="a" data-type="rectangle">
+    <rect x="5" y="5" width="20" height="12" fill="none" stroke="black" stroke-width="0.3"/>
+    <text x="15" y="11" text-anchor="middle" dominant-baseline="central" fill="black">Bloc</text>
+  </g>
+  <!-- b : Rectangle — 20 × 12 mm, « $E_1$ » -->
+  <g id="b" data-type="rectangle">
+    <rect x="30" y="5" width="20" height="12" fill="#e6e6e6" stroke="black" stroke-width="0.3"/>
+    <g transform="translate(38.34 11.75) scale(0.00282)"><g stroke="black" fill="black" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="msub"><g data-mml-node="mi"><path data-c="1D438" d="M492 213Q472 213 472 226Q472 230 477 250T482 285Q482 316 461 323T364 330H312Q311 328 277 192T243 52Q243 48 254 48T334 46Q428 46 458 48T518 61Q567 77 599 117T670 248Q680 270 683 272Q690 274 698 274Q718 274 718 261Q613 7 608 2Q605 0 322 0H133Q31 0 31 11Q31 13 34 25Q38 41 42 43T65 46Q92 46 125 49Q139 52 144 61Q146 66 215 342T285 622Q285 629 281 629Q273 632 228 634H197Q191 640 191 642T193 659Q197 676 203 680H757Q764 676 764 669Q764 664 751 557T737 447Q735 440 717 440H705Q698 445 698 453L701 476Q704 500 704 528Q704 558 697 578T678 609T643 625T596 632T532 634H485Q397 633 392 631Q388 629 386 622Q385 619 355 499T324 377Q347 376 372 376H398Q464 376 489 391T534 472Q538 488 540 490T557 493Q562 493 565 493T570 492T572 491T574 487T577 483L544 351Q511 218 508 216Q505 213 492 213Z"></path></g><g data-mml-node="mn" transform="translate(771,-150) scale(0.707)"><path data-c="31" d="M213 578L200 573Q186 568 160 563T102 556H83V602H102Q149 604 189 617T245 641T273 663Q275 666 285 666Q294 666 302 660V361L303 61Q310 54 315 52T339 48T401 46H427V0H416Q395 3 257 3Q121 3 100 0H88V46H114Q136 46 152 46T177 47T193 50T201 52T207 57T213 61V578Z"></path></g></g></g></g></g>
+  </g>
+  <!-- c : Rectangle — 20 × 12 mm, « 50 % & plus » -->
+  <g id="c" data-type="rectangle">
+    <rect x="55" y="5" width="20" height="12" fill="url(#fig-hachure-bitumineux)" stroke="black" stroke-width="0.3"/>
+    <text x="65" y="11" text-anchor="middle" dominant-baseline="central" fill="black" stroke="white" stroke-width="0.8" paint-order="stroke">50 % &amp; plus</text>
+  </g>
+  <!-- d : Rectangle — 16 × 6 mm -->
+  <g id="d" data-type="rectangle">
+    <path d="M20 34L33.86 26L36.86 31.2L23 39.2Z" fill="url(#fig-hachure-granulaire)" stroke="black" stroke-width="0.3"/>
+  </g>
+  <!-- e : Rectangle — 10 × 5 mm -->
+  <g id="e" data-type="rectangle">
+    <rect x="55" y="17" width="10" height="5" fill="url(#fig-hachure-sol)" stroke="black" stroke-width="0.3"/>
+  </g>
+</svg>

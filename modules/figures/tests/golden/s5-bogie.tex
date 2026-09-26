@@ -1,0 +1,28 @@
+% Figure générée par Figurine -- format figurine/1, thème « these ».
+% Nécessite \usepackage{figurine} (figurine.sty, copiable depuis l'appli).
+% Unités : mm ; origine en bas à gauche de la planche (120 × 70 mm).
+\begin{tikzpicture}[figurine]
+\useasboundingbox (0,0) rectangle (120,70);
+
+% a340 : Bogie (vue en plan) -- 2 essieu(x) × 2 roue(s), entraxes 32 et 20 mm
+\draw[fig/trait epais] (32,51) -- (32,19);
+\draw[fig/trait] (26,51) -- (38,51);
+\draw[fig/trait] (26,19) -- (38,19);
+\filldraw[fig/trait, fig/fond gris] (18,44.5) rectangle (26,57.5);
+\filldraw[fig/trait, fig/fond gris] (38,44.5) rectangle (46,57.5);
+\filldraw[fig/trait, fig/fond gris] (18,12.5) rectangle (26,25.5);
+\filldraw[fig/trait, fig/fond gris] (38,12.5) rectangle (46,25.5);
+\node[fig/texte, anchor=west] at (48,35) {A340 (2 × 2)};
+
+% b777 : Bogie (vue en plan) -- 3 essieu(x) × 2 roue(s), entraxes 18 et 18 mm
+\draw[fig/trait epais] (88,53) -- (88,17);
+\draw[fig/trait] (82.5,53) -- (93.5,53);
+\draw[fig/trait] (82.5,35) -- (93.5,35);
+\draw[fig/trait] (82.5,17) -- (93.5,17);
+\filldraw[fig/trait, fig/hachure bitumineux] (75.5,47.5) rectangle (82.5,58.5);
+\filldraw[fig/trait, fig/hachure bitumineux] (93.5,47.5) rectangle (100.5,58.5);
+\filldraw[fig/trait, fig/hachure bitumineux] (75.5,29.5) rectangle (82.5,40.5);
+\filldraw[fig/trait, fig/hachure bitumineux] (93.5,29.5) rectangle (100.5,40.5);
+\filldraw[fig/trait, fig/hachure bitumineux] (75.5,11.5) rectangle (82.5,22.5);
+\filldraw[fig/trait, fig/hachure bitumineux] (93.5,11.5) rectangle (100.5,22.5);
+\end{tikzpicture}

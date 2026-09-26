@@ -1,0 +1,26 @@
+% Figure générée par Figurine -- format figurine/1, thème « these ».
+% Nécessite \usepackage{figurine} (figurine.sty, copiable depuis l'appli).
+% Unités : mm ; origine en bas à gauche de la planche (140 × 90 mm).
+\begin{tikzpicture}[figurine]
+\useasboundingbox (0,0) rectangle (140,90);
+
+% pav : Empilement de couches -- 4 couches (BB, GB, GRH, PF), largeur 110 mm
+\filldraw[fig/interface, fig/hachure bitumineux] (10,62) rectangle (120,70);
+\node[fig/etiquette, anchor=west] at (12,66) {BB};
+\filldraw[fig/interface, fig/hachure bitumineux-dense] (10,50) rectangle (120,62);
+\node[fig/etiquette, anchor=west] at (12,56) {GB};
+\filldraw[fig/interface, fig/hachure granulaire] (10,30) rectangle (120,50);
+\node[fig/etiquette, anchor=west] at (12,40) {GRH};
+\fill[fig/hachure sol] (10,30) -- (120,30) -- (120,15) .. controls (117.96,16.07) and (115.93,16.07) .. (113.89,15) .. controls (111.85,13.93) and (109.81,13.93) .. (107.78,15) .. controls (105.74,16.07) and (103.7,16.07) .. (101.67,15) .. controls (99.63,13.93) and (97.59,13.93) .. (95.56,15) .. controls (93.52,16.07) and (91.48,16.07) .. (89.44,15) .. controls (87.41,13.93) and (85.37,13.93) .. (83.33,15) .. controls (81.3,16.07) and (79.26,16.07) .. (77.22,15) .. controls (75.19,13.93) and (73.15,13.93) .. (71.11,15) .. controls (69.07,16.07) and (67.04,16.07) .. (65,15) .. controls (62.96,13.93) and (60.93,13.93) .. (58.89,15) .. controls (56.85,16.07) and (54.81,16.07) .. (52.78,15) .. controls (50.74,13.93) and (48.7,13.93) .. (46.67,15) .. controls (44.63,16.07) and (42.59,16.07) .. (40.56,15) .. controls (38.52,13.93) and (36.48,13.93) .. (34.44,15) .. controls (32.41,16.07) and (30.37,16.07) .. (28.33,15) .. controls (26.3,13.93) and (24.26,13.93) .. (22.22,15) .. controls (20.19,16.07) and (18.15,16.07) .. (16.11,15) .. controls (14.07,13.93) and (12.04,13.93) .. (10,15) -- cycle;
+\draw[fig/interface] (10,15) -- (10,30) -- (120,30) -- (120,15);
+\draw[fig/trait fin] (120,15) .. controls (117.96,16.07) and (115.93,16.07) .. (113.89,15) .. controls (111.85,13.93) and (109.81,13.93) .. (107.78,15) .. controls (105.74,16.07) and (103.7,16.07) .. (101.67,15) .. controls (99.63,13.93) and (97.59,13.93) .. (95.56,15) .. controls (93.52,16.07) and (91.48,16.07) .. (89.44,15) .. controls (87.41,13.93) and (85.37,13.93) .. (83.33,15) .. controls (81.3,16.07) and (79.26,16.07) .. (77.22,15) .. controls (75.19,13.93) and (73.15,13.93) .. (71.11,15) .. controls (69.07,16.07) and (67.04,16.07) .. (65,15) .. controls (62.96,13.93) and (60.93,13.93) .. (58.89,15) .. controls (56.85,16.07) and (54.81,16.07) .. (52.78,15) .. controls (50.74,13.93) and (48.7,13.93) .. (46.67,15) .. controls (44.63,16.07) and (42.59,16.07) .. (40.56,15) .. controls (38.52,13.93) and (36.48,13.93) .. (34.44,15) .. controls (32.41,16.07) and (30.37,16.07) .. (28.33,15) .. controls (26.3,13.93) and (24.26,13.93) .. (22.22,15) .. controls (20.19,16.07) and (18.15,16.07) .. (16.11,15) .. controls (14.07,13.93) and (12.04,13.93) .. (10,15);
+\node[fig/etiquette, anchor=west] at (12,22.5) {PF};
+
+% roue : Rectangle -- 12 × 8 mm, « $q$ »
+\filldraw[fig/trait, fig/fond gris] (65,62) rectangle (77,70);
+\node[fig/texte, anchor=center] at (71,66) {$q$};
+
+% legende : Empilement de couches -- 1 couche (Couche de roulement), largeur 20 mm
+\filldraw[fig/interface, fig/hachure bitumineux] (10,6) rectangle (30,10);
+\node[fig/texte, anchor=west] at (32,8) {BBSG 0/10 -- 8 cm};
+\end{tikzpicture}

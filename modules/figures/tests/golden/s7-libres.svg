@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="120mm" height="45mm" viewBox="0 0 120 45" font-family="'Latin Modern Roman', 'CMU Serif', 'Times New Roman', serif" font-size="2.82" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Figure générée par Figurine (figurine/1, thème « these ») -->
+  <defs>
+    <pattern id="fig-hachure-bitumineux" patternUnits="userSpaceOnUse" width="1.2" height="1.2" patternTransform="rotate(-45)"><line x1="0" y1="0.6" x2="1.2" y2="0.6" stroke="#4d4d4d" stroke-width="0.12"/></pattern>
+    <pattern id="fig-hachure-granulaire" patternUnits="userSpaceOnUse" width="1.6" height="1.6"><circle cx="0.8" cy="0.8" r="0.22" fill="#4d4d4d"/></pattern>
+  </defs>
+  <!-- l : Ligne — 110 mm, pointillés -->
+  <g id="l" data-type="line">
+    <path d="M5 40L115 40" fill="none" stroke="black" stroke-width="0.18" stroke-dasharray="1.08 0.72"/>
+  </g>
+  <!-- pl : Polyligne — 3 points, fermée -->
+  <g id="pl" data-type="polyline">
+    <path d="M10 30L25 12L40 30Z" fill="url(#fig-hachure-granulaire)" stroke="black" stroke-width="0.3"/>
+  </g>
+  <!-- pf : Polyligne — 4 points -->
+  <g id="pf" data-type="polyline">
+    <path d="M50 30L55 15L65 15L70 25" fill="none" stroke="black" stroke-width="0.3"/>
+    <line x1="69.78" y1="24.55" x2="69.46" y2="23.93" fill="none" stroke="black" stroke-width="0.3"/><path d="M70 25L68.75 23.84L69.46 23.93L69.82 23.3Z" fill="black"/>
+  </g>
+  <!-- c : Cercle — rayon 8 mm -->
+  <g id="c" data-type="circle">
+    <circle cx="85" cy="20" r="8" fill="url(#fig-hachure-bitumineux)" stroke="black" stroke-width="0.3"/>
+    <rect x="83.43" y="18.51" width="3.14" height="2.99" fill="white"/><g transform="translate(83.93 20.93) scale(0.00282)"><g stroke="black" fill="black" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="mi"><path data-c="1D445" d="M230 637Q203 637 198 638T193 649Q193 676 204 682Q206 683 378 683Q550 682 564 680Q620 672 658 652T712 606T733 563T739 529Q739 484 710 445T643 385T576 351T538 338L545 333Q612 295 612 223Q612 212 607 162T602 80V71Q602 53 603 43T614 25T640 16Q668 16 686 38T712 85Q717 99 720 102T735 105Q755 105 755 93Q755 75 731 36Q693 -21 641 -21H632Q571 -21 531 4T487 82Q487 109 502 166T517 239Q517 290 474 313Q459 320 449 321T378 323H309L277 193Q244 61 244 59Q244 55 245 54T252 50T269 48T302 46H333Q339 38 339 37T336 19Q332 6 326 0H311Q275 2 180 2Q146 2 117 2T71 2T50 1Q33 1 33 10Q33 12 36 24Q41 43 46 45Q50 46 61 46H67Q94 46 127 49Q141 52 146 61Q149 65 218 339T287 628Q287 635 230 637ZM630 554Q630 586 609 608T523 636Q521 636 500 636T462 637H440Q393 637 386 627Q385 624 352 494T319 361Q319 360 388 360Q466 361 492 367Q556 377 592 426Q608 449 619 486T630 554Z"></path></g></g></g></g>
+  </g>
+  <!-- bz : Courbe de Bézier — 35 mm, courbure 10 mm -->
+  <g id="bz" data-type="bezier">
+    <path d="M75 35C86.67 21 98.33 29 110 35" fill="none" stroke="black" stroke-width="0.3"/>
+    <line x1="109.56" y1="34.77" x2="108.93" y2="34.45" fill="none" stroke="black" stroke-width="0.3"/><path d="M110 35L108.3 34.8L108.93 34.45L108.85 33.73Z" fill="black"/>
+  </g>
+</svg>
