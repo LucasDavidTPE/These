@@ -509,3 +509,12 @@ table.tableau th {
 .courbes {
   width: 100%;
 }
+
+.courbes-selection {
+  fill: var(--accent);
+  opacity: 0.15;
+}
+
+.courbes svg {
+  user-select: none;
+}

@@ -81,7 +81,9 @@ l'installeur de la phase est produit par GitHub Actions.
       portage de these-lgcb), courbes d'un essai (un panneau par famille d'unités, légende
       cliquable, réticule), aperçu température / force enregistré dans l'espace et affiché
       dans la galerie (visible aussi sur le PC sans données brutes)
-- [ ] Plus tard : zoom dans les courbes, export Excel d'un essai, copie des données brutes
+- [x] Zoom dans les courbes (glisser une plage, double-clic pour revenir), export d'un essai
+      en CSV pour Excel (« ; », virgule décimale)
+- [ ] Plus tard : copie des données brutes d'un essai vers une sauvegarde
 
 ## P6 — Liaisons et finitions
 - [ ] Accueil complet (Cette semaine, derniers essais, dernières figures)

@@ -23,6 +23,12 @@ describe("CSV", () => {
     expect(voieTemps(s)).toBe(0);
   });
 
+  it("export CSV pour Excel", async () => {
+    const { versCsvExcel } = await import("./wavematrix");
+    const s = lireCsv('"Temps total (s)";"Force(8800 (0,1):Charge) (kN)";"Étape(8800)"\n3600;1,5;2\n7200;-2;3\n');
+    expect(versCsvExcel(s)).toBe("\uFEFFTemps (h);Force Charge (kN)\r\n1;1,5\r\n2;-2\r\n");
+  });
+
   it("la décimation garde les extrêmes de chaque paquet", () => {
     const n = 10_000;
     const x = Float64Array.from({ length: n }, (_, i) => i);

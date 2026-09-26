@@ -150,3 +150,17 @@ export function voieTemps(s: Serie): number {
   const total = s.voies.findIndex((v) => v.nature === "temps" && /total/i.test(v.grandeur));
   return total >= 0 ? total : s.voies.findIndex((v) => v.nature === "temps");
 }
+
+/**
+ * CSV lisible par Excel en français (« ; », décimale « , », BOM) : temps en heures puis
+ * les voies utiles, avec leur unité. Sert à l'export d'un essai.
+ */
+export function versCsvExcel(s: Serie): string {
+  const it = voieTemps(s);
+  const utiles = s.voies.map((v, j) => ({ v, j })).filter(({ v, j }) => j !== it && !["etape", "boucle", "modal", "inconnu", "temps_cycle"].includes(v.nature));
+  const entete = ["Temps (h)", ...utiles.map(({ v }) => `${v.grandeur}${v.capteur && v.capteur !== "Défini par utilisateur" ? ` ${v.capteur}` : ""}${v.unite ? ` (${v.unite})` : ""}`)];
+  const f = (x: number) => (Number.isFinite(x) ? String(Number(x.toPrecision(8))).replace(".", ",") : "");
+  const lignes = [entete.join(";")];
+  for (let i = 0; i < s.lignes; i++) lignes.push([f(it >= 0 ? s.colonnes[it]![i]! / 3600 : i), ...utiles.map(({ j }) => f(s.colonnes[j]![i]!))].join(";"));
+  return "\uFEFF" + lignes.join("\r\n") + "\r\n";
+}

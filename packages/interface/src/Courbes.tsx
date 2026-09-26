@@ -1,7 +1,8 @@
 /**
  * Courbes en SVG, sans bibliothèque : un panneau par famille d'unités (jamais deux
  * grandeurs d'échelles différentes sur le même axe), légende cliquable pour masquer une
- * voie, réticule qui affiche les valeurs. Partagé entre les modules.
+ * voie, réticule qui affiche les valeurs, zoom en glissant sur une plage de temps (double-
+ * clic pour revenir). Partagé entre les modules.
  */
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 
@@ -35,12 +36,30 @@ function graduer(a: number, b: number, n = 5): number[] {
 
 const fmt = (v: number) => (Math.abs(v) >= 1000 || (Math.abs(v) < 0.01 && v !== 0) ? v.toExponential(1) : String(Number(v.toPrecision(4))));
 
-function Graphe({ p, largeur, xLibelle, masquees, basculer, curseur, setCurseur }: { p: Panneau; largeur: number; xLibelle: string; masquees: Set<string>; basculer(n: string): void; curseur: number | null; setCurseur(x: number | null): void }) {
-  const visibles = p.traces.filter((t) => !masquees.has(t.nom));
-  const toutes = visibles.length ? visibles : p.traces;
+interface Props {
+  p: Panneau;
+  largeur: number;
+  xLibelle: string;
+  masquees: Set<string>;
+  basculer(n: string): void;
+  curseur: number | null;
+  setCurseur(x: number | null): void;
+  plage: [number, number] | null;
+  setPlage(p: [number, number] | null): void;
+}
+
+function Graphe({ p, largeur, xLibelle, masquees, basculer, curseur, setCurseur, plage, setPlage }: Props) {
+  const [selection, setSelection] = useState<[number, number] | null>(null);
+  const dans = (x: number) => !plage || (x >= plage[0] && x <= plage[1]);
+  const traces = p.traces.map((t) => {
+    const i = t.x.map((x, j) => (dans(x) ? j : -1)).filter((j) => j >= 0);
+    return { ...t, x: i.map((j) => t.x[j]!), y: i.map((j) => t.y[j]!) };
+  });
+  const visibles = traces.filter((t) => !masquees.has(t.nom) && t.x.length);
+  const toutes = visibles.length ? visibles : traces;
   const xs = toutes.flatMap((t) => t.x);
   const ys = toutes.flatMap((t) => t.y).filter(Number.isFinite);
-  const [x0, x1] = [Math.min(...xs), Math.max(...xs)];
+  const [x0, x1] = plage ?? [Math.min(...xs), Math.max(...xs)];
   let [y0, y1] = [Math.min(...ys), Math.max(...ys)];
   if (y0 === y1) [y0, y1] = [y0 - 1, y1 + 1];
   const pad = (y1 - y0) * 0.05;
@@ -75,8 +94,22 @@ function Graphe({ p, largeur, xLibelle, masquees, basculer, curseur, setCurseur 
           const r = e.currentTarget.getBoundingClientRect();
           const x = x0 + ((e.clientX - r.left - M.g) / W) * (x1 - x0);
           setCurseur(x >= x0 && x <= x1 ? x : null);
+          if (selection) setSelection([selection[0], x]);
         }}
-        onMouseLeave={() => setCurseur(null)}
+        onMouseDown={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          const x = x0 + ((e.clientX - r.left - M.g) / W) * (x1 - x0);
+          setSelection([x, x]);
+        }}
+        onMouseUp={() => {
+          if (selection && Math.abs(selection[1] - selection[0]) > (x1 - x0) / 200) setPlage([Math.min(...selection), Math.max(...selection)]);
+          setSelection(null);
+        }}
+        onDoubleClick={() => setPlage(null)}
+        onMouseLeave={() => {
+          setCurseur(null);
+          setSelection(null);
+        }}
       >
         {graduer(y0, y1, 4).map((v) => (
           <g key={`y${v}`}>
@@ -94,7 +127,8 @@ function Graphe({ p, largeur, xLibelle, masquees, basculer, curseur, setCurseur 
         <text x={largeur - M.d} y={H - 6} textAnchor="end" className="courbes-texte">
           {xLibelle}
         </text>
-        {p.traces.map((t, i) =>
+        {selection ? <rect x={px(Math.min(...selection))} y={M.h} width={Math.abs(px(selection[1]) - px(selection[0]))} height={H - M.h - M.b} className="courbes-selection" /> : null}
+        {traces.map((t, i) =>
           masquees.has(t.nom) ? null : (
             <polyline
               key={t.nom}
@@ -116,6 +150,7 @@ export function Courbes({ panneaux, xLibelle }: { panneaux: Panneau[]; xLibelle:
   const [largeur, setLargeur] = useState(800);
   const [masquees, setMasquees] = useState<Set<string>>(new Set());
   const [curseur, setCurseur] = useState<number | null>(null);
+  const [plage, setPlage] = useState<[number, number] | null>(null);
   useLayoutEffect(() => {
     const el = boite.current;
     if (!el) return;
@@ -126,8 +161,16 @@ export function Courbes({ panneaux, xLibelle }: { panneaux: Panneau[]; xLibelle:
   const basculer = useMemo(() => (n: string) => setMasquees((m) => (m.has(n) ? new Set([...m].filter((x) => x !== n)) : new Set([...m, n]))), []);
   return (
     <div className="courbes" ref={boite}>
+      <p className="discret petit">
+        Glisser sur une courbe pour zoomer sur une plage{plage ? " · " : ""}
+        {plage ? (
+          <button type="button" className="lien" onClick={() => setPlage(null)}>
+            vue entière
+          </button>
+        ) : null}
+      </p>
       {panneaux.map((p) => (
-        <Graphe key={p.titre} p={p} largeur={largeur} xLibelle={xLibelle} masquees={masquees} basculer={basculer} curseur={curseur} setCurseur={setCurseur} />
+        <Graphe key={p.titre} p={p} largeur={largeur} xLibelle={xLibelle} masquees={masquees} basculer={basculer} curseur={curseur} setCurseur={setCurseur} plage={plage} setPlage={setPlage} />
       ))}
     </div>
   );

@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { resoudre, referenceDepuisChemin } from "@noyau/poste/racines";
 import { Message, Page, Pastille, Section } from "@interface/composants";
 import { Apercu, Courbes } from "@interface/Courbes";
-import { lireCsv } from "@noyau/formats/wavematrix";
+import { lireCsv, versCsvExcel, type Serie } from "@noyau/formats/wavematrix";
 import { apercu, panneaux, type PanneauEssai } from "../core/courbes";
 import { SUFFIXE_SUIVI } from "../core/decouverte";
 import { useContexte } from "@interface/contexte";
@@ -89,7 +89,7 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
   const fs = ctx.espace!.fichiers;
   const [message, setMessage] = useState<{ niveau: "info" | "erreur"; texte: string } | null>(null);
   const [note, setNote] = useState({ titre: "", texte: "" });
-  const [courbes, setCourbes] = useState<{ essai: string; panneaux: PanneauEssai[] | null } | null>(null);
+  const [courbes, setCourbes] = useState<{ essai: string; panneaux: PanneauEssai[] | null; serie?: Serie } | null>(null);
   const k = c.campagne;
   const agir = async (f: () => Promise<unknown>, ok?: string) => {
     try {
@@ -138,7 +138,7 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
       const fichier = (await fsDonnees.listDir(nom)).find((f) => f.name.endsWith(SUFFIXE_SUIVI));
       if (!fichier) throw new Error(`Pas d'export ${SUFFIXE_SUIVI} dans ${nom}.`);
       const serie = lireCsv(new TextDecoder().decode(await fsDonnees.readBytes(`${nom}/${fichier.name}`)));
-      setCourbes({ essai: nom, panneaux: panneaux(serie) });
+      setCourbes({ essai: nom, panneaux: panneaux(serie), serie });
       const a = apercu(serie);
       if (a) await enregistrerApercu(fs, c.slug, nom, a);
     } catch (e) {
@@ -284,9 +284,19 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
         <Section
           titre={`Courbes : ${courbes.essai}`}
           aDroite={
-            <button type="button" onClick={() => setCourbes(null)}>
-              Fermer
-            </button>
+            <span className="rangee">
+              {courbes.serie ? (
+                <button
+                  type="button"
+                  onClick={() => void ctx.plateforme.enregistrerSous(`${k.titre} - ${courbes.essai}.csv`.replace(/[\\/:*?"<>|]/g, "_"), new TextEncoder().encode(versCsvExcel(courbes.serie!)))}
+                >
+                  Exporter pour Excel (.csv)
+                </button>
+              ) : null}
+              <button type="button" onClick={() => setCourbes(null)}>
+                Fermer
+              </button>
+            </span>
           }
         >
           {courbes.panneaux ? <Courbes panneaux={courbes.panneaux} xLibelle="temps (h)" /> : <p className="discret">Lecture de l'export…</p>}
