@@ -7,14 +7,16 @@ import { resoudre, referenceDepuisChemin } from "@noyau/poste/racines";
 import { Message, Page, Pastille, Section } from "@interface/composants";
 import { Apercu, Courbes } from "@interface/Courbes";
 import { svgEnPng } from "@interface/image";
-import { lireCsv, versCsvExcel, type Serie } from "@noyau/formats/wavematrix";
+import { lireCsv, tableauEssai, versCsvExcel, type Serie } from "@noyau/formats/wavematrix";
+import { ecrireXlsx } from "@noyau/formats/xlsx-ecriture";
 import { apercu, panneaux, type PanneauEssai } from "../core/courbes";
 import { SUFFIXE_SUIVI } from "../core/decouverte";
 import { useContexte } from "@interface/contexte";
 import { IconeDossier } from "@interface/icones";
 import { decouvrir } from "../core/decouverte";
-import { lireEssai, nouvelleCampagne, periode, periodeLisible, STATUTS, TYPES, typeDe, type Campagne, type Essai } from "../core/modele";
+import { FILTRE_VIDE, garderCampagne, lireEssai, nouvelleCampagne, periode, periodeLisible, STATUTS, TYPES, typeDe, type Campagne, type Essai } from "../core/modele";
 import { depuisLgcb } from "../core/toml";
+import { valeur } from "../core/traitement";
 import { ajouterImage, ajouterNote, chargerCampagnes, cheminTraitement, creerCampagne, enregistrerApercu, enregistrerCampagne, enregistrerEssai, type CampagneChargee } from "./donnees";
 import { prendreOuverture } from "./ouverture";
 import "./campagnes.css";
@@ -160,6 +162,47 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
     });
   }
 
+  async function exporterXlsx(essai: string, serie: Serie) {
+    try {
+      const t = tableauEssai(serie);
+      const octets = ecrireXlsx(essai, t.entetes, t.lignes.map((l) => l.map((x) => (Number.isFinite(x) ? Number(x.toPrecision(8)) : null))));
+      await ctx.plateforme.enregistrerSous(`${k.titre} - ${essai}.xlsx`.replace(/[\\/:*?"<>|]/g, "_"), octets);
+    } catch (e) {
+      setMessage({ niveau: "erreur", texte: `${e instanceof Error ? e.message : String(e)} Utilisez l'export .csv.` });
+    }
+  }
+
+  /** Copie les données brutes (un essai, ou tout le dossier) vers un dossier choisi. */
+  async function copier(essai?: string) {
+    if (!donnees?.ok) return;
+    let depart: string | undefined;
+    try {
+      depart = localStorage.getItem("campagnes.copie") ?? undefined;
+    } catch {
+      depart = undefined;
+    }
+    const choisi = await ctx.plateforme.choisirDossier(essai ? `Copier les données de ${essai} vers…` : "Copier toutes les données de la campagne vers…", depart);
+    if (!choisi) return;
+    try {
+      localStorage.setItem("campagnes.copie", choisi);
+    } catch {
+      /* mémoire du poste indisponible : sans conséquence */
+    }
+    const sep = choisi.includes("\\") || !choisi.includes("/") ? "\\" : "/";
+    const base = donnees.chemin.replace(/[\\/]+$/, "");
+    const nom = essai ?? base.split(/[\\/]/).pop()!;
+    const source = essai ? `${base}${donnees.chemin.includes("\\") ? "\\" : "/"}${essai}` : base;
+    const destination = `${choisi.replace(/[\\/]+$/, "")}${sep}${nom}`;
+    setMessage({ niveau: "info", texte: `Copie de ${nom} en cours…` });
+    try {
+      const r = await ctx.plateforme.copierDossier(source, destination);
+      const mo = (r.octets / 1e6).toLocaleString("fr-FR", { maximumFractionDigits: 1 });
+      setMessage({ niveau: "info", texte: `${nom} copié dans ${destination} : ${r.copies} fichier(s) copié(s) (${mo} Mo), ${r.aJour} déjà à jour.` });
+    } catch (e) {
+      setMessage({ niveau: "erreur", texte: `Copie impossible : ${e instanceof Error ? e.message : String(e)}` });
+    }
+  }
+
   async function depouiller(nom: string) {
     if (!donnees?.ok) return;
     try {
@@ -172,6 +215,7 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
         dossierDonnees: `${donnees.chemin.replace(/[\\/]+$/, "")}${sep}${nom}`,
         fichier: fichier.name,
         projet: cheminTraitement(c.slug, nom),
+        campagne: c.slug,
       });
     } catch (e) {
       setMessage({ niveau: "erreur", texte: e instanceof Error ? e.message : String(e) });
@@ -247,6 +291,9 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
                 <button type="button" className="principal" onClick={() => void decouvrirEssais()}>
                   Découvrir les essais
                 </button>
+                <button type="button" title="Copie incrémentale vers un disque externe ou un dossier partagé ; rien n'est supprimé" onClick={() => void copier()}>
+                  Copier les données…
+                </button>
               </>
             ) : null}
           </div>
@@ -297,6 +344,9 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
                       <button type="button" disabled={!donnees?.ok} title={donnees?.ok ? "Lire l'export de suivi et tracer les courbes" : "Choisissez d'abord le dossier de données"} onClick={() => void voirCourbes(nom)}>
                         Courbes
                       </button>{" "}
+                      <button type="button" disabled={!donnees?.ok} title="Copier les données brutes de cet essai vers un dossier choisi" onClick={() => void copier(nom)}>
+                        Copier…
+                      </button>{" "}
                       {k.type === "module-complexe" && ctx.registre.aAction("traitement.ouvrir-essai") ? (
                         <button type="button" disabled={!donnees?.ok} title="Ouvrir cet essai dans le traitement 2S2P1D" onClick={() => void depouiller(nom)}>
                           {c.depouilles.includes(nom) ? "2S2P1D ✓" : "2S2P1D"}
@@ -311,6 +361,33 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
         )}
       </Section>
 
+      {Object.keys(c.traitements).length > 0 ? (
+        <Section titre="Résultats du traitement 2S2P1D">
+          <table className="tableau">
+            <thead>
+              <tr>
+                <th>Essai</th>
+                <th>Modèle</th>
+                <th>T réf.</th>
+                <th>WLF C1 / C2</th>
+                <th>Paramètres calés</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(c.traitements).map(([nom, t]) => (
+                <tr key={nom}>
+                  <td>{nom}</td>
+                  <td>{t.modele}</td>
+                  <td>{t.Tref !== null ? `${valeur(t.Tref)} °C` : "—"}</td>
+                  <td>{t.C1 !== null && t.C2 !== null ? `${valeur(t.C1)} / ${valeur(t.C2)}` : "—"}</td>
+                  <td className="petit">{t.parametres.map(([k, v]) => `${k} = ${valeur(v)}`).join(" · ")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Section>
+      ) : null}
+
       {courbes ? (
         <Section
           titre={`Courbes : ${courbes.essai}`}
@@ -321,7 +398,12 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
                   type="button"
                   onClick={() => void ctx.plateforme.enregistrerSous(`${k.titre} - ${courbes.essai}.csv`.replace(/[\\/:*?"<>|]/g, "_"), new TextEncoder().encode(versCsvExcel(courbes.serie!)))}
                 >
-                  Exporter pour Excel (.csv)
+                  Exporter en CSV
+                </button>
+              ) : null}
+              {courbes.serie ? (
+                <button type="button" onClick={() => void exporterXlsx(courbes.essai, courbes.serie!)}>
+                  Exporter en Excel (.xlsx)
                 </button>
               ) : null}
               {courbes.panneaux && ctx.registre.aAction("figures.enregistrer-image") ? (
@@ -397,10 +479,13 @@ export function CampagnesPage() {
     };
   }, [fs, ctx.revision, tour]);
 
+  const [filtre, setFiltre] = useState(FILTRE_VIDE);
+  const materiaux = useMemo(() => [...new Set((etat ?? []).map((c) => c.campagne.materiau).filter(Boolean))].sort(), [etat]);
   const triees = useMemo(
     () => [...(etat ?? [])].sort((a, b) => ((periode(Object.values(b.essais), b.campagne)?.debut ?? "") > (periode(Object.values(a.essais), a.campagne)?.debut ?? "") ? 1 : -1)),
     [etat],
   );
+  const visibles = triees.filter((c) => garderCampagne(c.campagne, c.essais, c.notes, filtre));
   if (!fs) return <Page titre="Campagnes"><Message niveau="erreur">Les campagnes vivent dans l'espace Thèse : ouvrez-en un d'abord.</Message></Page>;
   const courante = etat?.find((c) => c.slug === ouverte);
   if (courante) return <VueCampagne c={courante} fermer={() => setOuverte(null)} rafraichir={() => setTour((t) => t + 1)} />;
@@ -447,11 +532,43 @@ export function CampagnesPage() {
           <p className="discret">Créez-en une, ou importez vos fiches de these-lgcb (<code>projects/*.toml</code>) : titre, type, matériau, machine et essais sont repris.</p>
         </div>
       ) : (
-        <div className="galerie">
-          {triees.map((c) => (
-            <Carte key={c.slug} c={c} ouvrir={() => setOuverte(c.slug)} />
-          ))}
-        </div>
+        <>
+          <div className="filtres">
+            <input className="recherche" type="search" placeholder="Rechercher (fiche, essais, carnet)…" value={filtre.texte} onChange={(e) => setFiltre({ ...filtre, texte: e.target.value })} />
+            <select value={filtre.type} onChange={(e) => setFiltre({ ...filtre, type: e.target.value })} aria-label="Type">
+              <option value="">Tous les types</option>
+              {TYPES.map(([id, libelle]) => (
+                <option key={id} value={id}>
+                  {libelle}
+                </option>
+              ))}
+            </select>
+            <select value={filtre.statut} onChange={(e) => setFiltre({ ...filtre, statut: e.target.value })} aria-label="Statut">
+              <option value="">Tous les statuts</option>
+              {STATUTS.map((st) => (
+                <option key={st} value={st}>
+                  {st}
+                </option>
+              ))}
+            </select>
+            {materiaux.length > 1 ? (
+              <select value={filtre.materiau} onChange={(e) => setFiltre({ ...filtre, materiau: e.target.value })} aria-label="Matériau">
+                <option value="">Tous les matériaux</option>
+                {materiaux.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            ) : null}
+          </div>
+          {visibles.length === 0 ? <p className="discret">Aucune campagne ne correspond.</p> : null}
+          <div className="galerie">
+            {visibles.map((c) => (
+              <Carte key={c.slug} c={c} ouvrir={() => setOuverte(c.slug)} />
+            ))}
+          </div>
+        </>
       )}
     </Page>
   );

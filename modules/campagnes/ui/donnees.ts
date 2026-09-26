@@ -2,6 +2,7 @@
 import { detecterCopieConflit, DejaExistant, joindre, jsonStable, type Fichiers, type Probleme } from "@noyau/stockage";
 import { slugifier } from "@noyau/texte";
 import type { ApercuEssai } from "../core/courbes";
+import { resumeTraitement, type ResumeTraitement } from "../core/traitement";
 import { DOSSIER, lireCampagne, lireEssai, type Campagne, type Essai } from "../core/modele";
 
 export interface Note {
@@ -21,6 +22,8 @@ export interface CampagneChargee {
   apercu: ApercuEssai | null;
   /** Essais dont le dépouillement 2S2P1D est enregistré (traitement.json). */
   depouilles: string[];
+  /** Résultats de ces dépouillements (modèle, paramètres calés), par essai. */
+  traitements: Record<string, ResumeTraitement>;
 }
 
 async function lister(fs: Fichiers, chemin: string) {
@@ -61,10 +64,15 @@ export async function chargerCampagnes(fs: Fichiers): Promise<{ campagnes: Campa
     const essais: Record<string, Essai> = {};
     let apercu: ApercuEssai | null = null;
     const depouilles: string[] = [];
+    const traitements: Record<string, ResumeTraitement> = {};
     for (const e of (await lister(fs, joindre(base, "essais"))).filter((x) => x.kind === "dir")) {
       const dossierEssai = joindre(base, "essais", e.name);
       const noms = (await fs.listDir(dossierEssai)).map((x) => x.name);
-      if (noms.includes("traitement.json")) depouilles.push(e.name);
+      if (noms.includes("traitement.json")) {
+        depouilles.push(e.name);
+        const r = await lireJson(fs, joindre(dossierEssai, "traitement.json"), resumeTraitement, problemes);
+        if (r) traitements[e.name] = r;
+      }
       if (!apercu && noms.includes("apercu.json")) apercu = await lireJson(fs, joindre(dossierEssai, "apercu.json"), (b) => b as ApercuEssai, problemes);
       conflits(dossierEssai, noms, "essai.json", problemes);
       essais[e.name] = noms.includes("essai.json") ? ((await lireJson(fs, joindre(dossierEssai, "essai.json"), lireEssai, problemes)) ?? lireEssai({})) : lireEssai({});
@@ -77,7 +85,7 @@ export async function chargerCampagnes(fs: Fichiers): Promise<{ campagnes: Campa
     }
     notes.sort((a, b) => (a.fichier < b.fichier ? 1 : -1));
     const images = (await lister(fs, joindre(base, "images"))).filter((x) => x.kind === "file" && /\.(png|jpe?g|gif|webp|bmp)$/i.test(x.name)).map((x) => x.name);
-    campagnes.push({ slug: d.name, campagne, essais, notes, images, apercu, depouilles });
+    campagnes.push({ slug: d.name, campagne, essais, notes, images, apercu, depouilles, traitements });
   }
   return { campagnes, problemes };
 }

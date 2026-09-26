@@ -10,6 +10,7 @@
  * Les données brutes restent sur leur disque : `donnees` est une référence à une racine
  * (« recherche:Sergio CM test Bio B2C4 brutes »).
  */
+import { correspond } from "@noyau/texte";
 
 export const TYPES = [
   ["module-complexe", "Module complexe", "#2f5f8a"],
@@ -123,4 +124,24 @@ export function essaisRecents(campagnes: { slug: string; titre: string; essais: 
     )
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.essai.localeCompare(b.essai)))
     .slice(0, n);
+}
+
+/** Filtres de la galerie ; une chaîne vide ne filtre pas. */
+export interface FiltreCampagnes {
+  type: string;
+  statut: string;
+  materiau: string;
+  /** Recherche sans accents dans la fiche, les essais et le carnet. */
+  texte: string;
+}
+
+export const FILTRE_VIDE: FiltreCampagnes = { type: "", statut: "", materiau: "", texte: "" };
+
+export function garderCampagne(c: Campagne, essais: Record<string, Essai>, notes: readonly { titre: string; texte: string }[], f: FiltreCampagnes): boolean {
+  if (f.type && c.type !== f.type) return false;
+  if (f.statut && c.statut !== f.statut) return false;
+  if (f.materiau && c.materiau !== f.materiau) return false;
+  if (!f.texte.trim()) return true;
+  const tout = [c.titre, c.materiau, c.notes, typeDe(c.type).libelle, ...Object.entries(essais).flatMap(([n, e]) => [n, e.eprouvette, e.notes]), ...notes.flatMap((n) => [n.titre, n.texte])].join("\n");
+  return correspond(tout, f.texte);
 }

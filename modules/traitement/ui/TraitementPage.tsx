@@ -96,7 +96,7 @@ export function TraitementPage() {
             Enregistrer avec l'essai
           </button>
           {ctx.registre.aModule("campagnes") ? (
-            <button type="button" onClick={() => ctx.naviguer("campagnes")}>
+            <button type="button" onClick={() => (essai.campagne && ctx.registre.aAction("campagnes.ouvrir") ? void ctx.registre.executer("campagnes.ouvrir", { ctx, slug: essai.campagne }) : ctx.naviguer("campagnes"))}>
               ← Campagne
             </button>
           ) : null}

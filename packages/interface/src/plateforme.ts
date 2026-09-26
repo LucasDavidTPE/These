@@ -13,6 +13,13 @@ export interface MiseAJour {
   installer(progression?: (fraction: number | null) => void): Promise<void>;
 }
 
+/** Bilan d'une copie de dossier (données brutes d'un essai). */
+export interface RapportCopie {
+  copies: number;
+  aJour: number;
+  octets: number;
+}
+
 export interface Plateforme {
   genre: "tauri" | "demo";
   nomDuPoste(): Promise<string>;
@@ -26,6 +33,11 @@ export interface Plateforme {
   dossierExiste(chemin: string): Promise<boolean>;
   /** Crée le dossier (et ses parents) s'il n'existe pas. */
   creerDossier(chemin: string): Promise<void>;
+  /**
+   * Copie un dossier (chemins absolus) : incrémentale, rien n'est supprimé à la destination,
+   * qui est créée au besoin.
+   */
+  copierDossier(source: string, destination: string): Promise<RapportCopie>;
   /** Accès aux fichiers sous une racine absolue. */
   fichiers(racine: string): Fichiers;
   /** Supprime un fichier temporaire `*.tmp` laissé par une écriture interrompue. */

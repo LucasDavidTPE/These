@@ -116,3 +116,15 @@
   gap: 2px;
   margin: 4px 0;
 }
+
+.filtres {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.filtres .recherche {
+  flex: 1 1 260px;
+}

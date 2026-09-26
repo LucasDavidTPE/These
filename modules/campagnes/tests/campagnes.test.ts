@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { FichiersMemoire } from "@noyau/stockage";
 import { decouvrir } from "../core/decouverte";
 import { lireJournal } from "../core/journal";
-import { essaisRecents, lireEssai, periode, periodeLisible } from "../core/modele";
+import { essaisRecents, FILTRE_VIDE, garderCampagne, lireEssai, nouvelleCampagne, periode, periodeLisible } from "../core/modele";
 import { depuisLgcb, lireToml } from "../core/toml";
 
 const fiche = (nom: string) => readFileSync(new URL(`./fixtures/${nom}.toml`, import.meta.url), "utf8");
@@ -116,5 +116,31 @@ describe("essais récents (Accueil)", () => {
     );
     expect(r.map((x) => `${x.slug}/${x.essai}`)).toEqual(["a/E2", "b/E1"]);
     expect(r[1]!.detail).toBe("terminé · 2,3 h · 12 000 cycles");
+  });
+});
+
+describe("filtres de la galerie", () => {
+  it("type, statut, matériau, et recherche sans accents dans la fiche, les essais et le carnet", () => {
+    const c = { ...nouvelleCampagne("Module complexe B2C4 bio"), type: "module-complexe", statut: "terminé", materiau: "BBSG" };
+    const essais = { Essai1: { ...lireEssai({}), eprouvette: "E-12" } };
+    const notes = [{ titre: "Incident", texte: "Rupture de l'extensomètre à −10 °C" }];
+    const g = (f: Partial<typeof FILTRE_VIDE>) => garderCampagne(c, essais, notes, { ...FILTRE_VIDE, ...f });
+    expect(g({})).toBe(true);
+    expect(g({ type: "tsrst" })).toBe(false);
+    expect(g({ statut: "terminé", materiau: "BBSG" })).toBe(true);
+    expect(g({ texte: "extensometre rupture" })).toBe(true);
+    expect(g({ texte: "e-12 module" })).toBe(true);
+    expect(g({ texte: "fluage" })).toBe(false);
+  });
+});
+
+describe("résumé d'un dépouillement 2S2P1D", () => {
+  it("modèle, paramètres calés, WLF ; null si le fichier n'a pas la forme attendue", async () => {
+    const { resumeTraitement, valeur } = await import("../core/traitement");
+    const r = resumeTraitement({ version: 2, essais: [{ modeleId: "2s2p1d", p: { E00: 120, E0: 41000, delta: 2.05, tauE: 0.32, x: "?" }, Tref: 15, C1: 30.1, C2: 210 }] });
+    expect(r).toEqual({ modele: "2S2P1D", parametres: [["E00", 120], ["E0", 41000], ["δ", 2.05], ["τE", 0.32]], Tref: 15, C1: 30.1, C2: 210 });
+    expect(resumeTraitement({})).toBeNull();
+    expect(valeur(41234.5)).toBe("41 230");
+    expect(valeur(0.000123456)).toBe("0,0001235");
   });
 });

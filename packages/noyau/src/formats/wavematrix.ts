@@ -156,11 +156,19 @@ export function voieTemps(s: Serie): number {
  * les voies utiles, avec leur unité. Sert à l'export d'un essai.
  */
 export function versCsvExcel(s: Serie): string {
+  const t = tableauEssai(s);
+  const f = (x: number) => (Number.isFinite(x) ? String(Number(x.toPrecision(8))).replace(".", ",") : "");
+  const lignes = [t.entetes.join(";")];
+  for (const l of t.lignes) lignes.push(l.map(f).join(";"));
+  return "\uFEFF" + lignes.join("\r\n") + "\r\n";
+}
+
+/** Le tableau exporté d'un essai (CSV ou .xlsx) : temps en heures puis les voies utiles. */
+export function tableauEssai(s: Serie): { entetes: string[]; lignes: number[][] } {
   const it = voieTemps(s);
   const utiles = s.voies.map((v, j) => ({ v, j })).filter(({ v, j }) => j !== it && !["etape", "boucle", "modal", "inconnu", "temps_cycle"].includes(v.nature));
-  const entete = ["Temps (h)", ...utiles.map(({ v }) => `${v.grandeur}${v.capteur && v.capteur !== "Défini par utilisateur" ? ` ${v.capteur}` : ""}${v.unite ? ` (${v.unite})` : ""}`)];
-  const f = (x: number) => (Number.isFinite(x) ? String(Number(x.toPrecision(8))).replace(".", ",") : "");
-  const lignes = [entete.join(";")];
-  for (let i = 0; i < s.lignes; i++) lignes.push([f(it >= 0 ? s.colonnes[it]![i]! / 3600 : i), ...utiles.map(({ j }) => f(s.colonnes[j]![i]!))].join(";"));
-  return "\uFEFF" + lignes.join("\r\n") + "\r\n";
+  const entetes = ["Temps (h)", ...utiles.map(({ v }) => `${v.grandeur}${v.capteur && v.capteur !== "Défini par utilisateur" ? ` ${v.capteur}` : ""}${v.unite ? ` (${v.unite})` : ""}`)];
+  const lignes: number[][] = [];
+  for (let i = 0; i < s.lignes; i++) lignes.push([it >= 0 ? s.colonnes[it]![i]! / 3600 : i, ...utiles.map(({ j }) => s.colonnes[j]![i]!)]);
+  return { entetes, lignes };
 }

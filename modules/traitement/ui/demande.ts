@@ -10,6 +10,8 @@ export interface DemandeEssai {
   fichier: string;
   /** Chemin (relatif à l'espace) où le dépouillement est enregistré : …/traitement.json. */
   projet: string;
+  /** Campagne d'origine, pour y revenir (action « campagnes.ouvrir »). */
+  campagne?: string;
 }
 
 let courante: DemandeEssai | null = null;

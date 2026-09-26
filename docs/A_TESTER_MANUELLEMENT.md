@@ -148,3 +148,13 @@ Ce qui change avec l'intégration :
       clic ouvre Figures, onglet Bibliothèque, la figure sélectionnée.
 - [ ] Une figure enregistrée depuis les courbes d'un essai apparaît en tête au retour sur
       l'Accueil.
+
+## Campagnes : filtres, copie, .xlsx, résultats 2S2P1D (non vérifié sous Windows)
+
+- [ ] Galerie : filtres type / statut / matériau et recherche sans accents (fiche, essais, carnet).
+- [ ] « Copier… » (essai) et « Copier les données… » (campagne) : copie incrémentale vers le
+      dossier choisi, rien n'est supprimé ; relancer ne recopie que ce qui a changé.
+- [ ] Courbes → « Exporter en Excel (.xlsx) » s'ouvre dans Excel.
+- [ ] Après « Enregistrer avec l'essai » dans le traitement : la page de campagne montre
+      « Résultats du traitement 2S2P1D » ; « ← Campagne » revient sur la campagne
+      (vu blanc en démonstration : à vérifier en priorité).

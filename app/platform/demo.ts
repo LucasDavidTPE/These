@@ -116,6 +116,26 @@ export function plateformeDemo(scenario: string | null): Plateforme {
     creerDossier: async (chemin) => {
       dossier(chemin);
     },
+    copierDossier: async function (source, destination) {
+      const src = this.fichiers(source);
+      const dst = this.fichiers(destination);
+      const r = { copies: 0, aJour: 0, octets: 0 };
+      const copier = async (chemin: string) => {
+        await dst.ensureDir(chemin);
+        for (const e of await src.listDir(chemin)) {
+          const c = chemin ? `${chemin}/${e.name}` : e.name;
+          if (e.kind === "dir") await copier(c);
+          else {
+            const octets = await src.readBytes(c);
+            await dst.writeBytesAtomic(c, octets);
+            r.copies++;
+            r.octets += octets.length;
+          }
+        }
+      };
+      await copier("");
+      return r;
+    },
     fichiers: (racine) => {
       const sous = !dossiers.has(normaliser(racine)) ? parent(racine) : null;
       if (sous) {
