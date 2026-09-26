@@ -134,8 +134,7 @@ mod tests {
     #[test]
     fn decodes_encode_uri_component() {
         assert_eq!(
-            decoder_url("C%3A%5CUsers%5CDAVID%5COneDrive%20-%20entpe.fr%5CTh%C3%A8se")
-                .as_deref(),
+            decoder_url("C%3A%5CUsers%5CDAVID%5COneDrive%20-%20entpe.fr%5CTh%C3%A8se").as_deref(),
             Some("C:\\Users\\DAVID\\OneDrive - entpe.fr\\Thèse")
         );
         assert_eq!(decoder_url("a%2"), None);
