@@ -216,9 +216,9 @@ export function PlanningPage() {
       ) : null}
       {info ? (
         <Message niveau="info">
-          <strong>{info.titre}</strong> — {info.detail}. Élément fourni par la Bibliothèque : modifiez-le à sa source.{" "}
-          <button type="button" className="lien" onClick={() => ctx.naviguer("bibliotheque")}>
-            Ouvrir la Bibliothèque
+          <strong>{info.titre}</strong> — {info.detail}. Élément fourni par {info.source === "campagnes" ? "les Campagnes" : "la Bibliothèque"} : modifiez-le à sa source.{" "}
+          <button type="button" className="lien" onClick={() => ctx.naviguer(info.source === "campagnes" ? "campagnes" : "bibliotheque")}>
+            Y aller
           </button>
         </Message>
       ) : null}

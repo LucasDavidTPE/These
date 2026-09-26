@@ -1,0 +1,111 @@
+.galerie {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 12px;
+}
+
+.carte-campagne {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
+  padding: 14px 16px 14px 20px;
+  border-radius: var(--rayon);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.carte-campagne .bande {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: var(--type);
+}
+
+.carte-campagne .titre {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.carte-campagne .chiffres {
+  font-size: 12.5px;
+  color: var(--discret);
+}
+
+.grille-c {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px 14px;
+}
+
+.champ-c {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12.5px;
+}
+
+.champ-c > span {
+  color: var(--discret);
+}
+
+.champ-c.large {
+  grid-column: 1 / -1;
+}
+
+.champ-c input,
+.champ-c select,
+.champ-c textarea,
+.carnet input,
+.carnet textarea {
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: 6px;
+  padding: 5px 8px;
+  width: 100%;
+}
+
+.carnet .carte {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.carnet .note p {
+  white-space: pre-wrap;
+  margin: 4px 0 0;
+}
+
+.images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.images img {
+  height: 130px;
+  border-radius: 6px;
+  border: 1px solid var(--bordure);
+  cursor: pointer;
+  object-fit: cover;
+}
+
+.texte-erreur {
+  color: var(--erreur);
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.petit {
+  font-size: 12px;
+}

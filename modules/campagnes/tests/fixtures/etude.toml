@@ -1,0 +1,22 @@
+# Une campagne d'essai : un lot d'eprouvettes passees ensemble.
+title = ""
+kind = "module-complexe"              # module-complexe | tsrst | fluage | fatigue | autre
+status = "en cours"          # en cours | termine | en pause | abandonne
+
+# Materiau ou formulation testee. C'est souvent ce qu'on cherche des mois
+# plus tard : « ou etaient mes essais sur le B2C4 bio ? »
+material = ""
+
+# Donnees brutes, referencees par racine (voir config.toml).
+data = ""
+
+# Ce qu'il faut savoir sur cette campagne et qui n'est ecrit nulle part
+# ailleurs : conditions particulieres, incidents, eprouvettes ecartees.
+notes = """
+TODO
+"""
+
+
+# Essais decouverts dans le dossier, d'apres les journaux machine.
+# Completez la description de chaque eprouvette : c'est ce qui manque
+# toujours quand on revient sur une campagne ancienne.

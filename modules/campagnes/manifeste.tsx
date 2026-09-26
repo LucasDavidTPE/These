@@ -1,6 +1,11 @@
 import { IconeCampagnes } from "@interface/icones";
+import type { Contexte } from "@interface/contexte";
 import type { Manifeste } from "@interface/manifeste";
+import { periode, typeDe } from "./core/modele";
 import { CampagnesPage } from "./ui/CampagnesPage";
+import { chargerCampagnes } from "./ui/donnees";
+
+const charger = (ctx: Contexte) => (ctx.espace ? chargerCampagnes(ctx.espace.fichiers) : Promise.resolve(null));
 
 const campagnes: Manifeste = {
   id: "campagnes",
@@ -8,7 +13,24 @@ const campagnes: Manifeste = {
   resume: "Campagnes d'essais, données brutes, notes et photos",
   Icone: IconeCampagnes,
   Page: CampagnesPage,
-  aVenir: "P5",
+  etat: async (ctx) => {
+    const r = await charger(ctx);
+    if (!r || r.campagnes.length === 0) return "Aucune campagne";
+    const essais = r.campagnes.reduce((s, c) => s + Object.keys(c.essais).length, 0);
+    const enCours = r.campagnes.filter((c) => c.campagne.statut === "en cours").length;
+    return `${r.campagnes.length} campagne(s), ${essais} essai(s) · ${enCours} en cours`;
+  },
+  problemes: async (ctx) => (await charger(ctx))?.problemes ?? [],
+  actions: {
+    /** Pour le Planning (SPEC §10.2) : la période réelle (ou prévue) de chaque campagne. */
+    "campagnes.planning": async (ctx) => {
+      const r = await charger(ctx as Contexte);
+      return (r?.campagnes ?? []).flatMap((c) => {
+        const p = periode(Object.values(c.essais), c.campagne);
+        return p ? [{ id: `campagne-${c.slug}`, titre: c.campagne.titre, debut: p.debut, fin: p.fin, detail: `${typeDe(c.campagne.type).libelle} · ${Object.keys(c.essais).length} essai(s) · ${c.campagne.statut}` }] : [];
+      });
+    },
+  },
 };
 
 export default campagnes;

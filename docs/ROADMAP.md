@@ -66,14 +66,18 @@ l'installeur de la phase est produit par GitHub Actions.
 - [ ] Plus tard : glisser pour déplacer ou étirer une barre (les dates se modifient pour
       l'instant dans le panneau), exports PNG / SVG vers Figures
 
-## P5 — Campagnes
-- [ ] Fiches de campagne et d'essai, import des `projects/*.toml` de these-lgcb
-- [ ] Découverte des essais (journaux Instron, WaveMatrix), lecture rapide en Rust
-- [ ] Aperçus, galerie, page de campagne
-- [ ] Viewer d'essai, export Excel, copie des données brutes
-- [ ] Carnet : notes Markdown et images (coller, glisser)
-- [ ] Liens : ouvrir dans le traitement 2S2P1D, enregistrer dans Figures,
-      période des campagnes dans le Planning
+## P5 — Campagnes (étape 1 ✔)
+- [x] Fiches de campagne et d'essai (un dossier par campagne), import des
+      `projects/*.toml` de these-lgcb
+- [x] Découverte des essais dans le dossier de données (sous-dossiers avec un
+      `*.steps.tracking.csv`, journaux Instron `.log` : dates, durée, cycles, état, machine)
+- [x] Galerie (couleur par type, période réelle, chiffres), page de campagne
+- [x] Carnet : notes datées (Markdown) et images (Ctrl+V ou fichier), dans l'espace
+- [x] Période des campagnes dans le Planning (action `campagnes.planning`) ; lien vers le
+      traitement 2S2P1D
+- [ ] Étape 2 : aperçus (température et force en fonction du temps), viewer de courbes,
+      export Excel, copie des données brutes — demandent la lecture des exports WaveMatrix
+      (à partager avec le Traitement, dans le noyau)
 
 ## P6 — Liaisons et finitions
 - [ ] Accueil complet (Cette semaine, derniers essais, dernières figures)

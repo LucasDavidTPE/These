@@ -1,0 +1,54 @@
+# Une campagne d'essai : un lot d'eprouvettes passees ensemble.
+title = "Campagne TSRST"
+kind = "tsrst"              # module-complexe | tsrst | fluage | fatigue | autre
+status = "en cours"          # en cours | termine | en pause | abandonne
+
+# Materiau ou formulation testee. C'est souvent ce qu'on cherche des mois
+# plus tard : « ou etaient mes essais sur le B2C4 bio ? »
+material = ""
+
+# Donnees brutes, referencees par racine (voir config.toml).
+data = "essais:tsrst-lucas"
+
+# Ce qu'il faut savoir sur cette campagne et qui n'est ecrit nulle part
+# ailleurs : conditions particulieres, incidents, eprouvettes ecartees.
+notes = """
+TODO
+"""
+
+[machine]
+operateur = "ltds"
+poste = "LGCB-AA03956"
+bati = "8874K6136"
+logiciel = "2.1.20079.01"
+
+# Essais decouverts dans le dossier, d'apres les journaux machine.
+# Completez la description de chaque eprouvette : c'est ce qui manque
+# toujours quand on revient sur une campagne ancienne.
+[tests."Essai1"]
+eprouvette = ""   # a completer
+debut = "2026-06-22 10:22:58"
+fin = "2026-06-22 15:10:26"
+duree_h = 4.79
+cycles = 0
+
+[tests."Essai2"]
+eprouvette = ""   # a completer
+debut = "2026-06-23 08:10:42"
+fin = "2026-06-23 12:48:30"
+duree_h = 4.63
+cycles = 0
+
+[tests."Essai3"]
+eprouvette = ""   # a completer
+debut = "2026-06-24 09:10:58"
+fin = "2026-06-24 13:54:01"
+duree_h = 4.72
+cycles = 0
+
+[tests."Essai4"]
+eprouvette = ""   # a completer
+debut = "2026-06-25 09:25:49"
+fin = "2026-06-25 14:12:13"
+duree_h = 4.77
+cycles = 0

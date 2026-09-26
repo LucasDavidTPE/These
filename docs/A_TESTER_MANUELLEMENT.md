@@ -89,3 +89,13 @@ Ce qui change avec l'intégration :
       propose la mise à jour ; « Installer et redémarrer » l'installe sans droits
       administrateur et relance l'application ; les réglages et l'espace sont conservés.
 - [ ] Hors ligne : aucun bandeau, aucune erreur.
+
+## P5 — Campagnes (étape 1)
+
+- [ ] Importer `projects/sergio-cm-b2c4-bio.toml` et `tsrst-lucas.toml` de these-lgcb.
+- [ ] Déclarer la racine `recherche` (Bureau\Recherche) ; « Découvrir les essais » sur la
+      campagne B2C4 bio retrouve Essai1 (60,02 h, 1480 cycles) depuis le journal `.log`.
+- [ ] Sur le PC perso (sans les données) : la fiche, les essais, les notes et les images
+      sont là ; « Découvrir » dit que le dossier est introuvable, sans erreur.
+- [ ] Coller une capture (Ctrl+V) dans le carnet ; cliquer l'image l'ouvre dans la
+      visionneuse de Windows.

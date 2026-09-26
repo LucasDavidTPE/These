@@ -1,0 +1,101 @@
+/**
+ * Campagnes d'essais (SPEC §8) : une campagne = un lot d'éprouvettes passées ensemble ;
+ * un essai = une éprouvette. Un dossier par campagne dans l'espace :
+ *
+ *   campagnes/<slug>/campagne.json
+ *   campagnes/<slug>/essais/<Essai1>/essai.json
+ *   campagnes/<slug>/notes/<AAAA-MM-JJ>_<titre>.md     carnet
+ *   campagnes/<slug>/images/<fichier>                 photos, captures
+ *
+ * Les données brutes restent sur leur disque : `donnees` est une référence à une racine
+ * (« recherche:Sergio CM test Bio B2C4 brutes »).
+ */
+
+export const TYPES = [
+  ["module-complexe", "Module complexe", "#2f5f8a"],
+  ["tsrst", "TSRST", "#b0602c"],
+  ["fluage", "Fluage", "#6b4fa0"],
+  ["fatigue", "Fatigue", "#a8326e"],
+  ["autre", "Autre", "#777777"],
+] as const;
+export const STATUTS = ["en cours", "terminé", "en pause", "abandonné", "prévu"] as const;
+
+export interface Campagne {
+  titre: string;
+  type: string;
+  statut: string;
+  materiau: string;
+  /** Référence aux données brutes : « racine:chemin ». */
+  donnees: string;
+  machine: { operateur: string; poste: string; bati: string; logiciel: string };
+  notes: string;
+  /** Pour une campagne à venir (Planning) : dates prévues, « AAAA-MM-JJ ». */
+  prevu: { debut: string; fin: string };
+}
+
+export interface Essai {
+  eprouvette: string;
+  /** « AAAA-MM-JJ HH:MM:SS », d'après le journal machine. */
+  debut: string;
+  fin: string;
+  dureeH: number | null;
+  cycles: number | null;
+  etat: string;
+  notes: string;
+}
+
+export const DOSSIER = "campagnes";
+
+const t = (v: unknown) => (typeof v === "string" ? v : "");
+const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+const o = (v: unknown) => (typeof v === "object" && v !== null && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
+
+export function lireCampagne(brut: unknown): Campagne {
+  const b = o(brut);
+  if (typeof b.titre !== "string") throw new Error("Champ « titre » manquant.");
+  const m = o(b.machine);
+  const p = o(b.prevu);
+  return {
+    titre: b.titre,
+    type: t(b.type) || "autre",
+    statut: t(b.statut) || "en cours",
+    materiau: t(b.materiau),
+    donnees: t(b.donnees),
+    machine: { operateur: t(m.operateur), poste: t(m.poste), bati: t(m.bati), logiciel: t(m.logiciel) },
+    notes: t(b.notes),
+    prevu: { debut: t(p.debut), fin: t(p.fin) },
+  };
+}
+
+export function lireEssai(brut: unknown): Essai {
+  const b = o(brut);
+  return { eprouvette: t(b.eprouvette), debut: t(b.debut), fin: t(b.fin), dureeH: n(b.dureeH), cycles: n(b.cycles), etat: t(b.etat), notes: t(b.notes) };
+}
+
+export const nouvelleCampagne = (titre: string): Campagne => lireCampagne({ titre });
+
+export function typeDe(id: string): { libelle: string; couleur: string } {
+  const x = TYPES.find(([i]) => i === id) ?? TYPES[4];
+  return { libelle: x[1], couleur: x[2] };
+}
+
+/** Période réelle d'une campagne : du premier début au dernier fin de ses essais. */
+export function periode(essais: Essai[], c?: Campagne): { debut: string; fin: string } | null {
+  const debuts = essais.map((e) => e.debut).filter(Boolean).sort();
+  const fins = essais.map((e) => e.fin || e.debut).filter(Boolean).sort();
+  if (debuts.length) return { debut: debuts[0]!.slice(0, 10), fin: fins.at(-1)!.slice(0, 10) };
+  if (c?.prevu.debut) return { debut: c.prevu.debut, fin: c.prevu.fin || c.prevu.debut };
+  return null;
+}
+
+const MOIS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+
+/** « 22 → 25 juin 2026 », « 20 avr. → 3 mai 2026 », « 2 déc. 2025 → 10 janv. 2026 ». */
+export function periodeLisible(p: { debut: string; fin: string }): string {
+  const [a1, m1, j1] = p.debut.split("-").map(Number) as [number, number, number];
+  const [a2, m2, j2] = p.fin.split("-").map(Number) as [number, number, number];
+  if (p.debut === p.fin) return `${j1} ${MOIS[m1 - 1]} ${a1}`;
+  if (a1 === a2 && m1 === m2) return `${j1} → ${j2} ${MOIS[m2 - 1]} ${a2}`;
+  if (a1 === a2) return `${j1} ${MOIS[m1 - 1]} → ${j2} ${MOIS[m2 - 1]} ${a2}`;
+  return `${j1} ${MOIS[m1 - 1]} ${a1} → ${j2} ${MOIS[m2 - 1]} ${a2}`;
+}

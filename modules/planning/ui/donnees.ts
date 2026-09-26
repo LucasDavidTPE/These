@@ -17,9 +17,17 @@ interface PlanBiblio {
   jalons: { date: string; titre: string }[];
 }
 
-/** Barres fournies par la Bibliothèque, si elle est dans l'installeur (SPEC §10.2). */
+/** Périodes des campagnes d'essais, si le module Campagnes est dans l'installeur. */
+async function campagnes(ctx: Contexte): Promise<Barre[]> {
+  if (!ctx.registre.aAction("campagnes.planning")) return [];
+  const c = (await ctx.registre.executer("campagnes.planning", ctx)) as { id: string; titre: string; debut: string; fin: string; detail: string }[];
+  return c.map((x) => ({ ...x, categorie: "essais", avancement: 0, source: "campagnes" }));
+}
+
+/** Barres fournies par la Bibliothèque et les Campagnes, si elles sont dans l'installeur (SPEC §10.2). */
 async function externes(ctx: Contexte): Promise<Barre[]> {
-  if (!ctx.registre.aAction("bibliotheque.planning")) return [];
+  const deCampagnes = await campagnes(ctx).catch(() => []);
+  if (!ctx.registre.aAction("bibliotheque.planning")) return deCampagnes;
   const p = (await ctx.registre.executer("bibliotheque.planning", ctx)) as PlanBiblio;
   return [
     ...p.mois.map((m) => ({
@@ -33,6 +41,7 @@ async function externes(ctx: Contexte): Promise<Barre[]> {
       detail: `${m.lues}/${m.total} lues · ${m.heuresPrevues} h prévues pour ${m.capacite} h · ${m.etat}`,
     })),
     ...p.jalons.map((j, i) => ({ id: `biblio-jalon-${i}`, titre: j.titre, categorie: "biblio", debut: j.date, fin: "", avancement: 0, source: "bibliotheque", detail: "Date limite d'envoi d'une demande" })),
+    ...deCampagnes,
   ];
 }
 
