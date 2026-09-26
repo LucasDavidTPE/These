@@ -27,8 +27,8 @@ l'installeur de la phase est produit par GitHub Actions.
       modèle de détourage réel)
 - [x] Installeur `Figurine` seul (1.1.0) : reprend le dossier de bibliothèque des réglages
       de Figurine 1.0 ; détourage derrière la *feature* Cargo `figures`
-- [ ] Action « Enregistrer dans Figures » offerte aux autres modules : à faire avec son
-      premier utilisateur (Traitement, P2)
+- [x] Action `figures.enregistrer-image` offerte aux autres modules ; utilisée par les
+      courbes d'un essai (Campagnes) : PNG + source dans la bibliothèque de figures
 
 ## P2 — Traitement 2S2P1D (étape 1 ✔)
 - [x] Page de dépouillement reprise telle quelle (`modules/traitement/statique/`, commit

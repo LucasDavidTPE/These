@@ -121,3 +121,9 @@ Ce qui change avec l'intégration :
 - [ ] Hors ligne : message clair, rien n'est modifié.
 - [ ] La nouvelle référence (même DOI que BIB-001) est signalée comme doublon sur le
       tableau de bord.
+
+## Enregistrer dans Figures
+
+- [ ] Courbes d'un essai → « Enregistrer dans Figures » : la figure apparaît dans l'onglet
+      Bibliothèque de Figures, avec la source « Campagnes : … » ; le PNG est lisible (textes
+      et couleurs conservés).

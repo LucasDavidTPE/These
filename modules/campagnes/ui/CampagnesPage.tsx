@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { resoudre, referenceDepuisChemin } from "@noyau/poste/racines";
 import { Message, Page, Pastille, Section } from "@interface/composants";
 import { Apercu, Courbes } from "@interface/Courbes";
+import { svgEnPng } from "@interface/image";
 import { lireCsv, versCsvExcel, type Serie } from "@noyau/formats/wavematrix";
 import { apercu, panneaux, type PanneauEssai } from "../core/courbes";
 import { SUFFIXE_SUIVI } from "../core/decouverte";
@@ -145,6 +146,17 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
       setCourbes(null);
       setMessage({ niveau: "erreur", texte: e instanceof Error ? e.message : String(e) });
     }
+  }
+
+  async function versFigures() {
+    if (!courbes) return;
+    await agir(async () => {
+      const svgs = [...document.querySelectorAll<SVGSVGElement>(".courbes-panneau svg")];
+      const titre = `${k.titre} — ${courbes.essai}`;
+      const png = await svgEnPng(svgs, titre);
+      const dossier = await ctx.registre.executer("figures.enregistrer-image", { ctx, titre, png, source: `Campagnes : ${k.titre}, ${courbes.essai}`, tags: [typeDe(k.type).libelle, courbes.essai] });
+      setMessage({ niveau: "info", texte: `Figure enregistrée dans la bibliothèque : ${String(dossier)}.` });
+    });
   }
 
   async function collerImage(e: React.ClipboardEvent) {
@@ -291,6 +303,11 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
                   onClick={() => void ctx.plateforme.enregistrerSous(`${k.titre} - ${courbes.essai}.csv`.replace(/[\\/:*?"<>|]/g, "_"), new TextEncoder().encode(versCsvExcel(courbes.serie!)))}
                 >
                   Exporter pour Excel (.csv)
+                </button>
+              ) : null}
+              {courbes.panneaux && ctx.registre.aAction("figures.enregistrer-image") ? (
+                <button type="button" onClick={() => void versFigures()}>
+                  Enregistrer dans Figures
                 </button>
               ) : null}
               <button type="button" onClick={() => setCourbes(null)}>

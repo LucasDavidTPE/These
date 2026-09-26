@@ -137,3 +137,17 @@ describe("saveCropFigure", () => {
     expect(validateMeta({ ...meta, derived_from: "photo" }).ok).toBe(false);
   });
 });
+
+describe("action figures.enregistrer-image", () => {
+  it("crée une figure image avec sa source", async () => {
+    const { enregistrerImage } = await import("../action");
+    const fs = new MemoryFs();
+    const dossier = await enregistrerImage(fs, { titre: "Courbes Essai1", png: new Uint8Array([137, 80, 78, 71]), source: "Campagnes, B2C4 bio, Essai1", tags: ["essai"] }, "2026-09-26T12:00:00+02:00", "PC-TRAVAIL");
+    expect(dossier).toBe("FIG-0001_courbes-essai1");
+    const meta = JSON.parse(fs.get(`${dossier}/meta.json`)!) as { kind: string; source: { note: string }; tags: string[] };
+    expect(meta.kind).toBe("image");
+    expect(meta.source.note).toBe("Campagnes, B2C4 bio, Essai1");
+    expect(meta.tags).toEqual(["essai"]);
+    expect(fs.getBytes(`${dossier}/export.png`)).toEqual(new Uint8Array([137, 80, 78, 71]));
+  });
+});
