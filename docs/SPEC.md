@@ -347,6 +347,17 @@ Exigence : un test lit le classeur, importe, recalcule citation / état / alerte
 / temps et tous les indicateurs du tableau de bord, et les compare aux **valeurs mises
 en cache par Excel**. Même démarche que pour le 2S2P1D.
 
+Deux défauts du classeur, constatés par ce test (26/09/2026), sont corrigés dans
+l'application :
+
+- `Références!O` (« PDF récupéré ») teste la clé (`$B`) au lieu du fichier (`$BB`) à
+  partir de la ligne 124 : 43 références y sont « Oui » sans PDF ;
+- sur 49 références, l'alerte et le score enregistrés par Excel traitent le PDF comme
+  manquant alors que la colonne O dit « Oui ».
+
+Règle retenue : **PDF récupéré ⇔ fichier PDF renseigné**. Conséquence visible : 20 PDF
+libres à télécharger au lieu de 29 dans le classeur.
+
 ## 10. Module Planning (Gantt partagé)
 
 Un calendrier de thèse **propre à l'application**, synchronisé par OneDrive, sans aucun

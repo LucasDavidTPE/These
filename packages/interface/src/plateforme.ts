@@ -28,6 +28,8 @@ export interface Plateforme {
    * `nom` propose le nom de fichier (son extension sert de filtre).
    */
   enregistrerSous(nom: string, octets: Uint8Array): Promise<boolean>;
+  /** Boîte « Ouvrir » limitée à des extensions (« xlsx ») ; null si annulée. */
+  ouvrirFichier(titre: string, extensions: string[]): Promise<{ nom: string; octets: Uint8Array } | null>;
   /** Ouvre un dossier dans l'Explorateur. */
   ouvrirDossier(chemin: string): Promise<void>;
   /** Ouvre une adresse web dans le navigateur par défaut. */

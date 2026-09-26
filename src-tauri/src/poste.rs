@@ -133,6 +133,18 @@ pub async fn poste_ecrire_fichier(request: tauri::ipc::Request<'_>) -> LibResult
     fs::write(p, octets).map_err(|e| LibError::io(chemin.clone(), e))
 }
 
+/// Lit un fichier choisi par l'utilisateur dans la boîte « Ouvrir » (import d'un classeur…).
+#[tauri::command]
+pub async fn poste_lire_fichier(chemin: String) -> LibResult<tauri::ipc::Response> {
+    let p = Path::new(&chemin);
+    if !p.is_absolute() {
+        return Err(LibError::InvalidPath(chemin));
+    }
+    fs::read(p)
+        .map(tauri::ipc::Response::new)
+        .map_err(|e| LibError::io(chemin.clone(), e))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

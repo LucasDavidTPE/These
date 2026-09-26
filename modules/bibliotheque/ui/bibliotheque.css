@@ -1,0 +1,195 @@
+.onglets {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--bordure);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.onglets button {
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
+  margin-bottom: -1px;
+}
+
+.onglets button.actif {
+  background: var(--surface);
+  border-color: var(--bordure);
+  font-weight: 600;
+}
+
+.compteur {
+  background: var(--erreur);
+  color: var(--surface);
+  border-radius: 999px;
+  font-size: 11px;
+  padding: 0 6px;
+  font-weight: 700;
+}
+
+.tuiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.tuile {
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  padding: 10px 14px;
+}
+
+.tuile-valeur {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.tuile-attention .tuile-valeur {
+  color: var(--attention);
+}
+
+.tuile-erreur .tuile-valeur {
+  color: var(--erreur);
+}
+
+.deux-colonnes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 20px;
+}
+
+.filtres {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.filtres .recherche {
+  flex: 1 1 260px;
+}
+
+.champ {
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: 6px;
+  padding: 5px 8px;
+  min-width: 0;
+}
+
+textarea.champ {
+  width: 100%;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+.tableau.cliquable tbody tr {
+  cursor: pointer;
+}
+
+.tableau.cliquable tbody tr:hover {
+  background: var(--surface-2);
+}
+
+.tableau tr.lue {
+  opacity: 0.55;
+}
+
+.tableau.matrice td,
+.tableau.matrice th {
+  text-align: center;
+}
+
+.tableau.matrice td:first-child {
+  text-align: left;
+}
+
+.tableau tr.groupe td {
+  background: var(--surface-2);
+  font-weight: 600;
+}
+
+.defilement {
+  overflow-x: auto;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.gras {
+  font-weight: 600;
+}
+
+.petit {
+  font-size: 12px;
+}
+
+.texte-attention {
+  color: var(--attention);
+  font-weight: 600;
+}
+
+.carte.mois {
+  padding: 0;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.mois-entete {
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 12px 16px;
+  text-align: left;
+  flex-wrap: wrap;
+}
+
+.mois-droite {
+  margin-left: auto;
+  font-size: 13px;
+}
+
+.mois-corps {
+  padding: 0 16px 14px;
+}
+
+.fiche-entete {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.fiche-entete h2 {
+  font-size: 19px;
+  margin: 2px 0 4px;
+}
+
+.grille-champs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px 14px;
+}
+
+.libelle {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12.5px;
+}
+
+.libelle > span {
+  color: var(--discret);
+}
+
+.libelle.large {
+  grid-column: 1 / -1;
+}

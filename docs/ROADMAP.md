@@ -43,13 +43,17 @@ l'installeur de la phase est produit par GitHub Actions.
 - [ ] Installeur `Traitement 2S2P1D` seul : la configuration existe
       (`npm run construire -- traitement`), à produire par la CI
 
-## P3 — Bibliothèque
-- [ ] Modèle de données, `parametres.json`, calculs (citation, état, alerte, score, temps)
-- [ ] Import du classeur `.xlsx` relançable + test de conformité aux valeurs d'Excel
-- [ ] Tableau de bord, Références, Fiche, Plan de lecture
-- [ ] Demandes, Corrections TFE, Pistes, Analyse croisée
-- [ ] Actions : ouvrir (proxy), marquer lu, doublons, vérifier les liens, ajout par DOI
-- [ ] Exports RIS, BibTeX, Markdown
+## P3 — Bibliothèque ✔
+- [x] Modèle de données, `parametres.json`, calculs (citation, état, alerte, score, temps,
+      tableau de bord, demandes)
+- [x] Import du classeur `.xlsx` relançable + test de conformité aux valeurs d'Excel
+      (`modules/bibliotheque/tests/conformite.test.ts`)
+- [x] Tableau de bord, Références (filtres, tri par score), Fiche, Plan de lecture
+- [x] Demandes, Corrections TFE, Pistes, Analyse croisée (matrice recalculée + textes)
+- [x] Actions : ouvrir le lien (proxy), doi.org, Scholar, ouvrir le PDF, marquer lu,
+      nouvelle référence ; exports RIS et BibTeX
+- [ ] Plus tard : vérifier les liens, ajout par DOI (OpenAlex / Crossref), export Markdown
+      (selon la réponse aux questions Obsidian / iPad), contrôle des doublons
 
 ## P4 — Planning
 - [ ] Éléments, catégories, activer / désactiver, sous-éléments

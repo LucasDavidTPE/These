@@ -55,3 +55,18 @@ Ce qui change avec l'intégration :
 - [ ] Export `.xlsx` et fichier projet : la boîte « Enregistrer sous » s'ouvre, le fichier
       est écrit à l'endroit choisi et s'ouvre dans Excel.
 - [ ] Rouvrir un fichier projet `.json` enregistré par le site en ligne : même résultat.
+
+## P3 — Bibliothèque
+
+- [ ] « Importer le classeur… » : la boîte Windows s'ouvre ; l'import de
+      `Biblio_These_Lucas_MAITRE.xlsx` annonce 179 références, 11 demandes, 20 corrections,
+      7 pistes ; les fichiers apparaissent dans `Espace\bibliotheque\`.
+- [ ] Sur l'autre PC, après synchronisation OneDrive : la bibliothèque est là, sans import.
+- [ ] « Marquer lu » sur un PC → sur l'autre PC, la référence passe à « Lu » sans relancer.
+- [ ] Modifier la même référence sur les deux PC hors ligne → la copie de conflit apparaît
+      dans « À régler » (Accueil), avec la comparaison champ par champ.
+- [ ] « Ouvrir le PDF » avec la racine `biblio-pdf` déclarée : le PDF s'ouvre dans le
+      lecteur par défaut ; sans la racine, le message renvoie vers les réglages.
+- [ ] « Ouvrir le lien » d'une référence « Éditeur (abonnement) » passe par le proxy de
+      l'ENTPE s'il est renseigné dans les paramètres.
+- [ ] Export RIS importé dans Zotero ; export BibTeX compilé avec biblatex (`biber`).

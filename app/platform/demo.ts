@@ -100,6 +100,17 @@ export function plateformeDemo(scenario: string | null): Plateforme {
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
       return true;
     },
+    ouvrirFichier: (_titre, extensions) =>
+      new Promise((resolve) => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = extensions.map((e) => `.${e}`).join(",");
+        input.onchange = async () => {
+          const f = input.files?.[0];
+          resolve(f ? { nom: f.name, octets: new Uint8Array(await f.arrayBuffer()) } : null);
+        };
+        input.click();
+      }),
     ouvrirDossier: async (chemin) => {
       window.alert(`Démonstration : l'Explorateur s'ouvrirait sur\n${chemin}`);
     },
