@@ -16,12 +16,12 @@ const RECHERCHE = "C:\\Users\\DAVID\\Desktop\\Recherche";
 
 /** Essai de démonstration au format WaveMatrix : paliers de température, force cyclique. */
 function essaiDemo(): Record<string, string> {
-  const l = ['"Temps total (s)";"Force(8800 (0,1):Charge) (kN)";"Personnalisée(103 (0,3):Lion171144) (µm)";"Personnalisée(103 (0,5):Défini par utilisateur) (°C)";'];
+  const l = ['"Nombre total de cycles";"Temps total (s)";"Force(8800 (0,1):Charge) (kN)";"Personnalisée(103 (0,3):Lion171144) (µm)";"Personnalisée(103 (0,5):Défini par utilisateur) (°C)";'];
   for (let i = 0; i < 6000; i++) {
     const t = i * 30;
     const palier = [-10, 0, 10, 20, 30][Math.min(4, Math.floor(i / 1200))]!;
     const f = Math.sin(t / 7) * (2.5 - palier / 20);
-    l.push([t, f.toFixed(3), (f * 12).toFixed(2), (palier + Math.sin(i / 40) * 0.2).toFixed(2), ""].join(";").replace(/\./g, ","));
+    l.push([Math.floor(i / 20) + 1, t, f.toFixed(3), (f * 12).toFixed(2), (palier + Math.sin(i / 40) * 0.2).toFixed(2), ""].join(";").replace(/\./g, ","));
   }
   const log = [
     "01/06/2026;09:00:00;Demo;Essai1;60101;Création;",

@@ -19,6 +19,8 @@ export interface CampagneChargee {
   images: string[];
   /** Aperçu du premier essai qui en a un (galerie). */
   apercu: ApercuEssai | null;
+  /** Essais dont le dépouillement 2S2P1D est enregistré (traitement.json). */
+  depouilles: string[];
 }
 
 async function lister(fs: Fichiers, chemin: string) {
@@ -58,9 +60,11 @@ export async function chargerCampagnes(fs: Fichiers): Promise<{ campagnes: Campa
     if (!campagne) continue;
     const essais: Record<string, Essai> = {};
     let apercu: ApercuEssai | null = null;
+    const depouilles: string[] = [];
     for (const e of (await lister(fs, joindre(base, "essais"))).filter((x) => x.kind === "dir")) {
       const dossierEssai = joindre(base, "essais", e.name);
       const noms = (await fs.listDir(dossierEssai)).map((x) => x.name);
+      if (noms.includes("traitement.json")) depouilles.push(e.name);
       if (!apercu && noms.includes("apercu.json")) apercu = await lireJson(fs, joindre(dossierEssai, "apercu.json"), (b) => b as ApercuEssai, problemes);
       conflits(dossierEssai, noms, "essai.json", problemes);
       essais[e.name] = noms.includes("essai.json") ? ((await lireJson(fs, joindre(dossierEssai, "essai.json"), lireEssai, problemes)) ?? lireEssai({})) : lireEssai({});
@@ -73,7 +77,7 @@ export async function chargerCampagnes(fs: Fichiers): Promise<{ campagnes: Campa
     }
     notes.sort((a, b) => (a.fichier < b.fichier ? 1 : -1));
     const images = (await lister(fs, joindre(base, "images"))).filter((x) => x.kind === "file" && /\.(png|jpe?g|gif|webp|bmp)$/i.test(x.name)).map((x) => x.name);
-    campagnes.push({ slug: d.name, campagne, essais, notes, images, apercu });
+    campagnes.push({ slug: d.name, campagne, essais, notes, images, apercu, depouilles });
   }
   return { campagnes, problemes };
 }
@@ -133,3 +137,6 @@ export async function enregistrerApercu(fs: Fichiers, slug: string, nom: string,
   await fs.ensureDir(dossier);
   await fs.writeTextAtomic(joindre(dossier, "apercu.json"), JSON.stringify(a) + "\n");
 }
+
+/** Chemin (relatif à l'espace) du dépouillement 2S2P1D d'un essai. */
+export const cheminTraitement = (slug: string, nom: string) => joindre(DOSSIER, slug, "essais", nom.replace(/[\\/:*?"<>|]/g, "_"), "traitement.json");

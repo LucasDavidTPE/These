@@ -37,9 +37,12 @@ l'installeur de la phase est produit par GitHub Actions.
 - [x] Tests de conformité `test/reference/` portés **à l'identique** (`node --test`,
       lancés par `npm test`)
 - [x] Exports (`.xlsx`, projet `.json`) par la boîte « Enregistrer sous » de Windows
-- [ ] Étape 2 : cœur en TypeScript dans `modules/traitement/core`, interface React,
-      « Enregistrer dans Figures » ; à faire avec Campagnes (P5), qui ouvrira les essais
-      directement
+- [x] Ouverture d'un essai depuis Campagnes (action `traitement.ouvrir-essai`) : l'export
+      `.steps.tracking.csv` est chargé directement, le projet est enregistré avec l'essai
+      (`campagnes/<campagne>/essais/<essai>/traitement.json`) ; lecture des exports WaveMatrix
+      corrigée (séparateur, guillemets), boucle infinie sans colonne de cycles corrigée
+- [ ] Plus tard : cœur en TypeScript dans `modules/traitement/core`, interface React,
+      « Enregistrer dans Figures »
 - [ ] Installeur `Traitement 2S2P1D` seul : la configuration existe
       (`npm run construire -- traitement`), à produire par la CI
 

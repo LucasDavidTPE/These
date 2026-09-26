@@ -127,3 +127,15 @@ Ce qui change avec l'intégration :
 - [ ] Courbes d'un essai → « Enregistrer dans Figures » : la figure apparaît dans l'onglet
       Bibliothèque de Figures, avec la source « Campagnes : … » ; le PNG est lisible (textes
       et couleurs conservés).
+
+## Traitement 2S2P1D depuis Campagnes
+
+- [ ] Campagne de type « Module complexe » avec son dossier de données : chaque essai a un
+      bouton « 2S2P1D » ; il ouvre le traitement sur l'export `.steps.tracking.csv` de
+      l'essai (titre de l'essai dans la barre du haut), sans passer par « Déposer un fichier ».
+- [ ] Un vrai export WaveMatrix est lu (nombre de lignes et voies Force, Lion, °C
+      reconnues) : la lecture du séparateur « ; » et des en-têtes entre guillemets a été
+      corrigée.
+- [ ] Régler la matrice ou les paramètres → « Enregistrer avec l'essai » → « ← Campagne » :
+      le bouton devient « 2S2P1D ✓ » ; le rouvrir (sur l'autre PC aussi) retrouve les réglages.
+- [ ] Un fichier sans colonne de cycles ne fige plus la page (« 0 lignes » au pire).

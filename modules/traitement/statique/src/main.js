@@ -213,7 +213,11 @@ async function chargerFichiers(liste) {
       for (let q = 0; q < 4; q++) e.voiesRad[q] = e.correspondance['lion' + (q + 1)] >= 0;
       e.voiesAx = [e.correspondance.defA >= 0, e.correspondance.defB >= 0, e.correspondance.defC >= 0];
       const cCyc = e.table.colonne(e.correspondance.cycle);
-      if (cCyc) e.meta.cycleInitial = minimum(cCyc);
+      if (cCyc) {
+        const m = minimum(cCyc);
+        // Colonne vide ou illisible : minimum = Infinity, qui ferait boucler traiter().
+        if (Number.isFinite(m)) e.meta.cycleInitial = m;
+      }
       S.essais.push(e);
       S.actif = S.essais.length - 1;
       $('infoFichier').innerHTML =
@@ -285,6 +289,7 @@ async function traiter() {
   occupe('Traitement de la campagne…', 0);
   await souffler();
 
+  if (!Number.isFinite(e.meta.cycleInitial)) e.meta.cycleInitial = 1;
   const index = bornesCycles(e.table, e.correspondance.cycle);
   const paliers = [];
   let fin = e.meta.cycleInitial - 1;
@@ -1032,6 +1037,20 @@ function projetJSON() {
 }
 
 let telechargement = null;
+/** Réapplique un projet enregistré (tri des cycles, calages) aux essais chargés. */
+async function appliquerProjet(j) {
+  for (const [i, sauve] of (j.essais || []).entries()) {
+    const e = S.essais[i];
+    if (!e) continue;
+    const exclus = sauve.exclus;
+    Object.assign(e, sauve);
+    e.exclus = new Set(exclus || []);
+    e.motifs = sauve.motifs || {};
+  }
+  if (S.essais[0]) await traiter();
+  toutRedessiner();
+}
+
 async function enregistrer(nom, blob) {
   // Dans l'application Thèse, la page est intégrée au module Traitement : la boîte
   // « Enregistrer sous » de Windows remplace le téléchargement du navigateur.
@@ -1337,17 +1356,7 @@ function brancher() {
     const f = ev.target.files[0];
     if (!f) return;
     try {
-      const j = JSON.parse(await f.text());
-      for (const [i, sauve] of (j.essais || []).entries()) {
-        const e = S.essais[i];
-        if (!e) continue;
-        const exclus = sauve.exclus;
-        Object.assign(e, sauve);
-        e.exclus = new Set(exclus || []);
-        e.motifs = sauve.motifs || {};
-      }
-      if (S.essais[0]) await traiter();
-      toutRedessiner();
+      await appliquerProjet(JSON.parse(await f.text()));
       flash('projet rechargé');
     } catch (err) { flash('Fichier projet illisible', 'grave'); }
   };
@@ -1366,4 +1375,17 @@ function brancher() {
 
 document.getElementById('ouverture-locale')?.remove();
 brancher();
-demarrer();
+
+// Pont avec l'application Thèse (module Traitement) : ouvrir directement l'essai d'une
+// campagne, avec son dépouillement enregistré, et récupérer le projet pour l'enregistrer
+// avec l'essai. Les calculs ne sont pas touchés.
+window.theseTraitement = {
+  async ouvrir(fichiers, projetTexte) {
+    S.essais.length = 0;
+    S.actif = 0;
+    await chargerFichiers(fichiers);
+    if (projetTexte) await appliquerProjet(JSON.parse(projetTexte));
+  },
+  projet: () => projetJSON(),
+};
+demarrer().then(() => window.parent !== window && window.parent.theseTraitementPret?.());

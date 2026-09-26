@@ -16,8 +16,10 @@ function separateur(lignes) {
   for (const c of candidats) {
     let total = 0, n = 0;
     for (let i = 0; i < Math.min(lignes.length, 40); i++) {
-      const k = lignes[i].split(c).length - 1;
-      if (k > 0) { total += k; n++; }
+      if (!lignes[i].trim()) continue;
+      // moyenne sur toutes les lignes : un séparateur absent des lignes de données
+      // (les espaces d'un en-tête WaveMatrix) ne doit pas l'emporter
+      total += lignes[i].split(c).length - 1; n++;
     }
     const moy = n ? total / n : 0;
     if (moy > score) { score = moy; meilleur = c; }
@@ -46,10 +48,11 @@ export function lireTexte(texte, progres = () => {}) {
   for (let i = 0; i < n; i++) {
     const champs = lignes[i].split(sep);
     for (let c = 0; c < champs.length && c < nc; c++) {
-      const s = champs[c].trim().replace(/[\s  ]/g, '').replace(',', '.');
+      const brut = champs[c].trim().replace(/^"(.*)"$/, '$1');   // en-têtes WaveMatrix entre guillemets
+      const s = brut.replace(/[\s  ]/g, '').replace(',', '.');
       const v = s === '' ? NaN : Number(s);
       colonnes[c][i] = Number.isNaN(v) ? NaN : v;
-      if (i < LIGNES_TEXTE) (lignesTexte[i] ||= [])[c] = champs[c].trim();
+      if (i < LIGNES_TEXTE) (lignesTexte[i] ||= [])[c] = brut;
     }
     if ((i & 8191) === 0) progres('lecture', i / n);
   }

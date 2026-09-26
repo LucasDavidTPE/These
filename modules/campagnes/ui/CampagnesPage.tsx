@@ -15,7 +15,7 @@ import { IconeDossier } from "@interface/icones";
 import { decouvrir } from "../core/decouverte";
 import { lireEssai, nouvelleCampagne, periode, periodeLisible, STATUTS, TYPES, typeDe, type Campagne, type Essai } from "../core/modele";
 import { depuisLgcb } from "../core/toml";
-import { ajouterImage, ajouterNote, chargerCampagnes, creerCampagne, enregistrerApercu, enregistrerCampagne, enregistrerEssai, type CampagneChargee } from "./donnees";
+import { ajouterImage, ajouterNote, chargerCampagnes, cheminTraitement, creerCampagne, enregistrerApercu, enregistrerCampagne, enregistrerEssai, type CampagneChargee } from "./donnees";
 import "./campagnes.css";
 
 function heures(c: CampagneChargee): number {
@@ -159,6 +159,24 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
     });
   }
 
+  async function depouiller(nom: string) {
+    if (!donnees?.ok) return;
+    try {
+      const fichier = (await ctx.plateforme.fichiers(donnees.chemin).listDir(nom)).find((f) => f.name.endsWith(SUFFIXE_SUIVI));
+      if (!fichier) throw new Error(`Pas d'export ${SUFFIXE_SUIVI} dans ${nom}.`);
+      const sep = donnees.chemin.includes("\\") ? "\\" : "/";
+      await ctx.registre.executer("traitement.ouvrir-essai", {
+        ctx,
+        titre: `${k.titre} — ${nom}`,
+        dossierDonnees: `${donnees.chemin.replace(/[\\/]+$/, "")}${sep}${nom}`,
+        fichier: fichier.name,
+        projet: cheminTraitement(c.slug, nom),
+      });
+    } catch (e) {
+      setMessage({ niveau: "erreur", texte: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
   async function collerImage(e: React.ClipboardEvent) {
     const f = [...e.clipboardData.files].find((x) => x.type.startsWith("image/"));
     if (!f) return;
@@ -230,11 +248,6 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
                 </button>
               </>
             ) : null}
-            {ctx.registre.aModule("traitement") && k.type === "module-complexe" ? (
-              <button type="button" onClick={() => ctx.naviguer("traitement")}>
-                Traitement 2S2P1D
-              </button>
-            ) : null}
           </div>
           {Object.values(k.machine).some(Boolean) ? (
             <p className="discret petit">
@@ -279,10 +292,15 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
                     <td>
                       <Champ titre="" valeur={e.notes} onValider={(v) => ecrire({ notes: v })} />
                     </td>
-                    <td>
+                    <td className="nowrap">
                       <button type="button" disabled={!donnees?.ok} title={donnees?.ok ? "Lire l'export de suivi et tracer les courbes" : "Choisissez d'abord le dossier de données"} onClick={() => void voirCourbes(nom)}>
                         Courbes
-                      </button>
+                      </button>{" "}
+                      {k.type === "module-complexe" && ctx.registre.aAction("traitement.ouvrir-essai") ? (
+                        <button type="button" disabled={!donnees?.ok} title="Ouvrir cet essai dans le traitement 2S2P1D" onClick={() => void depouiller(nom)}>
+                          {c.depouilles.includes(nom) ? "2S2P1D ✓" : "2S2P1D"}
+                        </button>
+                      ) : null}
                     </td>
                   </tr>
                 );
