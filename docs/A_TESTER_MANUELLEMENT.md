@@ -80,3 +80,12 @@ Ce qui change avec l'intégration :
       « Bibliographie » dès que la bibliothèque est importée.
 - [ ] Export pgfgantt : le `.tex` compile dans un document avec `\usepackage{pgfgantt}`
       (et `xcolor` avec l'option `table` ou `HTML`).
+
+## Mises à jour
+
+- [ ] Après la mise en place de `docs/MISES_A_JOUR.md`, publier `v0.2.0` : la release
+      apparaît dans `These-versions` avec `latest.json` et l'installeur `.exe` + `.sig`.
+- [ ] Installer `v0.2.0` à la main, publier `v0.2.1` : au démarrage suivant, le bandeau
+      propose la mise à jour ; « Installer et redémarrer » l'installe sans droits
+      administrateur et relance l'application ; les réglages et l'espace sont conservés.
+- [ ] Hors ligne : aucun bandeau, aucune erreur.

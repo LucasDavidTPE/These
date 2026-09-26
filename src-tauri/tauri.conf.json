@@ -61,5 +61,16 @@
       "resources/models/*": "resources/models/",
       "resources/onnxruntime/*": "resources/onnxruntime/"
     }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUxOEQ1OUM2M0FGMTFBQTMKUldTakd2RTZ4bG1ONGFaR0hjaVZxQ1NlcHdkYm5EOHptZmVlYjFVM0pucGkvK2FCdzY2UjJsaDkK",
+      "endpoints": [
+        "https://github.com/LucasDavidTPE/These-versions/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

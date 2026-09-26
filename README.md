@@ -8,6 +8,7 @@ partagé entre deux PC par OneDrive.
 - [Feuille de route](docs/ROADMAP.md) — phase P0 (socle) terminée
 - [Questions ouvertes](docs/QUESTIONS.md)
 - [À tester manuellement](docs/A_TESTER_MANUELLEMENT.md)
+- [Mises à jour](docs/MISES_A_JOUR.md) : publier une version, mise à jour automatique
 
 ## Installer
 

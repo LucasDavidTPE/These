@@ -17,6 +17,10 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
+        // Mises à jour : publiées sur GitHub (dépôt public These-versions), signées ;
+        // voir docs/MISES_A_JOUR.md.
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .manage(Surveillances::default());
 
     // Commandes communes à tous les installeurs, plus celles des modules compilés : le
@@ -74,6 +78,16 @@ mod tests {
         let c = config();
         assert_eq!(c["productName"], "Thèse");
         assert_eq!(c["identifier"], "fr.lucasdavid.these");
+    }
+
+    #[test]
+    fn mises_a_jour_signees_depuis_github() {
+        let u = &config()["plugins"]["updater"];
+        assert!(u["pubkey"].as_str().is_some_and(|k| !k.is_empty()));
+        assert_eq!(
+            u["endpoints"][0],
+            "https://github.com/LucasDavidTPE/These-versions/releases/latest/download/latest.json"
+        );
     }
 
     #[test]

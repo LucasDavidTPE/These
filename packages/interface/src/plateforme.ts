@@ -6,6 +6,13 @@
  */
 import type { Fichiers } from "@noyau/stockage";
 
+export interface MiseAJour {
+  version: string;
+  notes: string;
+  /** Télécharge, installe et redémarre l'application. */
+  installer(progression?: (fraction: number | null) => void): Promise<void>;
+}
+
 export interface Plateforme {
   genre: "tauri" | "demo";
   nomDuPoste(): Promise<string>;
@@ -30,6 +37,8 @@ export interface Plateforme {
   enregistrerSous(nom: string, octets: Uint8Array): Promise<boolean>;
   /** Boîte « Ouvrir » limitée à des extensions (« xlsx ») ; null si annulée. */
   ouvrirFichier(titre: string, extensions: string[]): Promise<{ nom: string; octets: Uint8Array } | null>;
+  /** Version plus récente publiée, ou null (à jour, hors ligne, ou démonstration). */
+  verifierMiseAJour(): Promise<MiseAJour | null>;
   /** Ouvre un dossier dans l'Explorateur. */
   ouvrirDossier(chemin: string): Promise<void>;
   /** Ouvre une adresse web dans le navigateur par défaut. */

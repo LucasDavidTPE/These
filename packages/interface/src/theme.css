@@ -433,3 +433,19 @@ table.tableau th {
   background: var(--surface);
   cursor: pointer;
 }
+
+/* ---- Mise à jour disponible ---- */
+.bandeau-maj {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 32px;
+  background: var(--info-fond);
+  color: var(--info);
+  border-bottom: 1px solid var(--bordure);
+}
+
+.bandeau-maj > span:first-child {
+  flex: 1;
+}

@@ -6,6 +6,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { openPath, openUrl } from "@tauri-apps/plugin-opener";
+import { relaunch } from "@tauri-apps/plugin-process";
+import { check } from "@tauri-apps/plugin-updater";
 import { erreurDepuisIpc, type Entree } from "@noyau/stockage";
 import type { Plateforme } from "@interface/plateforme";
 
@@ -70,6 +72,26 @@ export function plateformeTauri(): Plateforme {
       if (typeof chemin !== "string") return null;
       const octets = new Uint8Array(await appel<ArrayBuffer>("poste_lire_fichier", { chemin }, chemin));
       return { nom: chemin.split(/[\\/]/).pop() ?? chemin, octets };
+    },
+    verifierMiseAJour: async () => {
+      const maj = await check();
+      if (!maj) return null;
+      return {
+        version: maj.version,
+        notes: maj.body ?? "",
+        installer: async (progression) => {
+          let total = 0;
+          let recu = 0;
+          await maj.downloadAndInstall((e) => {
+            if (e.event === "Started") total = e.data.contentLength ?? 0;
+            else if (e.event === "Progress") {
+              recu += e.data.chunkLength;
+              progression?.(total ? recu / total : null);
+            }
+          });
+          await relaunch();
+        },
+      };
     },
     ouvrirDossier: (chemin) => openPath(chemin),
     ouvrirLien: (url) => openUrl(url),

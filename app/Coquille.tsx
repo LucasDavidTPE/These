@@ -11,6 +11,7 @@ import { ContexteReact, type Contexte, type Destination, type ProblemeSitue } fr
 import { IconeDiagnostic, IconeReglages } from "@interface/icones";
 import type { Manifeste } from "@interface/manifeste";
 import type { Plateforme } from "@interface/plateforme";
+import { BandeauMiseAJour } from "./BandeauMiseAJour";
 import { DiagnosticPage } from "./DiagnosticPage";
 import { ReglagesPage } from "./ReglagesPage";
 
@@ -149,7 +150,11 @@ export function Coquille({ produit, manifestes, plateforme, poste, reglages, enr
             ) : null}
           </nav>
         )}
-        <main className="contenu">{page === "reglages" ? <ReglagesPage /> : page === "diagnostic" ? <DiagnosticPage /> : courant ? <courant.Page /> : null}</main>
+        <main className="contenu">
+          {/* Les mises à jour publiées sont celles de Thèse : les installeurs d'un seul module ne vérifient pas. */}
+          {produit.id === "these" ? <BandeauMiseAJour plateforme={plateforme} version={__APP_VERSION__} /> : null}
+          {page === "reglages" ? <ReglagesPage /> : page === "diagnostic" ? <DiagnosticPage /> : courant ? <courant.Page /> : null}
+        </main>
       </div>
     </ContexteReact.Provider>
   );

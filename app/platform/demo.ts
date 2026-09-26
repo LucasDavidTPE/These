@@ -111,6 +111,10 @@ export function plateformeDemo(scenario: string | null): Plateforme {
         };
         input.click();
       }),
+    verifierMiseAJour: async () =>
+      scenario === "maj"
+        ? { version: "9.9.9", notes: "Démonstration.", installer: async () => window.alert("Démonstration : l'application se mettrait à jour puis redémarrerait.") }
+        : null,
     ouvrirDossier: async (chemin) => {
       window.alert(`Démonstration : l'Explorateur s'ouvrirait sur\n${chemin}`);
     },
