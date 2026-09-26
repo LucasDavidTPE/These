@@ -278,6 +278,53 @@ input[type="text"] {
   gap: 12px;
 }
 
+/* Accueil : dernières figures */
+.accueil-figures {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.accueil-figures button {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  gap: 6px;
+  width: 100%;
+  padding: 8px;
+  text-align: left;
+  border-radius: var(--rayon);
+  background: var(--surface);
+}
+
+.accueil-vignette {
+  display: grid;
+  place-items: center;
+  height: 90px;
+  border-radius: calc(var(--rayon) - 2px);
+  background: #fff;
+  overflow: hidden;
+}
+
+.accueil-vignette img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.accueil-figure-titre {
+  font-size: 13px;
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .carte-module {
   display: flex;
   flex-direction: column;

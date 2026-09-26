@@ -89,7 +89,9 @@ l'installeur de la phase est produit par GitHub Actions.
 - [ ] Plus tard : copie des données brutes d'un essai vers une sauvegarde
 
 ## P6 — Liaisons et finitions
-- [ ] Accueil complet (Cette semaine, derniers essais, dernières figures)
+- [x] Accueil complet : Cette semaine, derniers essais (action `campagnes.recents`, clic →
+      la campagne via `campagnes.ouvrir`), dernières figures avec vignette
+      (`figures.recentes`, clic → la figure sélectionnée via `figures.ouvrir`)
 - [ ] Graphes régénérables depuis les données d'un essai
 - [ ] Archivage des anciens dépôts (hub, these-lgcb) une fois la bascule faite
 

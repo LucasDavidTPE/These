@@ -99,3 +99,28 @@ export function periodeLisible(p: { debut: string; fin: string }): string {
   if (a1 === a2) return `${j1} ${MOIS[m1 - 1]} → ${j2} ${MOIS[m2 - 1]} ${a2}`;
   return `${j1} ${MOIS[m1 - 1]} ${a1} → ${j2} ${MOIS[m2 - 1]} ${a2}`;
 }
+
+/** Un essai récent, pour l'Accueil (action « campagnes.recents »). */
+export interface EssaiRecent {
+  slug: string;
+  campagne: string;
+  essai: string;
+  /** « AAAA-MM-JJ HH:MM:SS » : fin de l'essai, ou son début s'il n'est pas fini. */
+  date: string;
+  detail: string;
+}
+
+/** Les `n` essais les plus récents (par date de fin, sinon de début), toutes campagnes confondues. */
+export function essaisRecents(campagnes: { slug: string; titre: string; essais: Record<string, Essai> }[], n: number): EssaiRecent[] {
+  return campagnes
+    .flatMap((c) =>
+      Object.entries(c.essais).flatMap(([nom, e]) => {
+        const date = e.fin || e.debut;
+        if (!date) return [];
+        const detail = [e.etat, e.dureeH !== null ? `${e.dureeH.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} h` : "", e.cycles !== null ? `${e.cycles.toLocaleString("fr-FR")} cycles` : ""].filter(Boolean).join(" · ");
+        return [{ slug: c.slug, campagne: c.titre, essai: nom, date, detail }];
+      }),
+    )
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.essai.localeCompare(b.essai)))
+    .slice(0, n);
+}

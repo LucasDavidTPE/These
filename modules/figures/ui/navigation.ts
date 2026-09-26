@@ -20,9 +20,14 @@ export const PAGES: readonly PageDef[] = [
 interface NavigationState {
   page: PageId;
   goTo: (page: PageId) => void;
+  /** Figure demandée par un autre module (Accueil), sélectionnée dès que l'index la contient. */
+  aOuvrir: string | null;
+  ouvrir: (dossier: string) => void;
 }
 
 export const useNavigation = create<NavigationState>()((set) => ({
   page: "library",
   goTo: (page) => set({ page }),
+  aOuvrir: null,
+  ouvrir: (dossier) => set({ page: "library", aOuvrir: dossier }),
 }));

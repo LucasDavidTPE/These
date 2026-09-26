@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { FichiersMemoire } from "@noyau/stockage";
 import { decouvrir } from "../core/decouverte";
 import { lireJournal } from "../core/journal";
-import { periode, periodeLisible } from "../core/modele";
+import { essaisRecents, lireEssai, periode, periodeLisible } from "../core/modele";
 import { depuisLgcb, lireToml } from "../core/toml";
 
 const fiche = (nom: string) => readFileSync(new URL(`./fixtures/${nom}.toml`, import.meta.url), "utf8");
@@ -101,5 +101,20 @@ describe("courbes d'un essai", () => {
     const a = apercu(s)!;
     expect(a.heures.length).toBeLessThanOrEqual(150);
     expect(a.temperature[0]).toBe(20);
+  });
+});
+
+describe("essais récents (Accueil)", () => {
+  it("triés par date de fin (sinon de début), sans les essais non datés", () => {
+    const e = (debut: string, fin: string) => ({ ...lireEssai({}), debut, fin, etat: "terminé", dureeH: 2.26, cycles: 12000 });
+    const r = essaisRecents(
+      [
+        { slug: "a", titre: "A", essais: { E1: e("2026-06-01 09:00:00", "2026-06-02 10:00:00"), E2: e("2026-06-10 09:00:00", ""), E3: e("", "") } },
+        { slug: "b", titre: "B", essais: { E1: e("2026-06-03 09:00:00", "2026-06-05 10:00:00") } },
+      ],
+      2,
+    );
+    expect(r.map((x) => `${x.slug}/${x.essai}`)).toEqual(["a/E2", "b/E1"]);
+    expect(r[1]!.detail).toBe("terminé · 2,3 h · 12 000 cycles");
   });
 });

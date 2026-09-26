@@ -16,6 +16,7 @@ import { decouvrir } from "../core/decouverte";
 import { lireEssai, nouvelleCampagne, periode, periodeLisible, STATUTS, TYPES, typeDe, type Campagne, type Essai } from "../core/modele";
 import { depuisLgcb } from "../core/toml";
 import { ajouterImage, ajouterNote, chargerCampagnes, cheminTraitement, creerCampagne, enregistrerApercu, enregistrerCampagne, enregistrerEssai, type CampagneChargee } from "./donnees";
+import { prendreOuverture } from "./ouverture";
 import "./campagnes.css";
 
 function heures(c: CampagneChargee): number {
@@ -380,7 +381,7 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
 export function CampagnesPage() {
   const ctx = useContexte();
   const [etat, setEtat] = useState<CampagneChargee[] | null>(null);
-  const [ouverte, setOuverte] = useState<string | null>(null);
+  const [ouverte, setOuverte] = useState<string | null>(prendreOuverture);
   const [erreur, setErreur] = useState<string | null>(null);
   const [tour, setTour] = useState(0);
   const fs = ctx.espace?.fichiers;

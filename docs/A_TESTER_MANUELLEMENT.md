@@ -139,3 +139,12 @@ Ce qui change avec l'intégration :
 - [ ] Régler la matrice ou les paramètres → « Enregistrer avec l'essai » → « ← Campagne » :
       le bouton devient « 2S2P1D ✓ » ; le rouvrir (sur l'autre PC aussi) retrouve les réglages.
 - [ ] Un fichier sans colonne de cycles ne fige plus la page (« 0 lignes » au pire).
+
+## Accueil complet
+
+- [ ] L'Accueil montre « Derniers essais » (5 au plus, du plus récent au plus ancien, avec
+      état, durée, cycles) ; un clic ouvre la campagne de l'essai.
+- [ ] « Dernières figures » montre les 6 dernières figures modifiées avec leur vignette ; un
+      clic ouvre Figures, onglet Bibliothèque, la figure sélectionnée.
+- [ ] Une figure enregistrée depuis les courbes d'un essai apparaît en tête au retour sur
+      l'Accueil.

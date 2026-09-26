@@ -37,6 +37,15 @@ export function FiguresPage() {
     if (s.ready && figures && figures !== s.root) void s.setRoot(figures, false);
   }, [figures]);
 
+  // Figure demandée depuis l'Accueil : sélectionnée une fois la bibliothèque indexée.
+  const aOuvrir = useNavigation((s) => s.aOuvrir);
+  const index = useLibrary((s) => s.index);
+  useEffect(() => {
+    if (!aOuvrir || !index?.figures.some((f) => f.folder === aOuvrir)) return;
+    useNavigation.setState({ aOuvrir: null });
+    void useLibrary.getState().select(aOuvrir);
+  }, [aOuvrir, index]);
+
   return (
     <div className="figures">
       <nav className="figures-onglets" aria-label="Figures">

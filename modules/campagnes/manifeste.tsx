@@ -1,9 +1,10 @@
 import { IconeCampagnes } from "@interface/icones";
 import type { Contexte } from "@interface/contexte";
 import type { Manifeste } from "@interface/manifeste";
-import { periode, typeDe } from "./core/modele";
+import { essaisRecents, periode, typeDe } from "./core/modele";
 import { CampagnesPage } from "./ui/CampagnesPage";
 import { chargerCampagnes } from "./ui/donnees";
+import { demanderOuverture } from "./ui/ouverture";
 
 const charger = (ctx: Contexte) => (ctx.espace ? chargerCampagnes(ctx.espace.fichiers) : Promise.resolve(null));
 
@@ -24,6 +25,17 @@ const campagnes: Manifeste = {
   actions: {
     /** Pour les Études : les campagnes auxquelles une étude peut se rattacher. */
     "campagnes.liste": async (ctx) => ((await charger(ctx as Contexte))?.campagnes ?? []).map((c) => ({ slug: c.slug, titre: c.campagne.titre })),
+    /** Pour l'Accueil : les derniers essais, toutes campagnes confondues. */
+    "campagnes.recents": async (ctx) => {
+      const r = await charger(ctx as Contexte);
+      return essaisRecents((r?.campagnes ?? []).map((c) => ({ slug: c.slug, titre: c.campagne.titre, essais: c.essais })), 5);
+    },
+    /** Ouvre une campagne ; charge : { ctx, slug }. */
+    "campagnes.ouvrir": async (charge) => {
+      const { ctx, slug } = charge as { ctx: Contexte; slug: string };
+      demanderOuverture(slug);
+      ctx.naviguer("campagnes");
+    },
     /** Pour le Planning (SPEC §10.2) : la période réelle (ou prévue) de chaque campagne. */
     "campagnes.planning": async (ctx) => {
       const r = await charger(ctx as Contexte);
