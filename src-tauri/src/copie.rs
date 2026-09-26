@@ -26,6 +26,26 @@ fn absolu(chemin: &str) -> LibResult<&Path> {
     Ok(p)
 }
 
+/// Forme canonique d'un chemin qui n'existe peut-être pas encore : on canonise son plus
+/// proche parent existant, puis on rajoute le reste. Sous Windows, `canonicalize` ajoute
+/// le préfixe `\\?\` : comparer un chemin canonisé à un chemin brut ne marcherait pas.
+fn canonique(p: &Path) -> std::path::PathBuf {
+    let mut reste = Vec::new();
+    let mut courant = p;
+    loop {
+        if let Ok(c) = courant.canonicalize() {
+            return reste.iter().rev().fold(c, |acc, n| acc.join(n));
+        }
+        match (courant.parent(), courant.file_name()) {
+            (Some(parent), Some(nom)) => {
+                reste.push(nom.to_os_string());
+                courant = parent;
+            }
+            _ => return p.to_path_buf(),
+        }
+    }
+}
+
 /// Copie récursivement `source` dans `destination` (créée au besoin).
 pub fn copier_dossier(source: &str, destination: &str) -> LibResult<RapportCopie> {
     let src = absolu(source)?;
@@ -33,19 +53,33 @@ pub fn copier_dossier(source: &str, destination: &str) -> LibResult<RapportCopie
     if !src.is_dir() {
         return Err(LibError::NotFound(source.to_string()));
     }
-    let canon = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
-    let (cs, cd) = (canon(src), canon(dst));
+    let (cs, cd) = (canonique(src), canonique(dst));
     if cd.starts_with(&cs) || cs.starts_with(&cd) {
         return Err(LibError::NotAllowed(
             "la destination ne peut pas être dans les données (ni l'inverse)".into(),
         ));
     }
     let mut r = RapportCopie::default();
-    copier(src, dst, &mut r)?;
+    copier(src, dst, &cd, 0, &mut r)?;
     Ok(r)
 }
 
-fn copier(src: &Path, dst: &Path, r: &mut RapportCopie) -> LibResult<()> {
+/// Au-delà, c'est une boucle (lien, jonction NTFS…), pas des données d'essai.
+const PROFONDEUR_MAX: usize = 32;
+
+fn copier(
+    src: &Path,
+    dst: &Path,
+    garde: &Path,
+    profondeur: usize,
+    r: &mut RapportCopie,
+) -> LibResult<()> {
+    if profondeur > PROFONDEUR_MAX {
+        return Err(LibError::NotAllowed(format!(
+            "dossiers imbriqués trop profondément : {}",
+            src.display()
+        )));
+    }
     fs::create_dir_all(dst).map_err(|e| LibError::io(dst.display().to_string(), e))?;
     let entrees = fs::read_dir(src).map_err(|e| LibError::io(src.display().to_string(), e))?;
     for entree in entrees {
@@ -55,7 +89,10 @@ fn copier(src: &Path, dst: &Path, r: &mut RapportCopie) -> LibResult<()> {
             .map_err(|e| LibError::io(entree.path().display().to_string(), e))?;
         let (de, vers) = (entree.path(), dst.join(entree.file_name()));
         if genre.is_dir() {
-            copier(&de, &vers, r)?;
+            // Jamais la destination elle-même, où qu'elle soit (seconde sécurité).
+            if canonique(&de) != garde {
+                copier(&de, &vers, garde, profondeur + 1, r)?;
+            }
         } else if genre.is_file() {
             copier_fichier(&de, &vers, r)?;
         }
@@ -164,6 +201,9 @@ mod tests {
         let s = t.path().to_str().unwrap().to_string();
         let d = t.path().join("copie").to_str().unwrap().to_string();
         assert!(copier_dossier(&s, &d).is_err());
+        // Destination à plusieurs niveaux, inexistante, dans la source.
+        let d2 = t.path().join("a").join("b").to_str().unwrap().to_string();
+        assert!(copier_dossier(&s, &d2).is_err());
         assert!(copier_dossier("relatif", &d).is_err());
         assert!(copier_dossier(&t.path().join("absent").to_string_lossy(), &d).is_err());
     }
