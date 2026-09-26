@@ -87,3 +87,11 @@ export const IconeAttention = (p: P) => (
     <path d="M12 10v4.5M12 17.5v.01" />
   </Trace>
 );
+
+export const IconeEtudes = (p: P) => (
+  <Trace {...p}>
+    <path d="M8 5 3 12l5 7" />
+    <path d="m16 5 5 7-5 7" />
+    <path d="m13.5 4-3 16" />
+  </Trace>
+);

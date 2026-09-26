@@ -33,3 +33,11 @@ describe("CSV", () => {
     expect(Math.min(...d.y)).toBeCloseTo(-1, 3);
   });
 });
+
+describe("TOML des fiches these-lgcb", () => {
+  it("listes, chaînes multilignes, tables", async () => {
+    const { lireToml } = await import("./toml");
+    const t = lireToml('title = "Lecture"\ntags = ["B2C4", "bio"]   # commentaire\nquestion = """\nPourquoi ?\n"""\n[inputs]\nessai = "recherche:X/Essai1"\n');
+    expect(t).toEqual({ title: "Lecture", tags: ["B2C4", "bio"], question: "Pourquoi ?\n", inputs: { essai: "recherche:X/Essai1" } });
+  });
+});

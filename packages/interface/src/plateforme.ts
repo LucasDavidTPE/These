@@ -39,6 +39,8 @@ export interface Plateforme {
   ouvrirFichier(titre: string, extensions: string[]): Promise<{ nom: string; octets: Uint8Array } | null>;
   /** Version plus récente publiée, ou null (à jour, hors ligne, ou démonstration). */
   verifierMiseAJour(): Promise<MiseAJour | null>;
+  /** Ouvre un dossier ou un fichier dans VS Code. */
+  ouvrirVSCode(chemin: string): Promise<void>;
   /** Ouvre un dossier dans l'Explorateur. */
   ouvrirDossier(chemin: string): Promise<void>;
   /** Ouvre une adresse web dans le navigateur par défaut. */

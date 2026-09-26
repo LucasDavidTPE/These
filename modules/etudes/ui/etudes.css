@@ -1,0 +1,78 @@
+.etude-colonnes {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(220px, 2fr);
+  gap: 24px;
+}
+
+.champ-e {
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: 6px;
+  padding: 5px 8px;
+  width: 100%;
+}
+
+select.champ-e {
+  width: auto;
+}
+
+.nouvelle-etude {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.arbre {
+  list-style: none;
+  margin: 0;
+  padding-left: 14px;
+  font-size: 13px;
+}
+
+.arbre summary {
+  cursor: pointer;
+}
+
+.execution {
+  margin-bottom: 10px;
+}
+
+.fichiers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.fichier {
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 220px;
+}
+
+.vignette {
+  max-width: 200px;
+  max-height: 130px;
+  border-radius: 4px;
+}
+
+.erreur-python {
+  background: var(--erreur-fond);
+  color: var(--erreur);
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.a-droite {
+  margin-left: auto;
+}
+
+.petit {
+  font-size: 12.5px;
+}

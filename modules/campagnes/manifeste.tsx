@@ -22,6 +22,8 @@ const campagnes: Manifeste = {
   },
   problemes: async (ctx) => (await charger(ctx))?.problemes ?? [],
   actions: {
+    /** Pour les Études : les campagnes auxquelles une étude peut se rattacher. */
+    "campagnes.liste": async (ctx) => ((await charger(ctx as Contexte))?.campagnes ?? []).map((c) => ({ slug: c.slug, titre: c.campagne.titre })),
     /** Pour le Planning (SPEC §10.2) : la période réelle (ou prévue) de chaque campagne. */
     "campagnes.planning": async (ctx) => {
       const r = await charger(ctx as Contexte);

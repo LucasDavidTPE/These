@@ -87,6 +87,10 @@ l'installeur de la phase est produit par GitHub Actions.
 - [ ] Archivage des anciens dépôts (hub, these-lgcb) une fois la bascule faite
 
 ## P7 — Plus tard (à décider)
-- [ ] Lancer un script d'étude Python si Python est présent
+- [x] Module Études : une étude = un dossier dans l'espace (fiche, `run.py`, outil
+      `these_etude.py` sans dépendance), arborescence, ouverture dans VS Code, chaque
+      exécution tracée (`sorties/<horodatage>/execution.json` : poste, Python, données lues,
+      fichiers produits, erreur), sorties avec vignettes ; études these-lgcb lues telles
+      quelles (`study.toml`, `outputs/`, `*.prov.json`)
 - [ ] Index des figures LaTeX des manuscrits
 - [ ] Module ViscoCompare (comparaison COMSOL / Viscoroute)

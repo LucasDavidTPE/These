@@ -102,3 +102,14 @@ Ce qui change avec l'intégration :
 - [ ] « Courbes » sur Essai1 de la campagne B2C4 bio : panneaux température, force,
       capteurs ; temps de lecture acceptable pour le fichier `.steps.tracking.csv` réel.
 - [ ] Après « Courbes », la carte de la campagne montre l'aperçu, y compris sur le PC perso.
+
+## Études
+
+- [ ] « Nouvelle étude » puis « Ouvrir dans VS Code » : VS Code s'ouvre sur le dossier
+      (sinon, le message demande d'installer VS Code avec « Ajouter à PATH »).
+- [ ] Exécuter `run.py` dans VS Code (Python du poste) : l'exécution apparaît dans
+      l'application avec ses sorties, sans relancer ; une erreur Python apparaît en rouge.
+- [ ] Une référence `recherche:…` dans `etude.donnees(...)` est résolue avec la racine du
+      poste ; sur l'autre PC, avec la sienne.
+- [ ] Copier `studies/2026-09-07_lecture-essai-module-complexe-b2c4-bio` de these-lgcb dans
+      `Espace\etudes\` : l'étude apparaît avec sa fiche et ses sorties.

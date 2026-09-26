@@ -145,6 +145,32 @@ pub async fn poste_lire_fichier(chemin: String) -> LibResult<tauri::ipc::Respons
         .map_err(|e| LibError::io(chemin.clone(), e))
 }
 
+/// Ouvre un dossier ou un fichier dans VS Code (commande `code`, installée avec VS Code
+/// et placée dans le PATH). Erreur explicite si VS Code est introuvable.
+#[tauri::command]
+pub async fn poste_ouvrir_vscode(chemin: String) -> LibResult<()> {
+    let p = Path::new(&chemin);
+    if !p.is_absolute() || !p.exists() {
+        return Err(LibError::NotFound(chemin));
+    }
+    #[cfg(windows)]
+    let resultat = {
+        use std::os::windows::process::CommandExt;
+        // CREATE_NO_WINDOW : pas de console qui clignote.
+        std::process::Command::new("cmd")
+            .args(["/C", "code", &chemin])
+            .creation_flags(0x0800_0000)
+            .spawn()
+    };
+    #[cfg(not(windows))]
+    let resultat = std::process::Command::new("code").arg(&chemin).spawn();
+    resultat.map(|_| ()).map_err(|e| {
+        LibError::NotAllowed(format!(
+            "VS Code introuvable ({e}). Installez-le en cochant « Ajouter à PATH »."
+        ))
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -33,7 +33,7 @@ pub fn run() {
             fichiers_creer_dossier, fichiers_assurer_dossier, fichiers_renommer,
             fichiers_supprimer_temporaire, verrou_lire, verrou_poser, verrou_lever, poste_nom,
             poste_lire_reglages, poste_ecrire_reglages, poste_dossiers_onedrive,
-            poste_dossier_existe, poste_creer_dossier, poste_ecrire_fichier, poste_lire_fichier,
+            poste_dossier_existe, poste_creer_dossier, poste_ecrire_fichier, poste_lire_fichier, poste_ouvrir_vscode,
             surveillance_demarrer, surveillance_arreter
             $(, $module)*
             ]

@@ -93,6 +93,7 @@ export function plateformeTauri(): Plateforme {
         },
       };
     },
+    ouvrirVSCode: (chemin) => appel<void>("poste_ouvrir_vscode", { chemin }, chemin),
     ouvrirDossier: (chemin) => openPath(chemin),
     ouvrirLien: (url) => openUrl(url),
     surveiller: async (racine, rappel) => {
