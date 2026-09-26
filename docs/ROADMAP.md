@@ -4,16 +4,18 @@ Une phase par session (ou par petite série de sessions). Une phase est **termin
 les tests sont verts, le lint est propre, `A_TESTER_MANUELLEMENT.md` est à jour et
 l'installeur de la phase est produit par GitHub Actions.
 
-## P0 — Socle
-- [ ] Monorepo npm (`packages/`, `modules/`, `app/`), Tauri 2, Vite, Vitest, ESLint
+## P0 — Socle ✔
+- [x] Dépôt unique (`packages/`, `modules/`, `app/`), Tauri 2, Vite, Vitest, ESLint
       avec la règle « un module n'importe jamais un autre module »
-- [ ] Coquille : fenêtre, barre des modules, registre (manifestes, actions nommées)
-- [ ] Sélection des modules à la compilation (`THESE_MODULES` + *features* Cargo)
-- [ ] `noyau/stockage` : espace, écriture atomique, verrous, scan, copies de conflit
-      OneDrive, surveillance du dossier (extrait et généralisé depuis Figurine)
-- [ ] Réglages du poste, racines de données, premier lancement (choix de l'espace)
-- [ ] Accueil minimal + « À régler » + Diagnostic
-- [ ] GitHub Actions : tests Linux, installeur Windows `Thèse`
+- [x] Coquille : fenêtre, barre des modules, registre (manifestes, actions nommées)
+- [x] Sélection des modules à la compilation (`THESE_PRODUIT`, surcharges Tauri par
+      produit) ; *features* Cargo à ajouter avec le premier code natif de module (P1)
+- [x] `noyau/stockage` : espace, collections (un fichier par objet), écriture atomique et
+      exclusive, verrous, copies de conflit OneDrive (dont « garder les deux »),
+      comparaison de versions, surveillance du dossier (repris et généralisé de Figurine)
+- [x] Réglages du poste, racines de données, premier lancement (choix de l'espace)
+- [x] Accueil minimal + « À régler » + Diagnostic
+- [x] GitHub Actions : tests Linux, installeur Windows `Thèse`
 
 ## P1 — Figures (Figurine intégrée)
 - [ ] Import du code de `LucasDavidTPE/Trace` avec son historique (`git subtree`)

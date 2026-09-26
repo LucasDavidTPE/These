@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Figurine",
+  "identifier": "fr.lucasdavid.figurine",
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Figurine",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 500
+      }
+    ]
+  }
+}

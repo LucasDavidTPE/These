@@ -1,6 +1,6 @@
 # Cahier des charges — Thèse
 
-Version 0.1 — 26/09/2026. Document de travail : à valider avant la phase P0.
+Version 0.2 — 26/09/2026. Validé ; P0 (socle) réalisé.
 
 ## 1. Objectif
 
@@ -51,7 +51,8 @@ Hors périmètre, décidé : synchronisation avec Google Agenda ou Outlook, bout
 
 ## 3. Architecture
 
-Un seul dépôt, organisé en espaces de travail npm :
+Un seul dépôt et un seul `package.json`, organisé en dossiers dont les frontières sont
+vérifiées par une règle ESLint locale (`outils/eslint-frontieres.js`) :
 
 ```
 These/
@@ -69,14 +70,18 @@ These/
 │  ├─ campagnes/
 │  ├─ bibliotheque/
 │  └─ planning/
-├─ app/               la coquille : fenêtre, barre des modules, réglages, registre
+├─ app/               la coquille : fenêtre, barre des modules, premier lancement,
+│                     réglages du poste, diagnostic, plateformes Tauri et démo
 ├─ src-tauri/         Rust : fichiers, verrous, surveillance du dossier OneDrive,
 │                     presse-papiers Windows, détourage ONNX, lecture rapide des essais
 ├─ tests/golden/      références de conformité (Excel 2S2P1D, classeur biblio, TikZ)
 └─ docs/
 ```
 
-**Règles de dépendance** (vérifiées par le lint) :
+Alias d'import : `@noyau/…` et `@interface/…`. Chaque module a un `manifeste.tsx` à sa
+racine (identité, page, état pour l'Accueil, problèmes, actions).
+
+**Règles de dépendance** (vérifiées par le lint, et testées dans `tests/frontieres.test.ts`) :
 
 - un module importe `packages/*`, **jamais un autre module** ;
 - un module s'enregistre auprès de la coquille par un **manifeste** (identifiant, titre,
@@ -87,8 +92,12 @@ These/
 
 ### 3.1 Installeurs
 
-Le même code produit plusieurs installeurs, en choisissant les modules à la compilation
-(variable `THESE_MODULES` côté Vite, *features* Cargo côté Rust) :
+Le même code produit plusieurs installeurs. Le produit est choisi à la compilation par
+`THESE_PRODUIT` (`npm run construire -- figurine`) : le module virtuel Vite
+`virtual:these-produit` n'importe que les manifestes des modules du produit, Tauri reçoit
+la surcharge `src-tauri/produits/<produit>.json`, et le code natif propre à un module
+(détourage…) sera rangé derrière une *feature* Cargo. Un produit d'un seul module s'ouvre
+directement sur ce module, sans barre latérale ni espace :
 
 | Installeur | Modules | Identifiant Windows | Remarque |
 |---|---|---|---|
@@ -155,7 +164,7 @@ Règles, reprises de Figurine et généralisées à tous les modules :
 
 ### 4.2 Réglages de chaque poste (local, jamais dans OneDrive)
 
-`%APPDATA%\fr.lucasdavid.these\poste.json` : chemin de l'espace, chemin de la
+`%APPDATA%\<identifiant du produit>\poste.json` : chemin de l'espace, chemin de la
 bibliothèque de figures, **racines de données** de ce poste, taille des fenêtres,
 filtres mémorisés.
 

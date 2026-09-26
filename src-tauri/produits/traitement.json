@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Traitement 2S2P1D",
+  "identifier": "fr.lucasdavid.traitement2s2p1d",
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Traitement 2S2P1D",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 500
+      }
+    ]
+  }
+}

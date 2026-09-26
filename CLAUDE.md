@@ -28,6 +28,16 @@ Tauri 2 (Rust) + TypeScript / React / Vite, Zustand, Vitest, `cargo test`.
 - Ce qui reproduit un calcul existant (Excel 2S2P1D, classeur de bibliographie) est
   couvert par un test de conformité ; ces tests ne sont jamais assouplis pour passer.
 
+## Commandes
+```
+npm install
+npm run test && npm run lint && npm run typecheck
+cd src-tauri && cargo test && cargo clippy --all-targets
+npm run dev                      # démo navigateur ; ?scenario=complet pour « À régler »
+npm run construire -- <produit>  # these | figurine | traitement
+```
+Sous Linux, `cargo test` demande les bibliothèques WebKitGTK (`libwebkit2gtk-4.1-dev`).
+
 ## Définition de « terminé »
 Tests verts, lint propre, `docs/A_TESTER_MANUELLEMENT.md` à jour, case cochée dans
 `docs/ROADMAP.md`.
