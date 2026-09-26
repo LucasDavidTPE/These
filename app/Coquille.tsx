@@ -2,6 +2,7 @@
  * La coquille : barre des modules, page courante, et ce qu'elle partage avec les modules
  * (contexte, registre, surveillance de l'espace, liste « À régler »).
  */
+import { avecGarde } from "@noyau/stockage";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { problemesRacine } from "@noyau/espace/espace";
 import type { ReglagesPoste } from "@noyau/poste/reglages";
@@ -34,7 +35,7 @@ export function Coquille({ produit, manifestes, plateforme, poste, reglages, enr
   const [problemes, setProblemes] = useState<ProblemeSitue[]>([]);
 
   const espace = useMemo(
-    () => (produit.espace && reglages.espace ? { racine: reglages.espace, fichiers: plateforme.fichiers(reglages.espace) } : null),
+    () => (produit.espace && reglages.espace ? { racine: reglages.espace, fichiers: avecGarde(plateforme.fichiers(reglages.espace)) } : null),
     [produit.espace, reglages.espace, plateforme],
   );
 

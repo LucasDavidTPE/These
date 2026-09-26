@@ -158,3 +158,10 @@ Ce qui change avec l'intégration :
 - [ ] Après « Enregistrer avec l'essai » dans le traitement : la page de campagne montre
       « Résultats du traitement 2S2P1D » ; « ← Campagne » revient sur la campagne
       (vu blanc en démonstration : à vérifier en priorité).
+
+## Deux PC allumés en même temps
+
+- [ ] Ouvrir la même fiche (campagne, référence, élément du planning) sur les deux PC ;
+      la modifier et l'enregistrer sur B ; attendre la synchronisation OneDrive ; la
+      modifier sur A sans recharger : A refuse (« modifié ailleurs… rechargez »), la
+      version de B est intacte.

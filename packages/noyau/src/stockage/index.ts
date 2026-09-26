@@ -7,3 +7,4 @@ export * from "./memoire";
 export * from "./problemes";
 export * from "./verrou";
 export * from "./comparaison";
+export * from "./garde";
