@@ -113,3 +113,11 @@ Ce qui change avec l'intégration :
       poste ; sur l'autre PC, avec la sienne.
 - [ ] Copier `studies/2026-09-07_lecture-essai-module-complexe-b2c4-bio` de these-lgcb dans
       `Espace\etudes\` : l'étude apparaît avec sa fiche et ses sorties.
+
+## Bibliothèque : DOI et doublons
+
+- [ ] Nouvelle référence → saisir `10.2346/tire.12.400403` → « Remplir depuis le DOI » :
+      titre, auteurs, revue, volume, pages et clé `debeer2012toward` sont remplis.
+- [ ] Hors ligne : message clair, rien n'est modifié.
+- [ ] La nouvelle référence (même DOI que BIB-001) est signalée comme doublon sur le
+      tableau de bord.

@@ -21,6 +21,22 @@ export function TableauDeBordVue({ b, ouvrir }: { b: Biblio; ouvrir(id: string):
   const t = b.tb;
   return (
     <>
+      {b.doublons.length ? (
+        <div className="message message-attention">
+          <strong>Doublons possibles :</strong>{" "}
+          {b.doublons.map((d) => (
+            <span key={d.motif + d.valeur}>
+              {d.motif} identique pour{" "}
+              {d.ids.map((id) => (
+                <button key={id} type="button" className="lien" onClick={() => ouvrir(id)}>
+                  {id}
+                </button>
+              ))}
+              {" · "}
+            </span>
+          ))}
+        </div>
+      ) : null}
       <div className="message message-info">
         <strong>Mois {t.libelleMoisCourant}</strong> · {t.heuresRestantesMois} h de lecture restantes ce mois-ci pour {t.parMois[0]?.capacite ?? b.parametres.capaciteHeures} h de capacité ·{" "}
         {t.charge} · <strong>Prochaine action :</strong> {t.prochaineAction}

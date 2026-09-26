@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { chargerCollection, creerObjet, enregistrerObjet, Introuvable, jsonStable, type Fichiers, type ObjetCharge, type Probleme } from "@noyau/stockage";
 import { useContexte } from "@interface/contexte";
 import { calculer, moisCourant, tableauDeBord, type Calcule, type TableauDeBord } from "../core/calculs";
+import { doublons, type Doublon } from "../core/doublons";
 import type { ImportClasseur } from "../core/import";
 import {
   CORRECTIONS,
@@ -35,6 +36,7 @@ export interface Biblio {
   aujourdhui: string;
   calc: Calcule[];
   tb: TableauDeBord;
+  doublons: Doublon[];
 }
 
 /** Date du jour, locale, « AAAA-MM-JJ ». */
@@ -81,6 +83,7 @@ export async function chargerBiblio(fs: Fichiers, jour = aujourdhui()): Promise<
     problemes,
     aujourdhui: jour,
     calc,
+    doublons: doublons(references.objets),
     tb: tableauDeBord(
       calc,
       demandes.objets.map((d) => d.valeur),

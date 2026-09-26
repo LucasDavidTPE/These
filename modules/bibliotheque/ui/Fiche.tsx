@@ -7,6 +7,7 @@ import { resoudre } from "@noyau/poste/racines";
 import { Message, Section } from "@interface/composants";
 import { useContexte } from "@interface/contexte";
 import { libelleMois, type Calcule } from "../core/calculs";
+import { cleProposee, depuisCrossref, urlCrossref } from "../core/doi";
 import { ACCES_DOCUMENT, PRIORITES, STATUTS, VERIFICATIONS, type FicheLecture, type NotesLecture, type Reference } from "../core/modele";
 import { ChampChoix, ChampTexte, Libelle } from "./champs";
 import { PastilleEtat } from "./commun";
@@ -40,6 +41,26 @@ const NOTES: [keyof NotesLecture, string][] = [
 export function Fiche({ b, c, onEnregistrer, onFermer }: { b: Biblio; c: Calcule; onEnregistrer(r: Reference): void; onFermer(): void }) {
   const ctx = useContexte();
   const [erreur, setErreur] = useState<string | null>(null);
+  const [doi, setDoi] = useState("");
+  const [recherche, setRecherche] = useState(false);
+
+  /** Métadonnées Crossref : requête réseau seulement sur ce clic (SPEC §11). */
+  async function remplirDepuisDoi(valeur: string) {
+    setRecherche(true);
+    setErreur(null);
+    try {
+      const rep = await fetch(urlCrossref(valeur), { headers: { Accept: "application/json" } });
+      if (!rep.ok) throw new Error(rep.status === 404 ? "DOI inconnu de Crossref." : `Crossref a répondu ${rep.status}.`);
+      const m = depuisCrossref(await rep.json());
+      const suite = { ...r, ...Object.fromEntries(Object.entries(m).filter(([, v]) => v !== "" && v !== null)) } as Reference;
+      if (!r.cle || r.cle.startsWith("nouvelle")) suite.cle = cleProposee(suite);
+      onEnregistrer({ ...suite, verifieLe: new Date().toISOString().slice(0, 10) });
+    } catch (e) {
+      setErreur(`Remplissage depuis le DOI impossible : ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setRecherche(false);
+    }
+  }
   const r = c.ref;
   const maj = (champ: Partial<Reference>) => onEnregistrer({ ...r, ...champ });
   const t = (k: keyof Reference) => (v: string) => maj({ [k]: v } as Partial<Reference>);
@@ -189,7 +210,17 @@ export function Fiche({ b, c, onEnregistrer, onFermer }: { b: Biblio; c: Calcule
         </div>
       </Section>
 
-      <Section titre="Métadonnées">
+      <Section
+        titre="Métadonnées"
+        aDroite={
+          <span className="rangee">
+            <input className="champ" placeholder="DOI (10.xxxx/…)" value={doi || r.doi} onChange={(e) => setDoi(e.target.value)} style={{ width: 240 }} />
+            <button type="button" disabled={recherche || !(doi || r.doi)} onClick={() => void remplirDepuisDoi(doi || r.doi)}>
+              {recherche ? "Recherche…" : "Remplir depuis le DOI"}
+            </button>
+          </span>
+        }
+      >
         <div className="grille-champs">
           <Libelle titre="Clé">
             <ChampTexte valeur={r.cle} onValider={t("cle")} />

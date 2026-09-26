@@ -52,7 +52,9 @@ l'installeur de la phase est produit par GitHub Actions.
 - [x] Demandes, Corrections TFE, Pistes, Analyse croisée (matrice recalculée + textes)
 - [x] Actions : ouvrir le lien (proxy), doi.org, Scholar, ouvrir le PDF, marquer lu,
       nouvelle référence ; exports RIS et BibTeX
-- [ ] Plus tard : vérifier les liens, ajout par DOI (OpenAlex / Crossref), export Markdown
+- [x] Remplir une référence depuis son DOI (Crossref, sur demande) ; contrôle des doublons
+      (clé, DOI, titre + premier auteur) sur le tableau de bord
+- [ ] Plus tard : vérifier les liens (demande des requêtes côté Rust), export Markdown
       (selon la réponse aux questions Obsidian / iPad), contrôle des doublons
 
 ## P4 — Planning ✔

@@ -172,3 +172,33 @@ describe("exports", () => {
     expect(versBibtex(refs)).toBe(bib);
   });
 });
+
+describe("doublons et DOI", () => {
+  it("le classeur n'a pas de doublon ; une copie est détectée par clé, DOI et titre", async () => {
+    const { doublons } = await import("../core/doublons");
+    expect(doublons(imp.references)).toEqual([]);
+    const r = imp.references[0]!;
+    const copie = { id: "BIB-999", valeur: { ...r.valeur, titre: r.valeur.titre.toUpperCase() + " !" } };
+    expect(doublons([...imp.references, copie]).map((d) => d.motif)).toEqual(["clé", "DOI", "titre"]);
+  });
+
+  it("convertit une réponse Crossref", async () => {
+    const { cleProposee, depuisCrossref, urlCrossref } = await import("../core/doi");
+    expect(urlCrossref("https://doi.org/10.2346/tire.12.400403")).toBe("https://api.crossref.org/works/10.2346%2Ftire.12.400403");
+    const r = depuisCrossref({
+      message: {
+        DOI: "10.2346/tire.12.400403",
+        title: ["Toward using tire-road contact stresses in pavement design and analysis"],
+        author: [{ family: "De Beer", given: "Morris" }, { family: "Maina", given: "James W." }],
+        issued: { "date-parts": [[2012, 12]] },
+        "container-title": ["Tire Science and Technology"],
+        volume: "40",
+        issue: "4",
+        page: "246-271",
+        type: "journal-article",
+      },
+    });
+    expect(r).toMatchObject({ auteurs: "De Beer, M.; Maina, J. W.", annee: 2012, typeRis: "JOUR", support: "Tire Science and Technology", url: "https://doi.org/10.2346/tire.12.400403" });
+    expect(cleProposee({ auteurs: r.auteurs!, annee: r.annee!, titre: r.titre! })).toBe("debeer2012toward");
+  });
+});
