@@ -129,7 +129,7 @@ pub fn decoder_url(s: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::urlencoding_decode;
+    use super::decoder_url;
 
     #[test]
     fn decodes_encode_uri_component() {
