@@ -222,7 +222,12 @@ Toutes les fonctions actuelles du site (voir le README du dépôt d'origine) :
 Exigence : les tests de conformité de `test/reference/` (valeurs recalculées par
 LibreOffice depuis `Calcul.xlsx`) sont portés et **restent verts à l'identique**.
 
-Ce qui change :
+Mise en œuvre en deux étapes. **Étape 1 (faite)** : la page existante est reprise telle
+quelle dans `modules/traitement/statique/` et affichée dans le module ; ses exports passent
+par « Enregistrer sous ». **Étape 2** : cœur porté en TypeScript et interface React, avec
+les liens ci-dessous.
+
+Ce qui change à l'étape 2 :
 
 - ouverture directe d'un essai depuis **Campagnes** (plus de fichier à rechercher) ; le
   projet est enregistré dans `campagnes/<c>/essais/<e>/traitement.json`, et ses

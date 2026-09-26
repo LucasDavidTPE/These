@@ -6,7 +6,9 @@ import tseslint from "typescript-eslint";
 import frontieres from "./outils/eslint-frontieres.js";
 
 export default tseslint.config(
-  { ignores: ["dist", "node_modules", "src-tauri/target", "src-tauri/gen"] },
+  // modules/*/statique : pages reprises telles quelles (JavaScript sans empaquetage), avec
+  // leurs propres tests (node --test).
+  { ignores: ["dist", "node_modules", "src-tauri/target", "src-tauri/gen", "modules/*/statique/**", "modules/*/tests/**/*.js"] },
   {
     files: ["**/*.{ts,tsx}"],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],

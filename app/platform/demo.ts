@@ -92,6 +92,14 @@ export function plateformeDemo(scenario: string | null): Plateforme {
       dossier(racine).supprimer(chemin);
       for (const rappel of abonnes.get(normaliser(racine)) ?? []) rappel([chemin]);
     },
+    enregistrerSous: async (nom, octets) => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([octets as BlobPart]));
+      a.download = nom;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      return true;
+    },
     ouvrirDossier: async (chemin) => {
       window.alert(`Démonstration : l'Explorateur s'ouvrirait sur\n${chemin}`);
     },

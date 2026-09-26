@@ -30,12 +30,18 @@ l'installeur de la phase est produit par GitHub Actions.
 - [ ] Action « Enregistrer dans Figures » offerte aux autres modules : à faire avec son
       premier utilisateur (Traitement, P2)
 
-## P2 — Traitement 2S2P1D
-- [ ] Portage JS → TypeScript de `src/coeur` et `src/io` dans `packages/noyau`
-      (lecture des essais, régression, modèles, optimiseur, WLF)
-- [ ] Tests de conformité `test/reference/` portés, **à l'identique**
-- [ ] Interface React (reprise de l'interface du site), tri des cycles, exports `.xlsx`
-- [ ] Installeur `Traitement 2S2P1D` seul (ouvrir / enregistrer des fichiers)
+## P2 — Traitement 2S2P1D (étape 1 ✔)
+- [x] Page de dépouillement reprise telle quelle (`modules/traitement/statique/`, commit
+      260bb55 de 2S2P1D-traitement), sans réseau (polices Google retirées), servie par
+      l'application ; seuls les modules du produit sont embarqués
+- [x] Tests de conformité `test/reference/` portés **à l'identique** (`node --test`,
+      lancés par `npm test`)
+- [x] Exports (`.xlsx`, projet `.json`) par la boîte « Enregistrer sous » de Windows
+- [ ] Étape 2 : cœur en TypeScript dans `modules/traitement/core`, interface React,
+      « Enregistrer dans Figures » ; à faire avec Campagnes (P5), qui ouvrira les essais
+      directement
+- [ ] Installeur `Traitement 2S2P1D` seul : la configuration existe
+      (`npm run construire -- traitement`), à produire par la CI
 
 ## P3 — Bibliothèque
 - [ ] Modèle de données, `parametres.json`, calculs (citation, état, alerte, score, temps)

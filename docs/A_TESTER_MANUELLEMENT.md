@@ -46,3 +46,12 @@ Ce qui change avec l'intégration :
       barre latérale ni écran d'espace.
 - [ ] Figurine 1.1.0 et Thèse installés ensemble : chacun a ses propres réglages
       (`%APPDATA%\fr.lucasdavid.figurine` et `%APPDATA%\fr.lucasdavid.these`).
+
+## P2 — Traitement 2S2P1D (étape 1)
+
+- [ ] Le module s'ouvre sur l'essai de démonstration entièrement calculé, sans connexion
+      Internet (polices système à la place d'IBM Plex : c'est voulu).
+- [ ] « Déposer un fichier » ouvre la boîte Windows ; un export MTS `.csv` réel se charge.
+- [ ] Export `.xlsx` et fichier projet : la boîte « Enregistrer sous » s'ouvre, le fichier
+      est écrit à l'endroit choisi et s'ouvre dans Excel.
+- [ ] Rouvrir un fichier projet `.json` enregistré par le site en ligne : même résultat.

@@ -23,6 +23,11 @@ export interface Plateforme {
   fichiers(racine: string): Fichiers;
   /** Supprime un fichier temporaire `*.tmp` laissé par une écriture interrompue. */
   supprimerTemporaire(racine: string, chemin: string): Promise<void>;
+  /**
+   * Boîte « Enregistrer sous » puis écriture du fichier ; false si l'utilisateur annule.
+   * `nom` propose le nom de fichier (son extension sert de filtre).
+   */
+  enregistrerSous(nom: string, octets: Uint8Array): Promise<boolean>;
   /** Ouvre un dossier dans l'Explorateur. */
   ouvrirDossier(chemin: string): Promise<void>;
   /** Ouvre une adresse web dans le navigateur par défaut. */

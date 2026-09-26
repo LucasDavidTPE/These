@@ -4,7 +4,7 @@
  */
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open, save } from "@tauri-apps/plugin-dialog";
 import { openPath, openUrl } from "@tauri-apps/plugin-opener";
 import { erreurDepuisIpc, type Entree } from "@noyau/stockage";
 import type { Plateforme } from "@interface/plateforme";
@@ -58,6 +58,13 @@ export function plateformeTauri(): Plateforme {
       rename: (de, vers) => appel<void>("fichiers_renommer", { racine, de, vers }, vers),
     }),
     supprimerTemporaire: (racine, chemin) => appel<void>("fichiers_supprimer_temporaire", { racine, chemin }, chemin),
+    enregistrerSous: async (nom, octets) => {
+      const ext = nom.includes(".") ? nom.slice(nom.lastIndexOf(".") + 1) : "";
+      const chemin = await save({ title: "Enregistrer sous", defaultPath: nom, filters: ext ? [{ name: ext.toUpperCase(), extensions: [ext] }] : [] });
+      if (!chemin) return false;
+      await appelBrut<void>("poste_ecrire_fichier", octets, { "x-chemin": chemin }, chemin);
+      return true;
+    },
     ouvrirDossier: (chemin) => openPath(chemin),
     ouvrirLien: (url) => openUrl(url),
     surveiller: async (racine, rappel) => {

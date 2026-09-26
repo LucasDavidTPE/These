@@ -5,7 +5,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { PRODUITS } from "../packages/noyau/src/produits";
-import { sourceDuProduit } from "../outils/produit-vite";
+import { fichiersStatiques, sourceDuProduit } from "../outils/produit-vite";
 
 const lire = (rel: string) => JSON.parse(readFileSync(new URL(`../${rel}`, import.meta.url), "utf8")) as Record<string, unknown>;
 
@@ -31,6 +31,12 @@ describe("produits", () => {
     expect(figurine).toContain('"/modules/figures/manifeste.tsx"');
     expect(figurine).not.toContain("/modules/bibliotheque/");
     expect(sourceDuProduit(undefined).match(/import m\d+ from/g)).toHaveLength(6);
+  });
+
+  it("les fichiers statiques d'un module ne sont embarqués que dans ses produits", () => {
+    expect(fichiersStatiques("traitement").map((f) => f.fichier)).toContain("index.html");
+    expect(fichiersStatiques("these").some((f) => f.module === "traitement" && f.fichier === "src/main.js")).toBe(true);
+    expect(fichiersStatiques("figurine")).toEqual([]);
   });
 
   it("chaque module a son manifeste", () => {

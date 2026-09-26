@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Module complexe 2S2P1D</title>
+<meta name="description" content="Traitement d'essai de module complexe et calage 2S2P1D, reproduisant exactement les formules du classeur Excel du LTDS.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b5f5c'/%3E%3Cpath d='M5 23c5 0 6-14 11-14s6 14 11 14' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+
+<!-- Visible uniquement si les modules ne se sont pas chargés : c'est le cas
+     quand cette page est ouverte par double-clic, Chrome refusant les modules
+     depuis file://. main.js retire ce bloc dès qu'il démarre. -->
+<div id="ouverture-locale" style="max-width:640px;margin:14vh auto;padding:24px 28px;
+     border:1px solid var(--trait);border-radius:8px;background:var(--surface);
+     font-family:var(--police-ui);line-height:1.6">
+  <h1 style="font-family:var(--police-hd);font-size:19px;margin:0 0 10px">
+    Cette page-ci doit être servie, pas ouverte directement
+  </h1>
+  <p style="margin:0 0 14px;color:var(--encre-2)">
+    <code>index.html</code> est la version du dépôt, découpée en modules. Les navigateurs
+    refusent de charger des modules JavaScript depuis <code>file://</code>, d'où cette page vide.
+  </p>
+  <p style="margin:0 0 6px"><b>Pour utiliser le site hors ligne</b>, ouvrez plutôt&nbsp;:</p>
+  <p style="margin:0 0 16px;font-family:var(--police-mo);font-size:13px;
+     background:var(--surface-2);padding:8px 10px;border-radius:5px">
+    dist/2S2P1D - traitement module complexe.html
+  </p>
+  <p style="margin:0 0 6px"><b>Pour travailler sur le code source</b>, lancez un serveur local&nbsp;:</p>
+  <p style="margin:0;font-family:var(--police-mo);font-size:13px;
+     background:var(--surface-2);padding:8px 10px;border-radius:5px">
+    node outils/serveur.mjs<br>puis http://localhost:8080
+  </p>
+</div>
+
+<div class="app">
+
+<header class="haut">
+  <div class="rangee">
+    <div class="marque">
+      <span class="sigle">2S2P1D</span>
+      <h1>Module complexe — traitement d'essai</h1>
+    </div>
+    <span class="pousse"></span>
+    <div class="meta-haut">
+      <label class="hors-ecran" for="selEssai">Essai courant</label>
+      <select id="selEssai" style="width:auto;min-width:180px"></select>
+      <div class="segment" role="group" aria-label="Mode de calcul">
+        <button id="modeExcel" aria-pressed="true">Excel à l'identique</button>
+        <button id="modeCorrige" aria-pressed="false">Corrigé</button>
+      </div>
+      <button class="btn" id="btnTheme">Thème</button>
+    </div>
+  </div>
+  <nav class="etapes" id="etapes" role="tablist" aria-label="Étapes du traitement">
+    <button role="tab" aria-selected="true"  aria-controls="etape0" id="onglet0"><span class="n">01</span>Essai</button>
+    <button role="tab" aria-selected="false" aria-controls="etape1" id="onglet1"><span class="n">02</span>Cycles</button>
+    <button role="tab" aria-selected="false" aria-controls="etape2" id="onglet2"><span class="n">03</span>Synthèse</button>
+    <button role="tab" aria-selected="false" aria-controls="etape3" id="onglet3"><span class="n">04</span>Calage</button>
+    <button role="tab" aria-selected="false" aria-controls="etape4" id="onglet4"><span class="n">05</span>Comparaison</button>
+    <button role="tab" aria-selected="false" aria-controls="etape5" id="onglet5"><span class="n">06</span>Fidélité Excel</button>
+    <button role="tab" aria-selected="false" aria-controls="etape6" id="onglet6"><span class="n">07</span>Export</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ══════════════ 01 ESSAI ══════════════ -->
+<section class="etape" id="etape0" role="tabpanel" aria-labelledby="onglet0" tabindex="0">
+  <div class="deux">
+    <div>
+      <div class="bloc">
+        <header><h2>Fichier de mesure</h2>
+          <span class="aide">export machine — .csv et .txt bien plus rapides que .xlsx</span></header>
+        <button type="button" class="depot" id="depot">
+          <strong>Déposer un fichier de campagne</strong>
+          MTS/Instron ou WaveMatrix — les voies sont reconnues automatiquement
+        </button>
+        <input type="file" id="fichier" accept=".xlsx,.xlsm,.csv,.txt" multiple class="hors-ecran">
+        <p class="note" id="infoFichier" style="margin-top:12px"></p>
+      </div>
+
+      <div class="bloc">
+        <header><h2>Correspondance des voies</h2>
+          <span class="aide">colonne du fichier → voie de la feuille « données »</span></header>
+        <div class="grille-champs" id="correspondance"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="bloc">
+        <header><h2>Éprouvette</h2></header>
+        <div class="grille-champs">
+          <div class="champ"><label for="pNom">Nom</label><input type="text" id="pNom"></div>
+          <div class="champ"><label for="pDiam">Diamètre <span class="unite">mm</span></label><input type="number" id="pDiam" step="0.01"></div>
+          <div class="champ"><label for="pHaut">Hauteur <span class="unite">mm</span></label><input type="number" id="pHaut" step="0.1"></div>
+          <div class="champ"><label for="pHcal">h_calcul <span class="unite">mm</span></label><input type="number" id="pHcal" step="0.001"></div>
+          <div class="champ"><label for="pCycle">Cycle initial</label><input type="number" id="pCycle" step="1"></div>
+        </div>
+        <div class="indicateurs" style="margin-top:6px">
+          <div class="indicateur"><div class="cle">Surface</div><div class="val" id="vSurface">—</div></div>
+          <div class="indicateur"><div class="cle">Lignes brutes</div><div class="val" id="vLignes">—</div></div>
+        </div>
+      </div>
+
+      <div class="bloc">
+        <header><h2>Capteurs sans contact</h2><span class="aide">Y (mm) = A·V + B</span></header>
+        <div class="grille-champs">
+          <div class="champ"><label for="cA1">Lion 1 — A</label><input type="number" id="cA1" step="any"></div>
+          <div class="champ"><label for="cB1">Lion 1 — B</label><input type="number" id="cB1" step="any"></div>
+          <div class="champ"><label for="cA2">Lion 2 — A</label><input type="number" id="cA2" step="any"></div>
+          <div class="champ"><label for="cB2">Lion 2 — B</label><input type="number" id="cB2" step="any"></div>
+        </div>
+        <p class="note" style="margin-top:10px">Capteurs en volts ou en µm : A = 0,001. En millimètres : A = 1.</p>
+      </div>
+
+      <div class="bloc">
+        <header><h2>Voies retenues</h2><span class="aide">exclure un capteur décroché</span></header>
+        <div class="rangee-btn" id="voies"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bloc">
+    <header><h2>Campagne — nombre de cycles par palier</h2>
+      <span class="aide">colonnes : températures · lignes : fréquences</span></header>
+    <div class="rangee-btn" style="margin-bottom:10px">
+      <button class="btn" id="btnDetecter">Détecter dans le fichier</button>
+      <button class="btn" id="btnAddT">+ température</button>
+      <button class="btn" id="btnDelT">− température</button>
+      <button class="btn" id="btnAddF">+ fréquence</button>
+      <button class="btn" id="btnDelF">− fréquence</button>
+      <span class="pousse"></span>
+      <button class="btn fort" id="btnTraiter">Traiter la campagne</button>
+    </div>
+    <p class="note" id="infoDetection" style="margin-bottom:12px"></p>
+    <div class="cadre-tableau" style="max-height:none"><table class="matrice" id="matrice"></table></div>
+  </div>
+</section>
+
+<!-- ══════════════ 02 CYCLES ══════════════ -->
+<section class="etape" id="etape1" role="tabpanel" aria-labelledby="onglet1" tabindex="0" hidden>
+  <div class="bloc">
+    <header><h2>Palier</h2><span class="aide">un palier = un couple (T, f) = un classeur Calc-…</span></header>
+    <div class="rangee-btn">
+      <label class="hors-ecran" for="selPalier">Palier</label>
+      <select id="selPalier" style="max-width:360px"></select>
+      <span id="statsPalier" class="meta-haut"></span>
+    </div>
+  </div>
+  <div class="deux">
+    <div class="bloc">
+      <header><h2>Résultats par cycle</h2>
+        <span class="aide">décocher un cycle le retire de la synthèse et du calage</span></header>
+      <div class="cadre-tableau"><table id="tabCycles"></table></div>
+      <p class="note" style="margin-top:10px">Sélectionner une ligne affiche son signal à droite :
+        c'est là qu'on juge un cycle avant de l'écarter. Au clavier, <kbd>Entrée</kbd> sélectionne
+        et <kbd>X</kbd> écarte ou remet.</p>
+    </div>
+    <div>
+      <figure class="graphe">
+        <h3>Signal mesuré et sinusoïde ajustée</h3>
+        <p class="sous" id="sousSignal">choisir un cycle dans le tableau</p>
+        <div class="rangee-btn" style="margin-bottom:8px">
+          <label class="hors-ecran" for="selVoie">Voie</label>
+          <select id="selVoie" style="max-width:220px"></select>
+        </div>
+        <canvas id="gSignal" aria-label="Signal mesuré et sinusoïde ajustée"></canvas>
+        <figcaption id="capSignal"></figcaption>
+      </figure>
+      <figure class="graphe" style="margin-top:14px">
+        <h3>Écart d'amplitude entre capteurs</h3>
+        <p class="sous">écart de chaque voie à la moyenne, cycle par cycle</p>
+        <canvas id="gEcart" aria-label="Écart d'amplitude de chaque capteur, cycle par cycle"></canvas>
+        <figcaption id="capEcart"></figcaption>
+        <div class="legende" id="legEcart"></div>
+      </figure>
+    </div>
+  </div>
+
+  <div class="bloc">
+    <header><h2>Cycles écartés du calcul</h2>
+      <span class="aide">rien n'est perdu : tout est réversible et enregistré avec le projet</span></header>
+    <p class="note" id="resumeEcartes"></p>
+    <div class="rangee-btn" style="margin:12px 0">
+      <span class="etiquette">Proposer d'écarter au-delà de</span>
+      <label class="hors-ecran" for="seuilIq">Indice de qualité maximal</label>
+      <input type="number" id="seuilIq" value="10" step="0.5" min="0" style="width:90px">
+      <span class="etiquette" style="text-transform:none;letter-spacing:0">% d'indice de qualité, ou</span>
+      <label class="hors-ecran" for="seuilEcart">Écart d'amplitude maximal</label>
+      <input type="number" id="seuilEcart" value="25" step="1" min="0" style="width:90px">
+      <span class="etiquette" style="text-transform:none;letter-spacing:0">% d'écart entre capteurs</span>
+      <button class="btn" id="btnProposer">Proposer</button>
+      <span class="pousse"></span>
+      <button class="btn" id="btnToutRetablir">Tout remettre</button>
+    </div>
+    <div class="cadre-tableau" style="max-height:44vh"><table id="tabEcartes"></table></div>
+  </div>
+</section>
+
+<!-- ══════════════ 03 SYNTHÈSE ══════════════ -->
+<section class="etape" id="etape2" role="tabpanel" aria-labelledby="onglet2" tabindex="0" hidden>
+  <div class="bloc">
+    <header><h2>Synthèse par palier</h2>
+      <span class="aide">moyenne, extrêmes et écart-type sur les cycles</span></header>
+    <div class="segment" role="group" aria-label="Statistique affichée" style="margin-bottom:10px">
+      <button data-stat="" aria-pressed="true">Moyenne</button>
+      <button data-stat="_min" aria-pressed="false">Min</button>
+      <button data-stat="_max" aria-pressed="false">Max</button>
+      <button data-stat="_et" aria-pressed="false">Écart-type</button>
+    </div>
+    <div class="cadre-tableau"><table id="tabSynthese"></table></div>
+  </div>
+  <div class="graphiques">
+    <figure class="graphe"><h3>|E*| par isotherme</h3><p class="sous">module en fonction de la fréquence de sollicitation</p>
+      <canvas id="gSynE" aria-label="Module par isotherme"></canvas><figcaption id="capSynE"></figcaption>
+      <div class="legende" id="legSyn"></div></figure>
+    <figure class="graphe"><h3>Angle de phase</h3><p class="sous">φ(E*) en fonction de la fréquence</p>
+      <canvas id="gSynP" aria-label="Angle de phase par isotherme"></canvas><figcaption id="capSynP"></figcaption></figure>
+  </div>
+</section>
+
+<!-- ══════════════ 04 CALAGE ══════════════ -->
+<section class="etape" id="etape3" role="tabpanel" aria-labelledby="onglet3" tabindex="0" hidden>
+  <div class="deux">
+    <div>
+      <div class="graphiques">
+        <figure class="graphe"><h3>Plan Cole-Cole</h3><p class="sous">E₂ en fonction de E₁ — fixe E0, E00, k, h, δ</p>
+          <canvas id="gCole" aria-label="Plan Cole-Cole"></canvas><figcaption id="capCole"></figcaption></figure>
+        <figure class="graphe"><h3>Espace de Black</h3><p class="sous">|E*| en fonction de φ</p>
+          <canvas id="gBlack" aria-label="Espace de Black"></canvas><figcaption id="capBlack"></figcaption></figure>
+        <figure class="graphe"><h3>Courbe maîtresse |E*|</h3><p class="sous">module en fonction de f·a<sub>T</sub></p>
+          <canvas id="gMaitreE" aria-label="Courbe maîtresse du module"></canvas><figcaption id="capMaitreE"></figcaption></figure>
+        <figure class="graphe"><h3>Courbe maîtresse φ</h3><p class="sous">angle de phase en fonction de f·a<sub>T</sub></p>
+          <canvas id="gMaitreP" aria-label="Courbe maîtresse de l'angle de phase"></canvas><figcaption id="capMaitreP"></figcaption></figure>
+        <figure class="graphe"><h3>Facteurs de translation</h3><p class="sous">a<sub>T</sub> expérimentaux et loi WLF</p>
+          <canvas id="gAT" aria-label="Facteurs de translation et loi WLF"></canvas><figcaption id="capAT"></figcaption></figure>
+        <figure class="graphe"><h3>Coefficient de Poisson</h3><p class="sous">|ν*| en fonction de f·a<sub>T</sub></p>
+          <canvas id="gNu" aria-label="Coefficient de Poisson"></canvas><figcaption id="capNu"></figcaption></figure>
+      </div>
+      <div class="legende" id="legTemps" style="margin-top:12px"></div>
+    </div>
+
+    <div>
+      <div class="bloc">
+        <header><h2>Modèle</h2></header>
+        <div class="champ"><label for="selModele">Loi de comportement</label><select id="selModele"></select></div>
+        <p class="note" id="infoModele"></p>
+        <div class="champ" style="margin-top:10px"><label for="selTref">Température de référence <span class="unite">°C</span></label>
+          <select id="selTref"></select></div>
+        <div class="indicateurs">
+          <div class="indicateur"><div class="cle">Points</div><div class="val" id="vPoints">—</div></div>
+          <div class="indicateur"><div class="cle">Écart |E*|</div><div class="val" id="vEcartE">—</div></div>
+          <div class="indicateur"><div class="cle">Écart φ</div><div class="val" id="vEcartP">—</div></div>
+        </div>
+      </div>
+
+      <div class="bloc">
+        <header><h2>Constantes</h2><span class="aide">module</span></header>
+        <div id="paramsModule"></div>
+        <div class="rangee-btn" style="margin-top:10px">
+          <button class="btn fort" id="btnCalerConjoint">Caler tout</button>
+          <button class="btn" id="btnCalerModule">Constantes seules</button>
+          <button class="btn" id="btnReinit">Réinitialiser</button>
+        </div>
+        <p class="note" style="margin-top:10px">« Caler tout » ajuste les constantes <em>et</em> les a<sub>T</sub> ensemble : c'est le seul moyen de placer les isothermes les plus froides, qui sont sur l'asymptote vitreuse et ne portent presque aucune information sur leur propre translation.</p>
+      </div>
+
+      <div class="bloc" id="blocPoisson">
+        <header><h2>Coefficient de Poisson</h2><span class="aide">mêmes k, h, δ, β</span></header>
+        <div id="paramsPoisson"></div>
+        <div class="rangee-btn" style="margin-top:10px"><button class="btn fort" id="btnCalerNu">Ajuster ν*</button></div>
+      </div>
+
+      <div class="bloc">
+        <header><h2>Facteurs de translation</h2></header>
+        <div class="rangee-btn" style="margin-bottom:10px">
+          <button class="btn" id="btnRecaler">Recaler les isothermes</button>
+          <button class="btn" id="btnWLF">Ajuster WLF</button>
+        </div>
+        <div class="ligne-param"><label for="nC1">C1</label><input type="range" id="rC1" min="1" max="120" step="0.1" aria-label="C1"><input type="number" id="nC1" step="any"></div>
+        <div class="ligne-param"><label for="nC2">C2</label><input type="range" id="rC2" min="10" max="800" step="1" aria-label="C2"><input type="number" id="nC2" step="any"></div>
+        <div class="cadre-tableau" style="max-height:300px;margin-top:10px"><table id="tabAT"></table></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ 05 COMPARAISON ══════════════ -->
+<section class="etape" id="etape4" role="tabpanel" aria-labelledby="onglet4" tabindex="0" hidden>
+  <div class="bloc">
+    <header><h2>Éprouvettes chargées</h2>
+      <span class="aide">chaque essai garde son propre calage</span></header>
+    <div class="cadre-tableau" style="max-height:none"><table id="tabEssais"></table></div>
+    <p class="note" style="margin-top:12px">Dépose plusieurs fichiers d'un coup à l'étape 01 pour comparer des formulations. Les courbes ci-dessous superposent les essais cochés, chacun avec ses propres a<sub>T</sub> et sa propre température de référence.</p>
+  </div>
+  <div class="graphiques">
+    <figure class="graphe"><h3>Courbes maîtresses |E*|</h3><p class="sous">un essai par couleur, points mesurés et modèle</p>
+      <canvas id="gCmpE" aria-label="Courbes maîtresses comparées"></canvas><figcaption id="capCmpE"></figcaption>
+      <div class="legende" id="legCmp"></div></figure>
+    <figure class="graphe"><h3>Plans Cole-Cole</h3><p class="sous">E₂ en fonction de E₁</p>
+      <canvas id="gCmpCole" aria-label="Plans Cole-Cole comparés"></canvas><figcaption id="capCmpCole"></figcaption></figure>
+    <figure class="graphe"><h3>Espaces de Black</h3><p class="sous">|E*| en fonction de φ</p>
+      <canvas id="gCmpBlack" aria-label="Espaces de Black comparés"></canvas><figcaption id="capCmpBlack"></figcaption></figure>
+    <figure class="graphe"><h3>Facteurs de translation</h3><p class="sous">a<sub>T</sub> de chaque essai</p>
+      <canvas id="gCmpAT" aria-label="Facteurs de translation comparés"></canvas><figcaption id="capCmpAT"></figcaption></figure>
+  </div>
+  <div class="bloc">
+    <header><h2>Constantes comparées</h2></header>
+    <div class="cadre-tableau" style="max-height:none"><table id="tabConstantes"></table></div>
+  </div>
+</section>
+
+<!-- ══════════════ 06 FIDÉLITÉ ══════════════ -->
+<section class="etape" id="etape5" role="tabpanel" aria-labelledby="onglet5" tabindex="0" hidden>
+  <div class="bloc">
+    <header><h2>Ce que fait réellement le classeur Excel</h2>
+      <span class="aide">relevé en lisant les formules de Calcul.xlsx</span></header>
+    <p class="note accent">Le mode <b>Excel à l'identique</b> reproduit les cinq particularités ci-dessous et
+      redonne les mêmes chiffres que le classeur, à 5·10⁻¹¹ près en relatif — la limite d'affichage
+      d'Excel. Deux jeux de mesures réelles, recalculés par un moteur de tableur, servent de test
+      automatique à chaque modification du code.</p>
+    <ol class="anomalies" style="margin-top:14px">
+      <li><div><b>La régression porte sur deux cycles.</b>
+        <code>Traitement!I2 = NB.SI(cycle) + NB.SI(cycle+1)</code> : chaque point de calcul mélange
+        le cycle courant et le suivant.
+        <span class="effet">Corrigé : régression sur le seul cycle considéré.</span></div></li>
+      <li><div><b>410 points au maximum, en silence.</b>
+        La feuille <code>Traitement</code> n'est pré-remplie que des lignes 6 à 415. Au-delà,
+        <code>SOMME(DECALER(…;I2;1))</code> additionne des cellules vides : à 0,003 Hz, 447 points
+        sont demandés et 410 seulement sont utilisés, sans aucun avertissement.
+        <span class="effet">Corrigé : tous les points du cycle sont utilisés.</span></div></li>
+      <li><div><b>Le centrage et les sommes n'ont pas la même longueur.</b>
+        La moyenne de recentrage porte sur <code>I2−1</code> points, les sommes sur <code>I2</code>.
+        <span class="effet">Corrigé : même nombre de points des deux côtés.</span></div></li>
+      <li><div><b>La voie Axial1 est décalée d'un point.</b>
+        <code>Traitement!AG7:AG415</code> lit <code>DECALER(données!$F$3;I−2)</code> quand les neuf
+        autres voies lisent <code>I−3</code>. Seule la première ligne est correcte. Amplitude, phase,
+        indice de qualité et écart d'amplitude d'Axial1 en sont faussés — donc le diagnostic même
+        qui sert à repérer un extensomètre défaillant.
+        <span class="effet">Corrigé : Axial1 lue comme les autres voies.</span></div></li>
+      <li><div><b>La sonde de température 1 est perdue.</b>
+        <code>Traitement!CD6 = DECALER(données!#REF!;…)</code> : la référence a été détruite.
+        <span class="effet">Ici la colonne déclarée dans la correspondance des voies est lue normalement.</span></div></li>
+    </ol>
+  </div>
+  <div class="bloc">
+    <header><h2>Effet des corrections sur l'essai chargé</h2>
+      <span class="aide">même palier, les deux modes</span></header>
+    <div class="cadre-tableau"><table id="tabEcarts"></table></div>
+  </div>
+</section>
+
+<!-- ══════════════ 07 EXPORT ══════════════ -->
+<section class="etape" id="etape6" role="tabpanel" aria-labelledby="onglet6" tabindex="0" hidden>
+  <div class="colonnes">
+    <div class="bloc">
+      <header><h2>Classeur de synthèse</h2></header>
+      <p class="note">Reprend les colonnes de <code>Synt_Temp.xlsx</code> : un onglet <code>Data</code>
+        ligne à ligne par cycle, un onglet <code>Calcul</code> avec moyennes, extrêmes et écarts-types,
+        un onglet pour les constantes et les a<sub>T</sub>.</p>
+      <div class="rangee-btn" style="margin-top:12px"><button class="btn fort" id="expXlsx">Télécharger le .xlsx</button></div>
+    </div>
+    <div class="bloc">
+      <header><h2>Tableaux</h2></header>
+      <p class="note">Point-virgule et décimale française, prêts pour Excel.</p>
+      <div class="rangee-btn" style="margin-top:12px">
+        <button class="btn" id="expCycles">Cycles (CSV)</button>
+        <button class="btn" id="expSynthese">Synthèse (CSV)</button>
+        <button class="btn" id="expModele">Modèle (CSV)</button>
+      </div>
+    </div>
+    <div class="bloc">
+      <header><h2>Projet</h2></header>
+      <p class="note">Éprouvette, correspondance, matrice, constantes, a<sub>T</sub> et WLF de tous les
+        essais chargés. À recharger pour reprendre le calage là où il en était.</p>
+      <div class="rangee-btn" style="margin-top:12px">
+        <button class="btn" id="expJson">Enregistrer le projet</button>
+        <button class="btn" id="impJson">Charger un projet</button>
+        <input type="file" id="fichierJson" accept=".json" class="hors-ecran">
+      </div>
+    </div>
+  </div>
+  <div class="bloc" style="margin-top:16px">
+    <header><h2>Copie directe</h2><span class="aide">pour coller dans un classeur déjà ouvert</span></header>
+    <div class="rangee-btn">
+      <button class="btn" id="copSynthese">Copier la synthèse</button>
+      <button class="btn" id="copProjet">Copier le projet</button>
+      <span id="msgCopie" class="pastille" hidden></span>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="etat" id="etat" aria-live="polite"></footer>
+</div>
+
+<div class="voile" id="voile" hidden>
+  <div class="boite" role="status" aria-live="assertive">
+    <div id="voileTexte">Traitement…</div>
+    <div class="jauge"><span id="voileJauge"></span></div>
+  </div>
+</div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

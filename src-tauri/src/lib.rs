@@ -45,6 +45,7 @@ pub fn run() {
             poste_dossiers_onedrive,
             poste_dossier_existe,
             poste_creer_dossier,
+            poste_ecrire_fichier,
             surveillance_demarrer,
             surveillance_arreter,
             cutout_segment,

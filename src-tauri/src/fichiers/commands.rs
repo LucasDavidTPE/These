@@ -55,7 +55,7 @@ pub async fn fichiers_ecrire_octets(request: tauri::ipc::Request<'_>) -> LibResu
             .get(nom)
             .and_then(|v| v.to_str().ok())
             .ok_or_else(|| LibError::InvalidPath(format!("en-tête {nom} manquant")))?;
-        urlencoding_decode(brut).ok_or_else(|| LibError::InvalidPath(brut.to_string()))
+        decoder_url(brut).ok_or_else(|| LibError::InvalidPath(brut.to_string()))
     };
     let racine = entete("x-racine")?;
     let chemin = entete("x-chemin")?;
@@ -110,7 +110,7 @@ pub async fn verrou_lever(racine: String, dossier: String, forcer: bool) -> LibR
 }
 
 /// Décodage « pourcent » (encodeURIComponent côté JS), en UTF-8. None si mal formé.
-fn urlencoding_decode(s: &str) -> Option<String> {
+pub fn decoder_url(s: &str) -> Option<String> {
     let octets = s.as_bytes();
     let mut out = Vec::with_capacity(octets.len());
     let mut i = 0;
@@ -134,12 +134,12 @@ mod tests {
     #[test]
     fn decodes_encode_uri_component() {
         assert_eq!(
-            urlencoding_decode("C%3A%5CUsers%5CDAVID%5COneDrive%20-%20entpe.fr%5CTh%C3%A8se")
+            decoder_url("C%3A%5CUsers%5CDAVID%5COneDrive%20-%20entpe.fr%5CTh%C3%A8se")
                 .as_deref(),
             Some("C:\\Users\\DAVID\\OneDrive - entpe.fr\\Thèse")
         );
-        assert_eq!(urlencoding_decode("a%2"), None);
-        assert_eq!(urlencoding_decode("a%ZZ"), None);
-        assert_eq!(urlencoding_decode("%C3"), None);
+        assert_eq!(decoder_url("a%2"), None);
+        assert_eq!(decoder_url("a%ZZ"), None);
+        assert_eq!(decoder_url("%C3"), None);
     }
 }

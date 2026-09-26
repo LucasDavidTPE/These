@@ -112,6 +112,27 @@ pub async fn poste_creer_dossier(chemin: String) -> LibResult<()> {
     creer_dossier(&chemin)
 }
 
+/// Écrit un fichier choisi par l'utilisateur dans la boîte « Enregistrer sous » (export
+/// d'un module). Corps brut ; chemin absolu en en-tête `x-chemin`, encodé en URL.
+#[tauri::command]
+pub async fn poste_ecrire_fichier(request: tauri::ipc::Request<'_>) -> LibResult<()> {
+    let brut = request
+        .headers()
+        .get("x-chemin")
+        .and_then(|v| v.to_str().ok())
+        .ok_or_else(|| LibError::InvalidPath("en-tête x-chemin manquant".into()))?;
+    let chemin = crate::fichiers::commands::decoder_url(brut)
+        .ok_or_else(|| LibError::InvalidPath(brut.to_string()))?;
+    let tauri::ipc::InvokeBody::Raw(octets) = request.body() else {
+        return Err(LibError::InvalidPath("corps binaire attendu".into()));
+    };
+    let p = Path::new(&chemin);
+    if !p.is_absolute() {
+        return Err(LibError::InvalidPath(chemin));
+    }
+    fs::write(p, octets).map_err(|e| LibError::io(chemin.clone(), e))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "test": "vitest run",
+    "test": "vitest run && node --test \"modules/traitement/tests/*.test.js\"",
     "test:watch": "vitest",
     "lint": "eslint . --max-warnings 0",
     "tauri": "tauri",
