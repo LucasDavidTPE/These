@@ -28,15 +28,17 @@ ni le code ni les données.
 
 ## Publier une version
 
-```
-npm run version -- 0.2.0
-git commit -am "Version 0.2.0"
-git tag v0.2.0
-git push --follow-tags
-```
+1. Écrire la nouvelle version dans l'application, puis pousser :
+   ```
+   npm run version -- 0.3.0
+   git commit -am "Version 0.3.0" && git push
+   ```
+2. Sur GitHub, dépôt `These` → onglet **Actions** → **build-windows** → bouton
+   **Run workflow** → choisir la branche → cocher **publier** → **Run workflow**.
 
-La CI construit l'installeur signé et crée la release `v0.2.0` dans `These-versions`,
-avec `latest.json`. Les deux PC proposent la mise à jour au démarrage suivant.
+La CI construit l'installeur signé et crée la release `v0.3.0` dans `These-versions`,
+avec `latest.json`. Les deux PC proposent la mise à jour au démarrage suivant. (Pousser
+un tag `v0.3.0` fait la même chose.)
 
 La **première** installation se fait à la main, depuis la release (`Thèse_x.y.z_x64-setup.exe`) ;
 les suivantes passent par le bandeau.

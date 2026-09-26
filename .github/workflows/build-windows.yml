@@ -8,7 +8,14 @@ on:
   push:
     branches: ["**"]
     tags: ["v*"]
+  # « Run workflow » dans l'onglet Actions, case « publier » cochée : publie la version
+  # écrite dans l'application (npm run version -- x.y.z) comme mise à jour.
   workflow_dispatch:
+    inputs:
+      publier:
+        description: "Publier cette version comme mise à jour (dépôt These-versions)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -58,8 +65,8 @@ jobs:
       # Version publiée (tag v*) : installeur signé + latest.json, dans le dépôt PUBLIC
       # These-versions, que l'application interroge pour se mettre à jour. Secrets :
       # TAURI_SIGNING_PRIVATE_KEY et RELEASES_TOKEN (voir docs/MISES_A_JOUR.md).
-      - name: Publication (tag)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Publication (tag ou « Run workflow » avec publier)
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.publier
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}
@@ -68,11 +75,12 @@ jobs:
         with:
           owner: LucasDavidTPE
           repo: These-versions
-          tagName: ${{ github.ref_name }}
+          # __VERSION__ : la version de tauri.conf.json.
+          tagName: v__VERSION__
           # Le tag est créé dans These-versions, sur sa branche principale (le commit
           # du code, lui, n'existe que dans ce dépôt-ci).
           commitish: main
-          releaseName: Thèse ${{ github.ref_name }}
+          releaseName: Thèse v__VERSION__
           releaseBody: ${{ github.event.head_commit.message }}
           releaseDraft: false
           prerelease: false
@@ -84,11 +92,11 @@ jobs:
           args: --config src-tauri/publication.json
 
       - name: Build (push)
-        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') && !inputs.publier }}
         run: npm run construire -- these
 
       - name: Installeurs en artefacts
-        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') && !inputs.publier }}
         uses: actions/upload-artifact@v4
         with:
           name: these-installeurs
