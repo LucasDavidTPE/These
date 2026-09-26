@@ -69,11 +69,17 @@ jobs:
           owner: LucasDavidTPE
           repo: These-versions
           tagName: ${{ github.ref_name }}
+          # Le tag est créé dans These-versions, sur sa branche principale (le commit
+          # du code, lui, n'existe que dans ce dépôt-ci).
+          commitish: main
           releaseName: Thèse ${{ github.ref_name }}
           releaseBody: ${{ github.event.head_commit.message }}
           releaseDraft: false
           prerelease: false
           includeUpdaterJson: true
+          # Les installations sont faites par l'installeur NSIS (.exe, sans droits
+          # administrateur) : la mise à jour doit utiliser le même.
+          updaterJsonPreferNsis: true
           # Signe l'installeur et produit les fichiers de mise à jour (.sig).
           args: --config src-tauri/publication.json
 
