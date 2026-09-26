@@ -5,12 +5,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { resoudre, referenceDepuisChemin } from "@noyau/poste/racines";
 import { Message, Page, Pastille, Section } from "@interface/composants";
+import { Apercu, Courbes } from "@interface/Courbes";
+import { lireCsv } from "@noyau/formats/wavematrix";
+import { apercu, panneaux, type PanneauEssai } from "../core/courbes";
+import { SUFFIXE_SUIVI } from "../core/decouverte";
 import { useContexte } from "@interface/contexte";
 import { IconeDossier } from "@interface/icones";
 import { decouvrir } from "../core/decouverte";
 import { lireEssai, nouvelleCampagne, periode, periodeLisible, STATUTS, TYPES, typeDe, type Campagne, type Essai } from "../core/modele";
 import { depuisLgcb } from "../core/toml";
-import { ajouterImage, ajouterNote, chargerCampagnes, creerCampagne, enregistrerCampagne, enregistrerEssai, type CampagneChargee } from "./donnees";
+import { ajouterImage, ajouterNote, chargerCampagnes, creerCampagne, enregistrerApercu, enregistrerCampagne, enregistrerEssai, type CampagneChargee } from "./donnees";
 import "./campagnes.css";
 
 function heures(c: CampagneChargee): number {
@@ -29,6 +33,12 @@ function Carte({ c, ouvrir }: { c: CampagneChargee; ouvrir(): void }) {
         {c.campagne.materiau ? ` · ${c.campagne.materiau}` : ""}
       </span>
       <span>{p ? periodeLisible(p) : <span className="discret">pas encore de date</span>}</span>
+      {c.apercu ? (
+        <span className="apercus">
+          {c.apercu.temperature.length ? <Apercu x={c.apercu.heures} y={c.apercu.temperature} couleur="#b0602c" /> : null}
+          {c.apercu.force.length ? <Apercu x={c.apercu.heures} y={c.apercu.force} couleur="#2f5f8a" /> : null}
+        </span>
+      ) : null}
       <span className="chiffres">
         {Object.keys(c.essais).length} essai(s) · {heures(c)} h · {c.notes.length} note(s) · {c.images.length} image(s)
       </span>
@@ -79,6 +89,7 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
   const fs = ctx.espace!.fichiers;
   const [message, setMessage] = useState<{ niveau: "info" | "erreur"; texte: string } | null>(null);
   const [note, setNote] = useState({ titre: "", texte: "" });
+  const [courbes, setCourbes] = useState<{ essai: string; panneaux: PanneauEssai[] | null } | null>(null);
   const k = c.campagne;
   const agir = async (f: () => Promise<unknown>, ok?: string) => {
     try {
@@ -117,6 +128,23 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
       await enregistrerCampagne(fs, c.slug, { ...k, machine });
       setMessage({ niveau: "info", texte: `${Object.keys(d.essais).length} essai(s) trouvé(s) dans ${donnees.chemin}.` });
     });
+  }
+
+  async function voirCourbes(nom: string) {
+    if (!donnees?.ok) return;
+    setCourbes({ essai: nom, panneaux: null });
+    try {
+      const fsDonnees = ctx.plateforme.fichiers(donnees.chemin);
+      const fichier = (await fsDonnees.listDir(nom)).find((f) => f.name.endsWith(SUFFIXE_SUIVI));
+      if (!fichier) throw new Error(`Pas d'export ${SUFFIXE_SUIVI} dans ${nom}.`);
+      const serie = lireCsv(new TextDecoder().decode(await fsDonnees.readBytes(`${nom}/${fichier.name}`)));
+      setCourbes({ essai: nom, panneaux: panneaux(serie) });
+      const a = apercu(serie);
+      if (a) await enregistrerApercu(fs, c.slug, nom, a);
+    } catch (e) {
+      setCourbes(null);
+      setMessage({ niveau: "erreur", texte: e instanceof Error ? e.message : String(e) });
+    }
   }
 
   async function collerImage(e: React.ClipboardEvent) {
@@ -218,6 +246,7 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
                 <th>Cycles</th>
                 <th>État final</th>
                 <th>Notes</th>
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -238,6 +267,11 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
                     <td>
                       <Champ titre="" valeur={e.notes} onValider={(v) => ecrire({ notes: v })} />
                     </td>
+                    <td>
+                      <button type="button" disabled={!donnees?.ok} title={donnees?.ok ? "Lire l'export de suivi et tracer les courbes" : "Choisissez d'abord le dossier de données"} onClick={() => void voirCourbes(nom)}>
+                        Courbes
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
@@ -245,6 +279,19 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
           </table>
         )}
       </Section>
+
+      {courbes ? (
+        <Section
+          titre={`Courbes : ${courbes.essai}`}
+          aDroite={
+            <button type="button" onClick={() => setCourbes(null)}>
+              Fermer
+            </button>
+          }
+        >
+          {courbes.panneaux ? <Courbes panneaux={courbes.panneaux} xLibelle="temps (h)" /> : <p className="discret">Lecture de l'export…</p>}
+        </Section>
+      ) : null}
 
       <Section titre="Carnet">
         <div className="carnet" onPaste={(e) => void collerImage(e)}>

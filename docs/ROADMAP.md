@@ -75,9 +75,11 @@ l'installeur de la phase est produit par GitHub Actions.
 - [x] Carnet : notes datées (Markdown) et images (Ctrl+V ou fichier), dans l'espace
 - [x] Période des campagnes dans le Planning (action `campagnes.planning`) ; lien vers le
       traitement 2S2P1D
-- [ ] Étape 2 : aperçus (température et force en fonction du temps), viewer de courbes,
-      export Excel, copie des données brutes — demandent la lecture des exports WaveMatrix
-      (à partager avec le Traitement, dans le noyau)
+- [x] Lecture des exports WaveMatrix dans le noyau (`packages/noyau/src/formats/wavematrix.ts`,
+      portage de these-lgcb), courbes d'un essai (un panneau par famille d'unités, légende
+      cliquable, réticule), aperçu température / force enregistré dans l'espace et affiché
+      dans la galerie (visible aussi sur le PC sans données brutes)
+- [ ] Plus tard : zoom dans les courbes, export Excel d'un essai, copie des données brutes
 
 ## P6 — Liaisons et finitions
 - [ ] Accueil complet (Cette semaine, derniers essais, dernières figures)

@@ -99,3 +99,6 @@ Ce qui change avec l'intégration :
       sont là ; « Découvrir » dit que le dossier est introuvable, sans erreur.
 - [ ] Coller une capture (Ctrl+V) dans le carnet ; cliquer l'image l'ouvre dans la
       visionneuse de Windows.
+- [ ] « Courbes » sur Essai1 de la campagne B2C4 bio : panneaux température, force,
+      capteurs ; temps de lecture acceptable pour le fichier `.steps.tracking.csv` réel.
+- [ ] Après « Courbes », la carte de la campagne montre l'aperçu, y compris sur le PC perso.

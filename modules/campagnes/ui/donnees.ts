@@ -1,6 +1,7 @@
 /** Lecture et écriture des campagnes dans l'espace (un dossier par campagne). */
 import { detecterCopieConflit, DejaExistant, joindre, jsonStable, type Fichiers, type Probleme } from "@noyau/stockage";
 import { slugifier } from "@noyau/texte";
+import type { ApercuEssai } from "../core/courbes";
 import { DOSSIER, lireCampagne, lireEssai, type Campagne, type Essai } from "../core/modele";
 
 export interface Note {
@@ -16,6 +17,8 @@ export interface CampagneChargee {
   essais: Record<string, Essai>;
   notes: Note[];
   images: string[];
+  /** Aperçu du premier essai qui en a un (galerie). */
+  apercu: ApercuEssai | null;
 }
 
 async function lister(fs: Fichiers, chemin: string) {
@@ -54,9 +57,11 @@ export async function chargerCampagnes(fs: Fichiers): Promise<{ campagnes: Campa
     const campagne = await lireJson(fs, joindre(base, "campagne.json"), lireCampagne, problemes);
     if (!campagne) continue;
     const essais: Record<string, Essai> = {};
+    let apercu: ApercuEssai | null = null;
     for (const e of (await lister(fs, joindre(base, "essais"))).filter((x) => x.kind === "dir")) {
       const dossierEssai = joindre(base, "essais", e.name);
       const noms = (await fs.listDir(dossierEssai)).map((x) => x.name);
+      if (!apercu && noms.includes("apercu.json")) apercu = await lireJson(fs, joindre(dossierEssai, "apercu.json"), (b) => b as ApercuEssai, problemes);
       conflits(dossierEssai, noms, "essai.json", problemes);
       essais[e.name] = noms.includes("essai.json") ? ((await lireJson(fs, joindre(dossierEssai, "essai.json"), lireEssai, problemes)) ?? lireEssai({})) : lireEssai({});
     }
@@ -68,7 +73,7 @@ export async function chargerCampagnes(fs: Fichiers): Promise<{ campagnes: Campa
     }
     notes.sort((a, b) => (a.fichier < b.fichier ? 1 : -1));
     const images = (await lister(fs, joindre(base, "images"))).filter((x) => x.kind === "file" && /\.(png|jpe?g|gif|webp|bmp)$/i.test(x.name)).map((x) => x.name);
-    campagnes.push({ slug: d.name, campagne, essais, notes, images });
+    campagnes.push({ slug: d.name, campagne, essais, notes, images, apercu });
   }
   return { campagnes, problemes };
 }
@@ -121,4 +126,10 @@ export async function ajouterImage(fs: Fichiers, slug: string, nom: string, octe
   const ext = point > 0 ? nom.slice(point).toLowerCase() : ".png";
   const racine = slugifier(point > 0 ? nom.slice(0, point) : nom) || "image";
   await fs.writeBytesAtomic(joindre(dossier, `${aujourdhui()}_${racine}-${Date.now() % 100000}${ext}`), octets);
+}
+
+export async function enregistrerApercu(fs: Fichiers, slug: string, nom: string, a: ApercuEssai) {
+  const dossier = joindre(DOSSIER, slug, "essais", nom.replace(/[\\/:*?"<>|]/g, "_"));
+  await fs.ensureDir(dossier);
+  await fs.writeTextAtomic(joindre(dossier, "apercu.json"), JSON.stringify(a) + "\n");
 }

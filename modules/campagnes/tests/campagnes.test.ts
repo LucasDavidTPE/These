@@ -83,3 +83,23 @@ describe("fiches these-lgcb", () => {
     expect(periodeLisible({ debut: "2026-06-22", fin: "2026-06-22" })).toBe("22 juin 2026");
   });
 });
+
+describe("courbes d'un essai", () => {
+  it("un panneau par famille d'unités, temps en heures, aperçu léger", async () => {
+    const { lireCsv } = await import("@noyau/formats/wavematrix");
+    const { apercu, panneaux } = await import("../core/courbes");
+    const lignes = ['"Temps total (s)";"Force(8800 (0,1):Charge) (kN)";"Personnalisée(103 (0,3):Lion171144) (µm)";"Personnalisée(103 (0,4):Lion171145) (µm)";"Personnalisée(103 (0,5):Défini par utilisateur) (°C)"'];
+    for (let i = 0; i <= 3600; i++) lignes.push(`${i * 10};${Math.sin(i).toFixed(3).replace(".", ",")};1;2;${(20 - i / 360).toFixed(2).replace(".", ",")}`);
+    const s = lireCsv(lignes.join("\n"));
+    const p = panneaux(s, 400);
+    expect(p.map((x) => [x.titre, x.unite, x.traces.map((t) => t.nom)])).toEqual([
+      ["Température", "°C", ["Personnalisée"]],
+      ["Force", "kN", ["Force Charge"]],
+      ["Déplacement (capteurs)", "µm", ["Personnalisée Lion171144", "Personnalisée Lion171145"]],
+    ]);
+    expect(Math.max(...p[0]!.traces[0]!.x)).toBeCloseTo(10, 1);
+    const a = apercu(s)!;
+    expect(a.heures.length).toBeLessThanOrEqual(150);
+    expect(a.temperature[0]).toBe(20);
+  });
+});

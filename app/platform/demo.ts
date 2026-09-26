@@ -12,6 +12,26 @@ import type { Plateforme } from "@interface/plateforme";
 const ONEDRIVE = "C:\\Users\\DAVID\\OneDrive - entpe.fr";
 const ESPACE = `${ONEDRIVE}\\Thèse\\Espace`;
 const BIBLIO = `${ONEDRIVE}\\Thèse\\BIBLIO`;
+const RECHERCHE = "C:\\Users\\DAVID\\Desktop\\Recherche";
+
+/** Essai de démonstration au format WaveMatrix : paliers de température, force cyclique. */
+function essaiDemo(): Record<string, string> {
+  const l = ['"Temps total (s)";"Force(8800 (0,1):Charge) (kN)";"Personnalisée(103 (0,3):Lion171144) (µm)";"Personnalisée(103 (0,5):Défini par utilisateur) (°C)";'];
+  for (let i = 0; i < 6000; i++) {
+    const t = i * 30;
+    const palier = [-10, 0, 10, 20, 30][Math.min(4, Math.floor(i / 1200))]!;
+    const f = Math.sin(t / 7) * (2.5 - palier / 20);
+    l.push([t, f.toFixed(3), (f * 12).toFixed(2), (palier + Math.sin(i / 40) * 0.2).toFixed(2), ""].join(";").replace(/\./g, ","));
+  }
+  const log = [
+    "01/06/2026;09:00:00;Demo;Essai1;60101;Création;",
+    "01/06/2026;09:00:00;Demo;Essai1;60107;Utilisateur;ltds",
+    "03/06/2026;11:00:00;Demo;Essai1;60121;Forme d'onde;1200",
+    "03/06/2026;11:00:00;Demo;Essai1;60120;Durée;180000",
+    "03/06/2026;11:00:00;Demo;Essai1;60202;État;Essai terminé",
+  ].join("\n");
+  return { "Demo CM/Essai1/Essai1.steps.tracking.csv": l.join("\n"), "Demo CM/Essai1/Essai1.log": log };
+}
 
 function normaliser(chemin: string): string {
   return chemin.replace(/[\\/]+$/, "").toLowerCase();
@@ -44,6 +64,15 @@ export function plateformeDemo(scenario: string | null): Plateforme {
   const abonnes = new Map<string, Set<(chemins: string[]) => void>>();
   let reglages: string | null = null;
 
+  /** Dossier démo qui contient `chemin`, et le chemin relatif à l'intérieur. */
+  const parent = (chemin: string): [FichiersMemoire, string] | null => {
+    const cle = normaliser(chemin);
+    for (const [k, fs] of dossiers) {
+      if (cle.startsWith(k + "\\")) return [fs, chemin.replace(/[\\/]+$/, "").slice(k.length + 1).split("\\").join("/")];
+    }
+    return null;
+  };
+
   const dossier = (chemin: string) => {
     const cle = normaliser(chemin);
     let fs = dossiers.get(cle);
@@ -59,13 +88,15 @@ export function plateformeDemo(scenario: string | null): Plateforme {
       version: 1,
       espace: ESPACE,
       figures: `${ONEDRIVE}\\Figurine`,
-      racines: { essais: "E:\\", "biblio-pdf": BIBLIO },
+      racines: { essais: "E:\\", "biblio-pdf": BIBLIO, recherche: RECHERCHE },
     });
     const espace = dossier(ESPACE);
     espace.poser("espace.json", '{\n  "format": 1,\n  "cree": "2026-09-26T10:00:00+02:00",\n  "creePar": "LGCB-AA03956"\n}\n');
     espace.poser("espace-PC-MAISON.json", '{\n  "format": 1,\n  "cree": "2026-09-26T10:05:00+02:00",\n  "creePar": "PC-MAISON"\n}\n');
     espace.poser("espace.json.tmp", "{");
     dossier(BIBLIO);
+    const recherche = dossier(RECHERCHE);
+    for (const [chemin, contenu] of Object.entries(essaiDemo())) recherche.poser(chemin, contenu);
   }
 
   return {
@@ -77,11 +108,22 @@ export function plateformeDemo(scenario: string | null): Plateforme {
     },
     dossiersOneDrive: async () => [ONEDRIVE],
     choisirDossier: async (titre, depart) => window.prompt(`${titre} (démonstration : saisissez un chemin)`, depart ?? "") || null,
-    dossierExiste: async (chemin) => dossiers.has(normaliser(chemin)),
+    dossierExiste: async (chemin) => {
+      if (dossiers.has(normaliser(chemin))) return true;
+      const p = parent(chemin);
+      return p ? p[0].exists(p[1]) : false;
+    },
     creerDossier: async (chemin) => {
       dossier(chemin);
     },
     fichiers: (racine) => {
+      const sous = !dossiers.has(normaliser(racine)) ? parent(racine) : null;
+      if (sous) {
+        // Sous-dossier d'un dossier démo (données d'un essai) : lecture seule suffit.
+        const [fs, prefixe] = sous;
+        const p = (c: string) => (c ? `${prefixe}/${c}` : prefixe);
+        return { ...observe(fs, () => undefined), listDir: (c) => fs.listDir(p(c)), exists: (c) => fs.exists(p(c)), readText: (c) => fs.readText(p(c)), readBytes: (c) => fs.readBytes(p(c)) };
+      }
       const cle = normaliser(racine);
       return observe(dossier(racine), (chemin) => {
         for (const rappel of abonnes.get(cle) ?? []) rappel([chemin]);
