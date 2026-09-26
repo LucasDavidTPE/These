@@ -101,5 +101,8 @@ l'installeur de la phase est produit par GitHub Actions.
       exécution tracée (`sorties/<horodatage>/execution.json` : poste, Python, données lues,
       fichiers produits, erreur), sorties avec vignettes ; études these-lgcb lues telles
       quelles (`study.toml`, `outputs/`, `*.prov.json`)
+- [x] Module Manuscrits : versions datées des `.docx` (racine `manuscrits`), avec une note,
+      copiées dans l'espace (`manuscrits/<fichier>/`), état « modifié depuis la dernière
+      version », ouvrir une version, en faire une copie ailleurs
 - [ ] Index des figures LaTeX des manuscrits
 - [ ] Module ViscoCompare (comparaison COMSOL / Viscoroute)

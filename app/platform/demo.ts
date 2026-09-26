@@ -88,13 +88,14 @@ export function plateformeDemo(scenario: string | null): Plateforme {
       version: 1,
       espace: ESPACE,
       figures: `${ONEDRIVE}\\Figurine`,
-      racines: { essais: "E:\\", "biblio-pdf": BIBLIO, recherche: RECHERCHE },
+      racines: { essais: "E:\\", "biblio-pdf": BIBLIO, recherche: RECHERCHE, manuscrits: `${ONEDRIVE}\\Thèse\\Rédaction` },
     });
     const espace = dossier(ESPACE);
     espace.poser("espace.json", '{\n  "format": 1,\n  "cree": "2026-09-26T10:00:00+02:00",\n  "creePar": "LGCB-AA03956"\n}\n');
     espace.poser("espace-PC-MAISON.json", '{\n  "format": 1,\n  "cree": "2026-09-26T10:05:00+02:00",\n  "creePar": "PC-MAISON"\n}\n');
     espace.poser("espace.json.tmp", "{");
     dossier(BIBLIO);
+    dossier(`${ONEDRIVE}\\Thèse\\Rédaction`).poser("Manuscrit thèse.docx", "PK démonstration");
     const recherche = dossier(RECHERCHE);
     for (const [chemin, contenu] of Object.entries(essaiDemo())) recherche.poser(chemin, contenu);
   }

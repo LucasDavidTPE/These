@@ -165,3 +165,14 @@ Ce qui change avec l'intégration :
       la modifier et l'enregistrer sur B ; attendre la synchronisation OneDrive ; la
       modifier sur A sans recharger : A refuse (« modifié ailleurs… rechargez »), la
       version de B est intacte.
+
+## Manuscrits (versions Word)
+
+- [ ] Manuscrits → « Choisir le dossier des manuscrits… » : les `.docx` du dossier (et de
+      ses sous-dossiers directs) apparaissent, sans les fichiers `~$…` de Word.
+- [ ] « Enregistrer une version » avec une note, **document ouvert dans Word** : la copie
+      est faite (sinon, message clair) ; l'état passe à « à jour ».
+- [ ] Modifier et enregistrer le document dans Word : l'état passe à « modifié depuis la
+      dernière version ».
+- [ ] « Ouvrir » ouvre la version dans Word ; « Copie sous… » l'enregistre ailleurs.
+- [ ] Sur l'autre PC (même dossier via OneDrive, racine réglée) : les mêmes versions.

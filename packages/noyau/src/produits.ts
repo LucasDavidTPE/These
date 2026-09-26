@@ -6,7 +6,7 @@
  * (nom, identifiant Windows, titre de fenêtre).
  */
 
-export const MODULES = ["accueil", "figures", "traitement", "campagnes", "etudes", "bibliotheque", "planning"] as const;
+export const MODULES = ["accueil", "figures", "traitement", "campagnes", "etudes", "manuscrits", "bibliotheque", "planning"] as const;
 export type ModuleId = (typeof MODULES)[number];
 
 export interface Produit {

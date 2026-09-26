@@ -66,5 +66,6 @@ export function espacePropose(oneDrive: string): string {
 export const RACINES_CONNUES: readonly { nom: string; description: string; exemple: string }[] = [
   { nom: "essais", description: "Données brutes des essais (sorties machine)", exemple: "E:\\" },
   { nom: "recherche", description: "Dossier de recherche du Bureau (données d'essai triées)", exemple: "C:\\Users\\DAVID\\Desktop\\Recherche" },
+  { nom: "manuscrits", description: "Manuscrits Word (.docx) dont on garde des versions", exemple: "C:\\Users\\DAVID\\OneDrive - entpe.fr\\Thèse\\Rédaction" },
   { nom: "biblio-pdf", description: "PDF de la bibliographie", exemple: "C:\\Users\\DAVID\\OneDrive - entpe.fr\\Thèse\\BIBLIO" },
 ];
