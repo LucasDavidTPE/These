@@ -229,7 +229,20 @@ export function PlanningPage() {
           <p className="discret">Ajoutez vos phases (bibliographie, campagnes d'essais, rédaction…) et vos jalons (comités de suivi, congrès). Les mois du plan de lecture apparaissent seuls dès que la bibliothèque est importée.</p>
         </div>
       ) : vue === "gantt" ? (
-        <Gantt groupes={groupes} aujourdhui={jourJ} zoom={zoom} onChoisir={choisir} />
+        <Gantt
+          groupes={groupes}
+          aujourdhui={jourJ}
+          zoom={zoom}
+          onChoisir={choisir}
+          onDeplacer={(b, dDebut, dFin) => {
+            const el = p.elements.find((e) => e.id === b.id);
+            if (!el) return;
+            const v = el.valeur;
+            const debut = iso(jour(v.debut) + dDebut);
+            const fin = v.fin ? iso(Math.max(jour(debut), jour(v.fin) + dFin)) : "";
+            void d.enregistrer(el.id, { ...v, debut, fin });
+          }}
+        />
       ) : (
         <table className="tableau cliquable">
           <thead>

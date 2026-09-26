@@ -63,8 +63,8 @@ l'installeur de la phase est produit par GitHub Actions.
 - [x] Fournisseurs : mois de lecture et dates limites des demandes (Bibliothèque,
       action `bibliotheque.planning`)
 - [x] Export pgfgantt
-- [ ] Plus tard : glisser pour déplacer ou étirer une barre (les dates se modifient pour
-      l'instant dans le panneau), exports PNG / SVG vers Figures
+- [x] Glisser une barre pour la déplacer, son bord droit pour l'étirer (au jour près)
+- [ ] Plus tard : exports PNG / SVG vers Figures
 
 ## P5 — Campagnes (étape 1 ✔)
 - [x] Fiches de campagne et d'essai (un dossier par campagne), import des

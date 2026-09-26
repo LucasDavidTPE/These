@@ -7,7 +7,28 @@ const H_GROUPE = 24;
 const H_ENTETE = 30;
 const L_LIBELLES = 260;
 
-export function Gantt({ groupes, aujourdhui, zoom, onChoisir }: { groupes: Groupe[]; aujourdhui: string; zoom: Zoom; onChoisir(b: Barre): void }) {
+/** Glisser une barre la déplace ; glisser son bord droit change la fin (au jour près). */
+interface Glisse {
+  id: string;
+  mode: "deplacer" | "etirer";
+  depart: number;
+  jours: number;
+}
+
+export function Gantt({
+  groupes,
+  aujourdhui,
+  zoom,
+  onChoisir,
+  onDeplacer,
+}: {
+  groupes: Groupe[];
+  aujourdhui: string;
+  zoom: Zoom;
+  onChoisir(b: Barre): void;
+  onDeplacer?(b: Barre, joursDebut: number, joursFin: number): void;
+}) {
+  const [glisse, setGlisse] = useState<Glisse | null>(null);
   const boite = useRef<HTMLDivElement>(null);
   const defilement = useRef<HTMLDivElement>(null);
   const [dispo, setDispo] = useState(900);
@@ -69,23 +90,42 @@ export function Gantt({ groupes, aujourdhui, zoom, onChoisir }: { groupes: Group
             const y0 = positions[i]!;
             if (l.type === "groupe") return <rect key={i} x={0} y={y0} width={W} height={H_GROUPE} className="gantt-bande" />;
             const b = l.b;
-            const x0 = x(e, b.debut);
+            const g = glisse?.id === b.id ? glisse : null;
+            const decalage = g ? g.jours * e.pxParJour : 0;
+            const x0 = x(e, b.debut) + (g?.mode === "deplacer" ? decalage : 0);
+            const mobile = !b.source && onDeplacer;
+            const saisir = (mode: Glisse["mode"]) => (ev: React.PointerEvent) => {
+              if (!mobile) return;
+              ev.stopPropagation();
+              (ev.currentTarget as Element).setPointerCapture(ev.pointerId);
+              setGlisse({ id: b.id, mode, depart: ev.clientX, jours: 0 });
+            };
+            const bouger = (ev: React.PointerEvent) => {
+              if (g) setGlisse({ ...g, jours: Math.round((ev.clientX - g.depart) / e.pxParJour) });
+            };
+            const lacher = () => {
+              if (!g) return;
+              setGlisse(null);
+              if (g.jours === 0) onChoisir(b);
+              else onDeplacer?.(b, g.mode === "deplacer" ? g.jours : 0, g.jours);
+            };
             const titre = `${b.titre}\n${b.debut}${b.fin ? ` → ${b.fin}` : ""}${b.detail ? `\n${b.detail}` : ""}`;
             if (!b.fin) {
               const c = 7;
               return (
-                <g key={i} className="gantt-cliquable" onClick={() => onChoisir(b)}>
+                <g key={i} className={mobile ? "gantt-mobile" : "gantt-cliquable"} onClick={mobile ? undefined : () => onChoisir(b)} onPointerDown={saisir("deplacer")} onPointerMove={bouger} onPointerUp={lacher}>
                   <path d={`M${x0} ${y0 + 13 - c} L${x0 + c} ${y0 + 13} L${x0} ${y0 + 13 + c} L${x0 - c} ${y0 + 13} Z`} fill={l.couleur} />
                   <title>{titre}</title>
                 </g>
               );
             }
-            const w = Math.max(3, x(e, b.fin) - x0 + e.pxParJour);
+            const w = Math.max(3, x(e, b.fin) + (g ? decalage : 0) - x0 + e.pxParJour);
             return (
-              <g key={i} className="gantt-cliquable" onClick={() => onChoisir(b)}>
-                <rect x={x0} y={y0 + 5} width={w} height={H_LIGNE - 10} rx={4} fill={l.couleur} opacity={b.source ? 0.55 : 0.9} />
+              <g key={i} className={mobile ? "gantt-mobile" : "gantt-cliquable"} onClick={mobile ? undefined : () => onChoisir(b)} onPointerMove={bouger} onPointerUp={lacher}>
+                <rect x={x0} y={y0 + 5} width={w} height={H_LIGNE - 10} rx={4} fill={l.couleur} opacity={b.source ? 0.55 : 0.9} onPointerDown={saisir("deplacer")} />
+                {mobile ? <rect x={x0 + w - 6} y={y0 + 5} width={6} height={H_LIGNE - 10} className="gantt-poignee" onPointerDown={saisir("etirer")} /> : null}
                 {b.avancement > 0 ? <rect x={x0} y={y0 + H_LIGNE - 8} width={(w * b.avancement) / 100} height={3} rx={1.5} className="gantt-avancement" /> : null}
-                <title>{titre}</title>
+                <title>{mobile ? `${titre}\nGlisser pour déplacer, bord droit pour étirer, clic pour modifier` : titre}</title>
               </g>
             );
           })}
