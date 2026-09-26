@@ -43,6 +43,54 @@ function CarteModule({ m }: { m: Manifeste }) {
   );
 }
 
+interface ElementSemaine {
+  id: string;
+  titre: string;
+  debut: string;
+  fin: string;
+  detail?: string;
+}
+
+/** « Cette semaine » : fourni par le Planning, s'il est dans l'installeur (action nommée). */
+function CetteSemaine() {
+  const ctx = useContexte();
+  const [elements, setElements] = useState<ElementSemaine[] | null>(null);
+  const { registre, revision } = ctx;
+  useEffect(() => {
+    if (!registre.aAction("planning.cette-semaine")) return;
+    let annule = false;
+    registre
+      .executer("planning.cette-semaine", ctx)
+      .then((r) => !annule && setElements(r as ElementSemaine[]))
+      .catch(() => !annule && setElements([]));
+    return () => {
+      annule = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registre, revision]);
+  if (!elements) return null;
+  const date = (s: string) => new Date(`${s}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  return (
+    <Section titre="Cette semaine">
+      {elements.length === 0 ? (
+        <p className="discret">Rien d'inscrit au planning pour les 7 prochains jours.</p>
+      ) : (
+        <ul className="liste">
+          {elements.map((e) => (
+            <li key={e.id}>
+              <strong>{e.titre}</strong>{" "}
+              <span className="discret">
+                {e.fin ? `${date(e.debut)} → ${date(e.fin)}` : date(e.debut)}
+                {e.detail ? ` · ${e.detail}` : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Section>
+  );
+}
+
 export function AccueilPage() {
   const ctx = useContexte();
   const autres = ctx.registre.manifestes.filter((m) => m.id !== "accueil");
@@ -62,6 +110,7 @@ export function AccueilPage() {
         </>
       }
     >
+      <CetteSemaine />
       <Section titre="Modules">
         <div className="grille-cartes">
           {autres.map((m) => (

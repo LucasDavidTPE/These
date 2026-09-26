@@ -70,3 +70,13 @@ Ce qui change avec l'intégration :
 - [ ] « Ouvrir le lien » d'une référence « Éditeur (abonnement) » passe par le proxy de
       l'ENTPE s'il est renseigné dans les paramètres.
 - [ ] Export RIS importé dans Zotero ; export BibTeX compilé avec biblatex (`biber`).
+
+## P4 — Planning
+
+- [ ] Créer une phase, une tâche dans cette phase, un jalon ; les retrouver sur l'autre PC.
+- [ ] Masquer une catégorie sur un PC → masquée aussi sur l'autre.
+- [ ] Désactiver une phase : ses tâches disparaissent ; « ↺ » la réactive.
+- [ ] Les mois du plan de lecture et les dates limites des demandes apparaissent dans
+      « Bibliographie » dès que la bibliothèque est importée.
+- [ ] Export pgfgantt : le `.tex` compile dans un document avec `\usepackage{pgfgantt}`
+      (et `xcolor` avec l'option `table` ou `HTML`).

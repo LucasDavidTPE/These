@@ -55,11 +55,16 @@ l'installeur de la phase est produit par GitHub Actions.
 - [ ] Plus tard : vérifier les liens, ajout par DOI (OpenAlex / Crossref), export Markdown
       (selon la réponse aux questions Obsidian / iPad), contrôle des doublons
 
-## P4 — Planning
-- [ ] Éléments, catégories, activer / désactiver, sous-éléments
-- [ ] Gantt (zoom, glisser, aujourd'hui), vue liste, widget « Cette semaine »
-- [ ] Fournisseurs : mois de lecture et demandes (Bibliothèque)
-- [ ] Exports PNG / SVG / pgfgantt
+## P4 — Planning ✔
+- [x] Éléments (phases, tâches, jalons), catégories, activer / désactiver (partagé
+      entre les deux PC), sous-éléments ; suppression = rangement dans `.supprimes/`
+- [x] Gantt SVG (zoom semaines / mois / trimestres / thèse, ligne « aujourd'hui »),
+      vue liste, widget « Cette semaine » sur l'Accueil (action `planning.cette-semaine`)
+- [x] Fournisseurs : mois de lecture et dates limites des demandes (Bibliothèque,
+      action `bibliotheque.planning`)
+- [x] Export pgfgantt
+- [ ] Plus tard : glisser pour déplacer ou étirer une barre (les dates se modifient pour
+      l'instant dans le panneau), exports PNG / SVG vers Figures
 
 ## P5 — Campagnes
 - [ ] Fiches de campagne et d'essai, import des `projects/*.toml` de these-lgcb

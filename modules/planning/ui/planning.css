@@ -1,0 +1,166 @@
+.barre-outils {
+  margin-bottom: 14px;
+}
+
+.segmente {
+  display: inline-flex;
+}
+
+.segmente button {
+  border-radius: 0;
+  margin-left: -1px;
+}
+
+.segmente button:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.segmente button:last-child {
+  border-radius: 0 6px 6px 0;
+}
+
+.segmente button.actif {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-texte);
+}
+
+.categories {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.puce {
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 12.5px;
+  border: 1.5px solid var(--couleur);
+  color: var(--discret);
+  background: transparent;
+  text-decoration: line-through;
+}
+
+.puce.active {
+  background: var(--couleur);
+  color: #fff;
+  text-decoration: none;
+}
+
+.gantt {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  overflow: hidden;
+}
+
+.gantt-libelles {
+  flex-shrink: 0;
+  border-right: 1px solid var(--bordure);
+}
+
+.gantt-defilement {
+  overflow-x: auto;
+  flex: 1;
+}
+
+.gantt svg text {
+  font-size: 12px;
+  fill: var(--texte);
+}
+
+.gantt-groupe {
+  font-weight: 600;
+  font-size: 12.5px !important;
+}
+
+.gantt-libelle,
+.gantt-cliquable {
+  cursor: pointer;
+}
+
+.gantt-libelle.externe {
+  fill: var(--discret) !important;
+  font-style: italic;
+}
+
+.gantt-bande {
+  fill: var(--surface-2);
+}
+
+.gantt-trait {
+  stroke: var(--bordure);
+  stroke-width: 1;
+}
+
+.gantt-trait.majeur {
+  stroke: var(--discret);
+}
+
+.gantt-mois {
+  fill: var(--discret) !important;
+  font-size: 11px !important;
+}
+
+.gantt-mois.majeur {
+  font-weight: 700;
+  fill: var(--texte) !important;
+}
+
+.gantt-aujourdhui {
+  stroke: var(--erreur);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.gantt-avancement {
+  fill: rgba(255, 255, 255, 0.85);
+}
+
+.editeur {
+  margin-bottom: 16px;
+}
+
+.editeur-grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.editeur .libelle {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12.5px;
+}
+
+.editeur .libelle > span {
+  color: var(--discret);
+}
+
+.editeur .libelle.large {
+  grid-column: 1 / -1;
+}
+
+.editeur .champ {
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: 6px;
+  padding: 5px 8px;
+}
+
+.a-droite {
+  margin-left: auto;
+}
+
+.pastille-couleur {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
