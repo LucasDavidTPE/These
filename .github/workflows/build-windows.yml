@@ -62,34 +62,23 @@ jobs:
         env:
           THESE_EXIGER_MODELE: "1"
 
-      # Version publiée (tag v*) : installeur signé + latest.json, dans le dépôt PUBLIC
-      # These-versions, que l'application interroge pour se mettre à jour. Secrets :
-      # TAURI_SIGNING_PRIVATE_KEY et RELEASES_TOKEN (voir docs/MISES_A_JOUR.md).
-      - name: Publication (tag ou « Run workflow » avec publier)
+      # Version publiée (tag v*, ou « Run workflow » avec publier) : installeur signé et
+      # latest.json dans le dépôt PUBLIC These-versions, que l'application interroge pour
+      # se mettre à jour. Secrets : TAURI_SIGNING_PRIVATE_KEY et RELEASES_TOKEN
+      # (voir docs/MISES_A_JOUR.md).
+      - name: Construction signée (publication)
         if: startsWith(github.ref, 'refs/tags/v') || inputs.publier
-        uses: tauri-apps/tauri-action@v0
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
-        with:
-          owner: LucasDavidTPE
-          repo: These-versions
-          # __VERSION__ : la version de tauri.conf.json.
-          tagName: v__VERSION__
-          # Le tag est créé dans These-versions, sur sa branche principale (le commit
-          # du code, lui, n'existe que dans ce dépôt-ci).
-          commitish: main
-          releaseName: Thèse v__VERSION__
-          releaseBody: ${{ github.event.head_commit.message }}
-          releaseDraft: false
-          prerelease: false
-          includeUpdaterJson: true
-          # Les installations sont faites par l'installeur NSIS (.exe, sans droits
-          # administrateur) : la mise à jour doit utiliser le même.
-          updaterJsonPreferNsis: true
-          # Signe l'installeur et produit les fichiers de mise à jour (.sig).
-          args: --config src-tauri/publication.json
+        run: npm run construire -- these --config src-tauri/publication.json
+
+      - name: Publication dans These-versions
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.publier
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+          NOTES: ${{ github.event.head_commit.message }}
+        run: node outils/publier.mjs
 
       - name: Build (push)
         if: ${{ !startsWith(github.ref, 'refs/tags/v') && !inputs.publier }}
