@@ -10,7 +10,7 @@ import { appliquerProjet, essaiDepuisLecture, type Essai } from "../core/essai";
 import { fichierDepuisOctets, lireFichier } from "../core/io/lecture";
 import { vueEnGraphe, type GrapheFigurine } from "../core/figurine";
 import { vuesCalage, vuesSynthese, type Langue, type Vue } from "../core/vues";
-import type { DemandeEssai } from "./demande";
+import { lireExport, type DemandeEssai } from "./demande";
 import { essaiActif, useTraitement } from "./etat";
 import type { FigureDemandee } from "./Graphe";
 
@@ -54,8 +54,7 @@ export function useFigure(): (titre: string, graphe: IdGraphe) => FigureDemandee
 export async function regenererFigure(ctx: Contexte, o: OrigineTraitement): Promise<{ svg: string; png: Uint8Array; graphe: GrapheFigurine }> {
   if (!ctx.espace) throw new Error("Aucun espace Thèse ouvert.");
   const d = o.demande;
-  if (!(await ctx.plateforme.dossierExiste(d.dossierDonnees))) throw new Error(`Données de l'essai absentes de ce poste (${d.dossierDonnees}).`);
-  const octets = await ctx.plateforme.fichiers(d.dossierDonnees).readBytes(d.fichier);
+  const octets = await lireExport(ctx, d);
   let projet: string;
   try {
     projet = await ctx.espace.fichiers.readText(d.projet);

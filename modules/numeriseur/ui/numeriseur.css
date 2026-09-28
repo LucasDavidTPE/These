@@ -1,0 +1,237 @@
+/* Numériseur */
+.nm-corps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 14px;
+  align-items: start;
+}
+@media (max-width: 1100px) {
+  .nm-corps {
+    grid-template-columns: 1fr;
+  }
+}
+.nm-visionneuse {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: sticky;
+  top: 0;
+}
+.nm-cadre {
+  position: relative;
+  height: min(72vh, 760px);
+  min-height: 360px;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: repeating-conic-gradient(var(--surface-2) 0 25%, var(--surface) 0 50%) 0 0 / 20px 20px;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+.nm-cadre.nm-viser {
+  cursor: crosshair;
+}
+.nm-cadre canvas {
+  display: block;
+}
+.nm-vide {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+  color: var(--discret);
+  pointer-events: none;
+}
+.nm-loupe {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 150px;
+  height: 150px;
+  border: 2px solid var(--texte);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+.nm-barre-etat {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  min-height: 26px;
+}
+.nm-barre-etat .grow {
+  flex: 1;
+}
+.nm-consigne {
+  font-weight: 600;
+  color: var(--accent);
+}
+.nm-lecture {
+  font-variant-numeric: tabular-nums;
+}
+.nm-panneau {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(72vh + 40px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.nm-modes {
+  display: flex;
+  gap: 0;
+}
+.nm-modes button {
+  flex: 1;
+  border-radius: 0;
+}
+.nm-modes button:first-child {
+  border-radius: 6px 0 0 6px;
+}
+.nm-modes button:last-child {
+  border-radius: 0 6px 6px 0;
+}
+.nm-modes button.actif,
+.nm-panneau button.actif {
+  background: var(--accent);
+  color: var(--accent-texte);
+  border-color: var(--accent);
+}
+.nm-section {
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.nm-section h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.nm-section .grow {
+  flex: 1;
+}
+.nm-axe {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.nm-nombre {
+  padding: 3px 6px;
+  width: auto;
+}
+.nm-titre-axe {
+  font-size: 12px;
+}
+.nm-case {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+.nm-ok {
+  color: var(--ok);
+}
+.nm-alerte {
+  color: var(--attention);
+}
+.nm-series {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.nm-serie {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.nm-pastille {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+}
+.nm-puce {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--bordure);
+}
+.nm-curseur {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nm-table-defile {
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid var(--bordure);
+  border-radius: 6px;
+}
+.nm-table {
+  border-collapse: collapse;
+  font-size: 12px;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+.nm-table th,
+.nm-table td {
+  padding: 2px 6px;
+  border-bottom: 1px solid var(--surface-2);
+  text-align: right;
+}
+.nm-table th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-2);
+  font-weight: 600;
+}
+.nm-table tr.choisi td {
+  background: var(--info-fond);
+}
+.nm-table .nm-nombre {
+  width: 11ch !important;
+  font-size: 12px;
+  padding: 1px 4px;
+}
+.nm-gamme {
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid var(--bordure);
+}
+.nm-coupe {
+  border-top: 1px solid var(--surface-2);
+  padding-top: 6px;
+}
+.nm-graphe svg {
+  max-width: 100%;
+  height: auto;
+}
+.nm-grille-champs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: flex-end;
+}
+.nm-grille-champs label {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nm-grille-champs .nm-large {
+  flex: 1 1 100%;
+}
+.nm-chausspec {
+  border-top: 1px dashed var(--bordure);
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}

@@ -27,7 +27,7 @@ const mo = (n: number) => (n < 1e6 ? `${Math.max(1, Math.round(n / 1e3))} ko` : 
 
 export function ManuscritsPage() {
   const ctx = useContexte();
-  const racine = ctx.reglages.racines.manuscrits;
+  const racine = ctx.racines.manuscrits;
   const espace = ctx.espace;
   const [lignes, setLignes] = useState<Ligne[] | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});

@@ -1,8 +1,10 @@
 /**
- * Le module Figures : Figurine 1.0, ses cinq pages en onglets. Le dossier de la
- * bibliothèque est celui des réglages du poste (champ `figures`), partagé avec la coquille.
+ * Le module Figures : Figurine 1.0, ses cinq pages en onglets. La bibliothèque vit dans
+ * l'espace (`<espace>/figures`) ; sans espace (Figurine seul), c'est le dossier des réglages
+ * du poste (champ `figures`).
  */
 import { useEffect, useLayoutEffect } from "react";
+import { BandeauHorsEspace } from "@interface/BandeauHorsEspace";
 import { useContexte } from "@interface/contexte";
 import { parseSettings, serializeSettings } from "../core/settings";
 import { AboutPage } from "./AboutPage";
@@ -25,13 +27,15 @@ export function FiguresPage() {
   // branché avant que la page Bibliothèque n'ouvre la bibliothèque (useLibrary.init).
   useLayoutEffect(() => {
     brancherReglages({
-      lire: async () => serializeSettings({ version: 1, libraryRoot: ctx.reglages.figures }),
-      ecrire: async (contenu) => ctx.enregistrerReglages({ ...ctx.reglages, figures: parseSettings(contenu).libraryRoot }),
+      lire: async () => serializeSettings({ version: 1, libraryRoot: ctx.dossierFigures }),
+      ecrire: async (contenu) => {
+        if (!ctx.espace) await ctx.enregistrerReglages({ ...ctx.reglages, figures: parseSettings(contenu).libraryRoot });
+      },
     });
   }, [ctx]);
 
   // Dossier changé depuis les réglages du poste : la bibliothèque suit.
-  const figures = ctx.reglages.figures;
+  const figures = ctx.dossierFigures;
   useEffect(() => {
     const s = useLibrary.getState();
     if (s.ready && figures && figures !== s.root) void s.setRoot(figures, false);
@@ -57,7 +61,10 @@ export function FiguresPage() {
       </nav>
       <div className="figures-contenu">
         {page === "library" ? (
-          <LibraryPage />
+          <>
+            <BandeauHorsEspace quoi="figures" />
+            <LibraryPage />
+          </>
         ) : page === "cutout" ? (
           <CutoutPage />
         ) : page === "schema" ? (

@@ -1,10 +1,11 @@
 /** Chargement de fichiers de mesure dans la page (dépôt, « Ouvrir ») : lecture, détection, traitement. */
 import { appliquerProjet, detecter, essaiDepuisLecture, traiter, type Essai } from "../core/essai";
-import { lireDepouillement, localiserSource } from "../core/depouillement";
+import { lireFichierDonnees } from "@interface/donnees";
+import { lireDepouillement } from "../core/depouillement";
 import { entier } from "../core/format";
 import { fichierDepuisOctets, lireFichier, type FichierMesure } from "../core/io/lecture";
 import type { Contexte } from "@interface/contexte";
-import { marquerEnregistre } from "./sauvegarde";
+import { enregistrer, marquerEnregistre } from "./sauvegarde";
 import { souffler, useTraitement } from "./etat";
 
 /** Lit des fichiers et en fait des essais traités (dépôt, « Ouvrir », ou essai d'une campagne). */
@@ -46,21 +47,21 @@ export async function chargerFichiers(fichiers: FichierMesure[], remplacer = fal
 
 
 /** Rouvre un dépouillement enregistré dans l'espace : relit le fichier de mesure, rejoue le projet. */
-export async function rouvrirDepouillement(ctx: Pick<Contexte, "espace" | "plateforme" | "reglages">, chemin: string): Promise<void> {
+export async function rouvrirDepouillement(ctx: Pick<Contexte, "espace" | "plateforme" | "racines" | "poste">, chemin: string): Promise<void> {
   const st = useTraitement.getState();
   await st.tache("Réouverture du dépouillement…", async (progres) => {
     if (!ctx.espace) throw new Error("Aucun espace Thèse ouvert.");
     const d = lireDepouillement(JSON.parse(await ctx.espace.fichiers.readText(chemin)));
-    const lieu = localiserSource(d.source, ctx.reglages.racines);
-    if (!lieu.ok) throw new Error(lieu.message);
-    if (!(await ctx.plateforme.dossierExiste(lieu.dossier))) throw new Error(`Le fichier de mesure n'est pas sur ce poste (${lieu.dossier}).`);
-    const octets = await ctx.plateforme.fichiers(lieu.dossier).readBytes(lieu.fichier);
-    const e = essaiDepuisLecture(await lireFichier(fichierDepuisOctets(lieu.fichier, octets)), useTraitement.getState().essais.filter((x) => !x.demo).length);
+    // Par la copie dans l'espace (ou la source si elle est là) : marche sur les deux PC.
+    const lieu = await lireFichierDonnees(ctx, d.source);
+    const e = essaiDepuisLecture(await lireFichier(fichierDepuisOctets(lieu.fichier, lieu.octets)), useTraitement.getState().essais.filter((x) => !x.demo).length);
     progres(0.5);
     await appliquerProjet([e], d.projet as Parameters<typeof appliquerProjet>[1]);
-    e.source = d.source;
+    e.source = lieu.source;
     e.enregistrement = { chemin, format: "depouillement" };
     marquerEnregistre(e);
+    // Ancien enregistrement (chemin absolu) : le fichier est maintenant dans l'espace, on le note.
+    if (lieu.source !== d.source) await enregistrer(ctx, e, true);
     st.maj((s) => {
       s.essais = [...s.essais.filter((x) => !x.demo && x.enregistrement?.chemin !== chemin), e];
       s.actif = s.essais.length - 1;

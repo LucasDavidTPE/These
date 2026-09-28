@@ -71,9 +71,9 @@ export function Fiche({ b, c, onEnregistrer, onFermer }: { b: Biblio; c: Calcule
   const lien = r.url || (r.doi ? `https://doi.org/${r.doi}` : "");
   const lienAvecProxy = b.parametres.proxy && r.accesDocument === "Éditeur (abonnement)" ? b.parametres.proxy + lien : lien;
   const ouvrirPdf = () => {
-    const res = resoudre(`biblio-pdf:${r.fichierPdf}`, ctx.reglages.racines);
+    const res = resoudre(`biblio-pdf:${r.fichierPdf}`, ctx.racines);
     if (res.ok) void ctx.plateforme.ouvrirDossier(res.chemin).catch((e: unknown) => setErreur(String(e)));
-    else setErreur(`${res.message} Déclarez le dossier des PDF (racine « biblio-pdf ») dans les réglages du poste.`);
+    else setErreur(`${res.message} Les PDF sont rangés dans l'espace (bibliotheque/pdf) : ouvrez d'abord un espace.`);
   };
 
   return (
@@ -207,7 +207,7 @@ export function Fiche({ b, c, onEnregistrer, onFermer }: { b: Biblio; c: Calcule
           <Libelle titre="Accès au document">
             <ChampChoix valeur={r.accesDocument} vide="—" options={ACCES_DOCUMENT} onValider={t("accesDocument")} />
           </Libelle>
-          <Libelle titre="Fichier PDF (dossier biblio-pdf)">
+          <Libelle titre="Fichier PDF (bibliotheque/pdf de l'espace)">
             <ChampTexte valeur={r.fichierPdf} onValider={t("fichierPdf")} placeholder="vide = pas encore récupéré" />
           </Libelle>
           <Libelle titre="Vérification">

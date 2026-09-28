@@ -433,3 +433,50 @@ nombres doivent être identiques, dans les deux modes.
       plus) et le calcul va au bout.
 - [ ] Ouvrir `modules/chausspec/core/kernel.ts` à côté de `kernel.py` : même découpage, mêmes noms.
 
+## Numériseur (1.1)
+
+- [ ] Capture d'un graphique d'article (Win+Maj+S) puis Ctrl+V dans le Numériseur : l'image
+      s'affiche, l'outil X1 est actif, la loupe suit le curseur.
+- [ ] Placer X1, X2, Y1, Y2 sur des graduations, saisir leurs valeurs : « Étalonnage prêt » ;
+      la lecture sous le curseur donne des valeurs justes ailleurs sur le graphique.
+- [ ] Graphique log-log (courbe maîtresse) : cocher « log » sur les deux axes, relever une
+      courbe, la comparer aux valeurs de l'article.
+- [ ] Relevé automatique d'une courbe qui en croise une autre : la courbe suivie ne saute pas
+      sur l'autre ; corriger un point faux en le glissant, en supprimer un (Suppr).
+- [ ] Nuage de points (symboles) : un point par symbole ; ajouter un point oublié à la main.
+- [ ] « Copier pour Excel » puis coller dans Excel : colonnes x, y par série, virgule décimale.
+- [ ] « → Figures » : le graphe arrive dans Figures, modifiable dans Graphes.
+- [ ] Carte de pression (exemple « pneu », puis une vraie carte) : légende, zone, « Lire la
+      carte » ≈ 100 % ; la valeur sous le curseur correspond à la légende.
+- [ ] Coupe : graphe cohérent avec l'image ; CSV et → Figures.
+- [ ] Maillage rectangulaire → « Matrice CSV… » ouverte dans ChaussSpec comme carte (import CSV).
+- [ ] Maillage en disques → « → ChaussSpec » : le chargement du cas ouvert est remplacé par
+      les charges circulaires, charge totale égale à celle annoncée ; calcul lancé.
+- [ ] « Enregistrer » : `numeriseur/<nom>.json` et l'image dans l'espace ; rouvrir le projet
+      sur l'autre PC, tout est à sa place.
+
+
+## Espace autonome (1.2)
+
+- [ ] Accueil → « À régler » : « Les PDF de la bibliographie sont encore hors de l'espace »
+      et « La bibliothèque de figures… » ; le bouton mène aux réglages.
+- [ ] Réglages → « Rapatrier dans l'espace » pour les PDF : bilan (fichiers copiés, Mo), les
+      PDF sont dans `Espace\bibliotheque\pdf`, « Ouvrir le PDF » d'une fiche marche ; le
+      dossier `BIBLIO` est intact (le supprimer soi-même ensuite).
+- [ ] Idem pour les figures : la bibliothèque s'affiche depuis `Espace\figures`, avec ses
+      verrous et ses aperçus ; l'ancien dossier est intact.
+- [ ] Sur l'autre PC (après synchronisation OneDrive) : « Rapatrier » ne recopie rien
+      (tout « déjà présent ») et n'écrase aucune figure modifiée entre-temps.
+- [ ] Campagne : « Courbes » puis « 2S2P1D » sur un essai : l'export apparaît dans
+      `Espace\donnees\essais\…` ; sur le PC sans `E:\`, les courbes et le dépouillement
+      s'ouvrent quand même (les essais jamais ouverts restent indisponibles).
+- [ ] Traitement : ouvrir un fichier hors de toute racine (Bureau) : il est copié dans
+      `donnees\importes` ; le dépouillement se rouvre sur l'autre PC.
+- [ ] Un dépouillement enregistré avant la 1.2 (chemin absolu) se rouvre et son fichier
+      part dans `donnees\importes`.
+- [ ] ViscoCompare : « Tout exporter » écrit les classeurs dans `Espace\viscocompare\…` ; le
+      dossier COMSOL / VISCOROUTE n'est pas modifié ; l'étude se rouvre sur l'autre PC.
+- [ ] Réglages → « Exporter l'espace (.zip)… » : le zip s'ouvre dans l'Explorateur, contient
+      tout l'espace (sans `.tmp` ni `.lock`) ; refus propre si on l'enregistre dans l'espace.
+- [ ] Taille de l'espace dans OneDrive après quelques semaines : raisonnable (seuls les
+      fichiers ouverts sont copiés).

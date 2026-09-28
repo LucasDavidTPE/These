@@ -4,6 +4,7 @@
  */
 import { useRef, useState } from "react";
 import { Message, Page } from "@interface/composants";
+import { BandeauHorsEspace } from "@interface/BandeauHorsEspace";
 import { useContexte } from "@interface/contexte";
 import { versBibtex, versRis } from "../core/exports";
 import { importerClasseur, type ImportClasseur } from "../core/import";
@@ -155,6 +156,7 @@ export function BibliothequePage() {
     >
       {erreur || d.erreur ? <Message niveau="erreur">{erreur ?? d.erreur}</Message> : null}
       {message ? <Message niveau="info">{message}</Message> : null}
+      <BandeauHorsEspace quoi="biblio-pdf" />
       {verification ? (
         <div className="message message-info rangee">
           <span>

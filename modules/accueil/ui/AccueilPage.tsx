@@ -20,6 +20,7 @@ const TEINTES: Record<string, number> = {
   manuscrits: 350,
   viscocompare: 192,
   chausspec: 12,
+  numeriseur: 52,
   bibliotheque: 128,
   planning: 245,
 };
@@ -42,7 +43,7 @@ function useAction<T>(nom: string, charge: (ctx: ReturnType<typeof useContexte>)
     };
     // Recalculé quand les fichiers changent, pas à chaque rendu du contexte.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [registre, revision, nom, ctx.reglages.figures]);
+  }, [registre, revision, nom, ctx.dossierFigures]);
   return r;
 }
 
@@ -326,7 +327,7 @@ export function AccueilPage() {
   const semaine = useAction<ElementSemaine[]>("planning.cette-semaine", (c) => c, []);
   const essais = useAction<EssaiRecent[]>("campagnes.recents", (c) => c, []);
   const figures = useAction<FigureRecente[]>("figures.recentes", (c) => c, []);
-  const montrerFigures = figures && (figures.length > 0 || !!ctx.reglages.figures);
+  const montrerFigures = figures && (figures.length > 0 || !!ctx.dossierFigures);
   const encarts = [semaine, essais, montrerFigures ? figures : null].filter((x) => x !== null).length;
 
   return (

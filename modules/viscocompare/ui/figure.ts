@@ -2,6 +2,7 @@
 import { courbesSvg, VUE_ENTIERE, type Vue } from "@noyau/courbes";
 import { svgTexteEnPng } from "@interface/image";
 import type { Contexte } from "@interface/contexte";
+import { fichiersDonnees } from "@interface/donnees";
 import { panneauxCas, type Cas } from "../core/comparaison";
 import { chargerEtude } from "../core/dossier";
 import type { Conventions } from "../core/lecture";
@@ -28,10 +29,9 @@ export async function renduCas(c: Cas, etude: string, vue: Vue = VUE_ENTIERE): P
 
 /** Action « viscocompare.regenerer-figure ». */
 export async function regenererCas(ctx: Contexte, o: OrigineCas): Promise<{ svg: string; png: Uint8Array }> {
-  const racine = ctx.reglages.racines.viscocompare;
-  if (!racine || !(await ctx.plateforme.dossierExiste(racine))) throw new Error("Le dossier des comparaisons (racine « viscocompare ») est absent de ce poste.");
-  const e = await chargerEtude(ctx.plateforme.fichiers(racine), o.etude, o.conventions);
+  // Par la copie dans l'espace : régénérable aussi sur le poste qui n'a pas les calculs.
+  const e = await chargerEtude(fichiersDonnees(ctx, "viscocompare:"), o.etude, o.conventions);
   const c = e.cas.find((x) => x.vitesse === o.vitesse);
-  if (!c) throw new Error(`Plus de cas V = ${o.vitesse} dans « ${o.etude || racine} ».`);
+  if (!c) throw new Error(`Plus de cas V = ${o.vitesse} dans « ${o.etude || "viscocompare"} » (ni dans l'espace, ni sur ce poste).`);
   return renduCas(c, o.etude, o.vue);
 }

@@ -117,6 +117,13 @@ function Actions({ p }: { p: Probleme }) {
           Corriger dans les réglages
         </button>
       );
+    case "hors-espace":
+      // Dans les réglages : le bilan de la copie y reste affiché.
+      return (
+        <button type="button" onClick={() => ctx.naviguer("reglages")}>
+          Rapatrier dans l'espace…
+        </button>
+      );
   }
 }
 
@@ -125,7 +132,7 @@ export function ARegler() {
   return (
     <Section titre="À régler" aDroite={<Pastille niveau={problemes.length === 0 ? "ok" : "attention"}>{problemes.length === 0 ? "Rien" : String(problemes.length)}</Pastille>}>
       {problemes.length === 0 ? (
-        <p className="discret">Rien à régler : pas de conflit OneDrive, pas d'écriture interrompue, toutes les racines sont présentes.</p>
+        <p className="discret">Rien à régler : pas de conflit OneDrive, pas d'écriture interrompue, toutes les racines sont présentes, tout est dans l'espace.</p>
       ) : (
         <ul className="liste">
           {problemes.map(({ probleme }) => {

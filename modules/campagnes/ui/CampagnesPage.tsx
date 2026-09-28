@@ -13,6 +13,7 @@ import { ecrireXlsx } from "@noyau/formats/xlsx-ecriture";
 import { apercu, panneaux, type PanneauEssai } from "../core/courbes";
 import { SUFFIXE_SUIVI } from "../core/decouverte";
 import { useContexte } from "@interface/contexte";
+import { fichiersDonnees, sousReference } from "@interface/donnees";
 import { IconeDossier } from "@interface/icones";
 import { decouvrir } from "../core/decouverte";
 import { FILTRE_VIDE, garderCampagne, lireEssai, nouvelleCampagne, periode, periodeLisible, STATUTS, TYPES, typeDe, type Campagne, type Essai } from "../core/modele";
@@ -116,12 +117,12 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
     }
   };
   const maj = (m: Partial<Campagne>) => void agir(() => enregistrerCampagne(fs, c.slug, { ...k, ...m }));
-  const donnees = k.donnees ? resoudre(k.donnees, ctx.reglages.racines) : null;
+  const donnees = k.donnees ? resoudre(k.donnees, ctx.racines) : null;
 
   async function choisirDonnees() {
     const chemin = await ctx.plateforme.choisirDossier("Dossier des données brutes de la campagne", donnees?.ok ? donnees.chemin : undefined);
     if (!chemin) return;
-    const ref = referenceDepuisChemin(chemin, ctx.reglages.racines);
+    const ref = referenceDepuisChemin(chemin, ctx.racines);
     if (!ref) {
       setMessage({ niveau: "erreur", texte: "Ce dossier n'est sous aucune racine de données. Déclarez d'abord sa racine (par exemple « essais » → E:\\) dans les réglages du poste." });
       return;
@@ -146,10 +147,11 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
   }
 
   async function voirCourbes(nom: string) {
-    if (!donnees?.ok) return;
+    if (!k.donnees) return;
     setCourbes({ essai: nom, panneaux: null });
     try {
-      const fsDonnees = ctx.plateforme.fichiers(donnees.chemin);
+      // Par la copie dans l'espace : l'export lu y est copié, et reste lisible sur l'autre PC.
+      const fsDonnees = fichiersDonnees(ctx, k.donnees);
       const fichier = (await fsDonnees.listDir(nom)).find((f) => f.name.endsWith(SUFFIXE_SUIVI));
       if (!fichier) throw new Error(`Pas d'export ${SUFFIXE_SUIVI} dans ${nom}.`);
       const serie = lireCsv(new TextDecoder().decode(await fsDonnees.readBytes(`${nom}/${fichier.name}`)));
@@ -217,15 +219,14 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
   }
 
   async function depouiller(nom: string) {
-    if (!donnees?.ok) return;
+    if (!k.donnees) return;
     try {
-      const fichier = (await ctx.plateforme.fichiers(donnees.chemin).listDir(nom)).find((f) => f.name.endsWith(SUFFIXE_SUIVI));
-      if (!fichier) throw new Error(`Pas d'export ${SUFFIXE_SUIVI} dans ${nom}.`);
-      const sep = donnees.chemin.includes("\\") ? "\\" : "/";
+      const fichier = (await fichiersDonnees(ctx, k.donnees).listDir(nom)).find((f) => f.name.endsWith(SUFFIXE_SUIVI));
+      if (!fichier) throw new Error(`Pas d'export ${SUFFIXE_SUIVI} dans ${nom} (ni dans l'espace, ni sur ce poste).`);
       await ctx.registre.executer("traitement.ouvrir-essai", {
         ctx,
         titre: `${k.titre} — ${nom}`,
-        dossierDonnees: `${donnees.chemin.replace(/[\\/]+$/, "")}${sep}${nom}`,
+        donnees: sousReference(k.donnees, nom),
         fichier: fichier.name,
         projet: cheminTraitement(c.slug, nom),
         campagne: c.slug,
@@ -354,14 +355,14 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
                       <Champ titre="" valeur={e.notes} onValider={(v) => ecrire({ notes: v })} />
                     </td>
                     <td className="nowrap">
-                      <button type="button" disabled={!donnees?.ok} title={donnees?.ok ? "Lire l'export de suivi et tracer les courbes" : "Choisissez d'abord le dossier de données"} onClick={() => void voirCourbes(nom)}>
+                      <button type="button" disabled={!k.donnees} title={k.donnees ? "Lire l'export de suivi (copié dans l'espace) et tracer les courbes" : "Choisissez d'abord le dossier de données"} onClick={() => void voirCourbes(nom)}>
                         Courbes
                       </button>{" "}
                       <button type="button" disabled={!donnees?.ok} title="Copier les données brutes de cet essai vers un dossier choisi" onClick={() => void copier(nom)}>
                         Copier…
                       </button>{" "}
                       {k.type === "module-complexe" && ctx.registre.aAction("traitement.ouvrir-essai") ? (
-                        <button type="button" disabled={!donnees?.ok} title="Ouvrir cet essai dans le traitement 2S2P1D" onClick={() => void depouiller(nom)}>
+                        <button type="button" disabled={!k.donnees} title="Ouvrir cet essai dans le traitement 2S2P1D" onClick={() => void depouiller(nom)}>
                           {c.depouilles.includes(nom) ? "2S2P1D ✓" : "2S2P1D"}
                         </button>
                       ) : null}

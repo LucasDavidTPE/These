@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { lireReference, referenceDepuisChemin, resoudre } from "./racines";
+import { dossierFigures, horsEspace, lireReference, racinesEffectives, referenceDepuisChemin, resoudre } from "./racines";
 import { ecrireReglages, espacePropose, lireReglages, REGLAGES_PAR_DEFAUT } from "./reglages";
 
 describe("réglages du poste", () => {
@@ -47,5 +47,24 @@ describe("racines de données", () => {
     expect(referenceDepuisChemin("c:\\users\\david\\desktop\\recherche\\B2C4", racines)).toBe("recherche:B2C4");
     expect(referenceDepuisChemin("C:\\Users\\DAVID\\Desktop\\RechercheBis", racines)).toBeNull();
     expect(referenceDepuisChemin("D:\\x", racines)).toBeNull();
+  });
+});
+
+describe("ce qui vit dans l'espace", () => {
+  const espace = "C:\\OneDrive\\Thèse\\Espace";
+  it("place les PDF et les figures dans l'espace, quoi que dise le poste", () => {
+    expect(racinesEffectives({ essais: "E:\\", "biblio-pdf": "C:\\BIBLIO" }, espace)).toEqual({ essais: "E:\\", "biblio-pdf": "C:\\OneDrive\\Thèse\\Espace\\bibliotheque\\pdf" });
+    expect(racinesEffectives({ essais: "E:\\" }, null)).toEqual({ essais: "E:\\" });
+    expect(dossierFigures("C:\\Figures", espace)).toBe("C:\\OneDrive\\Thèse\\Espace\\figures");
+    expect(dossierFigures("C:\\Figures", null)).toBe("C:\\Figures");
+  });
+
+  it("liste les anciens emplacements à rapatrier", () => {
+    expect(horsEspace({ racines: { "biblio-pdf": "C:\\BIBLIO" }, figures: "C:\\Figures" }, espace)).toEqual([
+      { quoi: "biblio-pdf", chemin: "C:\\BIBLIO" },
+      { quoi: "figures", chemin: "C:\\Figures" },
+    ]);
+    expect(horsEspace({ racines: {}, figures: "c:/onedrive/thèse/espace/figures/" }, espace)).toEqual([]);
+    expect(horsEspace({ racines: { "biblio-pdf": "C:\\BIBLIO" }, figures: null }, null)).toEqual([]);
   });
 });

@@ -2,6 +2,7 @@
 //! des dossiers. Les modules ajouteront leurs commandes (détourage, lecture rapide des
 //! essais) derrière des *features* Cargo, pour les installeurs d'un seul module.
 
+pub mod archive;
 pub mod copie;
 pub mod fichiers;
 #[cfg(feature = "figures")]
@@ -12,6 +13,7 @@ pub mod surveillance;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    use archive::archive_dossier;
     use copie::copie_dossier;
     use fichiers::commands::*;
     use liens::lien_verifier;
@@ -38,7 +40,7 @@ pub fn run() {
             fichiers_supprimer_temporaire, verrou_lire, verrou_poser, verrou_lever, poste_nom,
             poste_lire_reglages, poste_ecrire_reglages, poste_dossiers_onedrive,
             poste_dossier_existe, poste_creer_dossier, poste_ecrire_fichier, poste_lire_fichier, poste_ouvrir_vscode,
-            surveillance_demarrer, surveillance_arreter, copie_dossier, lien_verifier
+            surveillance_demarrer, surveillance_arreter, copie_dossier, archive_dossier, lien_verifier
             $(, $module)*
             ]
         };

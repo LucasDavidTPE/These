@@ -10,7 +10,7 @@ const viscocompare: Manifeste = {
   resume: "Profils COMSOL et Viscoroute comparés, vitesse par vitesse",
   Icone: IconeViscoCompare,
   Page: ViscoComparePage,
-  etat: async (ctx) => (ctx.reglages.racines.viscocompare ? `Dossier : ${ctx.reglages.racines.viscocompare.split(/[\\/]/).filter(Boolean).pop()}` : "Dossier à choisir"),
+  etat: async (ctx) => (ctx.racines.viscocompare ? `Dossier : ${ctx.racines.viscocompare.split(/[\\/]/).filter(Boolean).pop()}` : "Dossier à choisir"),
   actions: {
     /** Refait une figure de comparaison depuis les fichiers COMSOL et Viscoroute ; charge : { ctx, origine }. */
     "viscocompare.regenerer-figure": async (charge) => {

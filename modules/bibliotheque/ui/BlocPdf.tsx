@@ -1,8 +1,9 @@
 /**
  * Le PDF d'une référence : on le pointe (boîte « Ouvrir »), il est renommé selon la convention
- * des PDF déjà rangés (`BIB-003_Tielking_1989_Aircraft-tire-….pdf`) dans la racine
- * « biblio-pdf », et son nom est noté dans la fiche (PDF récupéré). Un PDF déjà dans le dossier
- * est renommé sur place ; un PDF pris ailleurs (Téléchargements…) y est copié.
+ * des PDF déjà rangés (`BIB-003_Tielking_1989_Aircraft-tire-….pdf`) dans l'espace
+ * (`bibliotheque/pdf`, racine « biblio-pdf » vue par les modules), et son nom est noté dans la
+ * fiche (PDF récupéré). Un PDF déjà dans le dossier est renommé sur place ; un PDF pris
+ * ailleurs (Téléchargements…) y est copié.
  */
 import { useState } from "react";
 import { useContexte } from "@interface/contexte";
@@ -11,7 +12,7 @@ import { dansRacine, nomPdf } from "../core/pdf";
 
 export function BlocPdf({ id, r, maj }: { id: string; r: Reference; maj(p: Partial<Reference>): void }) {
   const ctx = useContexte();
-  const racine = ctx.reglages.racines["biblio-pdf"];
+  const racine = ctx.racines["biblio-pdf"];
   const propose = nomPdf(id, r);
   const [saisi, setSaisi] = useState<string | null>(null);
   const [message, setMessage] = useState<{ texte: string; erreur?: boolean } | null>(null);
@@ -19,13 +20,14 @@ export function BlocPdf({ id, r, maj }: { id: string; r: Reference; maj(p: Parti
     const n = (saisi ?? propose).trim().replace(/[\\/:*?"<>|]/g, "-");
     return n.toLowerCase().endsWith(".pdf") ? n : `${n}.pdf`;
   })();
-  const sansDossier = "Déclarez d'abord le dossier des PDF (racine « biblio-pdf ») dans les réglages du poste.";
+  const sansDossier = "Ouvrez d'abord un espace Thèse : les PDF y sont rangés (bibliotheque/pdf).";
 
   async function pointer() {
     if (!racine) return setMessage({ texte: sansDossier, erreur: true });
     const f = await ctx.plateforme.ouvrirFichier("PDF de la référence", ["pdf"]);
     if (!f) return;
     try {
+      await ctx.plateforme.creerDossier(racine);
       const fs = ctx.plateforme.fichiers(racine);
       const rel = f.chemin ? dansRacine(f.chemin, racine) : null;
       if (rel === cible) {

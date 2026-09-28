@@ -30,7 +30,7 @@ describe("produits", () => {
     const figurine = sourceDuProduit("figurine");
     expect(figurine).toContain('"/modules/figures/manifeste.tsx"');
     expect(figurine).not.toContain("/modules/bibliotheque/");
-    expect(sourceDuProduit(undefined).match(/import m\d+ from/g)).toHaveLength(10);
+    expect(sourceDuProduit(undefined).match(/import m\d+ from/g)).toHaveLength(11);
   });
 
   it("les fichiers statiques d'un module ne sont embarqués que dans ses produits", () => {

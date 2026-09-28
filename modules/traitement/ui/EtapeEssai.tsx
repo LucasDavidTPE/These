@@ -1,11 +1,12 @@
 /** Étape 01 : fichier de mesure, correspondance des voies, éprouvette, capteurs, matrice de campagne. */
 import { useEffect, useRef, useState } from "react";
 import { useContexte } from "@interface/contexte";
+import { garderDansEspace } from "@interface/donnees";
 import { UNITES_AXIALES, type Correspondance } from "../core/donnees";
 import { detecter, traiter } from "../core/essai";
 import { entier, nb } from "../core/format";
 import { fichierDepuisOctets } from "../core/io/lecture";
-import { cheminDepouillement, DOSSIER_DEPOUILLEMENTS, lireDepouillement, sourceDepuisChemin, type Depouillement } from "../core/depouillement";
+import { cheminDepouillement, DOSSIER_DEPOUILLEMENTS, lireDepouillement, type Depouillement } from "../core/depouillement";
 import { chargerFichiers, rouvrirDepouillement } from "./chargement";
 import { Bloc, ChampNombre, Indicateur } from "./champs";
 import { essaiActif, souffler, useTraitement } from "./etat";
@@ -159,10 +160,12 @@ export function EtapeEssai() {
     if (ctx.plateforme.genre === "tauri") {
       const f = await ctx.plateforme.ouvrirFichier("Fichier de mesure", ["csv", "txt", "xlsx", "xlsm"]);
       if (!f) return;
-      // Dans l'espace, le dépouillement s'enregistre seul avec l'emplacement du fichier : on y revient plus tard.
+      // Dans l'espace, le fichier de mesure y est copié et le dépouillement s'enregistre seul :
+      // on y revient plus tard, depuis l'un ou l'autre PC.
+      const source = ctx.espace && f.chemin ? await garderDansEspace(ctx, f.chemin, f.octets) : null;
       await chargerFichiers([fichierDepuisOctets(f.nom, f.octets)], false, (e) => {
-        if (!ctx.espace || !f.chemin) return;
-        e.source = sourceDepuisChemin(f.chemin, ctx.reglages.racines);
+        if (!source) return;
+        e.source = source;
         e.enregistrement = { chemin: cheminDepouillement(e.nom, e.id), format: "depouillement" };
       });
     } else entree.current?.click();
