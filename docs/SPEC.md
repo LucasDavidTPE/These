@@ -237,6 +237,10 @@ Ce qui change à l'étape 2 :
   résultats (paramètres calés, courbes maîtresses) s'affichent sur la page de l'essai ;
 - dans l'installeur *Traitement 2S2P1D* seul, on ouvre et on enregistre des fichiers
   comme aujourd'hui, sans espace.
+- **Enregistrement automatique** (0.2.7) : un essai de campagne s'enregistre avec lui dès
+  sa première modification ; un fichier ouvert à la main s'enregistre dans
+  `traitement/<nom>-<id>.json` avec la référence de son fichier de mesure (racine du poste,
+  sinon chemin absolu) et se rouvre depuis « Dépouillements enregistrés ».
 
 Le site GitHub Pages actuel n'est plus développé ; il reste en ligne tel quel tant
 qu'on ne décide pas de le retirer (voir `QUESTIONS.md`).

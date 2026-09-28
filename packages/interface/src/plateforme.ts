@@ -54,8 +54,8 @@ export interface Plateforme {
    * `nom` propose le nom de fichier (son extension sert de filtre).
    */
   enregistrerSous(nom: string, octets: Uint8Array): Promise<boolean>;
-  /** Boîte « Ouvrir » limitée à des extensions (« xlsx ») ; null si annulée. */
-  ouvrirFichier(titre: string, extensions: string[]): Promise<{ nom: string; octets: Uint8Array } | null>;
+  /** Boîte « Ouvrir » limitée à des extensions (« xlsx ») ; null si annulée. `chemin` : absolu (Tauri). */
+  ouvrirFichier(titre: string, extensions: string[]): Promise<{ nom: string; octets: Uint8Array; chemin?: string } | null>;
   /** Version plus récente publiée, ou null (à jour, hors ligne, ou démonstration). */
   verifierMiseAJour(): Promise<MiseAJour | null>;
   /** Ouvre un dossier ou un fichier dans VS Code. */

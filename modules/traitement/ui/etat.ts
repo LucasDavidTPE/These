@@ -26,6 +26,8 @@ export interface EtatTraitement {
   infoDetection: string;
   /** Essai ouvert depuis une campagne (et d'où il vient), pour l'enregistrer avec elle. */
   campagne: { essaiId: string; demande: DemandeEssai } | null;
+  /** « Enregistré à 10:42 » : dernier enregistrement automatique dans l'espace. */
+  enregistre: string | null;
   /** Modifie l'état (essais compris) puis redessine. */
   maj(f: (s: EtatTraitement) => void): void;
   /** Tâche longue avec voile de progression ; l'erreur devient un message. */
@@ -52,6 +54,7 @@ export const useTraitement = create<EtatTraitement>()((set, get) => ({
   infoFichier: "",
   infoDetection: "",
   campagne: null,
+  enregistre: null,
   maj: (f) => {
     const s = get();
     f(s);

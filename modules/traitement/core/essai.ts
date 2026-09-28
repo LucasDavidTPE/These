@@ -8,6 +8,7 @@
  */
 import { aTwlf, calageConjoint, calerModule, calerPoisson, calerWLF, ecarts, recalerIsothermes, type PointMesure, type Translations } from "./calage";
 import { detecterCampagne } from "./campagne";
+import type { Depouillement, Enregistrement } from "./depouillement";
 import { construireDonnees, CORRESPONDANCE_PAR_DEFAUT, type Correspondance, type Donnees, type TableBrute } from "./donnees";
 import { CONSTANTES_DEMO, pointsDemo, signalDemo, WLF_DEMO, type PointDemo } from "./demo";
 import { entier, freq, nb } from "./format";
@@ -75,6 +76,10 @@ export interface Essai {
   pointsDemo?: PointDemo[];
   /** Chaîne Kelvin-Voigt identifiée (modèle GKV), recalculée quand les constantes changent. */
   chaine?: ChaineGKV | null;
+  /** Fichier de mesure : référence de racine ou chemin absolu (pour rouvrir le dépouillement). */
+  source?: string;
+  /** Où le dépouillement s'enregistre dans l'espace, s'il s'y enregistre. */
+  enregistrement?: Enregistrement;
 }
 
 let compteur = 0;
@@ -694,6 +699,15 @@ export async function appliquerProjet(essais: Essai[], j: { essais?: EssaiSauve[
   }
   for (const e of essais) if (e.table && !e.demo) await traiter(e);
   for (const e of essais) constantesChangees(e);
+}
+
+/** Ce qui s'écrit dans l'espace pour cet essai (null s'il ne s'y enregistre pas). */
+export function contenuEnregistre(e: Essai, poste: string, maintenant: string): string | null {
+  if (!e.enregistrement || e.demo) return null;
+  const projet = projetJSON([e]);
+  if (e.enregistrement.format === "projet") return projet;
+  const d: Depouillement = { version: 1, nom: e.nom, source: e.source ?? "", fichier: (e.source ?? "").split(/[\\/:]/).pop() ?? "", modifie: maintenant, poste, projet: JSON.parse(projet) };
+  return JSON.stringify(d, null, 2) + "\n";
 }
 
 /* ══════════════════════════════════════════════════════ ligne d'état */

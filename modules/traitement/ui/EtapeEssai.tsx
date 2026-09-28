@@ -1,11 +1,12 @@
 /** Étape 01 : fichier de mesure, correspondance des voies, éprouvette, capteurs, matrice de campagne. */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useContexte } from "@interface/contexte";
 import { UNITES_AXIALES, type Correspondance } from "../core/donnees";
 import { detecter, traiter } from "../core/essai";
 import { entier, nb } from "../core/format";
 import { fichierDepuisOctets } from "../core/io/lecture";
-import { chargerFichiers } from "./chargement";
+import { cheminDepouillement, DOSSIER_DEPOUILLEMENTS, lireDepouillement, sourceDepuisChemin, type Depouillement } from "../core/depouillement";
+import { chargerFichiers, rouvrirDepouillement } from "./chargement";
 import { Bloc, ChampNombre, Indicateur } from "./champs";
 import { essaiActif, souffler, useTraitement } from "./etat";
 
@@ -34,6 +35,80 @@ const VOIES_BOUTONS: [string, "voiesAx" | "voiesRad", number, keyof Correspondan
   ["Radial 3", "voiesRad", 2, "lion3"],
   ["Radial 4", "voiesRad", 3, "lion4"],
 ];
+
+/** Dépouillements enregistrés dans l'espace (fichiers ouverts à la main ; ceux des campagnes sont avec leurs essais). */
+function Depouillements() {
+  const ctx = useContexte();
+  const tour = useTraitement((x) => x.tour);
+  const [liste, setListe] = useState<(Depouillement & { chemin: string })[] | null>(null);
+  const [rafraichi, setRafraichi] = useState(0);
+  useEffect(() => {
+    const fs = ctx.espace?.fichiers;
+    if (!fs) return;
+    let annule = false;
+    (async () => {
+      if (!(await fs.exists(DOSSIER_DEPOUILLEMENTS))) return [];
+      const out: (Depouillement & { chemin: string })[] = [];
+      for (const f of await fs.listDir(DOSSIER_DEPOUILLEMENTS)) {
+        if (f.kind !== "file" || !f.name.endsWith(".json")) continue;
+        const chemin = `${DOSSIER_DEPOUILLEMENTS}/${f.name}`;
+        try {
+          out.push({ ...lireDepouillement(JSON.parse(await fs.readText(chemin))), chemin });
+        } catch {
+          // fichier abîmé ou copie de conflit : ignoré ici, visible dans « À régler »
+        }
+      }
+      return out.sort((a, b) => (a.modifie < b.modifie ? 1 : -1));
+    })().then((l) => !annule && setListe(l));
+    return () => {
+      annule = true;
+    };
+  }, [ctx.espace, ctx.revision, tour, rafraichi]);
+  if (!ctx.espace || !liste?.length) return null;
+  const retirer = async (chemin: string) => {
+    const fs = ctx.espace!.fichiers;
+    await fs.ensureDir(`${DOSSIER_DEPOUILLEMENTS}/.supprimes`);
+    await fs.rename(chemin, `${DOSSIER_DEPOUILLEMENTS}/.supprimes/${Date.now()}-${chemin.split("/").pop()}`);
+    setRafraichi((x) => x + 1);
+  };
+  return (
+    <Bloc titre="Dépouillements enregistrés" aide="enregistrés automatiquement dans l'espace ; ceux des campagnes se rouvrent depuis leur essai">
+      <div className="tr-cadre">
+        <table className="tr-table">
+          <thead>
+            <tr>
+              <th scope="col">Essai</th>
+              <th scope="col">Fichier de mesure</th>
+              <th scope="col">Modifié</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {liste.map((d) => (
+              <tr key={d.chemin}>
+                <th scope="row">{d.nom}</th>
+                <td className="texte">
+                  <code>{d.source}</code>
+                </td>
+                <td>
+                  {d.modifie.slice(0, 16).replace("T", " ")} · {d.poste}
+                </td>
+                <td>
+                  <button type="button" className="tr-mini" onClick={() => void rouvrirDepouillement(ctx, d.chemin)}>
+                    Rouvrir
+                  </button>{" "}
+                  <button type="button" className="tr-mini" title="Rangé dans traitement/.supprimes, jamais effacé" onClick={() => void retirer(d.chemin)}>
+                    Retirer
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Bloc>
+  );
+}
 
 function Matrice() {
   const s = useTraitement();
@@ -83,7 +158,13 @@ export function EtapeEssai() {
     // Dans l'application, la boîte « Ouvrir » de Windows ; dans un navigateur, le sélecteur de fichiers.
     if (ctx.plateforme.genre === "tauri") {
       const f = await ctx.plateforme.ouvrirFichier("Fichier de mesure", ["csv", "txt", "xlsx", "xlsm"]);
-      if (f) await chargerFichiers([fichierDepuisOctets(f.nom, f.octets)]);
+      if (!f) return;
+      // Dans l'espace, le dépouillement s'enregistre seul avec l'emplacement du fichier : on y revient plus tard.
+      await chargerFichiers([fichierDepuisOctets(f.nom, f.octets)], false, (e) => {
+        if (!ctx.espace || !f.chemin) return;
+        e.source = sourceDepuisChemin(f.chemin, ctx.reglages.racines);
+        e.enregistrement = { chemin: cheminDepouillement(e.nom, e.id), format: "depouillement" };
+      });
     } else entree.current?.click();
   }
 
@@ -212,6 +293,8 @@ export function EtapeEssai() {
           </div>
         </Bloc>
       </div>
+
+      <Depouillements />
 
       <Bloc titre="Campagne — nombre de cycles par palier" aide="un palier = un couple (T, f)">
         <div className="rangee">

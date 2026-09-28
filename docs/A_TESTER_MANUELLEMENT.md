@@ -272,3 +272,15 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] Fermer et rouvrir les courbes (et sur l'autre PC) : les régressions reviennent.
 - [ ] « Enregistrer dans Figures » : les droites et leurs pentes sont dans l'image ; « Régénérer »
       les refait.
+
+## Traitement : enregistrement automatique (0.2.7)
+
+- [ ] Essai de campagne : l'ouvrir puis revenir sans rien toucher → bouton « 2S2P1D » (pas
+      de ✓) ; écarter un cycle ou caler → « Enregistré à hh:mm » dans la barre, puis « 2S2P1D ✓ ».
+- [ ] Fichier ouvert à la main (« Choisir un fichier… ») sous une racine du poste (ex.
+      Recherche) : il apparaît dans « Dépouillements enregistrés » (étape 01) avec sa
+      référence `recherche:…` ; chaque modification s'enregistre seule.
+- [ ] Fermer l'application, la rouvrir (ou passer sur l'autre PC, même racine déclarée) →
+      « Rouvrir » : même tri des cycles, mêmes calages, ouverture sur l'étape Calage.
+- [ ] Fichier hors de toute racine : rouvrable sur ce PC seulement (chemin absolu) ; message
+      clair sur l'autre PC. « Retirer » range l'entrée dans `traitement/.supprimes/`.

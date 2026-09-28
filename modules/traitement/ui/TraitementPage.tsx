@@ -8,9 +8,9 @@
  * n'est pas validée sous Windows.
  */
 import { useCallback, useEffect, useState } from "react";
-import { Introuvable, parent } from "@noyau/stockage";
+import { Introuvable } from "@noyau/stockage";
 import { useContexte } from "@interface/contexte";
-import { appliquerProjet, detecter, essaiDemo, essaiDepuisLecture, projetJSON, resumeEssai, traiter, type Mode } from "../core/essai";
+import { appliquerProjet, detecter, essaiDemo, essaiDepuisLecture, resumeEssai, traiter, type Mode } from "../core/essai";
 import { fichierDepuisOctets, lireFichier } from "../core/io/lecture";
 import { prendre, surDemande, type DemandeEssai } from "./demande";
 import { EtapeCalage } from "./EtapeCalage";
@@ -20,6 +20,7 @@ import { EtapeSynthese } from "./EtapeSynthese";
 import { EtapeComparaison, EtapeExport, EtapeFidelite } from "./EtapesFin";
 import { essaiActif, souffler, useTraitement } from "./etat";
 import { AnciennePage } from "./AnciennePage";
+import { enregistrer, marquerEnregistre, useSauvegardeAuto } from "./sauvegarde";
 
 const ETAPES = ["Essai", "Cycles", "Synthèse", "Calage", "Comparaison", "Fidélité Excel", "Export"];
 
@@ -28,6 +29,7 @@ export function TraitementPage() {
   const s = useTraitement();
   const e = essaiActif(s);
   const [ancienne, setAncienne] = useState(false);
+  useSauvegardeAuto(ctx);
 
   // Premier affichage : l'essai de démonstration, calculé et calé.
   useEffect(() => {
@@ -58,6 +60,9 @@ export function TraitementPage() {
         useTraitement.setState({ occupe: { texte: "Traitement de la campagne…", part: 0 } });
         if (projet) await appliquerProjet([essai], JSON.parse(projet) as Parameters<typeof appliquerProjet>[1]);
         else await traiter(essai, progres, souffler);
+        essai.enregistrement = { chemin: d.projet, format: "projet" };
+        // État d'ouverture : il ne s'écrit qu'après une première modification.
+        marquerEnregistre(essai);
         st.maj((x) => {
           x.essais = [essai];
           x.actif = 0;
@@ -82,12 +87,10 @@ export function TraitementPage() {
   }, [ouvrirEssai]);
 
   async function enregistrerDansEssai() {
-    const c = s.campagne;
-    const essai = s.essais.find((x) => x.id === c?.essaiId);
-    if (!c || !essai || !ctx.espace) return;
+    const essai = s.essais.find((x) => x.id === s.campagne?.essaiId);
+    if (!essai) return;
     try {
-      await ctx.espace.fichiers.ensureDir(parent(c.demande.projet));
-      await ctx.espace.fichiers.writeTextAtomic(c.demande.projet, projetJSON([essai]));
+      await enregistrer(ctx, essai, true);
       s.signaler(`Dépouillement enregistré avec l'essai (${new Date().toLocaleTimeString("fr-FR")}).`);
     } catch (err) {
       s.signaler(`Enregistrement impossible : ${err instanceof Error ? err.message : String(err)}`, "erreur");
@@ -110,7 +113,10 @@ export function TraitementPage() {
       {s.campagne ? (
         <div className="traitement-barre">
           <strong>{s.campagne.demande.titre}</strong>
-          <span className="discret">Essai ouvert depuis sa campagne : le dépouillement (tri des cycles, calages) s'enregistre avec lui, dans l'espace.</span>
+          <span className="discret">
+            Essai ouvert depuis sa campagne : le dépouillement (tri des cycles, calages) s'enregistre avec lui, automatiquement dès la première modification.
+            {s.enregistre ? ` ${s.enregistre}.` : ""}
+          </span>
           <button type="button" className="principal" onClick={() => void enregistrerDansEssai()}>
             Enregistrer avec l'essai
           </button>
