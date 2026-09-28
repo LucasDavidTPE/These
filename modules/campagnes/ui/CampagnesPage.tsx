@@ -96,6 +96,14 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
   const [note, setNote] = useState({ titre: "", texte: "" });
   const [courbes, setCourbes] = useState<{ essai: string; panneaux: PanneauEssai[] | null; serie?: Serie } | null>(null);
   const [vue, setVue] = useState<Vue>(VUE_ENTIERE);
+  // Les régressions posées sur les courbes sont gardées avec l'essai (essai.json).
+  useEffect(() => {
+    const nom = courbes?.essai;
+    const essai = nom ? c.essais[nom] : undefined;
+    if (!nom || !essai || !vue.regressions) return;
+    if (JSON.stringify(vue.regressions) === JSON.stringify(essai.regressions)) return;
+    void enregistrerEssai(fs, c.slug, nom, { ...essai, regressions: vue.regressions }).catch((e: unknown) => setMessage({ niveau: "erreur", texte: e instanceof Error ? e.message : String(e) }));
+  }, [vue.regressions, courbes?.essai, c.essais, c.slug, fs]);
   const k = c.campagne;
   const agir = async (f: () => Promise<unknown>, ok?: string) => {
     try {
@@ -421,7 +429,7 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
             </span>
           }
         >
-          {courbes.panneaux ? <Courbes key={courbes.essai} panneaux={courbes.panneaux} xLibelle="temps (h)" onVue={setVue} /> : <p className="discret">Lecture de l'export…</p>}
+          {courbes.panneaux ? <Courbes key={courbes.essai} panneaux={courbes.panneaux} xLibelle="temps (h)" onVue={setVue} regressionsInitiales={c.essais[courbes.essai]?.regressions} /> : <p className="discret">Lecture de l'export…</p>}
         </Section>
       ) : null}
 

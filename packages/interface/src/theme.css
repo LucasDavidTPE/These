@@ -562,6 +562,76 @@ table.tableau th {
   opacity: 0.15;
 }
 
+.courbes-outils {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.courbes-mode {
+  display: inline-flex;
+}
+
+.courbes-mode button {
+  padding: 3px 10px;
+  font-size: 12.5px;
+  border-radius: 0;
+}
+
+.courbes-mode button:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.courbes-mode button:last-child {
+  border-radius: 0 6px 6px 0;
+  border-left: none;
+}
+
+.courbes-mode button.actif {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-texte);
+}
+
+.courbes-regression {
+  stroke: var(--texte);
+  stroke-width: 1.6;
+  stroke-dasharray: 6 3;
+}
+
+.courbes-regression-texte {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--texte);
+  stroke: var(--surface);
+  stroke-width: 3px;
+  paint-order: stroke;
+}
+
+.courbes-regressions {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.courbes-regressions li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.courbes-regressions .pastille-couleur {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
 .courbes svg {
   user-select: none;
 }

@@ -5,7 +5,7 @@
  * clic pour revenir). Partagé entre les modules.
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { cadrer, COULEURS, formaterNombre, graduer, type Panneau, type Trace, type Vue } from "@noyau/courbes";
+import { cadrer, calculerRegressions, COULEURS, formaterNombre, graduer, libelleRegression, type Panneau, type RegressionDemandee, type Trace, type Vue } from "@noyau/courbes";
 
 export type { Panneau, Trace, Vue } from "@noyau/courbes";
 
@@ -23,9 +23,13 @@ interface Props {
   setCurseur(x: number | null): void;
   plage: [number, number] | null;
   setPlage(p: [number, number] | null): void;
+  /** « regression » : glisser pose une droite de régression au lieu de zoomer. */
+  mode: "zoom" | "regression";
+  regressions: RegressionDemandee[];
+  ajouterRegression(de: number, a: number): void;
 }
 
-function Graphe({ p, largeur, xLibelle, masquees, basculer, curseur, setCurseur, plage, setPlage }: Props) {
+function Graphe({ p, largeur, xLibelle, masquees, basculer, curseur, setCurseur, plage, setPlage, mode, regressions, ajouterRegression }: Props) {
   const [selection, setSelection] = useState<[number, number] | null>(null);
   const { traces, x0, x1, y0, y1 } = cadrer(p, { masquees: [...masquees], plage });
   const W = largeur - M.g - M.d;
@@ -65,7 +69,11 @@ function Graphe({ p, largeur, xLibelle, masquees, basculer, curseur, setCurseur,
           setSelection([x, x]);
         }}
         onMouseUp={() => {
-          if (selection && Math.abs(selection[1] - selection[0]) > (x1 - x0) / 200) setPlage([Math.min(...selection), Math.max(...selection)]);
+          if (selection && Math.abs(selection[1] - selection[0]) > (x1 - x0) / 200) {
+            const [de, a] = [Math.min(...selection), Math.max(...selection)];
+            if (mode === "regression") ajouterRegression(de, a);
+            else setPlage([de, a]);
+          }
           setSelection(null);
         }}
         onDoubleClick={() => setPlage(null)}
@@ -102,6 +110,20 @@ function Graphe({ p, largeur, xLibelle, masquees, basculer, curseur, setCurseur,
             />
           ),
         )}
+        {calculerRegressions([p], regressions, xLibelle).map((r, k) => {
+          const xa = Math.max(r.droite.x0, x0),
+            xb = Math.min(r.droite.x1, x1);
+          if (!(xb > xa)) return null;
+          const f = (x: number) => r.droite.pente * x + r.droite.ordonnee;
+          return (
+            <g key={k}>
+              <line x1={px(xa)} y1={py(f(xa))} x2={px(xb)} y2={py(f(xb))} className="courbes-regression" />
+              <text x={px((xa + xb) / 2)} y={Math.min(py(f(xa)), py(f(xb))) - 6} textAnchor="middle" className="courbes-regression-texte">
+                {fmt(r.droite.pente).replace(".", ",")} {r.unite}
+              </text>
+            </g>
+          );
+        })}
         {curseur !== null ? <line x1={px(curseur)} x2={px(curseur)} y1={M.h} y2={H - M.b} className="courbes-curseur" /> : null}
       </svg>
     </div>
@@ -109,15 +131,18 @@ function Graphe({ p, largeur, xLibelle, masquees, basculer, curseur, setCurseur,
 }
 
 /**
- * `onVue` reçoit les voies masquées et la plage zoomée à chaque changement : de quoi
- * refaire la même figure plus tard (Enregistrer dans Figures, puis Régénérer).
+ * `onVue` reçoit les voies masquées, la plage zoomée et les régressions à chaque changement :
+ * de quoi refaire la même figure plus tard (Enregistrer dans Figures, puis Régénérer), et
+ * garder les régressions avec l'essai (`regressionsInitiales` les restitue).
  */
-export function Courbes({ panneaux, xLibelle, onVue }: { panneaux: Panneau[]; xLibelle: string; onVue?(v: Vue): void }) {
+export function Courbes({ panneaux, xLibelle, onVue, regressionsInitiales }: { panneaux: Panneau[]; xLibelle: string; onVue?(v: Vue): void; regressionsInitiales?: RegressionDemandee[] }) {
   const boite = useRef<HTMLDivElement>(null);
   const [largeur, setLargeur] = useState(800);
   const [masquees, setMasquees] = useState<Set<string>>(new Set());
   const [curseur, setCurseur] = useState<number | null>(null);
   const [plage, setPlage] = useState<[number, number] | null>(null);
+  const [mode, setMode] = useState<"zoom" | "regression">("zoom");
+  const [regressions, setRegressions] = useState<RegressionDemandee[]>(regressionsInitiales ?? []);
   useLayoutEffect(() => {
     const el = boite.current;
     if (!el) return;
@@ -125,21 +150,62 @@ export function Courbes({ panneaux, xLibelle, onVue }: { panneaux: Panneau[]; xL
     o.observe(el);
     return () => o.disconnect();
   }, []);
-  useEffect(() => onVue?.({ masquees: [...masquees], plage }), [masquees, plage, onVue]);
+  useEffect(() => onVue?.({ masquees: [...masquees], plage, regressions }), [masquees, plage, regressions, onVue]);
+  const calculees = calculerRegressions(panneaux, regressions, xLibelle);
   const basculer = useMemo(() => (n: string) => setMasquees((m) => (m.has(n) ? new Set([...m].filter((x) => x !== n)) : new Set([...m, n]))), []);
   return (
     <div className="courbes" ref={boite}>
-      <p className="discret petit">
-        Glisser sur une courbe pour zoomer sur une plage{plage ? " · " : ""}
-        {plage ? (
-          <button type="button" className="lien" onClick={() => setPlage(null)}>
-            vue entière
+      <div className="courbes-outils">
+        <span className="courbes-mode" role="group" aria-label="Glisser sur une courbe pour">
+          <button type="button" aria-pressed={mode === "zoom"} className={mode === "zoom" ? "actif" : undefined} onClick={() => setMode("zoom")}>
+            Zoom
           </button>
-        ) : null}
-      </p>
+          <button type="button" aria-pressed={mode === "regression"} className={mode === "regression" ? "actif" : undefined} onClick={() => setMode("regression")} title="Glisser sur un domaine : droite de régression de chaque voie affichée du panneau">
+            Régression
+          </button>
+        </span>
+        <span className="discret petit">
+          {mode === "zoom" ? "Glisser sur une courbe pour zoomer sur une plage" : "Glisser sur un domaine pour y poser une droite de régression (voies affichées du panneau)"}
+          {plage ? " · " : ""}
+          {plage ? (
+            <button type="button" className="lien" onClick={() => setPlage(null)}>
+              vue entière
+            </button>
+          ) : null}
+        </span>
+      </div>
       {panneaux.map((p) => (
-        <Graphe key={p.titre} p={p} largeur={largeur} xLibelle={xLibelle} masquees={masquees} basculer={basculer} curseur={curseur} setCurseur={setCurseur} plage={plage} setPlage={setPlage} />
+        <Graphe
+          key={p.titre}
+          p={p}
+          largeur={largeur}
+          xLibelle={xLibelle}
+          masquees={masquees}
+          basculer={basculer}
+          curseur={curseur}
+          setCurseur={setCurseur}
+          plage={plage}
+          setPlage={setPlage}
+          mode={mode}
+          regressions={regressions}
+          ajouterRegression={(de, a) =>
+            setRegressions((r) => [...r, ...p.traces.filter((t) => !masquees.has(t.nom)).map((t) => ({ panneau: p.titre, trace: t.nom, de: Number(de.toPrecision(8)), a: Number(a.toPrecision(8)) }))])
+          }
+        />
       ))}
+      {calculees.length ? (
+        <ul className="courbes-regressions">
+          {calculees.map((r) => (
+            <li key={`${r.demande.panneau}|${r.demande.trace}|${r.demande.de}|${r.demande.a}`}>
+              <span className="pastille-couleur" style={{ background: r.couleur }} />
+              {libelleRegression(r)}
+              <button type="button" className="lien" title="Retirer cette régression" onClick={() => setRegressions((l) => l.filter((x) => x !== r.demande))}>
+                retirer
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

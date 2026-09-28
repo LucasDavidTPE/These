@@ -33,3 +33,22 @@ describe("traceur de courbes", () => {
     expect(svg).not.toMatch(/NaN|undefined|Infinity/);
   });
 });
+
+describe("régressions sur les courbes", () => {
+  const tsrst: Panneau = { titre: "Température", unite: "°C", traces: [{ nom: "Enceinte", x: [0, 1, 2, 3, 4], y: [20, 10, 0, -10, -10] }] };
+
+  it("pente dans l'unité du panneau par unité de temps", async () => {
+    const { calculerRegressions, libelleRegression } = await import("./courbes");
+    const [r] = calculerRegressions([tsrst], [{ panneau: "Température", trace: "Enceinte", de: 0, a: 3 }], "temps (h)");
+    expect(r!.droite.pente).toBeCloseTo(-10);
+    expect(r!.unite).toBe("°C/h");
+    expect(libelleRegression(r!)).toBe("Température (Enceinte) : -10 °C/h · R² 1,0000 · 0 → 3");
+    expect(calculerRegressions([tsrst], [{ panneau: "Force", trace: "x", de: 0, a: 1 }], "temps (h)")).toEqual([]);
+  });
+
+  it("dessinées dans le SVG exporté, avec la pente", () => {
+    const svg = courbesSvg([tsrst], { xLibelle: "temps (h)", vue: { masquees: [], plage: null, regressions: [{ panneau: "Température", trace: "Enceinte", de: 0, a: 3 }] } });
+    expect(svg).toContain('stroke-dasharray="6 3"');
+    expect(svg).toContain("-10 °C/h (R² 1,000)");
+  });
+});

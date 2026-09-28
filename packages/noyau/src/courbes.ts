@@ -4,6 +4,7 @@
  * famille d'unités, jamais deux échelles sur un axe). Sert à l'écran (composant Courbes)
  * et aux figures régénérées depuis les données : même dessin, mêmes octets.
  */
+import { regressionLineaire, type Droite } from "./regression";
 import { echapperXml } from "./texte";
 
 export interface Trace {
@@ -34,13 +35,53 @@ export function graduer(a: number, b: number, n = 5): number[] {
 
 export const formaterNombre = (v: number) => (Math.abs(v) >= 1000 || (Math.abs(v) < 0.01 && v !== 0) ? v.toExponential(1) : String(Number(v.toPrecision(4))));
 
-/** Ce que l'utilisateur regarde : voies masquées (par nom) et plage d'abscisses zoomée. */
+/** Droite de régression demandée sur une voie, entre deux abscisses. */
+export interface RegressionDemandee {
+  /** Titre du panneau (« Température »). */
+  panneau: string;
+  /** Nom de la voie. */
+  trace: string;
+  de: number;
+  a: number;
+}
+
+/** Ce que l'utilisateur regarde : voies masquées (par nom), plage d'abscisses zoomée, régressions posées. */
 export interface Vue {
   masquees: string[];
   plage: [number, number] | null;
+  regressions?: RegressionDemandee[];
 }
 
 export const VUE_ENTIERE: Vue = { masquees: [], plage: null };
+
+export interface RegressionCalculee {
+  demande: RegressionDemandee;
+  droite: Droite;
+  /** « °C/h » */
+  unite: string;
+  couleur: string;
+}
+
+/** Unité entre parenthèses d'un libellé d'axe : « temps (h) » → « h ». */
+export const uniteDe = (libelle: string) => /\(([^()]+)\)\s*$/.exec(libelle)?.[1] ?? "";
+
+/** Calcule les régressions demandées (celles dont la voie existe encore et qui ont au moins deux points). */
+export function calculerRegressions(panneaux: readonly Panneau[], demandes: readonly RegressionDemandee[], xLibelle: string): RegressionCalculee[] {
+  const ux = uniteDe(xLibelle);
+  return demandes.flatMap((d) => {
+    const p = panneaux.find((x) => x.titre === d.panneau);
+    const i = p ? p.traces.findIndex((t) => t.nom === d.trace) : -1;
+    if (!p || i < 0) return [];
+    const droite = regressionLineaire(p.traces[i]!.x, p.traces[i]!.y, d.de, d.a);
+    return droite ? [{ demande: d, droite, unite: ux ? `${p.unite}/${ux}` : p.unite, couleur: COULEURS[i % COULEURS.length]! }] : [];
+  });
+}
+
+/** « Température (Enceinte) : −12,3 °C/h · R² 0,998 · 0,5 → 3,2 » */
+export function libelleRegression(r: RegressionCalculee): string {
+  const f = (v: number) => formaterNombre(v).replace(".", ",");
+  return `${r.demande.panneau} (${r.demande.trace}) : ${f(r.droite.pente)} ${r.unite} · R² ${r.droite.r2.toFixed(4).replace(".", ",")} · ${f(r.droite.x0)} → ${f(r.droite.x1)}`;
+}
 
 /** Cadre d'un panneau : traces restreintes à la plage, bornes des axes (5 % de marge en y). */
 export function cadrer(p: Panneau, vue: Vue): { traces: Trace[]; x0: number; x1: number; y0: number; y1: number } {
@@ -116,6 +157,17 @@ export function courbesSvg(panneaux: Panneau[], o: OptionsSvg): string {
       const pts = t.x.map((x, j) => (Number.isFinite(t.y[j]!) ? `${px(x).toFixed(1)},${py(t.y[j]!).toFixed(1)}` : "")).filter(Boolean).join(" ");
       if (pts) out.push(`<polyline fill="none" stroke="${COULEURS[i % COULEURS.length]}" stroke-width="1.2" points="${pts}"/>`);
     });
+    // Régressions de ce panneau : droite en tirets sur son domaine, pente écrite au bout.
+    for (const r of calculerRegressions([p], vue.regressions ?? [], o.xLibelle)) {
+      const xa = Math.max(r.droite.x0, c.x0),
+        xb = Math.min(r.droite.x1, c.x1);
+      if (!(xb > xa)) continue;
+      const ya = r.droite.pente * xa + r.droite.ordonnee,
+        yb = r.droite.pente * xb + r.droite.ordonnee;
+      out.push(`<line x1="${r1(px(xa))}" y1="${r1(py(ya))}" x2="${r1(px(xb))}" y2="${r1(py(yb))}" stroke="#1d1d1b" stroke-width="1.6" stroke-dasharray="6 3"/>`);
+      const texte = `${formaterNombre(r.droite.pente).replace(".", ",")} ${r.unite} (R² ${r.droite.r2.toFixed(3).replace(".", ",")})`;
+      out.push(`<text x="${r1(px((xa + xb) / 2))}" y="${r1(Math.min(py(ya), py(yb)) - 6)}" text-anchor="middle" ${POLICE} font-size="11" font-weight="600" fill="#1d1d1b" stroke="#ffffff" stroke-width="3" paint-order="stroke">${echapperXml(texte)}</text>`);
+    }
   });
   out.push("</svg>");
   return out.join("\n") + "\n";

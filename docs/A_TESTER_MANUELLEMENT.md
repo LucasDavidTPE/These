@@ -263,3 +263,12 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] « → Figures » sur la courbe maîtresse d'un essai de campagne, puis dans Figures
       « Régénérer depuis les données » après avoir modifié le calage et réenregistré.
 - [ ] Installeur Traitement seul : pas de bouton « → Figures », tout le reste fonctionne.
+
+## Régressions sur les courbes d'un essai (0.2.7)
+
+- [ ] Campagnes → « Courbes » d'un TSRST → « Régression » → glisser sur la phase de
+      refroidissement : droite en tirets, pente en °C/h et R² ; plusieurs domaines possibles,
+      « retirer » en enlève une.
+- [ ] Fermer et rouvrir les courbes (et sur l'autre PC) : les régressions reviennent.
+- [ ] « Enregistrer dans Figures » : les droites et leurs pentes sont dans l'image ; « Régénérer »
+      les refait.
