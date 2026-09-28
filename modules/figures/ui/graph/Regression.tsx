@@ -1,0 +1,128 @@
+/**
+ * Régression d'une série : type (droite, polynôme, puissance, exponentielle, logarithme),
+ * plage des x prise en compte (saisie, ou tirée sur l'aperçu), prolongement de la courbe,
+ * équation sur la figure.
+ */
+import { DEGRE_MAX, DEGRE_MIN, fitLabel, fitSample, fitSeries, type FitKind, type Series, type SeriesFit } from "../../core/graph";
+import { NumberInput } from "../editor/fields";
+import { usePlageRegression } from "./plageRegression";
+import { useGraph } from "./useGraph";
+
+const FITS: { value: FitKind; label: string }[] = [
+  { value: "lineaire", label: "Linéaire (y = a·x + b)" },
+  { value: "origine", label: "Linéaire par l'origine (y = a·x)" },
+  { value: "polynome", label: "Polynôme (y = c₀ + c₁·x + … + cₙ·xⁿ)" },
+  { value: "puissance", label: "Puissance (y = a·xᵇ)" },
+  { value: "exponentielle", label: "Exponentielle (y = a·eᵇˣ)" },
+  { value: "logarithmique", label: "Logarithmique (y = a·ln x + b)" },
+];
+
+const CONDITION: Partial<Record<FitKind, string>> = {
+  puissance: "Il faut au moins deux points à x et y positifs.",
+  exponentielle: "Il faut au moins deux points à y positif.",
+  logarithmique: "Il faut au moins deux points à x positif.",
+};
+
+/** Équation lisible dans le panneau (le TeX de la figure, sans les commandes). */
+function equationTexte(sr: Series, fit: SeriesFit): string {
+  const pts = fitSample(sr.x, sr.y, fit);
+  const f = fitSeries(pts.x, pts.y, fit.kind, fit.degre);
+  if (!f) return fit.kind === "polynome" ? `Il faut au moins ${(fit.degre ?? DEGRE_MIN) + 1} x distincts dans la plage.` : (CONDITION[fit.kind] ?? "Pas assez de points distincts dans la plage.");
+  const eq = fitLabel(f)
+    .replace(/\$/g, "")
+    .replace(/\{,\}/g, ",")
+    .replace(/\\,/g, "·")
+    .replace(/\\quad/g, "  ·  ")
+    .replace(/\\ln/g, "ln")
+    .replace(/\\times 10\^\{(-?\d+)\}/g, "×10^$1")
+    .replace(/\^\{([^}]*)\}/g, "^$1")
+    .replace("R^2", "R²");
+  return `${eq}  ·  ${f.n} point${f.n > 1 ? "s" : ""}`;
+}
+
+const nombre = (v: number) => String(Number(v.toPrecision(6))).replace(".", ",");
+
+export function RegressionSerie({ i, sr }: { i: number; sr: Series }) {
+  const s = useGraph();
+  const choix = usePlageRegression((p) => p.serie);
+  const fit = sr.fit;
+  const maj = (patch: Partial<SeriesFit>) => s.setSeries(i, { fit: { ...fit!, ...patch } });
+
+  function changerType(kind: string) {
+    if (!kind) return s.setSeries(i, { fit: undefined });
+    const f: SeriesFit = { ...(fit ?? { label: true }), kind: kind as FitKind };
+    if (f.kind === "polynome") f.degre = fit?.degre ?? DEGRE_MIN;
+    else delete f.degre;
+    s.setSeries(i, { fit: f });
+  }
+
+  const xFinis = sr.x.filter(Number.isFinite);
+  const [xLo, xHi] = xFinis.length ? [Math.min(...xFinis), Math.max(...xFinis)] : [0, 0];
+  const plage = fit && (fit.xmin !== undefined || fit.xmax !== undefined);
+
+  return (
+    <>
+      <label className="field">
+        <span>Régression</span>
+        <select value={fit?.kind ?? ""} onChange={(e) => changerType(e.target.value)}>
+          <option value="">Aucune</option>
+          {FITS.map((f) => (
+            <option key={f.value} value={f.value}>
+              {f.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      {fit && (
+        <>
+          {fit.kind === "polynome" && (
+            <label className="field">
+              <span>Degré</span>
+              <select value={fit.degre ?? DEGRE_MIN} onChange={(e) => maj({ degre: Number(e.target.value) })}>
+                {Array.from({ length: DEGRE_MAX - DEGRE_MIN + 1 }, (_, k) => DEGRE_MIN + k).map((d) => (
+                  <option key={d} value={d}>
+                    {d === 2 ? "2 (parabole)" : d === 3 ? "3 (cubique)" : d}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <div className="field">
+            <span>Plage de la régression (x)</span>
+            <div className="row">
+              <span className="muted small">de</span>
+              <NumberInput value={fit.xmin ?? Number(xLo.toPrecision(6))} title="Plus petit x pris en compte" onChange={(v) => maj({ xmin: v })} />
+              <span className="muted small">à</span>
+              <NumberInput value={fit.xmax ?? Number(xHi.toPrecision(6))} title="Plus grand x pris en compte" onChange={(v) => maj({ xmax: v })} />
+            </div>
+            <div className="row">
+              <button
+                type="button"
+                className={`small-btn${choix === i ? " actif" : ""}`}
+                aria-pressed={choix === i}
+                title="Tirer un rectangle sur l'aperçu : ses bornes en x deviennent celles de la régression"
+                onClick={() => usePlageRegression.setState({ serie: choix === i ? null : i })}
+              >
+                ⇤⇥ Choisir sur l'aperçu
+              </button>
+              <button type="button" className="small-btn" disabled={!plage} title={`Toute la série (x de ${nombre(xLo)} à ${nombre(xHi)})`} onClick={() => maj({ xmin: undefined, xmax: undefined })}>
+                Toute la série
+              </button>
+            </div>
+          </div>
+          <p className="muted small">{equationTexte(sr, fit)}</p>
+          {plage && (
+            <label className="chip">
+              <input type="checkbox" checked={!!fit.prolonger} onChange={(e) => maj({ prolonger: e.target.checked || undefined })} />
+              Prolonger la courbe sur toute la série
+            </label>
+          )}
+          <label className="chip">
+            <input type="checkbox" checked={fit.label} onChange={(e) => maj({ label: e.target.checked })} />
+            Équation sur la figure
+          </label>
+        </>
+      )}
+    </>
+  );
+}

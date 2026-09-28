@@ -7,7 +7,7 @@ import { measureLabel } from "../math/tex";
 import type { Primitive } from "../schema/geometry";
 import type { Theme } from "../schema/theme";
 import type { Pt } from "../schema/types";
-import { fitCorner, fitLabel, fitPoints, fitSeries, type FitResult } from "./fit";
+import { fitCorner, fitLabel, fitPoints, fitSample, fitSeries, type FitResult } from "./fit";
 import type { GraphDoc, Series } from "./model";
 import { graphTheme } from "./style";
 import { formatTick, linearScale, logScale, project, type AxisScale } from "./ticks";
@@ -241,9 +241,12 @@ export function graphFits(doc: GraphDoc, xs: AxisScale, ys: AxisScale): GraphFit
   const out: GraphFit[] = [];
   doc.series.forEach((s, i) => {
     if (!s.fit || s.type === "bar") return;
-    const result = fitSeries(s.x, s.y, s.fit.kind);
+    const pts = fitSample(s.x, s.y, s.fit);
+    const result = fitSeries(pts.x, pts.y, s.fit.kind, s.fit.degre);
     if (!result) return;
-    out.push({ i, result, points: fitPoints(result, s.x, xs.log, ys.log), label: s.fit.label ? fitLabel(result) : null });
+    // Courbe sur la plage des points retenus, ou prolongée sur toute la série.
+    const etendue = s.fit.prolonger ? s.x : pts.x;
+    out.push({ i, result, points: fitPoints(result, etendue, xs.log, ys.log), label: s.fit.label ? fitLabel(result) : null });
   });
   return out;
 }
@@ -254,13 +257,29 @@ export function legendRow(theme: Theme): number {
 }
 
 /** Encadré des équations : un échantillon du trait de la régression puis l'équation. */
+/**
+ * Lignes de l'encadré des équations : « équation   R² = … » sur une ligne, ou, quand c'est
+ * trop large pour le graphe (polynôme de degré élevé), R² sur la ligne suivante.
+ * `trait` : la ligne porte l'échantillon du trait de la régression.
+ */
+export function fitRows(fits: GraphFit[], theme: Theme, boxW: number): { i: number; text: string; trait: boolean }[] {
+  const size = theme.text.sizeMm;
+  const large = Math.max(...fits.map((f) => measureLabel(f.label!, size).w));
+  if (large <= boxW - 3 - (1.5 + 6 + 1.5 + 1.5)) return fits.map((f) => ({ i: f.i, text: f.label!, trait: true }));
+  return fits.flatMap((f) => {
+    const [eq, r2] = f.label!.slice(1, -1).split(" \\quad ");
+    return r2 ? [{ i: f.i, text: `$${eq}$`, trait: true }, { i: f.i, text: `$${r2}$`, trait: false }] : [{ i: f.i, text: f.label!, trait: true }];
+  });
+}
+
 function fitBox(doc: GraphDoc, theme: Theme, box: GraphLayout["box"], fits: GraphFit[]): Primitive[] {
   const size = theme.text.sizeMm;
   const rowH = legendRow(theme) * 1.15;
   const sample = 6;
-  const textW = Math.max(...fits.map((f) => measureLabel(f.label!, size).w));
+  const rows = fitRows(fits, theme, box.w);
+  const textW = Math.max(...rows.map((r) => measureLabel(r.text, size).w));
   const w = 1.5 + sample + 1.5 + textW + 1.5;
-  const h = rowH * fits.length + 1;
+  const h = rowH * rows.length + 1;
   const pad = 1.5;
   const corner = fitCorner(doc.fit_pos, doc.legend);
   // Même coin que la légende : on se place juste en dessous (ou au-dessus).
@@ -268,11 +287,11 @@ function fitBox(doc: GraphDoc, theme: Theme, box: GraphLayout["box"], fits: Grap
   const x = corner.includes("east") ? box.x + box.w - w - pad : box.x + pad;
   const y = corner.includes("south") ? box.y + box.h - h - pad - legendH : box.y + pad + legendH;
   const out: Primitive[] = [{ kind: "rect", x, y, w, h, stroke: "trait fin", fill: "none", fillColor: "white" }];
-  fits.forEach((f, k) => {
-    const st = theme.graph.series[f.i % theme.graph.series.length]!;
+  rows.forEach((r, k) => {
+    const st = theme.graph.series[r.i % theme.graph.series.length]!;
     const cy = y + 0.5 + rowH * (k + 0.5);
-    out.push({ kind: "path", segs: [{ op: "M", p: [x + 1.5, cy] }, { op: "L", p: [x + 1.5 + sample, cy] }], stroke: "trait", fill: "none", color: st.svg, dash: st.dash === "dashed" ? "dotted" : true });
-    out.push({ kind: "text", at: [x + 3 + sample, cy], text: f.label!, anchor: "west", halo: false });
+    if (r.trait) out.push({ kind: "path", segs: [{ op: "M", p: [x + 1.5, cy] }, { op: "L", p: [x + 1.5 + sample, cy] }], stroke: "trait", fill: "none", color: st.svg, dash: st.dash === "dashed" ? "dotted" : true });
+    out.push({ kind: "text", at: [x + 3 + sample, cy], text: r.text, anchor: "west", halo: false });
   });
   return out;
 }

@@ -480,3 +480,18 @@ nombres doivent être identiques, dans les deux modes.
       tout l'espace (sans `.tmp` ni `.lock`) ; refus propre si on l'enregistre dans l'espace.
 - [ ] Taille de l'espace dans OneDrive après quelques semaines : raisonnable (seuls les
       fichiers ouverts sont copiés).
+
+## Figures → Graphes : autres régressions et plage (1.2.1)
+
+- [ ] Régression → Polynôme, degré 2 puis 3 : courbe lisse, équation sans termes parasites
+      (pas de « 10⁻¹⁶ ») ; comparer avec la courbe de tendance polynomiale d'Excel.
+- [ ] Exponentielle sur une décroissance (y > 0), Logarithmique (x > 0) : mêmes coefficients
+      que la courbe de tendance d'Excel ; avec des points hors domaine, ils sont écartés et le
+      nombre de points retenus est affiché.
+- [ ] « Choisir sur l'aperçu », tirer un rectangle sur une partie de la courbe : les bornes
+      « de / à » se remplissent, la régression n'utilise que ces points, la courbe s'arrête aux
+      bornes ; « Prolonger » l'étend à toute la série ; « Toute la série » annule la plage ;
+      Échap annule la sélection en cours.
+- [ ] Polynôme de degré 3 dans un graphe étroit : R² passe sous l'équation, en SVG comme en
+      pgfplots compilé.
+- [ ] Enregistrer, rouvrir le graphe : type, degré, plage et prolongement sont gardés.

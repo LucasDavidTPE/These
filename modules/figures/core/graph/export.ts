@@ -8,7 +8,7 @@ import { THEMES } from "../schema/theme";
 import { latexText } from "../schema/export/tikz";
 import { generateSty } from "../schema/export/sty";
 import { fitCorner } from "./fit";
-import { graphFits, graphLayout, legendRow } from "./layout";
+import { fitRows, graphFits, graphLayout, legendRow } from "./layout";
 import { GRAPH_FORMAT, validateGraph, type GraphDoc, type GraphError } from "./model";
 import { graphTheme, isPlain } from "./style";
 import type { AxisScale } from "./ticks";
@@ -161,7 +161,7 @@ export function exportPgfplots(raw: unknown, options: PgfplotsOptions = {}): Pgf
     const east = corner.includes("east");
     const south = corner.includes("south");
     const legendH = corner === doc.legend ? legendRow(theme) * doc.series.filter((s) => s.legend).length + 2.5 : 0;
-    const rows = labels.map((f) => `\\tikz[baseline=-0.5ex]\\draw[${fitDraw(f.i)}] (0,0) -- (6mm,0);~${f.label}`);
+    const rows = fitRows(labels, theme, box.w).map((r) => (r.trait ? `\\tikz[baseline=-0.5ex]\\draw[${fitDraw(r.i)}] (0,0) -- (6mm,0);~${r.text}` : `\\hspace*{6mm}~${r.text}`));
     lines.push("");
     lines.push(
       `\\node[anchor=${corner}, draw, fill=white, line width=${n(theme.strokes["trait fin"].width)}mm, inner sep=1mm, align=left, xshift=${east ? "-" : ""}1.5mm, yshift=${south ? "" : "-"}${n(1.5 + legendH)}mm] at (rel axis cs:${east ? 1 : 0},${south ? 0 : 1}) {${rows.join(" \\\\ ")}};`,

@@ -253,6 +253,13 @@ Ajouts permis par l'intégration :
   `label`, équation et R² (4 chiffres significatifs, virgule décimale) dans un encadré au coin
   `fit_pos` du graphe (par défaut, en haut du côté opposé à la légende). Même rendu en SVG et
   en pgfplots (`\addplot coordinates` + `\node` à `rel axis cs`) ; ignorée pour les barres.
+  **1.2.1** : types `polynome` (champ `degre`, 2 à 6 ; moindres carrés en x centré-réduit,
+  réécrits en puissances de x, termes de bruit d'arrondi omis dans l'équation),
+  `exponentielle` y = a·e^(b·x) (en semi-log) et `logarithmique` y = a·ln x + b ; plage
+  `xmin` / `xmax` des points pris en compte (saisie, ou rectangle tiré sur l'aperçu), courbe
+  sur cette plage ou, avec `prolonger`, sur toute la série ; R² passe à la ligne quand
+  l'équation est trop large pour le graphe. R² de la puissance et de l'exponentielle dans
+  les variables transformées, comme les courbes de tendance d'Excel.
 
 ## 7. Module Traitement 2S2P1D
 

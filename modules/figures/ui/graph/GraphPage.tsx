@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { columnLetters, fitLabel, fitSeries, type FitKind, type LegendPos, type SeriesType } from "../../core/graph";
+import { columnLetters, type LegendPos, type SeriesType } from "../../core/graph";
 import { NumberInput, TextInput } from "../editor/fields";
 import { useLibrary } from "../library/useLibrary";
 import { Apercu } from "./Apercu";
 import { Apparence, SerieLook } from "./Apparence";
 import { DonneesSerie } from "./DonneesSerie";
 import { Modeles } from "./Modeles";
+import { RegressionSerie } from "./Regression";
 import { useGraph } from "./useGraph";
 
 const TYPES: { value: SeriesType; label: string }[] = [
@@ -22,26 +23,6 @@ const LEGENDS: { value: LegendPos; label: string }[] = [
   { value: "south west", label: "En bas à gauche" },
   { value: "none", label: "Aucune" },
 ];
-
-const FITS: { value: FitKind; label: string }[] = [
-  { value: "lineaire", label: "Linéaire (y = a·x + b)" },
-  { value: "origine", label: "Linéaire par l'origine (y = a·x)" },
-  { value: "puissance", label: "Puissance (y = a·xᵇ)" },
-];
-
-/** Équation lisible dans le panneau (le TeX de la figure, sans les commandes). */
-function equationTexte(x: number[], y: number[], kind: FitKind): string {
-  const f = fitSeries(x, y, kind);
-  if (!f) return kind === "puissance" ? "Il faut au moins deux points à x et y positifs." : "Pas assez de points distincts.";
-  return fitLabel(f)
-    .replace(/\$/g, "")
-    .replace(/\{,\}/g, ",")
-    .replace(/\\,/g, "")
-    .replace(/\\quad/g, "  ·  ")
-    .replace(/\\times 10\^\{(-?\d+)\}/g, "×10^$1")
-    .replace(/x\^\{([^}]*)\}/g, "x^$1")
-    .replace("R^2", "R²");
-}
 
 /** Page Graphes (SPEC §10). */
 export function GraphPage() {
@@ -287,30 +268,7 @@ export function GraphPage() {
                 <input type="checkbox" checked={sr.legend} onChange={(e) => s.setSeries(i, { legend: e.target.checked })} />
                 Dans la légende
               </label>
-              {sr.type !== "bar" && (
-                <>
-                  <label className="field">
-                    <span>Régression</span>
-                    <select value={sr.fit?.kind ?? ""} onChange={(e) => s.setSeries(i, { fit: e.target.value ? { kind: e.target.value as FitKind, label: sr.fit?.label ?? true } : undefined })}>
-                      <option value="">Aucune</option>
-                      {FITS.map((f) => (
-                        <option key={f.value} value={f.value}>
-                          {f.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  {sr.fit && (
-                    <>
-                      <p className="muted small">{equationTexte(sr.x, sr.y, sr.fit.kind)}</p>
-                      <label className="chip">
-                        <input type="checkbox" checked={sr.fit.label} onChange={(e) => s.setSeries(i, { fit: { ...sr.fit!, label: e.target.checked } })} />
-                        Équation sur la figure
-                      </label>
-                    </>
-                  )}
-                </>
-              )}
+              {sr.type !== "bar" && <RegressionSerie i={i} sr={sr} />}
             </div>
           ))}
           {s.doc.series.some((sr) => sr.fit?.label && sr.type !== "bar") && (
