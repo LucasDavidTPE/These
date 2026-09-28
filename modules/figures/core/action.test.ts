@@ -63,14 +63,17 @@ describe("graphes modifiables", () => {
     const { enregistrerGraphe, remplacerGraphe } = await import("./action");
     const fs = new MemoryFs();
     const dossier = await enregistrerGraphe(fs, { titre: "G", source: "T", graphe: doc([1000, 5000, 20000]) }, rendu, "2026-09-28T10:00:00+02:00", "PC");
-    const modifie = { ...JSON.parse(fs.get(`${dossier}/graph.json`)!), width: 160 };
+    const modifie = { ...JSON.parse(fs.get(`${dossier}/graph.json`)!), width: 160, style: { name: "Couleur", palette: ["#0072b2", "#e69f00"] } };
     modifie.y.label = "Norm of the complex modulus (MPa)";
+    modifie.series[0].color = "#123456";
     await fs.writeTextAtomic(`${dossier}/graph.json`, JSON.stringify(modifie));
     await remplacerGraphe(fs, dossier, doc([1100, 5100, 21000]), rendu, "2026-09-29T10:00:00+02:00", "PC");
     const apres = JSON.parse(fs.get(`${dossier}/graph.json`)!);
     expect(apres.width).toBe(160);
     expect(apres.y.label).toBe("Norm of the complex modulus (MPa)");
     expect(apres.series[0].y).toEqual([1100, 5100, 21000]);
+    expect(apres.series[0].color).toBe("#123456");
+    expect(apres.style.palette).toEqual(["#0072b2", "#e69f00"]);
   });
 
   it("régénérer une ancienne figure image la laisse image, même si le module fournit un graphe", async () => {

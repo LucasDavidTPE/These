@@ -323,3 +323,23 @@ nombres doivent être identiques, dans les deux modes.
       *VISCOELASTIC Prony, *TRS WLF) ; « COMSOL .txt » se charge dans le tableau des branches
       du matériau viscoélastique (G en Pa) ; « Tableau .csv » s'ouvre dans Excel.
 - [ ] Les réglages Prony se retrouvent en rouvrant le dépouillement enregistré.
+
+## Figures → Graphes : apparence, palettes, modèles, zoom (0.2.7)
+
+- [ ] « ▸ Modèles de graphes » (en haut à gauche) : vignettes ; « Courbe maîtresse » donne un
+      graphe complet avec valeurs d'exemple ; le bandeau le rappelle.
+- [ ] Apparence → Style : Couleur, Article (axes seuls), Présentation (traits épais, texte
+      plus grand), Minimal, Séquentiel, Noir et blanc ; l'aperçu change aussitôt.
+- [ ] Palette : choisir Okabe-Ito, Viridis… ; coller l'adresse d'une palette coolors.co
+      (ex. `https://coolors.co/264653-2a9d8f-e9c46a-f4a261-e76f51`) → « Importer » ;
+      retoucher une couleur, en ajouter, en retirer.
+- [ ] « Enregistrer ce style… » → nom → il apparaît sous « Mes styles », aussi sur l'autre PC
+      (dossier `_styles-graphes` de la bibliothèque) ; « Retirer » le range dans
+      `_styles-graphes/.supprimes`.
+- [ ] Sous chaque série : couleur (et « auto »), marque, trait ; « Copier pgfplots » →
+      compile dans le manuscrit avec les mêmes couleurs.
+- [ ] Zoom : l'aperçu remplit la place (« Ajuster ») ; + / − et Ctrl + molette ; 100 % ;
+      « ⬚ Zoom sur une zone » puis tirer un rectangle → bornes des axes fixées ; « Axes
+      auto » ou double-clic pour revenir. Coordonnées sous le curseur en bas.
+- [ ] Un graphe du Traitement envoyé dans Figures garde les couleurs de l'écran ; après
+      « Régénérer », couleurs et style retouchés dans Figures restent.

@@ -152,6 +152,9 @@ describe("graphes pour Figures et langue des axes", () => {
     expect(g.series.at(-1)!.name).toMatch(/^modèle /);
     expect(g.series.every((s) => s.legend && s.x.length === s.y.length && s.x.every((v) => v > 0))).toBe(true);
     expect(g.legend).toBe("south east");
+    // couleurs de l'écran gardées (isothermes, modèle)
+    expect(g.series.every((s) => /^#[0-9a-f]{6}$/.test(s.color ?? ""))).toBe(true);
+    expect(g.series.at(-1)!.color).toBe("#0b5f5c");
   }, 30000);
 
   it("ligne + points du même capteur : une série « linepoints », longues séries allégées", async () => {

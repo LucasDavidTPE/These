@@ -1,6 +1,10 @@
-import { useMemo, useState } from "react";
-import { columnLetters, exportGraphSvg, validateGraph, type LegendPos, type SeriesType } from "../../core/graph";
+import { useEffect, useState } from "react";
+import { columnLetters, type LegendPos, type SeriesType } from "../../core/graph";
 import { NumberInput, TextInput } from "../editor/fields";
+import { useLibrary } from "../library/useLibrary";
+import { Apercu } from "./Apercu";
+import { Apparence, SerieLook } from "./Apparence";
+import { Modeles } from "./Modeles";
 import { useGraph } from "./useGraph";
 
 const TYPES: { value: SeriesType; label: string }[] = [
@@ -23,16 +27,12 @@ export function GraphPage() {
   const s = useGraph();
   const [pasted, setPasted] = useState("");
 
-  const preview = useMemo(() => {
-    const v = validateGraph(s.doc);
-    if (!v.ok) return { svg: "", error: v.errors.map((e) => `${e.path} : ${e.message}`).join("\n") };
-    if (v.doc.series.length === 0) return { svg: "", error: "" };
-    try {
-      return { svg: exportGraphSvg(v.doc), error: "" };
-    } catch (e) {
-      return { svg: "", error: e instanceof Error ? e.message : String(e) };
-    }
-  }, [s.doc]);
+  const root = useLibrary((l) => l.root);
+  const loadStyles = useGraph((g) => g.loadStyles);
+  // Styles enregistrés : relus à l'ouverture de la page et quand la bibliothèque change.
+  useEffect(() => {
+    void loadStyles();
+  }, [root, loadStyles]);
 
   const sheet = s.sheets[s.pick.sheet];
   const cols = sheet ? Math.max(0, ...sheet.rows.map((r) => r.length)) : 0;
@@ -84,6 +84,7 @@ export function GraphPage() {
       )}
       <div className="editor-body">
         <aside className="panel graph-data">
+          <Modeles />
           <h3>Données</h3>
           <label className="field">
             <span>Coller depuis Excel (colonnes séparées par des tabulations)</span>
@@ -153,15 +154,14 @@ export function GraphPage() {
             </>
           )}
         </aside>
-        <div className="graph-preview checker">
-          {preview.svg ? <div dangerouslySetInnerHTML={{ __html: preview.svg.replace(/<\?xml[^>]*>/, "") }} /> : <p className="muted">{preview.error || "Ouvrez un fichier ou collez des colonnes, puis ajoutez des séries."}</p>}
-        </div>
+        <Apercu />
         <aside className="panel props">
           <h3>Graphe</h3>
           <label className="field">
             <span>Titre (bibliothèque)</span>
             <TextInput value={s.title} onChange={(v) => s.set({ title: v })} placeholder="Graphe" />
           </label>
+          <Apparence />
           <div className="grid2">
             <label className="field">
               <span>Largeur (mm)</span>
@@ -256,6 +256,7 @@ export function GraphPage() {
                   ))}
                 </select>
               </label>
+              <SerieLook i={i} sr={sr} />
               <label className="chip">
                 <input type="checkbox" checked={sr.legend} onChange={(e) => s.setSeries(i, { legend: e.target.checked })} />
                 Dans la légende

@@ -78,3 +78,9 @@ export function project(s: AxisScale, v: number): number {
   if (s.log) return (Math.log10(v) - Math.log10(s.min)) / (Math.log10(s.max) - Math.log10(s.min));
   return (v - s.min) / (s.max - s.min);
 }
+
+/** Valeur à une position relative (0 à 1) de l'axe : l'inverse de project. */
+export function unproject(s: AxisScale, t: number): number {
+  if (s.log) return 10 ** (Math.log10(s.min) + t * (Math.log10(s.max) - Math.log10(s.min)));
+  return s.min + t * (s.max - s.min);
+}

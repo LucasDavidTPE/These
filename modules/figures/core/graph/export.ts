@@ -9,6 +9,7 @@ import { latexText } from "../schema/export/tikz";
 import { generateSty } from "../schema/export/sty";
 import { graphLayout } from "./layout";
 import { GRAPH_FORMAT, validateGraph, type GraphDoc, type GraphError } from "./model";
+import { graphTheme, isPlain } from "./style";
 import type { AxisScale } from "./ticks";
 
 const n = (v: number) => formatNumber(v, 2);
@@ -28,7 +29,7 @@ function prepare(raw: unknown): GraphDoc {
 
 export function exportGraphSvg(raw: unknown): string {
   const doc = prepare(raw);
-  const theme = THEMES[doc.theme] ?? THEMES.these!;
+  const theme = graphTheme(doc);
   const { primitives } = graphLayout(doc);
   return [
     `<?xml version="1.0" encoding="UTF-8"?>`,
@@ -63,6 +64,23 @@ function axisOptions(axis: "x" | "y", s: AxisScale, label: string): string[] {
   return o;
 }
 
+const TIKZ_MARK: Record<string, string> = { o: "o", square: "square", triangle: "triangle", x: "x", diamond: "diamond", "+": "+" };
+
+/** Police LaTeX la plus proche d'une taille relative au \footnotesize (8 pt) du thème. */
+function texFont(scale: number): string | null {
+  const tailles: [number, string][] = [
+    [7, "\\scriptsize"],
+    [8, ""],
+    [9, "\\small"],
+    [10, "\\normalsize"],
+    [12, "\\large"],
+    [14.4, "\\Large"],
+  ];
+  const cible = 8 * scale;
+  const [, f] = tailles.reduce((a, b) => (Math.abs(b[0] - cible) < Math.abs(a[0] - cible) ? b : a));
+  return f || null;
+}
+
 export interface PgfplotsOptions {
   /** Document compilable seul. */
   standalone?: boolean;
@@ -80,6 +98,14 @@ export function exportPgfplots(raw: unknown, options: PgfplotsOptions = {}): Pgf
   const doc = prepare(raw);
   const { box, xs, ys } = graphLayout(doc);
   const files: Record<string, string> = {};
+  // Apparence personnalisée : chaque série porte ses options (couleur, marque, tirets)
+  // au lieu des styles fig/serie i du thème, communs à toutes les figures.
+  const perso = !isPlain(doc);
+  const theme = graphTheme(doc);
+  const extraAxis: string[] = [];
+  if (doc.style?.frame === "axes") extraAxis.push("axis lines=left, axis line style={-}");
+  const police = doc.style ? texFont(doc.style.fontScale) : null;
+  if (police) extraAxis.push(`font=${police}, label style={font=${police}}, legend style={font=${police}}`);
   const barSeries = doc.series.map((s, i) => ({ s, i })).filter(({ s }) => s.type === "bar");
   const lines: string[] = [
     `% Graphe généré par Figurine -- format ${GRAPH_FORMAT}, thème « ${doc.theme} ».`,
@@ -87,12 +113,18 @@ export function exportPgfplots(raw: unknown, options: PgfplotsOptions = {}): Pgf
     "\\begin{tikzpicture}",
     `\\begin{axis}[fig/graphe, width=${n(box.w)}mm, height=${n(box.h)}mm,`,
     `  ${[...axisOptions("x", xs, doc.x.label), ...axisOptions("y", ys, doc.y.label)].join(",\n  ")},`,
-    `  legend pos=${doc.legend === "none" ? "north east" : doc.legend}${doc.grid ? ", grid=major" : ""}]`,
+    `  legend pos=${doc.legend === "none" ? "north east" : doc.legend}${doc.grid ? ", grid=major" : ""}${extraAxis.length ? `,\n  ${extraAxis.join(",\n  ")}` : ""}]`,
   ];
   doc.series.forEach((s, i) => {
     const k = barSeries.findIndex((b) => b.i === i);
-    const style =
-      s.type === "bar"
+    const st = theme.graph.series[i]!;
+    const lw = n(theme.strokes.trait.width);
+    const marque = st.noMark || s.type === "line" ? "mark=none" : `mark=${TIKZ_MARK[st.mark]}, mark size=${n(theme.graph.markSize / 2)}mm, mark options={solid, fill=${st.filled ? st.tikz : "white"}}`;
+    const style = perso
+      ? s.type === "bar"
+        ? `ybar, area legend, draw=black, line width=${n(theme.strokes["trait fin"].width)}mm, fill=${st.barTikz}, mark=none, bar width=${n(doc.bar_width)}mm, bar shift=${n((k - (barSeries.length - 1) / 2) * doc.bar_width)}mm`
+        : `draw=${st.tikz}, line width=${lw}mm, ${st.dash ?? "solid"}, ${marque}${s.type === "points" ? ", only marks" : ""}`
+      : s.type === "bar"
         ? `fig/barres ${(i % 6) + 1}, bar width=${n(doc.bar_width)}mm, bar shift=${n((k - (barSeries.length - 1) / 2) * doc.bar_width)}mm`
         : `fig/serie ${(i % 6) + 1}${s.type === "line" ? ", mark=none" : s.type === "points" ? ", only marks" : ""}`;
     const legendOff = !s.legend || doc.legend === "none" ? ", forget plot" : "";
@@ -116,10 +148,10 @@ export function exportPgfplots(raw: unknown, options: PgfplotsOptions = {}): Pgf
   lines.push("\\end{tikzpicture}");
   let tex = lines.join("\n") + "\n";
   if (options.standalone) {
-    const theme = THEMES[doc.theme] ?? THEMES.these!;
+    const base = THEMES[doc.theme] ?? THEMES.these!;
     tex = [
       "\\begin{filecontents*}[overwrite]{figurine.sty}",
-      generateSty(theme).trimEnd(),
+      generateSty(base).trimEnd(),
       "\\end{filecontents*}",
       "\\documentclass[tikz, border=1mm]{standalone}",
       "\\usepackage[T1]{fontenc}",

@@ -23,7 +23,18 @@ export interface Theme {
   arrow: { length: number; width: number };
   /** Styles des séries de graphes (S9), dans l'ordre des séries. */
   graph: {
-    series: { svg: string; tikz: string; dash: "dashed" | "dotted" | null; mark: GraphMark; barSvg: string; barTikz: string }[];
+    series: {
+      svg: string;
+      tikz: string;
+      dash: "dashed" | "dotted" | null;
+      mark: GraphMark;
+      barSvg: string;
+      barTikz: string;
+      /** Série sans marques, même en « points » impossible : réglage d'une série (graph/style.ts). */
+      noMark?: boolean;
+      /** Marques pleines. */
+      filled?: boolean;
+    }[];
     gridSvg: string;
     gridTikz: string;
     markSize: number;

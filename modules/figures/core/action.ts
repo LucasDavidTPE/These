@@ -68,7 +68,8 @@ export async function enregistrerGraphe(fs: LibraryFs, d: DemandeGraphe, rendu: 
 
 /**
  * Régénération d'un graphe : les données (séries, échelles) sont remplacées, la mise en forme
- * choisie dans Figures (taille, titres d'axes, bornes, légende, grille) est gardée.
+ * choisie dans Figures (taille, titres d'axes, bornes, légende, grille, style, retouches des
+ * séries de même nom) est gardée.
  */
 export async function remplacerGraphe(fs: LibraryFs, dossier: string, nouveau: unknown, rendu: RenduGraphe, now: string, host: string): Promise<FigureMeta> {
   const v = validateMeta(JSON.parse(await fs.readText(joinPath(dossier, "meta.json"))));
@@ -77,7 +78,12 @@ export async function remplacerGraphe(fs: LibraryFs, dossier: string, nouveau: u
   let doc = neuf;
   try {
     const ancien = grapheValide(JSON.parse(await fs.readText(joinPath(dossier, "graph.json"))));
-    doc = { ...ancien, series: neuf.series, x: { ...ancien.x, log: neuf.x.log }, y: { ...ancien.y, log: neuf.y.log } };
+    // Retouches d'une série (couleur, marque, tirets, type, légende) gardées si elle porte le même nom.
+    const series = neuf.series.map((sr) => {
+      const a = ancien.series.find((x) => x.name === sr.name);
+      return a ? { ...sr, type: a.type, legend: a.legend, color: a.color ?? sr.color, mark: a.mark, dash: a.dash } : sr;
+    });
+    doc = { ...ancien, series, x: { ...ancien.x, log: neuf.x.log }, y: { ...ancien.y, log: neuf.y.log } };
   } catch {
     // pas de graph.json lisible : on repart du graphe neuf
   }

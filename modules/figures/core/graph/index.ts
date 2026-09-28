@@ -2,6 +2,8 @@ export * from "./export";
 export * from "./layout";
 export * from "./model";
 export * from "./source";
+export * from "./style";
+export * from "./templates";
 export * from "./table";
 export * from "./ticks";
 export * from "./xlsx";

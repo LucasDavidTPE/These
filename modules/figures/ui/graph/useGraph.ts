@@ -10,8 +10,12 @@ import {
   looksLikeHeader,
   readDataFile,
   readPasted,
+  parseStyle,
+  STYLES_DIR,
+  styleFileName,
   validateGraph,
   type GraphDoc,
+  type GraphStyle,
   type Series,
   type Sheet,
 } from "../../core/graph";
@@ -57,6 +61,13 @@ interface GraphState {
   copyPng(): Promise<void>;
   exportAs(kind: "tex" | "svg" | "png"): Promise<void>;
   set(patch: Partial<Pick & { title: string; dataFiles: boolean }>): void;
+  /** Styles enregistrés dans la bibliothèque (`_styles-graphes/`, un fichier par style). */
+  userStyles: GraphStyle[];
+  loadStyles(): Promise<void>;
+  saveStyle(name: string): Promise<void>;
+  deleteStyle(name: string): Promise<void>;
+  /** Remplace le graphe par un modèle (nouvelle figure). */
+  fromTemplate(doc: GraphDoc, title: string): void;
 }
 
 function msg(e: unknown): string {
@@ -107,6 +118,7 @@ export const useGraph = create<GraphState>()((set, get) => {
     dataFiles: false,
     busy: false,
     message: null,
+    userStyles: [],
 
     update: (patch) => set({ doc: { ...get().doc, ...patch } }),
     setSeries: (i, patch) => set({ doc: { ...get().doc, series: get().doc.series.map((s, j) => (j === i ? { ...s, ...patch } : s)) } }),
@@ -235,6 +247,59 @@ export const useGraph = create<GraphState>()((set, get) => {
               : await backend.saveTextAs(exportPgfplots(doc, { standalone: true }).tex, "graphe.tex", "tex");
         if (ok) set({ message: { kind: "info", text: "Export enregistré." } });
       }),
+    loadStyles: async () => {
+      const { backend, root } = useLibrary.getState();
+      if (!backend || !root) return set({ userStyles: [] });
+      const fs = backend.fs(root);
+      const styles: GraphStyle[] = [];
+      try {
+        for (const e of await fs.listDir(STYLES_DIR)) {
+          if (e.kind === "dir" || !e.name.endsWith(".json")) continue;
+          try {
+            const st = parseStyle(JSON.parse(await fs.readText(joinPath(STYLES_DIR, e.name))));
+            if (st) styles.push(st);
+          } catch {
+            // style illisible (copie de conflit OneDrive…) : ignoré
+          }
+        }
+      } catch {
+        // pas encore de dossier de styles
+      }
+      set({ userStyles: styles.sort((a, b) => a.name.localeCompare(b.name, "fr")) });
+    },
+
+    saveStyle: (name) =>
+      run(async () => {
+        const { backend, root } = useLibrary.getState();
+        if (!backend || !root) throw new Error("Choisissez d'abord le dossier de la bibliothèque (page Bibliothèque).");
+        const style = get().doc.style;
+        if (!style) throw new Error("Choisissez d'abord un style ou une palette à enregistrer.");
+        const fs = backend.fs(root);
+        await fs.createDir(STYLES_DIR).catch(() => undefined);
+        const named = { ...style, name: name.trim() };
+        await fs.writeTextAtomic(joinPath(STYLES_DIR, styleFileName(named.name)), JSON.stringify(named, null, 2) + "\n");
+        set({ doc: { ...get().doc, style: named }, message: { kind: "info", text: `Style « ${named.name} » enregistré dans la bibliothèque (${STYLES_DIR}), disponible sur les deux postes.` } });
+        await get().loadStyles();
+      }),
+
+    deleteStyle: (name) =>
+      run(async () => {
+        const { backend, root } = useLibrary.getState();
+        if (!backend || !root) return;
+        const fs = backend.fs(root);
+        // pas de suppression dans la bibliothèque : le fichier est rangé à part, récupérable
+        await fs.createDir(joinPath(STYLES_DIR, ".supprimes")).catch(() => undefined);
+        const file = styleFileName(name);
+        await fs.rename(joinPath(STYLES_DIR, file), joinPath(STYLES_DIR, ".supprimes", `${Date.now()}-${file}`));
+        set({ message: { kind: "info", text: `Style « ${name} » retiré (rangé dans ${STYLES_DIR}/.supprimes).` } });
+        await get().loadStyles();
+      }),
+
+    fromTemplate: (doc, title) => {
+      void releaseLock();
+      set({ doc: JSON.parse(JSON.stringify(doc)) as GraphDoc, folder: null, meta: null, title, message: { kind: "info", text: `Modèle « ${title} » : valeurs d'exemple, à remplacer par vos données (Données à gauche).` } });
+    },
+
     set: (patch) => {
       const { title, dataFiles, ...pick } = patch;
       if (title !== undefined) set({ title });

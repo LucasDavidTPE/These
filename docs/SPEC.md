@@ -204,7 +204,19 @@ Ajouts permis par l'intégration :
 - action **« Enregistrer dans Figures »** offerte aux autres modules (courbe maîtresse,
   graphe d'essai, Gantt) : la figure arrive avec sa source (« Traitement 2S2P1D,
   campagne X, essai Y ») ;
-- un graphe créé depuis un essai garde le lien vers ses données : il peut être régénéré.
+- un graphe créé depuis un essai garde le lien vers ses données : il peut être régénéré
+  (les données changent, la mise en forme choisie dans Figures reste) ;
+- page Graphes (0.2.7) : **apparence** — `graph.json` accepte un champ facultatif `style`
+  (palette #rrggbb, cadre complet ou axes seuls, épaisseur, marques, taille du texte) et,
+  par série, `color`, `mark`, `dash`. Sans ces champs, le rendu du thème (noir et gris) est
+  inchangé. Préréglages (Couleur, Article, Présentation, Minimal, Séquentiel, Noir et blanc),
+  palettes éprouvées (Okabe-Ito, Paul Tol, Tableau 10, Dark2, Viridis…), import d'une
+  palette coolors.co (adresse ou codes), **styles enregistrés** dans la bibliothèque
+  (`_styles-graphes/<nom>.json`, un fichier par style, partagé entre les postes) ; exports
+  SVG et pgfplots identiques (couleurs xcolor explicites) ;
+- **modèles de graphes** (courbe maîtresse, Cole-Cole, orniérage, fatigue, TSRST, suivi
+  temporel, barres) avec des valeurs d'exemple inventées ; **zoom** de l'aperçu (ajusté,
+  Ctrl + molette, taille réelle) et zoom sur une zone des données (fixe les bornes des axes).
 
 ## 7. Module Traitement 2S2P1D
 
