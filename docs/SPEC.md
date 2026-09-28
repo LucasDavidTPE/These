@@ -15,6 +15,7 @@ de la thèse de Lucas David (chaussées aéronautiques, ENTPE / LTDS / LGCB) :
 | **Bibliothèque** | le classeur `Biblio_These_Lucas_MAITRE.xlsx` et ses macros | — |
 | **Planning** | *(nouveau)* un Gantt de la thèse, partagé entre les deux PC | — |
 | **Accueil** | le panneau Java du hub | `lucasdavid47/lgcb-hub` |
+| **ViscoCompare** | le script de comparaison COMSOL / Viscoroute | `LucasDavidTPE/ViscoCompare` |
 
 Principes, par ordre d'importance :
 
@@ -224,8 +225,10 @@ LibreOffice depuis `Calcul.xlsx`) sont portés et **restent verts à l'identique
 
 Mise en œuvre en deux étapes. **Étape 1 (faite)** : la page existante est reprise telle
 quelle dans `modules/traitement/statique/` et affichée dans le module ; ses exports passent
-par « Enregistrer sous ». **Étape 2** : cœur porté en TypeScript et interface React, avec
-les liens ci-dessous.
+par « Enregistrer sous ». **Étape 2 (faite, 0.2.6)** : cœur porté en TypeScript
+(`modules/traitement/core/`, calculs inchangés, vérifiés bit à bit contre le JavaScript
+d'origine) et interface React ; l'ancienne page reste accessible (« Ancienne page ») jusqu'à
+validation sous Windows, puis sera retirée.
 
 Ce qui change à l'étape 2 :
 
@@ -234,6 +237,10 @@ Ce qui change à l'étape 2 :
   résultats (paramètres calés, courbes maîtresses) s'affichent sur la page de l'essai ;
 - dans l'installeur *Traitement 2S2P1D* seul, on ouvre et on enregistre des fichiers
   comme aujourd'hui, sans espace.
+- **Enregistrement automatique** (0.2.7) : un essai de campagne s'enregistre avec lui dès
+  sa première modification ; un fichier ouvert à la main s'enregistre dans
+  `traitement/<nom>-<id>.json` avec la référence de son fichier de mesure (racine du poste,
+  sinon chemin absolu) et se rouvre depuis « Dépouillements enregistrés ».
 
 Le site GitHub Pages actuel n'est plus développé ; il reste en ligne tel quel tant
 qu'on ne décide pas de le retirer (voir `QUESTIONS.md`).
@@ -269,8 +276,9 @@ graphe dans Figures**, **ouvrir dans le traitement 2S2P1D**.
 
 ### 8.4 Reprise de l'existant
 Import unique des fiches `projects/*.toml`, des aperçus et des notes de these-lgcb.
-Les **études** (`studies/…/run.py`) et l'**index LaTeX** ne sont pas repris en V1
-(voir `QUESTIONS.md`).
+Les **études** sont reprises par le module Études (P7). L'**index LaTeX** est repris dans
+Manuscrits (onglet Sources LaTeX, racine `latex`), sans la compilation ni les vignettes de
+`lgcb/tex.py` : l'application ne lance pas LaTeX, elle montre le PDF déjà compilé.
 
 ## 9. Module Bibliothèque (ex-classeur Excel)
 
@@ -345,7 +353,8 @@ continue à travailler dans Excel et on réimporte. Les PDF restent dans le doss
 
 Exigence : un test lit le classeur, importe, recalcule citation / état / alerte / score
 / temps et tous les indicateurs du tableau de bord, et les compare aux **valeurs mises
-en cache par Excel**. Même démarche que pour le 2S2P1D.
+en cache par Excel**. Même démarche que pour le 2S2P1D. Le classeur réel est versionné dans
+`modules/bibliotheque/tests/fixtures/` (le dépôt est privé).
 
 Deux défauts du classeur, constatés par ce test (26/09/2026), sont corrigés dans
 l'application :
@@ -396,7 +405,20 @@ Gantt** (on les modifie à leur source, un clic y mène) :
 - Export **PNG / SVG** et **pgfgantt** (TikZ) pour un comité de suivi ou le manuscrit,
   via Figures.
 
-## 11. Exigences générales
+## 11. Module ViscoCompare
+
+Remplace le script `main.py` de `LucasDavidTPE/ViscoCompare` (Python, pandas, xlsxwriter).
+La racine de poste `viscocompare` désigne un dossier organisé comme celui du script
+(`COMSOL/*.csv` avec « V=… » dans le nom, `VISCOROUTE/Vitesse_…/*.json`), ou un dossier
+qui en contient plusieurs. Lecture et conversions **identiques** au script (colonnes
+renommées, déplacements COMSOL en µm, `arc_length` − 5 m, profil Viscoroute en x = 0,
+signe inversé pour UX et UZ, × 10⁶, interpolation sur le y de la première grandeur),
+vérifiées par des tests ; les conventions restent modifiables à l'écran. Ajouts : les
+fichiers écartés sont listés (le script les taisait), écart sur l'extremum de chaque
+grandeur, figures régénérables. Les classeurs `EXCEL_OUTPUT/comparaison_<v>.xlsx`
+reprennent les feuilles du script, sans ses graphiques Excel.
+
+## 12. Exigences générales
 
 - Interface et messages **en français** ; code, identifiants et commits en anglais
   (convention de Figurine).

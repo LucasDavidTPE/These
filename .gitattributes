@@ -1,1 +1,4 @@
+# Fins de ligne LF partout (les fichiers de référence des tests golden sont comparés
+# octet par octet, y compris sous Windows) ; CRLF pour les scripts .cmd de Windows.
+* text=auto eol=lf
 *.cmd text eol=crlf

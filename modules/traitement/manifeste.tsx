@@ -2,6 +2,7 @@ import type { Contexte } from "@interface/contexte";
 import { IconeTraitement } from "@interface/icones";
 import type { Manifeste } from "@interface/manifeste";
 import { demander, type DemandeEssai } from "./ui/demande";
+import { regenererFigure, type OrigineTraitement } from "./ui/figure";
 import { TraitementPage } from "./ui/TraitementPage";
 import "./ui/traitement.css";
 
@@ -17,6 +18,11 @@ const traitement: Manifeste = {
       const { ctx, ...d } = charge as DemandeEssai & { ctx: Contexte };
       demander(d);
       ctx.naviguer("traitement");
+    },
+    /** Refait un graphique (courbe maîtresse…) depuis le fichier de l'essai et son dépouillement enregistré. */
+    "traitement.regenerer-figure": async (charge) => {
+      const { ctx, origine } = charge as { ctx: Contexte; origine: OrigineTraitement };
+      return regenererFigure(ctx, origine);
     },
   },
 };

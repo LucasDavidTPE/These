@@ -176,3 +176,133 @@ Ce qui change avec l'intégration :
       dernière version ».
 - [ ] « Ouvrir » ouvre la version dans Word ; « Copie sous… » l'enregistre ailleurs.
 - [ ] Sur l'autre PC (même dossier via OneDrive, racine réglée) : les mêmes versions.
+
+## Version 0.2.5 : tests sous Windows, installeur Traitement
+
+- [ ] GitHub → Actions → **tests-windows** → « Run workflow » : toutes les étapes vertes
+      (cocher « latex » une fois pour vérifier aussi la compilation des figures).
+- [ ] Ou, sur un PC avec Node et Rust : double-clic sur `tester-windows.cmd` à la racine
+      du dépôt ; le résumé final dit « Tous les tests sont verts ». Sans Node ni Rust, il
+      propose d'ouvrir la page du bouton GitHub.
+- [ ] Artefact `traitement-2s2p1d-installeurs` : il s'installe à côté de Thèse, s'ouvre
+      directement sur le traitement, sans écran d'espace ; l'installeur est bien plus léger
+      que celui de Thèse (pas de modèle de détourage).
+
+## Figures régénérables (Gantt, courbes d'un essai, ViscoCompare)
+
+- [ ] Planning → « SVG » et « PNG » : toute la thèse, lisible (titres, catégories, ligne
+      « aujourd'hui ») ; le SVG s'ouvre dans le navigateur et dans Inkscape.
+- [ ] Planning → « Enregistrer dans Figures » : figure « Planning de la thèse ». Déplacer
+      un élément du planning, puis, dans Figures, sélectionner la figure → « Régénérer
+      depuis les données » : l'image suit, la vignette se met à jour, titre et tags restent.
+- [ ] Courbes d'un essai : masquer une voie et zoomer sur une plage → « Enregistrer dans
+      Figures » : la figure a les mêmes voies et la même plage. « Régénérer » la refait à
+      l'identique sur le PC qui a les données ; sur l'autre, message « Données brutes
+      absentes de ce poste ».
+- [ ] Figurine seul (installeur Figurine) : sur une figure venue de Thèse, le panneau dit
+      que le module d'origine est absent, sans bouton.
+
+## Bibliothèque : liens et Markdown
+
+- [ ] « Vérifier les liens » : confirmation, barre de progression, « Arrêter » fonctionne ;
+      à la fin, « État du lien » et « Lien contrôlé le » sont remplis dans les fiches, les
+      liens morts listés en haut du tableau de bord (un clic ouvre la fiche).
+- [ ] Derrière le proxy de l'école : les liens répondent (sinon noter ce qui s'affiche :
+      l'application n'utilise pas encore le proxy système de Windows).
+- [ ] Fiche → « Vérifier le lien » sur une seule référence.
+- [ ] « Exporter Markdown… » vers un dossier (ou un coffre Obsidian) : une note par
+      référence (propriétés en tête, fiche de lecture, notes, liens [[clé]]) et
+      « Point mensuel - mois N.md ».
+
+## ViscoCompare
+
+- [ ] ViscoCompare → « Choisir le dossier… » : le dossier du script (avec `COMSOL` et
+      `VISCOROUTE`) ou un dossier qui en contient plusieurs (liste « Étude »).
+- [ ] Mêmes vitesses que le script ; les courbes COMSOL et Viscoroute se superposent
+      comme dans les graphiques Excel du script (UX, UZ, EPS_…).
+- [ ] Les fichiers que le script ignorait en silence (ex. `…0P0….json`) sont listés
+      « Écartés » avec la raison.
+- [ ] « Tout exporter (EXCEL_OUTPUT) » : un `comparaison_<v>.xlsx` par vitesse, mêmes
+      valeurs que ceux du script (feuilles COMSOL, VISCOROUTE, une par grandeur) plus une
+      feuille « Ecarts » ; les graphiques Excel du script ne sont pas refaits (ils sont
+      dans l'application et dans Figures).
+- [ ] « Enregistrer dans Figures » puis « Régénérer » après avoir remplacé un `.csv`.
+
+## Manuscrits : sources LaTeX
+
+- [ ] Manuscrits → « Sources LaTeX » → choisir le dossier du manuscrit : figures TikZ
+      (`standalone`), documents et chapitres classés comme dans le tableau de bord de
+      these-lgcb ; les dossiers `build`, `out`, `.git` sont ignorés.
+- [ ] Une figure incluse par un chapitre (`\input` ou `\includegraphics` de son PDF)
+      affiche ce chapitre dans « Utilisé par ».
+- [ ] Renommer une image utilisée : elle apparaît dans « Inclusions introuvables ».
+- [ ] « VS Code », « PDF » (si compilé à côté) et « Dossier » ouvrent ce qu'il faut.
+
+## Traitement 2S2P1D : nouvelle interface (0.2.6)
+
+À comparer avec « Ancienne page » (bouton en haut à droite) sur les mêmes fichiers : les
+nombres doivent être identiques, dans les deux modes.
+
+- [ ] À l'ouverture : l'essai de démonstration, calé (écart |E*| < 1 %), en quelques secondes.
+- [ ] 01 Essai : « Choisir un fichier… » (boîte « Ouvrir » de Windows ; le glisser-déposer
+      n'est pas pris en charge dans la fenêtre de l'application) : un export MTS `.csv` réel, puis un export
+      WaveMatrix `.steps.tracking.csv` et un `.xlsx` : voies reconnues, matrice T × f
+      détectée, « Traiter la campagne » ; un second fichier s'ajoute pour la comparaison.
+- [ ] 02 Cycles : case « Retenu », touche X sur une ligne, « Proposer » avec les seuils,
+      « Tout remettre » ; le signal et la sinusoïde suivent le cycle et la voie choisis.
+- [ ] 03 Synthèse : moyenne / maximum / minimum / écart-type ; isothermes.
+- [ ] 04 Calage : « Caler tout », « Constantes seules », « Ajuster ν* », « Recaler les
+      isothermes », « Ajuster WLF », curseurs et champs ; changer de Tref ; modèle
+      Huet-Sayegh puis Kelvin-Voigt généralisé ; survol d'un point (palier affiché).
+- [ ] 05 Comparaison et 06 Fidélité Excel : mêmes tableaux que l'ancienne page.
+- [ ] 07 Export : `.xlsx` (Data avec la colonne Retenu, Calcul, Modele), trois CSV qui
+      s'ouvrent dans Excel, projet `.json` enregistré puis rouvert (tri et calages
+      retrouvés) ; un projet enregistré par l'ancienne page ou le site se rouvre aussi.
+- [ ] Depuis une campagne : « 2S2P1D » ouvre l'essai, « Enregistrer avec l'essai »,
+      « ← Campagne » (bouton « 2S2P1D ✓ »), rouvrir : le dépouillement revient sur Calage.
+- [ ] « → Figures » sur la courbe maîtresse d'un essai de campagne, puis dans Figures
+      « Régénérer depuis les données » après avoir modifié le calage et réenregistré.
+- [ ] Installeur Traitement seul : pas de bouton « → Figures », tout le reste fonctionne.
+
+## Régressions sur les courbes d'un essai (0.2.7)
+
+- [ ] Campagnes → « Courbes » d'un TSRST → « Régression » → glisser sur la phase de
+      refroidissement : droite en tirets, pente en °C/h et R² ; plusieurs domaines possibles,
+      « retirer » en enlève une.
+- [ ] Fermer et rouvrir les courbes (et sur l'autre PC) : les régressions reviennent.
+- [ ] « Enregistrer dans Figures » : les droites et leurs pentes sont dans l'image ; « Régénérer »
+      les refait.
+
+## Traitement : enregistrement automatique (0.2.7)
+
+- [ ] Essai de campagne : l'ouvrir puis revenir sans rien toucher → bouton « 2S2P1D » (pas
+      de ✓) ; écarter un cycle ou caler → « Enregistré à hh:mm » dans la barre, puis « 2S2P1D ✓ ».
+- [ ] Fichier ouvert à la main (« Choisir un fichier… ») sous une racine du poste (ex.
+      Recherche) : il apparaît dans « Dépouillements enregistrés » (étape 01) avec sa
+      référence `recherche:…` ; chaque modification s'enregistre seule.
+- [ ] Fermer l'application, la rouvrir (ou passer sur l'autre PC, même racine déclarée) →
+      « Rouvrir » : même tri des cycles, mêmes calages, ouverture sur l'étape Calage.
+- [ ] Fichier hors de toute racine : rouvrable sur ce PC seulement (chemin absolu) ; message
+      clair sur l'autre PC. « Retirer » range l'entrée dans `traitement/.supprimes/`.
+
+## Figures d'une campagne ou d'une étude (0.2.7)
+
+- [ ] Page de campagne → section « Figures » : les courbes d'essais et les graphiques du
+      traitement 2S2P1D enregistrés depuis cette campagne y sont (« issue de la campagne ») ;
+      un clic ouvre la figure dans Figures.
+- [ ] « Rattacher une figure… » → rechercher → la figure (ex. une photo, un schéma) apparaît,
+      « détacher » la retire ; même chose sur la page d'une étude.
+- [ ] Dans Figures, la fiche indique « Rattachée à : … » ; sur l'autre PC, mêmes rattachements.
+
+## Graphes du traitement modifiables dans Figures, axes FR/EN (0.2.7)
+
+- [ ] Traitement → Calage → « → Figures » sur la courbe maîtresse : dans Figures, la figure est
+      un **Graphe** (onglet Graphes) : changer un titre d'axe, la taille, la position de la
+      légende, exporter en pgfplots (`export.tex`) → compile dans le manuscrit.
+- [ ] Bouton « Axes EN » en haut du traitement : titres d'axes et légendes en anglais à
+      l'écran (« centred signal », « deviation (%) », « measured », « model ») ; « → Figures »
+      garde l'anglais.
+- [ ] Essai ouvert depuis une campagne, graphe envoyé dans Figures, titre d'axe retouché dans
+      Figures, puis « Régénérer » après un nouveau calage : les données changent, le titre
+      retouché et la taille restent.
+- [ ] Une figure « image » envoyée avant la 0.2.7 se régénère toujours en image.

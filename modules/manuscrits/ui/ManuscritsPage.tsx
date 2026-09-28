@@ -8,6 +8,7 @@ import { useContexte } from "@interface/contexte";
 import { isoAvecDecalage } from "@noyau/dates";
 import { etat, dossierManuscrit, type Etat, type Version } from "../core/versions";
 import { chargerVersions, enregistrerVersion, listerManuscrits } from "./donnees";
+import { LatexIndex } from "./LatexIndex";
 
 interface Ligne {
   chemin: string;
@@ -32,6 +33,7 @@ export function ManuscritsPage() {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<{ niveau: "info" | "erreur"; texte: string } | null>(null);
   const [tour, setTour] = useState(0);
+  const [vue, setVue] = useState<"word" | "latex">("word");
 
   useEffect(() => {
     if (!racine || !espace) return;
@@ -86,13 +88,25 @@ export function ManuscritsPage() {
       titre="Manuscrits"
       sousTitre={racine ? <span className="chemin">{racine}</span> : "Versions datées de vos manuscrits Word"}
       actions={
-        <button type="button" onClick={() => void choisir()}>
-          {racine ? "Changer de dossier…" : "Choisir le dossier des manuscrits…"}
-        </button>
+        vue === "word" ? (
+          <button type="button" onClick={() => void choisir()}>
+            {racine ? "Changer de dossier…" : "Choisir le dossier des manuscrits…"}
+          </button>
+        ) : null
       }
     >
+      <nav className="onglets" aria-label="Manuscrits">
+        <button type="button" className={vue === "word" ? "actif" : undefined} onClick={() => setVue("word")}>
+          Versions Word
+        </button>
+        <button type="button" className={vue === "latex" ? "actif" : undefined} onClick={() => setVue("latex")}>
+          Sources LaTeX
+        </button>
+      </nav>
       {message ? <Message niveau={message.niveau}>{message.texte}</Message> : null}
-      {!racine ? (
+      {vue === "latex" ? (
+        <LatexIndex />
+      ) : !racine ? (
         <div className="carte">
           <p>Indiquez le dossier où sont vos manuscrits (.docx). Ils restent où ils sont ; chaque version enregistrée est une copie datée, avec une note, dans l'espace OneDrive (<code>manuscrits/</code>), visible depuis les deux PC.</p>
         </div>

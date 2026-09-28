@@ -72,7 +72,7 @@ export function plateformeTauri(): Plateforme {
       const chemin = await open({ title: titre, multiple: false, filters: [{ name: extensions.join(", "), extensions }] });
       if (typeof chemin !== "string") return null;
       const octets = new Uint8Array(await appel<ArrayBuffer>("poste_lire_fichier", { chemin }, chemin));
-      return { nom: chemin.split(/[\\/]/).pop() ?? chemin, octets };
+      return { nom: chemin.split(/[\\/]/).pop() ?? chemin, octets, chemin };
     },
     verifierMiseAJour: async () => {
       const maj = await check();

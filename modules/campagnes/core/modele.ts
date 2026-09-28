@@ -10,6 +10,7 @@
  * Les données brutes restent sur leur disque : `donnees` est une référence à une racine
  * (« recherche:Sergio CM test Bio B2C4 brutes »).
  */
+import type { RegressionDemandee } from "@noyau/courbes";
 import { correspond } from "@noyau/texte";
 
 export const TYPES = [
@@ -43,6 +44,8 @@ export interface Essai {
   cycles: number | null;
   etat: string;
   notes: string;
+  /** Droites de régression posées sur ses courbes (vitesse de refroidissement…). */
+  regressions: RegressionDemandee[];
 }
 
 export const DOSSIER = "campagnes";
@@ -70,7 +73,17 @@ export function lireCampagne(brut: unknown): Campagne {
 
 export function lireEssai(brut: unknown): Essai {
   const b = o(brut);
-  return { eprouvette: t(b.eprouvette), debut: t(b.debut), fin: t(b.fin), dureeH: n(b.dureeH), cycles: n(b.cycles), etat: t(b.etat), notes: t(b.notes) };
+  const regressions = (Array.isArray(b.regressions) ? b.regressions : []).map(o).filter((r) => typeof r.panneau === "string" && typeof r.trace === "string" && n(r.de) !== null && n(r.a) !== null);
+  return {
+    eprouvette: t(b.eprouvette),
+    debut: t(b.debut),
+    fin: t(b.fin),
+    dureeH: n(b.dureeH),
+    cycles: n(b.cycles),
+    etat: t(b.etat),
+    notes: t(b.notes),
+    regressions: regressions.map((r) => ({ panneau: r.panneau as string, trace: r.trace as string, de: r.de as number, a: r.a as number })),
+  };
 }
 
 export const nouvelleCampagne = (titre: string): Campagne => lireCampagne({ titre });

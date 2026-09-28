@@ -1,25 +1,3 @@
-.onglets {
-  display: flex;
-  gap: 2px;
-  border-bottom: 1px solid var(--bordure);
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.onglets button {
-  border: 1px solid transparent;
-  border-bottom: none;
-  border-radius: 6px 6px 0 0;
-  background: transparent;
-  margin-bottom: -1px;
-}
-
-.onglets button.actif {
-  background: var(--surface);
-  border-color: var(--bordure);
-  font-weight: 600;
-}
-
 .compteur {
   background: var(--erreur);
   color: var(--surface);

@@ -3,6 +3,7 @@
  * pour être exécutés ; l'application retrouve ensuite chaque exécution (date, poste,
  * données lues, fichiers produits, succès ou erreur) et donne accès à ses sorties.
  */
+import { FiguresLiees } from "@interface/FiguresLiees";
 import { useEffect, useState } from "react";
 import { absolu, joindre } from "@noyau/stockage";
 import { Message, Page, Pastille, Section } from "@interface/composants";
@@ -198,6 +199,11 @@ function VueEtude({ e, campagnes, fermer }: { e: EtudeChargee; campagnes: { slug
         </Section>
       </div>
 
+      {ctx.registre.aAction("figures.liste") ? (
+        <Section titre="Figures">
+          <FiguresLiees cible={{ type: "etude", id: e.dossier, titre: k.titre }} />
+        </Section>
+      ) : null}
       <Section titre={`Exécutions (${e.executions.length})`}>
         {e.executions.length === 0 ? (
           <p className="discret">
