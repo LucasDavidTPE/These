@@ -1,7 +1,7 @@
 import { IconePlanning } from "@interface/icones";
 import type { Contexte } from "@interface/contexte";
 import type { Manifeste } from "@interface/manifeste";
-import { barresDepuis, cetteSemaine } from "./core/gantt";
+import { avancement, barresDepuis, cetteSemaine } from "./core/gantt";
 import { chargerPlanning, renduGantt } from "./ui/donnees";
 import { PlanningPage } from "./ui/PlanningPage";
 
@@ -14,7 +14,10 @@ async function semaine(ctx: Contexte) {
   const p = await chargerPlanning(ctx);
   if (!p) return [];
   const actives = new Set(p.categories.filter((c) => c.active).map((c) => c.id));
-  return cetteSemaine([...barresDepuis(p.elements), ...p.externes], aujourdhui()).filter((b) => actives.has(b.categorie) || !b.categorie);
+  const couleur = new Map(p.categories.map((c) => [c.id, c.couleur]));
+  return cetteSemaine([...barresDepuis(p.elements), ...p.externes], aujourdhui())
+    .filter((b) => actives.has(b.categorie) || !b.categorie)
+    .map((b) => ({ ...b, couleur: couleur.get(b.categorie) ?? null }));
 }
 
 const planning: Manifeste = {
@@ -31,6 +34,11 @@ const planning: Manifeste = {
   actions: {
     /** Pour l'Accueil : ce qui est en cours ou arrive dans les 7 jours. */
     "planning.cette-semaine": (ctx) => semaine(ctx as Contexte),
+    /** Pour l'Accueil : part du planning écoulée et prochain jalon (null sans planning). */
+    "planning.avancement": async (ctx) => {
+      const p = await chargerPlanning(ctx as Contexte);
+      return p ? avancement(barresDepuis(p.elements), aujourdhui()) : null;
+    },
     /** Refait la figure « Planning de la thèse » (Figures) avec le planning d'aujourd'hui. */
     "planning.regenerer-figure": async (charge) => {
       const { ctx } = charge as { ctx: Contexte };

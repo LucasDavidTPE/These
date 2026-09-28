@@ -133,3 +133,38 @@ export function cetteSemaine(barres: Barre[], aujourdhui: string): Barre[] {
     })
     .sort((a, b) => (a.debut < b.debut ? -1 : 1));
 }
+
+export interface Avancement {
+  /** Premier début et dernière fin du planning. */
+  debut: string;
+  fin: string;
+  /** Part écoulée entre les deux (0 à 1). */
+  part: number;
+  /** Jours restants jusqu'à la fin. */
+  joursRestants: number;
+  /** Prochain jalon à venir (aujourd'hui compris). */
+  prochainJalon: { titre: string; date: string; dans: number } | null;
+}
+
+/** Pour l'Accueil : où en est la thèse d'après le planning, et le prochain jalon. */
+export function avancement(barres: Barre[], aujourdhui: string): Avancement | null {
+  if (!barres.length) return null;
+  const t = jour(aujourdhui);
+  let d = Infinity,
+    f = -Infinity;
+  for (const b of barres) {
+    d = Math.min(d, jour(b.debut));
+    f = Math.max(f, jour(b.fin || b.debut));
+  }
+  const jalons = barres
+    .filter((b) => b.fin === "" && jour(b.debut) >= t)
+    .sort((a, b) => (a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : 0));
+  const j = jalons[0];
+  return {
+    debut: iso(d),
+    fin: iso(f),
+    part: f > d ? Math.min(1, Math.max(0, (t - d) / (f - d))) : 1,
+    joursRestants: Math.max(0, Math.round(f - t)),
+    prochainJalon: j ? { titre: j.titre, date: j.debut, dans: Math.round(jour(j.debut) - t) } : null,
+  };
+}
