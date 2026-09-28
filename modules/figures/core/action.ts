@@ -8,6 +8,7 @@
  * Pur : le système de fichiers et l'horloge sont passés en paramètres.
  */
 import { exportGraphSvg, exportPgfplots, validateGraph, type GraphDoc } from "./graph";
+import { exportSvg, exportTikz, validateFigure, type FigureDoc } from "./schema";
 import { createFigure, saveImageFigure, saveMeta, validateMeta, joinPath, type FigureMeta, type LibraryFs } from "./library";
 
 /**
@@ -89,6 +90,38 @@ export async function remplacerGraphe(fs: LibraryFs, dossier: string, nouveau: u
   }
   await ecrireGraphe(fs, dossier, doc, rendu);
   return saveMeta(fs, dossier, { ...v.meta, regenere: now }, { now, host });
+}
+
+export interface DemandeSchema {
+  titre: string;
+  source: string;
+  tags?: string[];
+  origine?: Origine;
+  /** Contenu de figure.json (validé ici). */
+  schema: unknown;
+}
+
+/** Rendu PNG d'un schéma (fourni par l'interface). */
+export type RenduSchema = (svg: string, doc: FigureDoc) => Promise<Uint8Array>;
+
+/**
+ * Action « figures.enregistrer-schema » : un schéma modifiable dans l'éditeur de schémas
+ * (figure.json, export.tex TikZ, export.svg, export.png), par exemple le modèle rhéologique
+ * calé dans le traitement, ses constantes en étiquettes.
+ */
+export async function enregistrerSchema(fs: LibraryFs, d: DemandeSchema, rendu: RenduSchema, now: string, host: string): Promise<string> {
+  const v = validateFigure(d.schema);
+  if (!v.ok) throw new Error(`Schéma invalide : ${v.errors.map((e) => `${e.path} : ${e.message}`).join(" ; ")}`);
+  const cree = await createFigure(fs, { title: d.titre, kind: "schema", now, host });
+  const svg = exportSvg(v.doc);
+  await fs.writeTextAtomic(joinPath(cree.folder, "figure.json"), JSON.stringify(v.doc, null, 2) + "\n");
+  await fs.writeTextAtomic(joinPath(cree.folder, "export.svg"), svg);
+  await fs.writeTextAtomic(joinPath(cree.folder, "export.tex"), exportTikz(v.doc));
+  await fs.writeBytesAtomic(joinPath(cree.folder, "export.png"), await rendu(svg, v.doc));
+  const meta: FigureMeta = { ...cree.meta, tags: d.tags ?? [], source: { type: "own", note: d.source } };
+  if (d.origine) meta.origine = d.origine;
+  await saveMeta(fs, cree.folder, meta, { now, host });
+  return cree.folder;
 }
 
 export interface DemandeImage extends Rendu {

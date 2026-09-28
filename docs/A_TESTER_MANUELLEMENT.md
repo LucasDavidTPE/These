@@ -351,3 +351,17 @@ nombres doivent être identiques, dans les deux modes.
       le décodeur), dans le bon sens.
 - [ ] Même chose dans Détourage (« Ouvrir… » et glisser-déposer d'un `.heic`).
 - [ ] Une photo HEIC abîmée donne un message clair, sans bloquer la page.
+
+## Traitement : « Ce que l'on modélise » (0.2.7)
+
+- [ ] Calage → bloc « Ce que l'on modélise » : schéma du modèle choisi (2S2P1D, Huet-Sayegh,
+      Maxwell, Kelvin-Voigt, Zener, Burgers, Kelvin-Voigt généralisé), valeurs sous chaque
+      élément ; survol → rôle de l'élément ; clic → son curseur ; les valeurs suivent les
+      curseurs.
+- [ ] « ▶ Animer » (Sinusoïdal) : l'éprouvette s'allonge et s'amincit (ν), la contrainte est
+      en avance de φ, la boucle σ–ε tourne ; changer T et f : |E*|, φ, |ν*| et l'énergie
+      dissipée suivent (plus froid → plus raide, boucle plus fine).
+- [ ] Fluage et Relaxation : courbes J(t) et E(t) du modèle calé, point qui parcourt le temps,
+      éprouvette qui s'allonge (fluage) ou effort qui baisse (relaxation).
+- [ ] « → Figures (schéma TikZ) » avec et sans les valeurs : le schéma s'ouvre dans l'éditeur
+      de schémas de Figures ; l'export TikZ compile dans le manuscrit.

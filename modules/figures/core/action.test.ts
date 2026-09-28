@@ -93,3 +93,31 @@ describe("graphes modifiables", () => {
     return enregistrerGraphe(fs, { titre: "G", source: "T", graphe: doc([1, 2, 3]) }, rendu, "2026-09-28T10:00:00+02:00", "PC");
   }
 });
+
+describe("schémas envoyés par un module", () => {
+  const schema = (type: string, params: Record<string, unknown> = {}) => ({
+    format: "figurine/1",
+    canvas: { unit: "mm", width: 100, height: 40, grid: 0 },
+    theme: "these",
+    items: [{ id: "modele", type, from: [10, 20], to: [90, 20], params }],
+  });
+
+  it("un modèle rhéologique devient une figure « schema » avec TikZ, SVG et PNG", async () => {
+    const { enregistrerSchema } = await import("./action");
+    const fs = new MemoryFs();
+    const dossier = await enregistrerSchema(fs, { titre: "Modèle 2S2P1D", source: "Traitement", schema: schema("model_2s2p1d", { e00_label: "$E_{00}$ = 120 MPa" }) }, async () => new Uint8Array([9]), "2026-09-28T10:00:00+02:00", "PC");
+    expect(JSON.parse(fs.get(`${dossier}/meta.json`)!).kind).toBe("schema");
+    expect(JSON.parse(fs.get(`${dossier}/figure.json`)!).items[0].params.e00_label).toBe("$E_{00}$ = 120 MPa");
+    expect(fs.get(`${dossier}/export.tex`)).toContain("\\begin{tikzpicture}");
+    expect(fs.get(`${dossier}/export.svg`)).toContain("<svg");
+  });
+
+  it("Zener, Burgers et Huet-Sayegh existent comme composants ; un type inconnu est refusé", async () => {
+    const { enregistrerSchema } = await import("./action");
+    const fs = new MemoryFs();
+    for (const t of ["zener", "burgers", "huet_sayegh", "maxwell", "kelvin_voigt", "kvg", "generalized_maxwell"]) {
+      await expect(enregistrerSchema(fs, { titre: t, source: "T", schema: schema(t) }, async () => new Uint8Array([1]), "2026-09-28T10:00:00+02:00", "PC")).resolves.toMatch(/^FIG-/);
+    }
+    await expect(enregistrerSchema(fs, { titre: "x", source: "T", schema: schema("inconnu") }, async () => new Uint8Array([1]), "2026-09-28T10:00:00+02:00", "PC")).rejects.toThrow("Schéma invalide");
+  });
+});

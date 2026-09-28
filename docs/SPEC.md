@@ -253,6 +253,17 @@ Ce qui change à l'étape 2 :
   sa première modification ; un fichier ouvert à la main s'enregistre dans
   `traitement/<nom>-<id>.json` avec la référence de son fichier de mesure (racine du poste,
   sinon chemin absolu) et se rouvre depuis « Dépouillements enregistrés ».
+- **Calage étendu** (0.2.7) : modèles élémentaires Maxwell, Kelvin-Voigt, Zener, Burgers
+  (constantes propres, « Caler tout » ne touche pas aux a_T) ; **séries de Prony** (Maxwell
+  ou Kelvin-Voigt généralisé, τ sur une grille, modules par moindres carrés positifs) calées
+  sur les mesures translatées ou sur le modèle continu, exports Abaqus (`*VISCOELASTIC,
+  TIME=PRONY`, `*TRS` WLF), COMSOL (branches Gᵢ, τᵢ) et CSV ; log a_T borné à ±30 décades
+  dans le calage conjoint ; axes des graphiques en français ou en anglais ; graphiques
+  envoyés à Figures comme graphes modifiables (pgfplots).
+- **« Ce que l'on modélise »** (0.2.7) : schéma rhéologique du modèle calé (valeurs,
+  rôle de chaque élément, lien vers son curseur), essai animé sur une éprouvette (sinusoïdal
+  avec ν et déphasages, boucle σ–ε ; fluage et relaxation par la série de Prony du modèle),
+  export du schéma vers Figures (composants rhéologiques, TikZ).
 
 Le site GitHub Pages actuel n'est plus développé ; il reste en ligne tel quel tant
 qu'on ne décide pas de le retirer (voir `QUESTIONS.md`).

@@ -405,3 +405,53 @@
   background: var(--accent);
   transition: width 0.15s;
 }
+
+/* « Ce que l'on modélise » */
+.tr-schema svg {
+  display: block;
+  color: var(--texte);
+}
+
+.tr-schema-organe {
+  cursor: pointer;
+  outline: none;
+}
+
+.tr-schema-info {
+  min-height: 2.6em;
+  margin: 4px 0 8px;
+}
+
+.tr-anime .rangee {
+  align-items: flex-end;
+}
+
+.tr-anime-reglage {
+  min-width: 150px;
+}
+
+.tr-anime-scene {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 8px;
+  align-items: center;
+  color: var(--texte);
+  margin: 8px 0 4px;
+}
+
+.tr-eprouvette {
+  width: 150px;
+  height: auto;
+}
+
+.tr-anime-courbes {
+  width: 100%;
+  height: auto;
+}
+
+.tr-case {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 13px;
+}

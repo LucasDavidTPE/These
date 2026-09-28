@@ -5,6 +5,7 @@ import { nb } from "../core/format";
 import { MODELES, modele, type Parametre } from "../core/modeles";
 import { vuesCalage } from "../core/vues";
 import { BlocProny } from "./BlocProny";
+import { Illustration } from "./Illustration";
 import { Bloc, ChampNombre, Indicateur } from "./champs";
 import { essaiActif, useTraitement } from "./etat";
 import { Graphe } from "./Graphe";
@@ -160,6 +161,8 @@ export function EtapeCalage() {
           </div>
         </Bloc>
       </div>
+
+      <Illustration e={e} />
 
       <BlocProny e={e} vue={v.prony} />
     </div>
