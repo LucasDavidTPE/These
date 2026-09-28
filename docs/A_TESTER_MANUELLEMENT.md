@@ -176,3 +176,54 @@ Ce qui change avec l'intégration :
       dernière version ».
 - [ ] « Ouvrir » ouvre la version dans Word ; « Copie sous… » l'enregistre ailleurs.
 - [ ] Sur l'autre PC (même dossier via OneDrive, racine réglée) : les mêmes versions.
+
+## Version 0.2.5 : tests sous Windows, installeur Traitement
+
+- [ ] GitHub → Actions → **tests-windows** → « Run workflow » : toutes les étapes vertes
+      (cocher « latex » une fois pour vérifier aussi la compilation des figures).
+- [ ] Ou, sur un PC avec Node et Rust : double-clic sur `tester-windows.cmd` à la racine
+      du dépôt ; le résumé final dit « Tous les tests sont verts ». Sans Node ni Rust, il
+      propose d'ouvrir la page du bouton GitHub.
+- [ ] Artefact `traitement-2s2p1d-installeurs` : il s'installe à côté de Thèse, s'ouvre
+      directement sur le traitement, sans écran d'espace ; l'installeur est bien plus léger
+      que celui de Thèse (pas de modèle de détourage).
+
+## Figures régénérables (Gantt, courbes d'un essai, ViscoCompare)
+
+- [ ] Planning → « SVG » et « PNG » : toute la thèse, lisible (titres, catégories, ligne
+      « aujourd'hui ») ; le SVG s'ouvre dans le navigateur et dans Inkscape.
+- [ ] Planning → « Enregistrer dans Figures » : figure « Planning de la thèse ». Déplacer
+      un élément du planning, puis, dans Figures, sélectionner la figure → « Régénérer
+      depuis les données » : l'image suit, la vignette se met à jour, titre et tags restent.
+- [ ] Courbes d'un essai : masquer une voie et zoomer sur une plage → « Enregistrer dans
+      Figures » : la figure a les mêmes voies et la même plage. « Régénérer » la refait à
+      l'identique sur le PC qui a les données ; sur l'autre, message « Données brutes
+      absentes de ce poste ».
+- [ ] Figurine seul (installeur Figurine) : sur une figure venue de Thèse, le panneau dit
+      que le module d'origine est absent, sans bouton.
+
+## Bibliothèque : liens et Markdown
+
+- [ ] « Vérifier les liens » : confirmation, barre de progression, « Arrêter » fonctionne ;
+      à la fin, « État du lien » et « Lien contrôlé le » sont remplis dans les fiches, les
+      liens morts listés en haut du tableau de bord (un clic ouvre la fiche).
+- [ ] Derrière le proxy de l'école : les liens répondent (sinon noter ce qui s'affiche :
+      l'application n'utilise pas encore le proxy système de Windows).
+- [ ] Fiche → « Vérifier le lien » sur une seule référence.
+- [ ] « Exporter Markdown… » vers un dossier (ou un coffre Obsidian) : une note par
+      référence (propriétés en tête, fiche de lecture, notes, liens [[clé]]) et
+      « Point mensuel - mois N.md ».
+
+## ViscoCompare
+
+- [ ] ViscoCompare → « Choisir le dossier… » : le dossier du script (avec `COMSOL` et
+      `VISCOROUTE`) ou un dossier qui en contient plusieurs (liste « Étude »).
+- [ ] Mêmes vitesses que le script ; les courbes COMSOL et Viscoroute se superposent
+      comme dans les graphiques Excel du script (UX, UZ, EPS_…).
+- [ ] Les fichiers que le script ignorait en silence (ex. `…0P0….json`) sont listés
+      « Écartés » avec la raison.
+- [ ] « Tout exporter (EXCEL_OUTPUT) » : un `comparaison_<v>.xlsx` par vitesse, mêmes
+      valeurs que ceux du script (feuilles COMSOL, VISCOROUTE, une par grandeur) plus une
+      feuille « Ecarts » ; les graphiques Excel du script ne sont pas refaits (ils sont
+      dans l'application et dans Figures).
+- [ ] « Enregistrer dans Figures » puis « Régénérer » après avoir remplacé un `.csv`.

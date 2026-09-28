@@ -4,6 +4,9 @@ Une phase par session (ou par petite série de sessions). Une phase est **termin
 les tests sont verts, le lint est propre, `A_TESTER_MANUELLEMENT.md` est à jour et
 l'installeur de la phase est produit par GitHub Actions.
 
+Outillage : bouton **tests-windows** (Actions → Run workflow) et `tester-windows.cmd`
+lancent tous les tests automatiques sous Windows.
+
 ## P0 — Socle ✔
 - [x] Dépôt unique (`packages/`, `modules/`, `app/`), Tauri 2, Vite, Vitest, ESLint
       avec la règle « un module n'importe jamais un autre module »
@@ -43,8 +46,8 @@ l'installeur de la phase est produit par GitHub Actions.
       corrigée (séparateur, guillemets), boucle infinie sans colonne de cycles corrigée
 - [ ] Plus tard : cœur en TypeScript dans `modules/traitement/core`, interface React,
       « Enregistrer dans Figures »
-- [ ] Installeur `Traitement 2S2P1D` seul : la configuration existe
-      (`npm run construire -- traitement`), à produire par la CI
+- [x] Installeur `Traitement 2S2P1D` seul, produit par la CI (job `build-traitement`,
+      artefact `traitement-2s2p1d-installeurs`), compilé sans la *feature* `figures`
 
 ## P3 — Bibliothèque ✔
 - [x] Modèle de données, `parametres.json`, calculs (citation, état, alerte, score, temps,
@@ -57,8 +60,9 @@ l'installeur de la phase est produit par GitHub Actions.
       nouvelle référence ; exports RIS et BibTeX
 - [x] Remplir une référence depuis son DOI (Crossref, sur demande) ; contrôle des doublons
       (clé, DOI, titre + premier auteur) sur le tableau de bord
-- [ ] Plus tard : vérifier les liens (demande des requêtes côté Rust), export Markdown
-      (selon la réponse aux questions Obsidian / iPad), contrôle des doublons
+- [x] Vérifier les liens (commande Rust `lien_verifier`, sur demande, interruptible) :
+      état et date notés dans chaque référence, liens morts sur le tableau de bord
+- [x] Export Markdown : une note par référence (compatible Obsidian) et le point mensuel
 
 ## P4 — Planning ✔
 - [x] Éléments (phases, tâches, jalons), catégories, activer / désactiver (partagé
@@ -69,7 +73,7 @@ l'installeur de la phase est produit par GitHub Actions.
       action `bibliotheque.planning`)
 - [x] Export pgfgantt
 - [x] Glisser une barre pour la déplacer, son bord droit pour l'étirer (au jour près)
-- [ ] Plus tard : exports PNG / SVG vers Figures
+- [x] Exports SVG / PNG de toute la thèse, et « Enregistrer dans Figures » (régénérable)
 
 ## P5 — Campagnes (étape 1 ✔)
 - [x] Fiches de campagne et d'essai (un dossier par campagne), import des
@@ -92,7 +96,9 @@ l'installeur de la phase est produit par GitHub Actions.
 - [x] Accueil complet : Cette semaine, derniers essais (action `campagnes.recents`, clic →
       la campagne via `campagnes.ouvrir`), dernières figures avec vignette
       (`figures.recentes`, clic → la figure sélectionnée via `figures.ouvrir`)
-- [ ] Graphes régénérables depuis les données d'un essai
+- [x] Graphes régénérables : une figure garde son `origine` ; « Régénérer depuis les
+      données » demande l'action `<module>.regenerer-figure` (courbes d'un essai avec voies
+      et plage, Gantt, ViscoCompare). Traceur SVG commun dans `noyau/courbes`
 - [ ] Archivage des anciens dépôts (hub, these-lgcb) une fois la bascule faite
 
 ## P7 — Plus tard (à décider)
@@ -105,4 +111,6 @@ l'installeur de la phase est produit par GitHub Actions.
       copiées dans l'espace (`manuscrits/<fichier>/`), état « modifié depuis la dernière
       version », ouvrir une version, en faire une copie ailleurs
 - [ ] Index des figures LaTeX des manuscrits
-- [ ] Module ViscoCompare (comparaison COMSOL / Viscoroute)
+- [x] Module ViscoCompare : portage de `LucasDavidTPE/ViscoCompare/main.py` (lecture COMSOL
+      et Viscoroute, profil en x = 0, conversions, interpolation), courbes superposées,
+      écart sur l'extremum, classeurs `EXCEL_OUTPUT`, figures régénérables

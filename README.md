@@ -31,6 +31,9 @@ npm run construire -- these        # installeur Thèse
 npm run construire -- figurine     # installeur d'un seul module
 ```
 
+Tous les tests **sous Windows** : onglet *Actions* → **tests-windows** → *Run workflow*
+(rien à installer), ou double-clic sur `tester-windows.cmd` sur un PC qui a Node et Rust.
+
 Arborescence : `packages/noyau` (TypeScript pur), `packages/interface` (React commun),
 `modules/<module>` (un dossier par module, avec son `manifeste.tsx`), `app` (la coquille),
 `src-tauri` (Rust). Un module n'importe jamais un autre module : voir `docs/SPEC.md` §3.

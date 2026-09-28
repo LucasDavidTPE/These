@@ -20,3 +20,17 @@ describe("ecrireXlsx", () => {
     expect(ecrireXlsx("Essai1 : suivi/brut", ["Temps (h)", "Force (kN)", "Déformation <A> & \"B\""], lignes)).toEqual(octets);
   });
 });
+
+describe("ecrireClasseur", () => {
+  it("plusieurs feuilles, textes et nombres, noms uniques", async () => {
+    const { ecrireClasseur } = await import("./xlsx-ecriture");
+    const octets = ecrireClasseur([
+      { nom: "COMSOL", entetes: ["arc_length", "UX"], lignes: [[0, 1.5], [1, null]] },
+      { nom: "UX", entetes: ["Source", "x", "Valeur"], lignes: [["COMSOL", 0, 1.5], ["Viscoroute", 0, 1.4]] },
+      { nom: "ux", entetes: ["a"], lignes: [] },
+    ]);
+    const f = readXlsx(octets);
+    expect(f.map((x) => x.name)).toEqual(["COMSOL", "UX", "ux (2)"]);
+    expect(f[1]!.rows[2]).toEqual(["Viscoroute", 0, 1.4]);
+  });
+});

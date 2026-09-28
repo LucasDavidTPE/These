@@ -9,7 +9,8 @@ reportée dans `SPEC.md` et la question est supprimée d'ici.
    pour garder une consultation sur iPad ?
 2. **Obsidian (P3).** Le classeur génère des notes Obsidian et un point mensuel. Les
    notes de lecture vivront dans l'application : Obsidian est-il encore utilisé, ou
-   l'export Markdown suffit-il ?
+   l'export Markdown suffit-il ? *(0.2.5 : l'export Markdown existe, compatible
+   Obsidian ; reste à savoir s'il faut le relancer automatiquement.)*
 3. **Zotero (P3).** Zotero reste-t-il l'outil de citation (import RIS, plugin Word) ? Si
    la rédaction se fait en LaTeX, l'export BibTeX de l'application pourrait suffire.
 4. **« Récupérer les données brutes » (P5).** Il s'agit de *consulter et exporter* les

@@ -15,6 +15,7 @@ de la thèse de Lucas David (chaussées aéronautiques, ENTPE / LTDS / LGCB) :
 | **Bibliothèque** | le classeur `Biblio_These_Lucas_MAITRE.xlsx` et ses macros | — |
 | **Planning** | *(nouveau)* un Gantt de la thèse, partagé entre les deux PC | — |
 | **Accueil** | le panneau Java du hub | `lucasdavid47/lgcb-hub` |
+| **ViscoCompare** | le script de comparaison COMSOL / Viscoroute | `LucasDavidTPE/ViscoCompare` |
 
 Principes, par ordre d'importance :
 
@@ -396,7 +397,20 @@ Gantt** (on les modifie à leur source, un clic y mène) :
 - Export **PNG / SVG** et **pgfgantt** (TikZ) pour un comité de suivi ou le manuscrit,
   via Figures.
 
-## 11. Exigences générales
+## 11. Module ViscoCompare
+
+Remplace le script `main.py` de `LucasDavidTPE/ViscoCompare` (Python, pandas, xlsxwriter).
+La racine de poste `viscocompare` désigne un dossier organisé comme celui du script
+(`COMSOL/*.csv` avec « V=… » dans le nom, `VISCOROUTE/Vitesse_…/*.json`), ou un dossier
+qui en contient plusieurs. Lecture et conversions **identiques** au script (colonnes
+renommées, déplacements COMSOL en µm, `arc_length` − 5 m, profil Viscoroute en x = 0,
+signe inversé pour UX et UZ, × 10⁶, interpolation sur le y de la première grandeur),
+vérifiées par des tests ; les conventions restent modifiables à l'écran. Ajouts : les
+fichiers écartés sont listés (le script les taisait), écart sur l'extremum de chaque
+grandeur, figures régénérables. Les classeurs `EXCEL_OUTPUT/comparaison_<v>.xlsx`
+reprennent les feuilles du script, sans ses graphiques Excel.
+
+## 12. Exigences générales
 
 - Interface et messages **en français** ; code, identifiants et commits en anglais
   (convention de Figurine).
