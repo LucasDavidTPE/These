@@ -244,7 +244,8 @@ Ce qui change avec l'intégration :
 nombres doivent être identiques, dans les deux modes.
 
 - [ ] À l'ouverture : l'essai de démonstration, calé (écart |E*| < 1 %), en quelques secondes.
-- [ ] 01 Essai : déposer (ou cliquer et choisir) un export MTS `.csv` réel, puis un export
+- [ ] 01 Essai : « Choisir un fichier… » (boîte « Ouvrir » de Windows ; le glisser-déposer
+      n'est pas pris en charge dans la fenêtre de l'application) : un export MTS `.csv` réel, puis un export
       WaveMatrix `.steps.tracking.csv` et un `.xlsx` : voies reconnues, matrice T × f
       détectée, « Traiter la campagne » ; un second fichier s'ajoute pour la comparaison.
 - [ ] 02 Cycles : case « Retenu », touche X sur une ligne, « Proposer » avec les seuils,

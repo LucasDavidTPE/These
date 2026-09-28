@@ -103,10 +103,22 @@ export function EtapeEssai() {
               if (ev.dataTransfer.files.length) void chargerFichiers([...ev.dataTransfer.files]);
             }}
           >
-            <strong>Déposer un fichier</strong>
-            <span className="discret">ou cliquer pour le choisir — plusieurs éprouvettes s'ajoutent pour être comparées</span>
+            {/* Sous Windows, la fenêtre de l'application intercepte le glisser-déposer : on choisit le fichier. */}
+            <strong>{ctx.plateforme.genre === "tauri" ? "Choisir un fichier…" : "Déposer un fichier"}</strong>
+            <span className="discret">{ctx.plateforme.genre === "tauri" ? "" : "ou cliquer pour le choisir — "}plusieurs éprouvettes s'ajoutent pour être comparées</span>
           </button>
-          <input ref={entree} type="file" hidden multiple accept=".xlsx,.xlsm,.csv,.txt" onChange={(ev) => ev.target.files?.length && void chargerFichiers([...ev.target.files])} />
+          <input
+            ref={entree}
+            type="file"
+            hidden
+            multiple
+            accept=".xlsx,.xlsm,.csv,.txt"
+            onChange={(ev) => {
+              const f = [...(ev.target.files ?? [])];
+              ev.target.value = "";
+              if (f.length) void chargerFichiers(f);
+            }}
+          />
           <p className="discret petit">{s.infoFichier || (e.demo ? "Aucun fichier chargé — l'écran montre un essai de démonstration entièrement calculé à partir de constantes connues. L'optimiseur doit les retrouver." : "")}</p>
         </Bloc>
 
