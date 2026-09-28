@@ -7,9 +7,19 @@
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 
+/**
+ * Arguments Cargo propres à un produit : le code natif des modules absents n'est pas
+ * compilé (le produit Traitement n'a ni détourage ni ONNX Runtime).
+ */
+const CARGO = { traitement: ["--no-default-features"] };
+
 const [produit = "these", ...reste] = process.argv.slice(2);
 const surcharge = `src-tauri/produits/${produit}.json`;
-const args = ["tauri", "build", ...(produit !== "these" ? ["--config", surcharge] : []), ...reste];
+const cargo = CARGO[produit] ?? [];
+const tiret = reste.indexOf("--");
+const avant = tiret < 0 ? reste : reste.slice(0, tiret);
+const apres = tiret < 0 ? [] : reste.slice(tiret + 1);
+const args = ["tauri", "build", ...(produit !== "these" ? ["--config", surcharge] : []), ...avant, ...(cargo.length || apres.length ? ["--", ...cargo, ...apres] : [])];
 if (produit !== "these" && !existsSync(surcharge)) {
   console.error(`Produit inconnu : « ${produit} » (pas de ${surcharge}).`);
   process.exit(1);

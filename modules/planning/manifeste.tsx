@@ -2,7 +2,7 @@ import { IconePlanning } from "@interface/icones";
 import type { Contexte } from "@interface/contexte";
 import type { Manifeste } from "@interface/manifeste";
 import { barresDepuis, cetteSemaine } from "./core/gantt";
-import { chargerPlanning } from "./ui/donnees";
+import { chargerPlanning, renduGantt } from "./ui/donnees";
 import { PlanningPage } from "./ui/PlanningPage";
 
 function aujourdhui(): string {
@@ -31,6 +31,13 @@ const planning: Manifeste = {
   actions: {
     /** Pour l'Accueil : ce qui est en cours ou arrive dans les 7 jours. */
     "planning.cette-semaine": (ctx) => semaine(ctx as Contexte),
+    /** Refait la figure « Planning de la thèse » (Figures) avec le planning d'aujourd'hui. */
+    "planning.regenerer-figure": async (charge) => {
+      const { ctx } = charge as { ctx: Contexte };
+      const p = await chargerPlanning(ctx);
+      if (!p) throw new Error("Le planning vit dans l'espace Thèse : aucun espace n'est ouvert.");
+      return renduGantt(p);
+    },
   },
 };
 

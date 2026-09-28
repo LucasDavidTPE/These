@@ -5,17 +5,12 @@
 import { useMemo, useState } from "react";
 import { Message, Page, Section } from "@interface/composants";
 import { useContexte } from "@interface/contexte";
-import { barresDepuis, grouper, iso, jour, type Barre, type Zoom } from "../core/gantt";
+import { iso, jour, type Barre, type Zoom } from "../core/gantt";
 import type { Element } from "../core/modele";
 import { versPgfgantt } from "../core/pgfgantt";
-import { usePlanning } from "./donnees";
+import { aujourdhui, groupesDe, renduGantt, TITRE_FIGURE, usePlanning } from "./donnees";
 import { Gantt } from "./Gantt";
 import "./planning.css";
-
-function aujourdhui(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
 
 const ZOOMS: [Zoom, string][] = [
   ["semaine", "Semaines"],
@@ -127,7 +122,8 @@ export function PlanningPage() {
   const [vue, setVue] = useState<"gantt" | "liste">("gantt");
   const jourJ = aujourdhui();
 
-  const groupes = useMemo(() => (p ? grouper([...barresDepuis(p.elements), ...p.externes], p.categories) : []), [p]);
+  const [message, setMessage] = useState<{ niveau: "info" | "erreur"; texte: string } | null>(null);
+  const groupes = useMemo(() => (p ? groupesDe(p) : []), [p]);
 
   if (!ctx.espace) return <Page titre="Planning"><Message niveau="erreur">Le planning vit dans l'espace Thèse : ouvrez-en un d'abord.</Message></Page>;
   if (!p) return <Page titre="Planning"><p className="discret">Chargement…</p></Page>;
@@ -153,6 +149,22 @@ export function PlanningPage() {
     await ctx.plateforme.enregistrerSous("planning-these.tex", new TextEncoder().encode(versPgfgantt(groupes, debut, fin)));
   }
 
+  /** Toute la thèse en image : fichier SVG ou PNG, ou figure de la bibliothèque (régénérable). */
+  async function image(vers: "svg" | "png" | "figures") {
+    if (!p) return;
+    try {
+      const r = await renduGantt(p, jourJ);
+      if (vers === "svg") await ctx.plateforme.enregistrerSous("planning-these.svg", new TextEncoder().encode(r.svg));
+      else if (vers === "png") await ctx.plateforme.enregistrerSous("planning-these.png", r.png);
+      else {
+        const dossier = await ctx.registre.executer("figures.enregistrer-image", { ctx, titre: TITRE_FIGURE, ...r, source: "Planning (Gantt de la thèse)", tags: ["planning", "gantt"], origine: { module: "planning" } });
+        setMessage({ niveau: "info", texte: `Figure enregistrée dans la bibliothèque : ${String(dossier)}. « Régénérer » la met à jour avec le planning du jour.` });
+      }
+    } catch (e) {
+      setMessage({ niveau: "erreur", texte: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
   return (
     <Page
       titre="Planning"
@@ -162,13 +174,25 @@ export function PlanningPage() {
           <button type="button" className="principal" onClick={nouveau}>
             Nouvel élément
           </button>
-          <button type="button" onClick={() => void exporter()}>
-            Exporter (pgfgantt)
+          <button type="button" onClick={() => void exporter()} title="Le Gantt en LaTeX (paquet pgfgantt)">
+            pgfgantt
           </button>
+          <button type="button" onClick={() => void image("svg")} title="Toute la thèse, en image vectorielle">
+            SVG
+          </button>
+          <button type="button" onClick={() => void image("png")} title="Toute la thèse, en image">
+            PNG
+          </button>
+          {ctx.registre.aAction("figures.enregistrer-image") ? (
+            <button type="button" onClick={() => void image("figures")} title="Nouvelle figure de la bibliothèque, qu'on pourra régénérer">
+              Enregistrer dans Figures
+            </button>
+          ) : null}
         </>
       }
     >
       {d.erreur ? <Message niveau="erreur">{d.erreur}</Message> : null}
+      {message ? <Message niveau={message.niveau}>{message.texte}</Message> : null}
       <div className="rangee barre-outils">
         <span className="segmente">
           {(["gantt", "liste"] as const).map((v) => (

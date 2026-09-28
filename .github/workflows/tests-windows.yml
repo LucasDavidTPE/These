@@ -1,0 +1,83 @@
+name: tests-windows
+
+# Le bouton « lancer tous les tests sous Windows » : onglet Actions → tests-windows →
+# « Run workflow ». Rien à installer sur les PC : tout tourne sur une machine Windows de
+# GitHub, avec les mêmes chemins (antislashs, lettres de lecteur, accents) que chez vous.
+#
+# Lance tout ce que « npm run test » et « cargo test » vérifient sous Linux, plus :
+# - Python (les tests du module Études l'utilisent quand il est présent) ;
+# - LaTeX si la case est cochée (compilation des figures TikZ / pgfplots ; ≈ 5 min de plus).
+# Le résumé de l'exécution liste chaque étape en vert ou en rouge.
+
+on:
+  workflow_dispatch:
+    inputs:
+      latex:
+        description: "Installer LaTeX (MiKTeX) pour les tests de compilation des figures"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: LaTeX (MiKTeX)
+        if: inputs.latex
+        shell: pwsh
+        run: |
+          choco install miktex --no-progress -y
+          $bin = "C:\Program Files\MiKTeX\miktex\bin\x64"
+          & "$bin\initexmf.exe" --admin --set-config-value=[MPM]AutoInstall=1
+          & "$bin\miktex.exe" --admin packages update-package-database
+          echo $bin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - run: npm ci
+
+      - uses: actions/cache@v4
+        with:
+          path: .cache/figurine-downloads
+          key: figurine-downloads-${{ hashFiles('outils/fetch-models.mjs') }}
+      - run: npm run fetch-models
+
+      - name: TypeScript (typecheck)
+        if: success() || failure()
+        run: npm run typecheck
+      - name: Lint
+        if: success() || failure()
+        run: npm run lint
+      - name: Tests TypeScript et conformité
+        if: success() || failure()
+        run: npm run test
+      - name: Tests Rust (cargo test, modèle de détourage réel)
+        if: success() || failure()
+        working-directory: src-tauri
+        env:
+          THESE_EXIGER_MODELE: "1"
+        run: cargo test
+      - name: Tests Rust sans le module Figures (installeur Traitement)
+        if: success() || failure()
+        working-directory: src-tauri
+        run: cargo test --no-default-features
+      - name: Clippy
+        if: success() || failure()
+        working-directory: src-tauri
+        run: cargo clippy --all-targets -- -D warnings

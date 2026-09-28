@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { resoudre, referenceDepuisChemin } from "@noyau/poste/racines";
 import { Message, Page, Pastille, Section } from "@interface/composants";
 import { Apercu, Courbes } from "@interface/Courbes";
-import { svgEnPng } from "@interface/image";
+import { VUE_ENTIERE, type Vue } from "@noyau/courbes";
 import { lireCsv, tableauEssai, versCsvExcel, type Serie } from "@noyau/formats/wavematrix";
 import { ecrireXlsx } from "@noyau/formats/xlsx-ecriture";
 import { apercu, panneaux, type PanneauEssai } from "../core/courbes";
@@ -18,6 +18,7 @@ import { FILTRE_VIDE, garderCampagne, lireEssai, nouvelleCampagne, periode, peri
 import { depuisLgcb } from "../core/toml";
 import { valeur } from "../core/traitement";
 import { ajouterImage, ajouterNote, chargerCampagnes, cheminTraitement, creerCampagne, enregistrerApercu, enregistrerCampagne, enregistrerEssai, type CampagneChargee } from "./donnees";
+import { renduCourbes, titreFigure, type OrigineCourbes } from "./figure";
 import { prendreOuverture } from "./ouverture";
 import "./campagnes.css";
 
@@ -94,6 +95,7 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
   const [message, setMessage] = useState<{ niveau: "info" | "erreur"; texte: string } | null>(null);
   const [note, setNote] = useState({ titre: "", texte: "" });
   const [courbes, setCourbes] = useState<{ essai: string; panneaux: PanneauEssai[] | null; serie?: Serie } | null>(null);
+  const [vue, setVue] = useState<Vue>(VUE_ENTIERE);
   const k = c.campagne;
   const agir = async (f: () => Promise<unknown>, ok?: string) => {
     try {
@@ -153,12 +155,14 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
 
   async function versFigures() {
     if (!courbes) return;
+    const p = courbes.panneaux;
+    if (!p) return;
     await agir(async () => {
-      const svgs = [...document.querySelectorAll<SVGSVGElement>(".courbes-panneau svg")];
-      const titre = `${k.titre} — ${courbes.essai}`;
-      const png = await svgEnPng(svgs, titre);
-      const dossier = await ctx.registre.executer("figures.enregistrer-image", { ctx, titre, png, source: `Campagnes : ${k.titre}, ${courbes.essai}`, tags: [typeDe(k.type).libelle, courbes.essai] });
-      setMessage({ niveau: "info", texte: `Figure enregistrée dans la bibliothèque : ${String(dossier)}.` });
+      const titre = titreFigure(k.titre, courbes.essai);
+      const origine: OrigineCourbes = { module: "campagnes", campagne: c.slug, essai: courbes.essai, vue };
+      const r = await renduCourbes(p, titre, vue);
+      const dossier = await ctx.registre.executer("figures.enregistrer-image", { ctx, titre, ...r, source: `Campagnes : ${k.titre}, ${courbes.essai}`, tags: [typeDe(k.type).libelle, courbes.essai], origine });
+      setMessage({ niveau: "info", texte: `Figure enregistrée dans la bibliothèque : ${String(dossier)}. Elle garde le lien vers les données : « Régénérer » la refait (mêmes voies, même plage).` });
     });
   }
 
@@ -417,7 +421,7 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
             </span>
           }
         >
-          {courbes.panneaux ? <Courbes panneaux={courbes.panneaux} xLibelle="temps (h)" /> : <p className="discret">Lecture de l'export…</p>}
+          {courbes.panneaux ? <Courbes key={courbes.essai} panneaux={courbes.panneaux} xLibelle="temps (h)" onVue={setVue} /> : <p className="discret">Lecture de l'export…</p>}
         </Section>
       ) : null}
 
