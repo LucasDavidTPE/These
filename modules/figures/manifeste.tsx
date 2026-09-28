@@ -2,7 +2,7 @@ import { IconeFigures } from "@interface/icones";
 import type { Contexte } from "@interface/contexte";
 import type { Manifeste } from "@interface/manifeste";
 import { isoAvecDecalage } from "@noyau/dates";
-import { enregistrerGraphe, enregistrerImage, type DemandeGraphe, type DemandeImage } from "./core/action";
+import { enregistrerGraphe, enregistrerImage, enregistrerSchema, type DemandeGraphe, type DemandeImage, type DemandeSchema } from "./core/action";
 import { exportGraphSvg } from "./core/graph";
 import { svgToPng } from "./ui/editor/raster";
 import { figuresRecentes } from "./core/recentes";
@@ -45,6 +45,13 @@ const figures: Manifeste = {
       const racine = ctx.reglages.figures;
       if (!racine) throw new Error("Choisissez d'abord le dossier de la bibliothèque de figures (Réglages du poste).");
       return enregistrerGraphe(ctx.plateforme.fichiers(racine), demande, (doc) => svgToPng(exportGraphSvg(doc), doc.width, doc.height, 300), isoAvecDecalage(new Date(), -new Date().getTimezoneOffset()), ctx.poste);
+    },
+    /** Un schéma modifiable (figure.json, TikZ) ; renvoie son dossier. */
+    "figures.enregistrer-schema": async (charge) => {
+      const { ctx, ...demande } = charge as DemandeSchema & { ctx: Contexte };
+      const racine = ctx.reglages.figures;
+      if (!racine) throw new Error("Choisissez d'abord le dossier de la bibliothèque de figures (Réglages du poste).");
+      return enregistrerSchema(ctx.plateforme.fichiers(racine), demande, (svg, doc) => svgToPng(svg, doc.canvas.width, doc.canvas.height, 300), isoAvecDecalage(new Date(), -new Date().getTimezoneOffset()), ctx.poste);
     },
     /** Les figures d'une campagne ou d'une étude (origine ou rattachement), avec leur vignette ; charge : { ctx, cible }. */
     "figures.liste": async (charge) => {

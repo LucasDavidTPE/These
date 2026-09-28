@@ -678,20 +678,211 @@ code {
   font-size: 15px;
 }
 
-.graph-preview {
+.graph-preview-cadre {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.graph-preview {
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
+  position: relative;
+}
+
+/* Taille du SVG imposée par l'aperçu (ajusté ou zoomé) ; au-delà de la place, on fait défiler. */
+.graph-preview {
+  display: grid;
+  place-items: center;
+}
+
+.graph-preview > div {
+  width: max-content;
+  height: max-content;
 }
 
 .graph-preview svg {
-  max-width: 100%;
+  display: block;
+  max-width: none;
+  background: white;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 15%);
+}
+
+.graph-preview.mode-zone,
+.graph-preview.mode-zone svg {
+  cursor: crosshair;
+  user-select: none;
+}
+
+.zone-trace {
+  border: 1.5px dashed var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.apercu-outils {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.apercu-outils .sep {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.apercu-outils .grow {
+  flex: 1;
+}
+
+button.small-btn.actif {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.apercu-pied {
+  padding: 3px 10px;
+  border-top: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+  min-height: 1.6em;
+  white-space: pre;
+}
+
+/* Modèles de graphes : bande repliable, vignettes petites. */
+.modeles-graphes {
+  margin-bottom: 10px;
+}
+
+.modeles-bande {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.modele-vignette {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  cursor: pointer;
+  text-align: left;
+}
+
+.modele-vignette:hover {
+  border-color: var(--accent);
+}
+
+.modele-image svg {
+  display: block;
+  width: 100%;
   height: auto;
   background: white;
+}
+
+.modele-nom {
+  font-size: 11px;
+}
+
+/* Apparence */
+.apparence .muted.small {
+  margin: 0 0 6px;
+}
+
+.palette-edition {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.palette-case {
+  display: inline-flex;
+  align-items: center;
+}
+
+.palette-case input[type="color"],
+.serie-couleur input[type="color"] {
+  width: 26px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
+
+.palette-case .small-btn {
+  padding: 0 3px;
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.palette-import {
+  display: flex;
+  gap: 4px;
+}
+
+.palette-import input {
+  flex: 1;
+  min-width: 0;
+}
+
+.style-details {
+  margin: 6px 0;
+}
+
+.style-details summary {
+  cursor: pointer;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.rangee-boutons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.serie-look {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin: 4px 0;
+}
+
+.serie-look select {
+  flex: 1;
+  min-width: 0;
+}
+
+.serie-couleur {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.erreur-texte {
+  color: #b3261e;
 }
 
 .data-preview {
@@ -801,4 +992,42 @@ code {
   display: inline-block;
   gap: 0;
   align-items: normal;
+}
+
+/* Retouche des données */
+.zone-trace.gomme {
+  border-color: #b3261e;
+  background: rgb(179 38 30 / 10%);
+}
+
+.small-select {
+  font-size: 12px;
+  padding: 1px 4px;
+}
+
+.donnees-serie {
+  margin: 6px 0;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.donnees-ligne {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.donnees-ligne input {
+  width: 64px;
+}
+
+.donnees-serie textarea {
+  width: 100%;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
 }

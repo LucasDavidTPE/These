@@ -112,7 +112,7 @@ pub async fn clipboard_write_svg(svg: String, png: Vec<u8>) -> Result<(), String
     clipboard::write_image_with(&img, Some(&svg))
 }
 
-const IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "bmp", "gif", "webp"];
+const IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "bmp", "gif", "webp", "heic", "heif"];
 
 fn has_image_extension(path: &Path) -> bool {
     path.extension()
@@ -225,6 +225,7 @@ mod tests {
     fn only_image_files_can_be_opened() {
         assert!(has_image_extension(Path::new("C:/a/b.PNG")));
         assert!(has_image_extension(Path::new("/a/photo.jpeg")));
+        assert!(has_image_extension(Path::new("C:/iPhone/IMG_0042.HEIC")));
         assert!(!has_image_extension(Path::new("/a/secret.txt")));
         assert!(!has_image_extension(Path::new("/a/noext")));
     }

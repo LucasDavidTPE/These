@@ -1,0 +1,150 @@
+/* ChaussSpec */
+.cs-champ {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+.cs-champ > span:first-child {
+  color: var(--discret);
+}
+.cs-inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+.cs-nombre {
+  padding: 3px 6px;
+}
+.cs-nom {
+  align-items: flex-end;
+  margin-bottom: 8px;
+}
+.cs-commentaire {
+  max-width: 60ch;
+}
+.cs-couche {
+  border: 1px solid var(--bordure);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--surface);
+}
+.cs-couche-tete {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.cs-couche-tete .grow,
+.rangee .grow {
+  flex: 1;
+}
+.cs-loi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: flex-end;
+}
+.cs-interface {
+  padding: 4px 0 4px 24px;
+  border-left: 2px dashed var(--bordure);
+  margin-left: 14px;
+}
+.cs-structure > div + div {
+  margin-top: 0;
+}
+.cs-table {
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.cs-table th,
+.cs-table td {
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--bordure);
+  text-align: left;
+  white-space: nowrap;
+}
+.cs-table tr.choisi td,
+.cs-table tr.choisi th {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.cs-calcul > .rangee,
+.cs-comps,
+.cs-jauges {
+  margin-bottom: 8px;
+  align-items: flex-end;
+}
+.cs-comps,
+.cs-jauges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.cs-jauge {
+  display: inline-block;
+  width: 160px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bordure);
+  overflow: hidden;
+}
+.cs-jauge i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s;
+}
+.cs-resultats-grille {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 16px;
+  margin: 10px 0;
+  align-items: start;
+}
+.cs-carte-zone {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 6px;
+  align-items: stretch;
+}
+.cs-carte canvas {
+  width: 100%;
+  max-height: 460px;
+  image-rendering: pixelated;
+  display: block;
+  border: 1px solid var(--bordure);
+}
+.cs-axe-y {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--discret);
+  writing-mode: horizontal-tb;
+}
+.cs-axe-x {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--discret);
+}
+.cs-barre {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+}
+.cs-barre i {
+  flex: 1;
+  width: 14px;
+  min-height: 120px;
+  border: 1px solid var(--bordure);
+}
+.cs-graphe svg {
+  width: 100%;
+  height: auto;
+}
+.cs-jauges-graphe {
+  max-width: 640px;
+}

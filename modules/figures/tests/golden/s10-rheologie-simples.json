@@ -1,0 +1,10 @@
+{
+  "format": "figurine/1",
+  "canvas": { "unit": "mm", "width": 110, "height": 105, "grid": 1 },
+  "theme": "these",
+  "items": [
+    { "id": "hs", "type": "huet_sayegh", "from": [10, 18], "to": [95, 18], "params": {} },
+    { "id": "z", "type": "zener", "from": [10, 52], "to": [70, 52], "params": {} },
+    { "id": "b", "type": "burgers", "from": [10, 88], "to": [100, 88], "params": {} }
+  ]
+}

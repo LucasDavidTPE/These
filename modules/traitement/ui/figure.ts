@@ -14,7 +14,7 @@ import type { DemandeEssai } from "./demande";
 import { essaiActif, useTraitement } from "./etat";
 import type { FigureDemandee } from "./Graphe";
 
-export type IdGraphe = "cole" | "black" | "maitreE" | "maitreP" | "aT" | "nu" | "isothermesE" | "isothermesP";
+export type IdGraphe = "cole" | "black" | "maitreE" | "maitreP" | "aT" | "nu" | "prony" | "isothermesE" | "isothermesP";
 
 export interface OrigineTraitement {
   module: "traitement";
@@ -28,7 +28,9 @@ export interface OrigineTraitement {
 function vueDe(e: Essai, g: IdGraphe, langue: Langue): Vue {
   if (g === "isothermesE") return vuesSynthese(e, langue).module;
   if (g === "isothermesP") return vuesSynthese(e, langue).phase;
-  return vuesCalage(e, langue)[g];
+  const v = vuesCalage(e, langue)[g];
+  if (!v) throw new Error("La série de Prony n'est plus demandée pour cet essai : rouvrez-le dans le traitement.");
+  return v;
 }
 
 /** Pour les étapes : ce qu'il faut à « → Figures » (titre, source, origine si l'essai vient d'une campagne). */

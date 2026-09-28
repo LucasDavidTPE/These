@@ -16,6 +16,7 @@ de la thèse de Lucas David (chaussées aéronautiques, ENTPE / LTDS / LGCB) :
 | **Planning** | *(nouveau)* un Gantt de la thèse, partagé entre les deux PC | — |
 | **Accueil** | le panneau Java du hub | `lucasdavid47/lgcb-hub` |
 | **ViscoCompare** | le script de comparaison COMSOL / Viscoroute | `LucasDavidTPE/ViscoCompare` |
+| **ChaussSpec** | le code Python chausspec v0.4 (calcul spectral de chaussées) | archive `chausspec_v0.4.zip` |
 
 Principes, par ordre d'importance :
 
@@ -204,7 +205,24 @@ Ajouts permis par l'intégration :
 - action **« Enregistrer dans Figures »** offerte aux autres modules (courbe maîtresse,
   graphe d'essai, Gantt) : la figure arrive avec sa source (« Traitement 2S2P1D,
   campagne X, essai Y ») ;
-- un graphe créé depuis un essai garde le lien vers ses données : il peut être régénéré.
+- un graphe créé depuis un essai garde le lien vers ses données : il peut être régénéré
+  (les données changent, la mise en forme choisie dans Figures reste) ;
+- page Graphes (0.2.7) : **apparence** — `graph.json` accepte un champ facultatif `style`
+  (palette #rrggbb, cadre complet ou axes seuls, épaisseur, marques, taille du texte) et,
+  par série, `color`, `mark`, `dash`. Sans ces champs, le rendu du thème (noir et gris) est
+  inchangé. Préréglages (Couleur, Article, Présentation, Minimal, Séquentiel, Noir et blanc),
+  palettes éprouvées (Okabe-Ito, Paul Tol, Tableau 10, Dark2, Viridis…), import d'une
+  palette coolors.co (adresse ou codes), **styles enregistrés** dans la bibliothèque
+  (`_styles-graphes/<nom>.json`, un fichier par style, partagé entre les postes) ; exports
+  SVG et pgfplots identiques (couleurs xcolor explicites) ;
+- **modèles de graphes** (courbe maîtresse, Cole-Cole, orniérage, fatigue, TSRST, suivi
+  temporel, barres) avec des valeurs d'exemple inventées ; **zoom** de l'aperçu (ajusté,
+  Ctrl + molette, taille réelle) et zoom sur une zone des données (fixe les bornes des axes) ;
+- **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
+  toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
+  plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,
+  duplication ; historique Annuler / Rétablir. « Régénérer » depuis l'essai repart des
+  données : les retouches de données sont alors perdues (la mise en forme reste).
 
 ## 7. Module Traitement 2S2P1D
 
@@ -241,6 +259,17 @@ Ce qui change à l'étape 2 :
   sa première modification ; un fichier ouvert à la main s'enregistre dans
   `traitement/<nom>-<id>.json` avec la référence de son fichier de mesure (racine du poste,
   sinon chemin absolu) et se rouvre depuis « Dépouillements enregistrés ».
+- **Calage étendu** (0.2.7) : modèles élémentaires Maxwell, Kelvin-Voigt, Zener, Burgers
+  (constantes propres, « Caler tout » ne touche pas aux a_T) ; **séries de Prony** (Maxwell
+  ou Kelvin-Voigt généralisé, τ sur une grille, modules par moindres carrés positifs) calées
+  sur les mesures translatées ou sur le modèle continu, exports Abaqus (`*VISCOELASTIC,
+  TIME=PRONY`, `*TRS` WLF), COMSOL (branches Gᵢ, τᵢ) et CSV ; log a_T borné à ±30 décades
+  dans le calage conjoint ; axes des graphiques en français ou en anglais ; graphiques
+  envoyés à Figures comme graphes modifiables (pgfplots).
+- **« Ce que l'on modélise »** (0.2.7) : schéma rhéologique du modèle calé (valeurs,
+  rôle de chaque élément, lien vers son curseur), essai animé sur une éprouvette (sinusoïdal
+  avec ν et déphasages, boucle σ–ε ; fluage et relaxation par la série de Prony du modèle),
+  export du schéma vers Figures (composants rhéologiques, TikZ).
 
 Le site GitHub Pages actuel n'est plus développé ; il reste en ligne tel quel tant
 qu'on ne décide pas de le retirer (voir `QUESTIONS.md`).
@@ -319,7 +348,11 @@ ENTPE.
   par poste), couleurs d'état comme dans le classeur, recherche sans accents.
 - **Fiche d'une référence** : tous les blocs sur une page, onglets Métadonnées /
   Fiche de lecture / Mes notes ; boutons Ouvrir le lien (avec proxy), Ouvrir le PDF,
-  doi.org, Scholar, Marquer lu, PDF récupéré.
+  doi.org, Scholar, Marquer lu, PDF récupéré. **Bloc PDF** (1.0) : « Pointer le PDF… »
+  le renomme selon la convention des PDF rangés (`ID_Auteur[-Auteur2|-etal]_Année_Titre-court.pdf`,
+  titre court = six mots significatifs sans accents ; nom modifiable), le renomme sur place
+  s'il est déjà dans la racine `biblio-pdf`, sinon l'y copie (l'original reste), et note son
+  nom dans la fiche ; « Renommer selon la convention » pour un PDF déjà rattaché.
 - **Plan de lecture** : un bloc par mois (objectif de fin de mois, documents à demander
   en amont, avancement, liste des références) ; changer le mois d'une référence la
   déplace. Les mois alimentent le **Planning** (§10).
@@ -417,6 +450,26 @@ vérifiées par des tests ; les conventions restent modifiables à l'écran. Ajo
 fichiers écartés sont listés (le script les taisait), écart sur l'extremum de chaque
 grandeur, figures régénérables. Les classeurs `EXCEL_OUTPUT/comparaison_<v>.xlsx`
 reprennent les feuilles du script, sans ses graphiques Excel.
+
+## 11 bis. Module ChaussSpec (1.0)
+
+Portage TypeScript du code Python **chausspec v0.4** (calcul semi-analytique spectral de
+chaussées multicouches élastiques / viscoélastiques sous chargements de surface quelconques),
+sans Python : lois (élastique, 2S2P1D + WLF, KVG, Maxwell généralisé), interfaces collées ou
+glissantes, fond semi-infini ou rigide (collé, glissant), empreintes (rectangle, disque,
+séparable dont De Beer, carte de pression mesurée), atterrisseurs multi-roues, efforts
+tangentiels ; régimes statique, harmonique (HWD, champs complexes) et charge roulante ; solveur
+grille (FFT + partition de l'unité) et solveur axisymétrique. Conformité : références produites
+par le Python d'origine (noyau à 1e-9, grilles à 1e-9, 1e-7 là où interviennent Bessel et le
+régime harmonique). Un cas = `chausspec/<nom>.json` dans l'espace, au **format JSON du Python**
+(`python -m chausspec cas.json` le calcule aussi) ; une carte de pression peut y être incluse.
+Calcul dans un Worker, cartes des champs, extrêmes et ε1, coupes, jauges (charge roulante),
+export du dossier de résultats au format du Python, cartes et courbes vers Figures, constantes
+2S2P1D reprises du Traitement (action `traitement.calages`).
+
+Écart assumé : effort tangentiel + interface glissante est refusé (problème mal posé ; le
+Python renvoie des NaN). Non porté : le module texture (contact, deux échelles, éléments finis
+2D), prévu pour une version suivante.
 
 ## 12. Exigences générales
 

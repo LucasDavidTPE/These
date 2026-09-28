@@ -10,6 +10,7 @@ import { libelleMois, type Calcule } from "../core/calculs";
 import { cleProposee, depuisCrossref, urlCrossref } from "../core/doi";
 import { libelleLien, lienARevoir } from "../core/liens";
 import { ACCES_DOCUMENT, PRIORITES, STATUTS, VERIFICATIONS, type FicheLecture, type NotesLecture, type Reference } from "../core/modele";
+import { BlocPdf } from "./BlocPdf";
 import { ChampChoix, ChampTexte, Libelle } from "./champs";
 import { PastilleEtat } from "./commun";
 import { aujourdhui, type Biblio } from "./donnees";
@@ -133,6 +134,8 @@ export function Fiche({ b, c, onEnregistrer, onFermer }: { b: Biblio; c: Calcule
         ) : null}
       </div>
       {erreur ? <Message niveau="erreur">{erreur}</Message> : null}
+
+      <BlocPdf id={c.id} r={r} maj={maj} />
 
       <Section titre="Lecture">
         <div className="grille-champs">

@@ -1,4 +1,5 @@
 /** Décodage / encodage d'images côté interface (canvas du navigateur intégré). */
+import { isHeif } from "../../core/format/heif";
 
 export interface DecodedImage {
   width: number;
@@ -12,7 +13,22 @@ function sniff(bytes: Uint8Array): string | undefined {
   return head.startsWith("<svg") || head.startsWith("<?xml") ? "image/svg+xml" : undefined;
 }
 
+/**
+ * HEIC → PNG. Le décodeur (libheif compilé en JavaScript, ~3 Mo, LGPL) n'est chargé qu'à la
+ * première photo HEIC ouverte ; aucune requête réseau.
+ */
+export async function heifToPng(bytes: Uint8Array): Promise<Uint8Array> {
+  const { heicTo } = await import("heic-to/csp");
+  try {
+    const png = await heicTo({ blob: new Blob([bytes.slice()], { type: "image/heic" }), type: "image/png" });
+    return new Uint8Array(await png.arrayBuffer());
+  } catch (e) {
+    throw new Error(`Photo HEIC illisible (${e instanceof Error ? e.message : String(e)}).`, { cause: e });
+  }
+}
+
 export async function decodeImage(bytes: Uint8Array): Promise<DecodedImage> {
+  if (isHeif(bytes)) bytes = await heifToPng(bytes);
   const type = sniff(bytes);
   if (type === "image/svg+xml") {
     // Un SVG passe par une balise <img> (createImageBitmap ne lit pas toujours le SVG).

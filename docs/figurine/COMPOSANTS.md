@@ -112,6 +112,9 @@ remplacé par le numéro de l'élément (`"$E_{i}$"` → `$E_{1}$`, `$E_{2}$`…
 | `generalized_maxwell` | `n`, `spring_label`, `dashpot_label`, `with_equilibrium`, `equilibrium_label` | idem + `branch[i]…` |
 | `kvg` — Kelvin-Voigt généralisé | `n`, `spring_label`, `dashpot_label`, `with_spring` (+`spring0_label`), `with_dashpot` (+`dashpot0_label`) | idem + `item[i]…` (bloc i en série) |
 | `model_2s2p1d` | `e00_label`, `e0_label`, `k_label`, `h_label`, `eta_label` | idem + `branch[1].item[j]…` |
+| `huet_sayegh` — Huet-Sayegh (2S2P1D sans amortisseur) | `e00_label`, `e0_label`, `k_label`, `h_label` | idem + `branch[1].item[j]…` |
+| `zener` — solide linéaire standard | `e00_label`, `e1_label`, `eta_label` | idem + `branch[1].item[j]…` |
+| `burgers` — Maxwell et Kelvin-Voigt en série | `e1_label`, `eta1_label`, `e2_label`, `eta2_label` | idem + `item[2].branch[j]…` |
 | `link` — liaison rigide | `thick` | `start`, `end`, `center` |
 | `node` — nœud (point) | `radius` | `center` |
 

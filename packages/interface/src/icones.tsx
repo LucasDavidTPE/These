@@ -104,6 +104,14 @@ export const IconeViscoCompare = (p: P) => (
   </Trace>
 );
 
+export const IconeChaussspec = (p: P) => (
+  <Trace {...p}>
+    <path d="M3 7h18M3 11h18M3 15h18" />
+    <path d="M9 3v4M15 3v4" />
+    <path d="M6 19c2-2.5 4-2.5 6 0s4 2.5 6 0" />
+  </Trace>
+);
+
 export const IconeManuscrits = (p: P) => (
   <Trace {...p}>
     <path d="M7 3h7l5 5v13H7z" />

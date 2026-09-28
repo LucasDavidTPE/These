@@ -124,3 +124,29 @@ lancent tous les tests automatiques sous Windows.
 - [x] Module ViscoCompare : portage de `LucasDavidTPE/ViscoCompare/main.py` (lecture COMSOL
       et Viscoroute, profil en x = 0, conversions, interpolation), courbes superposées,
       écart sur l'extremum, classeurs `EXCEL_OUTPUT`, figures régénérables
+
+## 0.2.7 — Retours de test (demandes du 28/09)
+- [x] Régressions linéaires sur les courbes d'un essai (pente par heure, R²), gardées avec
+      l'essai
+- [x] Traitement : enregistrement automatique, dépouillements enregistrés à rouvrir
+- [x] Figures rattachées aux campagnes et aux études
+- [x] Graphiques du traitement envoyés à Figures comme graphes modifiables ; axes FR / EN
+- [x] Calage : correctif des graphes vides (a_T bornés), modèles Maxwell, Kelvin-Voigt,
+      Zener, Burgers ; séries de Prony (Maxwell / Kelvin-Voigt généralisé) et exports
+      Abaqus, COMSOL, CSV
+- [x] « Ce que l'on modélise » : schéma rhéologique interactif, essai animé (sinusoïdal
+      avec ν, fluage, relaxation), export du schéma TikZ vers Figures
+- [x] Figures → Graphes : styles, palettes (import coolors.co), couleurs par série, styles
+      enregistrés, modèles de graphes, zoom de l'aperçu et zoom sur une zone
+- [x] Figures : photos HEIC / HEIF
+- [x] Retouche des courbes dans Figures → Graphes (précisé : dans l'éditeur de graphes) :
+      gomme sur l'aperçu, tableau x/y modifiable, unités / signe / zéro, plage de x, lissage,
+      allègement, tri, échange des axes, duplication ; Annuler / Rétablir (Ctrl+Z / Ctrl+Y)
+
+## 1.0 — ChaussSpec et finitions
+- [x] Retouche des courbes dans Figures → Graphes (gomme, tableau, unités, lissage…, Ctrl+Z)
+- [x] Module ChaussSpec : portage TypeScript de chausspec v0.4 (solveur multicouche spectral,
+      grille et axisymétrique), conformité au Python, interface (cas JSON, calcul en Worker,
+      cartes, jauges, exports)
+- [ ] ChaussSpec, phase 2 : module texture (contact.py, texture.py, fe2d.py)
+- [x] Bibliothèque : PDF pointé à la création d'une référence, renommé selon la convention

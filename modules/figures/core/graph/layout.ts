@@ -5,9 +5,10 @@
  */
 import { measureLabel } from "../math/tex";
 import type { Primitive } from "../schema/geometry";
-import { THEMES, type Theme } from "../schema/theme";
+import type { Theme } from "../schema/theme";
 import type { Pt } from "../schema/types";
 import type { GraphDoc, Series } from "./model";
+import { graphTheme } from "./style";
 import { formatTick, linearScale, logScale, project, type AxisScale } from "./ticks";
 
 export interface GraphLayout {
@@ -20,6 +21,12 @@ export interface GraphLayout {
 
 /** Marges autour de la boîte des axes (mm) : graduations et titres. */
 export const MARGINS = { left: 16, right: 3, top: 3, bottom: 12 };
+
+/** Marges d'un graphe : elles suivent la taille du texte de son style. */
+export function marginsOf(doc: GraphDoc): typeof MARGINS {
+  const k = doc.style?.fontScale ?? 1;
+  return { left: MARGINS.left * k, right: MARGINS.right, top: MARGINS.top, bottom: MARGINS.bottom * k };
+}
 
 function dashOf(d: "dashed" | "dotted" | null): boolean | "dotted" | undefined {
   return d === "dotted" ? "dotted" : d === "dashed" ? true : undefined;
@@ -88,20 +95,21 @@ export function clipSegment(a: Pt, b: Pt, box: { x: number; y: number; w: number
   ];
 }
 
-function mark(kind: string, c: Pt, size: number, color: string): Primitive[] {
+function mark(kind: string, c: Pt, size: number, color: string, filled = false): Primitive[] {
   const h = size / 2;
   const [x, y] = c;
+  const fond = filled ? color : "white";
   const path = (pts: Pt[], closed: boolean): Primitive => ({
     kind: "path",
     segs: [...pts.map((p, i) => (i === 0 ? { op: "M" as const, p } : { op: "L" as const, p })), ...(closed ? [{ op: "Z" as const }] : [])],
     stroke: "trait fin",
     fill: "none",
     color,
-    fillColor: closed ? "white" : undefined,
+    fillColor: closed ? fond : undefined,
   });
   switch (kind) {
     case "o":
-      return [{ kind: "circle", c, r: h, stroke: "trait fin", fill: "none", color, fillColor: "white" }];
+      return [{ kind: "circle", c, r: h, stroke: "trait fin", fill: "none", color, fillColor: fond }];
     case "square":
       return [path([[x - h, y - h], [x + h, y - h], [x + h, y + h], [x - h, y + h]], true)];
     case "triangle":
@@ -116,8 +124,9 @@ function mark(kind: string, c: Pt, size: number, color: string): Primitive[] {
 }
 
 export function graphLayout(doc: GraphDoc): GraphLayout {
-  const theme: Theme = THEMES[doc.theme] ?? THEMES.these!;
-  const box = { x: MARGINS.left, y: MARGINS.top, w: doc.width - MARGINS.left - MARGINS.right, h: doc.height - MARGINS.top - MARGINS.bottom };
+  const theme: Theme = graphTheme(doc);
+  const M = marginsOf(doc);
+  const box = { x: M.left, y: M.top, w: doc.width - M.left - M.right, h: doc.height - M.top - M.bottom };
   const { xs, ys } = scales(doc);
   const X = (v: number) => box.x + project(xs, v) * box.w;
   const Y = (v: number) => box.y + (1 - project(ys, v)) * box.h;
@@ -158,17 +167,19 @@ export function graphLayout(doc: GraphDoc): GraphLayout {
         if (seg) out.push(line(seg, { stroke: "trait", color: st.svg, dash: dashOf(st.dash) }));
       }
     }
-    if (s.type === "points" || s.type === "linepoints") {
+    if ((s.type === "points" || s.type === "linepoints") && !(st.noMark && s.type === "linepoints")) {
       for (const p of pts) {
         if (p[0] >= box.x - 1e-6 && p[0] <= box.x + box.w + 1e-6 && p[1] >= box.y - 1e-6 && p[1] <= box.y + box.h + 1e-6) {
-          out.push(...mark(st.mark, p, theme.graph.markSize, st.svg));
+          out.push(...mark(st.mark, p, theme.graph.markSize, st.svg, st.filled));
         }
       }
     }
   });
 
   // Cadre, graduations (intérieures, en bas et à gauche) et libellés.
-  out.push({ kind: "rect", x: box.x, y: box.y, w: box.w, h: box.h, stroke: "trait fin", fill: "none" });
+  if (doc.style?.frame === "axes") {
+    out.push(line([[box.x, box.y], [box.x, box.y + box.h], [box.x + box.w, box.y + box.h]]));
+  } else out.push({ kind: "rect", x: box.x, y: box.y, w: box.w, h: box.h, stroke: "trait fin", fill: "none" });
   const tick = 1;
   xs.ticks.forEach((t, i) => {
     out.push(line([[X(t), box.y + box.h], [X(t), box.y + box.h - tick]]));
@@ -220,7 +231,7 @@ function legend(doc: GraphDoc, theme: Theme, box: GraphLayout["box"], entries: {
     if (s.type === "bar") out.push({ kind: "rect", x: a[0] + 1.5, y: cy - 1.2, w: 3, h: 2.4, stroke: "trait fin", fill: "none", fillColor: st.barSvg });
     else {
       if (s.type !== "points") out.push({ kind: "path", segs: [{ op: "M", p: a }, { op: "L", p: b }], stroke: "trait", fill: "none", color: st.svg, dash: dashOf(st.dash) });
-      if (s.type !== "line") out.push(...mark(st.mark, [(a[0] + b[0]) / 2, cy], theme.graph.markSize, st.svg));
+      if (s.type !== "line" && !(st.noMark && s.type === "linepoints")) out.push(...mark(st.mark, [(a[0] + b[0]) / 2, cy], theme.graph.markSize, st.svg, st.filled));
     }
     out.push({ kind: "text", at: [b[0] + 1.5, cy], text: s.name, anchor: "west", halo: false });
   });

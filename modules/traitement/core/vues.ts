@@ -4,7 +4,8 @@
  */
 import { aTwlf } from "./calage";
 import { VOIES, type CleVoie } from "./donnees";
-import { evaluer, pointsCalage, temperaturesCalage, type Essai } from "./essai";
+import { evaluer, pointsCalage, serieProny, temperaturesCalage, type Essai } from "./essai";
+import { fonctionTemps, moduleProny } from "./prony";
 import { freq, nb } from "./format";
 import { modele } from "./modeles";
 import { maximum, minimum, uniques } from "./nombres";
@@ -14,13 +15,15 @@ export type Langue = "fr" | "en";
 
 /** Titres d'axes et libellés, en français et en anglais (figures pour un article). */
 export const TEXTES = {
-  fr: { t: "t (s)", signal: "signal centré", mesure: "mesure", cycle: "cycle", ecart: "écart (%)", f: "f (Hz)", module: "|E*| (MPa)", phi: "φ (°)", E1: "E₁ (MPa)", E2: "E₂ (MPa)", faT: "f·a_T (Hz)", nu: "|ν*|", T: "T (°C)", aT: "a_T", modele: "modèle", mesureAT: "mesuré" },
-  en: { t: "t (s)", signal: "centred signal", mesure: "measured", cycle: "cycle", ecart: "deviation (%)", f: "f (Hz)", module: "|E*| (MPa)", phi: "φ (°)", E1: "E₁ (MPa)", E2: "E₂ (MPa)", faT: "f·a_T (Hz)", nu: "|ν*|", T: "T (°C)", aT: "a_T", modele: "model", mesureAT: "measured" },
+  fr: { t: "t (s)", signal: "signal centré", mesure: "mesure", cycle: "cycle", ecart: "écart (%)", f: "f (Hz)", module: "|E*| (MPa)", phi: "φ (°)", E1: "E₁ (MPa)", E2: "E₂ (MPa)", faT: "f·a_T (Hz)", nu: "|ν*|", T: "T (°C)", aT: "a_T", modele: "modèle", mesureAT: "mesuré", relaxation: "E(t) (MPa)", fluage: "J(t) (1/MPa)", tps: "t (s)", maxwell: "Maxwell généralisé", kelvin: "Kelvin-Voigt généralisé" },
+  en: { t: "t (s)", signal: "centred signal", mesure: "measured", cycle: "cycle", ecart: "deviation (%)", f: "f (Hz)", module: "|E*| (MPa)", phi: "φ (°)", E1: "E₁ (MPa)", E2: "E₂ (MPa)", faT: "f·a_T (Hz)", nu: "|ν*|", T: "T (°C)", aT: "a_T", modele: "model", mesureAT: "measured", relaxation: "E(t) (MPa)", fluage: "J(t) (1/MPa)", tps: "t (s)", maxwell: "generalised Maxwell", kelvin: "generalised Kelvin-Voigt" },
 } as const;
 
 /** Couleur du modèle (courbes continues) et des mesures brutes. */
 export const ACCENT = "#0b5f5c";
 export const ENCRE = "#8a8a84";
+/** Série de Prony, en tirets par-dessus le modèle continu. */
+export const PRONY = "#b5542a";
 
 export interface Vue {
   spec: SpecGraphe;
@@ -137,6 +140,8 @@ export interface VuesCalage {
   maitreP: Vue;
   nu: Vue;
   aT: Vue;
+  /** Relaxation E(t) ou fluage J(t) de la série de Prony, s'il y en a une. */
+  prony: Vue | null;
 }
 
 export function vuesCalage(e: Essai, langue: Langue = "fr"): VuesCalage {
@@ -162,6 +167,26 @@ export function vuesCalage(e: Essai, langue: Langue = "fr"): VuesCalage {
     if (m.poisson) courbeNu.push([f, m.poisson(f, e.p).norme]);
   }
 
+  const sp = e.prony ? serieProny(e) : null;
+  const pE: Point[] = [],
+    pP: Point[] = [],
+    pCole: Point[] = [],
+    pBlack: Point[] = [],
+    pT: Point[] = [];
+  if (sp) {
+    for (let lf = -8; lf <= 10; lf += 0.05) {
+      const f = 10 ** lf,
+        v = moduleProny(f, sp);
+      pE.push([f, v.norme]);
+      pP.push([f, v.phase]);
+      pCole.push([v.re, v.im]);
+      pBlack.push([v.phase, v.norme]);
+    }
+    for (let lt = -10; lt <= 8; lt += 0.05) pT.push([10 ** lt, fonctionTemps(sp, 10 ** lt)]);
+  }
+  const nomProny = sp ? `Prony (${sp.type === "maxwell" ? X.maxwell : X.kelvin})` : "";
+  const prony = (pts: Point[]): Serie[] => (sp ? [{ points: pts, mode: "ligne", couleur: PRONY, epaisseur: 1.6, tirets: [5, 4], libelle: nomProny }] : []);
+
   const expE: Serie[] = [],
     expP: Serie[] = [],
     expCole: Serie[] = [],
@@ -183,6 +208,7 @@ export function vuesCalage(e: Essai, langue: Langue = "fr"): VuesCalage {
   const ligne = (pts: Point[]): Serie => ({ points: pts, mode: "ligne", couleur: ACCENT, epaisseur: 1.8, libelle: `${X.modele} ${m.nom}` });
   const fmtMaitre = (x: number, y: number, p?: unknown) => `${avecPalier(p)}f·a_T = ${nb(x)} Hz · ${nb(y)}`;
 
+  const legendeP: [string, string][] = sp ? [...legende, [nomProny, PRONY]] : legende;
   const wlf: Point[] = [];
   if (ts.length) {
     const t1 = minimum(ts) - 5,
@@ -191,13 +217,13 @@ export function vuesCalage(e: Essai, langue: Langue = "fr"): VuesCalage {
   }
   return {
     cole: {
-      spec: { series: [...expCole, ligne(courbeCole)], xTitre: X.E1, yTitre: X.E2, zeroY: true },
+      spec: { series: [...expCole, ligne(courbeCole), ...prony(pCole)], xTitre: X.E1, yTitre: X.E2, zeroY: true },
       format: (x, y, p) => `${avecPalier(p)}E₁ ${nb(x, 0)} · E₂ ${nb(y, 0)} MPa`,
-      legende,
+      legende: legendeP,
     },
-    black: { spec: { series: [...expBlack, ligne(courbeBlack)], yLog: true, xTitre: X.phi, yTitre: X.module }, format: (x, y, p) => `${avecPalier(p)}φ ${nb(x, 2)} ° · ${nb(y, 0)} MPa`, legende },
-    maitreE: { spec: { series: [...expE, ligne(courbeE)], xLog: true, yLog: true, xTitre: X.faT, yTitre: X.module }, format: fmtMaitre, legende },
-    maitreP: { spec: { series: [...expP, ligne(courbeP)], xLog: true, xTitre: X.faT, yTitre: X.phi }, format: fmtMaitre, legende },
+    black: { spec: { series: [...expBlack, ligne(courbeBlack), ...prony(pBlack)], yLog: true, xTitre: X.phi, yTitre: X.module }, format: (x, y, p) => `${avecPalier(p)}φ ${nb(x, 2)} ° · ${nb(y, 0)} MPa`, legende: legendeP },
+    maitreE: { spec: { series: [...expE, ligne(courbeE), ...prony(pE)], xLog: true, yLog: true, xTitre: X.faT, yTitre: X.module }, format: fmtMaitre, legende: legendeP },
+    maitreP: { spec: { series: [...expP, ligne(courbeP), ...prony(pP)], xLog: true, xTitre: X.faT, yTitre: X.phi }, format: fmtMaitre, legende: legendeP },
     nu: { spec: { series: courbeNu.length ? [...expNu, ligne(courbeNu)] : expNu, xLog: true, xTitre: X.faT, yTitre: X.nu }, format: fmtMaitre, legende },
     aT: {
       spec: {
@@ -211,6 +237,13 @@ export function vuesCalage(e: Essai, langue: Langue = "fr"): VuesCalage {
       },
       format: (x, y) => `${nb(x, 1)} °C · a_T = ${nb(y)}`,
     },
+    prony: sp
+      ? {
+          spec: { series: prony(pT), xLog: true, yLog: true, xTitre: X.tps, yTitre: sp.type === "maxwell" ? X.relaxation : X.fluage },
+          format: (x, y) => `t = ${nb(x)} s · ${sp.type === "maxwell" ? `E = ${nb(y, 0)} MPa` : `J = ${y.toExponential(3)} 1/MPa`}`,
+          sous: `${sp.E.length} branches · E0 = ${nb(sp.E0, 0)} MPa · E∞ = ${nb(sp.Einf, 1)} MPa · à T_ref = ${e.Tref} °C`,
+        }
+      : null,
   };
 }
 

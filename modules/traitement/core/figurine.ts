@@ -13,6 +13,8 @@ export interface SerieFigurine {
   x: number[];
   y: number[];
   legend: boolean;
+  /** Couleur de l'écran (#rrggbb), gardée dans Figures ; retouchable là-bas. */
+  color?: string;
 }
 
 export interface GrapheFigurine {
@@ -31,6 +33,13 @@ export interface GrapheFigurine {
 /** Au-delà, une courbe est allégée (un point sur k) : pgfplots peine sur les très longues séries. */
 export const POINTS_MAX = 2000;
 
+/** « #0b5f5c » ou « rgb(12,34,56) » → « #0c2238 » ; undefined sinon (variable CSS…). */
+export function enHex(c: string): string | undefined {
+  if (/^#[0-9a-f]{6}$/i.test(c)) return c.toLowerCase();
+  const m = c.match(/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i);
+  return m ? "#" + m.slice(1, 4).map((v) => Math.min(255, Number(v)).toString(16).padStart(2, "0")).join("") : undefined;
+}
+
 function serie(s: Serie, xLog: boolean, yLog: boolean, nom: string): SerieFigurine {
   const x: number[] = [],
     y: number[] = [];
@@ -41,7 +50,8 @@ function serie(s: Serie, xLog: boolean, yLog: boolean, nom: string): SerieFiguri
     x.push(a);
     y.push(b);
   }
-  return { name: nom, type: s.mode === "points" ? "points" : "line", x, y, legend: false };
+  const color = enHex(s.couleur);
+  return { name: nom, type: s.mode === "points" ? "points" : "line", x, y, legend: false, ...(color ? { color } : {}) };
 }
 
 export function vueEnGraphe(vue: Vue, legende: GrapheFigurine["legend"] = "south east"): GrapheFigurine {

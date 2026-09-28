@@ -63,14 +63,17 @@ describe("graphes modifiables", () => {
     const { enregistrerGraphe, remplacerGraphe } = await import("./action");
     const fs = new MemoryFs();
     const dossier = await enregistrerGraphe(fs, { titre: "G", source: "T", graphe: doc([1000, 5000, 20000]) }, rendu, "2026-09-28T10:00:00+02:00", "PC");
-    const modifie = { ...JSON.parse(fs.get(`${dossier}/graph.json`)!), width: 160 };
+    const modifie = { ...JSON.parse(fs.get(`${dossier}/graph.json`)!), width: 160, style: { name: "Couleur", palette: ["#0072b2", "#e69f00"] } };
     modifie.y.label = "Norm of the complex modulus (MPa)";
+    modifie.series[0].color = "#123456";
     await fs.writeTextAtomic(`${dossier}/graph.json`, JSON.stringify(modifie));
     await remplacerGraphe(fs, dossier, doc([1100, 5100, 21000]), rendu, "2026-09-29T10:00:00+02:00", "PC");
     const apres = JSON.parse(fs.get(`${dossier}/graph.json`)!);
     expect(apres.width).toBe(160);
     expect(apres.y.label).toBe("Norm of the complex modulus (MPa)");
     expect(apres.series[0].y).toEqual([1100, 5100, 21000]);
+    expect(apres.series[0].color).toBe("#123456");
+    expect(apres.style.palette).toEqual(["#0072b2", "#e69f00"]);
   });
 
   it("régénérer une ancienne figure image la laisse image, même si le module fournit un graphe", async () => {
@@ -89,4 +92,32 @@ describe("graphes modifiables", () => {
     const { enregistrerGraphe } = await import("./action");
     return enregistrerGraphe(fs, { titre: "G", source: "T", graphe: doc([1, 2, 3]) }, rendu, "2026-09-28T10:00:00+02:00", "PC");
   }
+});
+
+describe("schémas envoyés par un module", () => {
+  const schema = (type: string, params: Record<string, unknown> = {}) => ({
+    format: "figurine/1",
+    canvas: { unit: "mm", width: 100, height: 40, grid: 0 },
+    theme: "these",
+    items: [{ id: "modele", type, from: [10, 20], to: [90, 20], params }],
+  });
+
+  it("un modèle rhéologique devient une figure « schema » avec TikZ, SVG et PNG", async () => {
+    const { enregistrerSchema } = await import("./action");
+    const fs = new MemoryFs();
+    const dossier = await enregistrerSchema(fs, { titre: "Modèle 2S2P1D", source: "Traitement", schema: schema("model_2s2p1d", { e00_label: "$E_{00}$ = 120 MPa" }) }, async () => new Uint8Array([9]), "2026-09-28T10:00:00+02:00", "PC");
+    expect(JSON.parse(fs.get(`${dossier}/meta.json`)!).kind).toBe("schema");
+    expect(JSON.parse(fs.get(`${dossier}/figure.json`)!).items[0].params.e00_label).toBe("$E_{00}$ = 120 MPa");
+    expect(fs.get(`${dossier}/export.tex`)).toContain("\\begin{tikzpicture}");
+    expect(fs.get(`${dossier}/export.svg`)).toContain("<svg");
+  });
+
+  it("Zener, Burgers et Huet-Sayegh existent comme composants ; un type inconnu est refusé", async () => {
+    const { enregistrerSchema } = await import("./action");
+    const fs = new MemoryFs();
+    for (const t of ["zener", "burgers", "huet_sayegh", "maxwell", "kelvin_voigt", "kvg", "generalized_maxwell"]) {
+      await expect(enregistrerSchema(fs, { titre: t, source: "T", schema: schema(t) }, async () => new Uint8Array([1]), "2026-09-28T10:00:00+02:00", "PC")).resolves.toMatch(/^FIG-/);
+    }
+    await expect(enregistrerSchema(fs, { titre: "x", source: "T", schema: schema("inconnu") }, async () => new Uint8Array([1]), "2026-09-28T10:00:00+02:00", "PC")).rejects.toThrow("Schéma invalide");
+  });
 });

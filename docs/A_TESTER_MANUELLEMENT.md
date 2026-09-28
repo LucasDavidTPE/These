@@ -306,3 +306,106 @@ nombres doivent être identiques, dans les deux modes.
       Figures, puis « Régénérer » après un nouveau calage : les données changent, le titre
       retouché et la taille restent.
 - [ ] Une figure « image » envoyée avant la 0.2.7 se régénère toujours en image.
+
+## Calage : correctif des graphes vides, modèles élémentaires, séries de Prony (0.2.7)
+
+- [ ] **Correctif** : sur un vrai essai (plusieurs températures), Calage → « Caler tout » :
+      toutes les isothermes restent sur la courbe maîtresse (le compteur « Points » ne baisse
+      pas), la courbe du modèle s'affiche. Avant, une isotherme mal décrite pouvait partir à
+      a_T = 0 ou ∞ et disparaître des graphes.
+- [ ] Loi de comportement → Maxwell, Kelvin-Voigt, Zener, Burgers : « Caler tout » cale leurs
+      constantes sans toucher aux a_T ; revenir au 2S2P1D retrouve son calage intact.
+- [ ] Kelvin-Voigt généralisé (dérivé du 2S2P1D) : la courbe s'affiche (elle était vide).
+- [ ] « Ajouter une série de Prony » : Maxwell généralisé sur les mesures → tirets orange
+      sur Cole-Cole, Black et courbes maîtresses ; écart |E*| de l'ordre du pourcent ;
+      graphe E(t). Kelvin-Voigt généralisé → J(t).
+- [ ] Exports : « Abaqus .inp » s'inclut dans un modèle Abaqus (*ELASTIC instantané,
+      *VISCOELASTIC Prony, *TRS WLF) ; « COMSOL .txt » se charge dans le tableau des branches
+      du matériau viscoélastique (G en Pa) ; « Tableau .csv » s'ouvre dans Excel.
+- [ ] Les réglages Prony se retrouvent en rouvrant le dépouillement enregistré.
+
+## Figures → Graphes : apparence, palettes, modèles, zoom (0.2.7)
+
+- [ ] « ▸ Modèles de graphes » (en haut à gauche) : vignettes ; « Courbe maîtresse » donne un
+      graphe complet avec valeurs d'exemple ; le bandeau le rappelle.
+- [ ] Apparence → Style : Couleur, Article (axes seuls), Présentation (traits épais, texte
+      plus grand), Minimal, Séquentiel, Noir et blanc ; l'aperçu change aussitôt.
+- [ ] Palette : choisir Okabe-Ito, Viridis… ; coller l'adresse d'une palette coolors.co
+      (ex. `https://coolors.co/264653-2a9d8f-e9c46a-f4a261-e76f51`) → « Importer » ;
+      retoucher une couleur, en ajouter, en retirer.
+- [ ] « Enregistrer ce style… » → nom → il apparaît sous « Mes styles », aussi sur l'autre PC
+      (dossier `_styles-graphes` de la bibliothèque) ; « Retirer » le range dans
+      `_styles-graphes/.supprimes`.
+- [ ] Sous chaque série : couleur (et « auto »), marque, trait ; « Copier pgfplots » →
+      compile dans le manuscrit avec les mêmes couleurs.
+- [ ] Zoom : l'aperçu remplit la place (« Ajuster ») ; + / − et Ctrl + molette ; 100 % ;
+      « ⬚ Zoom sur une zone » puis tirer un rectangle → bornes des axes fixées ; « Axes
+      auto » ou double-clic pour revenir. Coordonnées sous le curseur en bas.
+- [ ] Un graphe du Traitement envoyé dans Figures garde les couleurs de l'écran ; après
+      « Régénérer », couleurs et style retouchés dans Figures restent.
+
+## Figures : photos HEIC (0.2.7)
+
+- [ ] Recadrage → « Ouvrir… » : les fichiers `.heic` / `.heif` (photos d'iPhone) sont
+      proposés ; une photo s'ouvre (quelques secondes la première fois, le temps de charger
+      le décodeur), dans le bon sens.
+- [ ] Même chose dans Détourage (« Ouvrir… » et glisser-déposer d'un `.heic`).
+- [ ] Une photo HEIC abîmée donne un message clair, sans bloquer la page.
+
+## Traitement : « Ce que l'on modélise » (0.2.7)
+
+- [ ] Calage → bloc « Ce que l'on modélise » : schéma du modèle choisi (2S2P1D, Huet-Sayegh,
+      Maxwell, Kelvin-Voigt, Zener, Burgers, Kelvin-Voigt généralisé), valeurs sous chaque
+      élément ; survol → rôle de l'élément ; clic → son curseur ; les valeurs suivent les
+      curseurs.
+- [ ] « ▶ Animer » (Sinusoïdal) : l'éprouvette s'allonge et s'amincit (ν), la contrainte est
+      en avance de φ, la boucle σ–ε tourne ; changer T et f : |E*|, φ, |ν*| et l'énergie
+      dissipée suivent (plus froid → plus raide, boucle plus fine).
+- [ ] Fluage et Relaxation : courbes J(t) et E(t) du modèle calé, point qui parcourt le temps,
+      éprouvette qui s'allonge (fluage) ou effort qui baisse (relaxation).
+- [ ] « → Figures (schéma TikZ) » avec et sans les valeurs : le schéma s'ouvre dans l'éditeur
+      de schémas de Figures ; l'export TikZ compile dans le manuscrit.
+
+## Figures → Graphes : retouche des courbes (0.2.8)
+
+- [ ] « ⌫ Gommer des points » puis tirer un rectangle sur l'aperçu : les points dedans
+      disparaissent (toutes les séries, ou celle choisie) ; Ctrl+Z les remet, Ctrl+Y ou ↷
+      les retire à nouveau.
+- [ ] Sous une série, « ▸ Données… » : −y, ×1000, ÷1000, zéro, x ↔ y, trier, dupliquer ;
+      garder / retirer une plage de x ; lisser ; alléger ; chaque opération s'annule par
+      Ctrl+Z.
+- [ ] Tableau x ↹ y : corriger une valeur ou coller des colonnes d'Excel, « Appliquer le
+      tableau » ; « Copier » puis coller dans Excel.
+- [ ] Un graphe du Traitement retouché puis enregistré : la figure garde les retouches ;
+      « Régénérer » repart des données de l'essai (retouches de données perdues, mise en
+      forme gardée).
+
+## ChaussSpec (1.0)
+
+- [ ] Menu ChaussSpec : l'exemple « Train A340 sur la structure PEP » s'ouvre ; « Calculer » :
+      jauge, puis résultats en une dizaine de secondes ; εyy à la base du BB-GB ≈ 316 µdef en
+      (−2,06 ; 0,69) (le Python donne 316,6 µdef au même point).
+- [ ] Changer une couche (loi, épaisseur), ajouter une roue ou le « Bogie A340 », le régime
+      (statique, roulant, harmonique), la grille ; « Calculer » ; le titre des résultats
+      signale un résultat périmé quand le cas a changé.
+- [ ] 2S2P1D : « Depuis le traitement… » reprend les constantes calées d'un essai ouvert.
+- [ ] Carte de pression : « CSV… » (1re ligne x, 1re colonne y, « ; ») ; exemple « Carte de
+      pression mesurée ».
+- [ ] « Enregistrer » : `chausspec/<nom>.json` dans l'espace, visible sur l'autre PC ;
+      `python -m chausspec` calcule le même fichier.
+- [ ] « Enregistrer les résultats… » : dossier `resultats_<nom>` avec un CSV par champ,
+      `synthese.json`, jauges, `cas.json` ; comparer à la sortie du Python.
+- [ ] « Carte → Figures », coupes et jauges « → Figures ».
+- [ ] Effort tangentiel (qx) avec une interface glissante : message clair, pas de calcul.
+
+## Bibliothèque : PDF d'une référence (1.0)
+
+- [ ] « Nouvelle référence » : la fiche s'ouvre avec le bloc PDF en évidence ; remplir auteurs,
+      année, titre (ou par le DOI) : le nom proposé suit (`BIB-180_Auteur-etal_2025_Titre-court.pdf`).
+- [ ] « Pointer le PDF… » sur un PDF des Téléchargements : il est copié dans le dossier des PDF
+      (racine « biblio-pdf ») sous ce nom, l'original reste ; « Ouvrir le PDF » l'ouvre ; la
+      référence passe en « PDF récupéré ».
+- [ ] PDF déjà déposé dans le dossier des PDF sous un autre nom : « Pointer le PDF… » le renomme
+      sur place (pas de doublon).
+- [ ] Référence existante dont le PDF porte un autre nom : « Renommer selon la convention ».
+- [ ] Nom retouché à la main avant de pointer : c'est ce nom qui est utilisé.

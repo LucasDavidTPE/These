@@ -24,6 +24,8 @@ export interface Parametre {
   pas: number;
   /** Curseur en log10 (τ, fréquences). */
   log?: boolean;
+  /** Temps caractéristique : la translation temps-température le déplace (changement de Tref). */
+  temps?: boolean;
   groupe: "module" | "poisson";
 }
 
@@ -50,6 +52,11 @@ export interface Modele {
   ajustablesPoisson: string[];
   module?(f: number, p: Constantes): Complexe;
   poisson?(f: number, p: Constantes): Complexe;
+  /**
+   * Modèle élémentaire (Maxwell, Zener…) : trop pauvre pour décrire la courbe maîtresse, il
+   * compenserait en déformant les a_T ; « Caler tout » ne cale alors que ses constantes.
+   */
+  elementaire?: boolean;
   /** Vrai si le modèle découle d'un autre au lieu d'être calé (GKV). */
   derive?: boolean;
   identifier?(source: Modele, p: Constantes, o?: { nElements?: number; fMin?: number; fMax?: number; affiner?: boolean }): ChaineGKV;

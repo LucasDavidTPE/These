@@ -1,7 +1,7 @@
 {
   "name": "these",
   "private": true,
-  "version": "0.2.6",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -23,6 +23,7 @@
     "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-updater": "^2.12.0",
     "fflate": "^0.8.3",
+    "heic-to": "^1.5.2",
     "mathjax-full": "^3.2.2",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

@@ -200,6 +200,85 @@ export const model2s2p1d = network({
   summary: () => "2 ressorts, 2 éléments paraboliques, 1 amortisseur (Olard et Di Benedetto)",
 });
 
+export const huetSayegh = network({
+  type: "huet_sayegh",
+  label: "Modèle de Huet-Sayegh",
+  length: 60,
+  params: {
+    e00_label: LABEL("Ressort E00", "$E_{00}$"),
+    e0_label: LABEL("Ressort E0 − E00", "$E_0 - E_{00}$"),
+    k_label: LABEL("Parabolique k", "$k$"),
+    h_label: LABEL("Parabolique h", "$h$"),
+  },
+  build: (p) => ({
+    kind: "parallel",
+    branches: [
+      { kind: "spring", label: str(p, "e00_label") },
+      {
+        kind: "series",
+        items: [
+          { kind: "spring", label: str(p, "e0_label") },
+          { kind: "parabolic", label: str(p, "k_label") },
+          { kind: "parabolic", label: str(p, "h_label") },
+        ],
+      },
+    ],
+  }),
+  summary: () => "2 ressorts, 2 éléments paraboliques (Huet, Sayegh)",
+});
+
+export const zener = network({
+  type: "zener",
+  label: "Zener (solide linéaire standard)",
+  length: 40,
+  params: {
+    e00_label: LABEL("Ressort d'équilibre", "$E_{00}$"),
+    e1_label: LABEL("Ressort de la branche", "$E_0 - E_{00}$"),
+    eta_label: LABEL("Amortisseur", "$\\eta$"),
+  },
+  build: (p) => ({
+    kind: "parallel",
+    branches: [
+      { kind: "spring", label: str(p, "e00_label") },
+      {
+        kind: "series",
+        items: [
+          { kind: "spring", label: str(p, "e1_label") },
+          { kind: "dashpot", label: str(p, "eta_label") },
+        ],
+      },
+    ],
+  }),
+  summary: () => "ressort en parallèle d'une branche de Maxwell",
+});
+
+export const burgers = network({
+  type: "burgers",
+  label: "Burgers",
+  length: 64,
+  params: {
+    e1_label: LABEL("Ressort (Maxwell)", "$E_1$"),
+    eta1_label: LABEL("Amortisseur (Maxwell)", "$\\eta_1$"),
+    e2_label: LABEL("Ressort (Kelvin-Voigt)", "$E_2$"),
+    eta2_label: LABEL("Amortisseur (Kelvin-Voigt)", "$\\eta_2$"),
+  },
+  build: (p) => ({
+    kind: "series",
+    items: [
+      { kind: "spring", label: str(p, "e1_label"), weight: 0.8 },
+      { kind: "dashpot", label: str(p, "eta1_label"), weight: 0.8 },
+      {
+        kind: "parallel",
+        branches: [
+          { kind: "spring", label: str(p, "e2_label") },
+          { kind: "dashpot", label: str(p, "eta2_label") },
+        ],
+      },
+    ],
+  }),
+  summary: () => "Maxwell et Kelvin-Voigt en série",
+});
+
 /** Liaison rigide (barre) entre deux points : relie des branches ou un bâti. */
 export const link: ComponentDef = {
   type: "link",

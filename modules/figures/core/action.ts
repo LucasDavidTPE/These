@@ -8,6 +8,7 @@
  * Pur : le système de fichiers et l'horloge sont passés en paramètres.
  */
 import { exportGraphSvg, exportPgfplots, validateGraph, type GraphDoc } from "./graph";
+import { exportSvg, exportTikz, validateFigure, type FigureDoc } from "./schema";
 import { createFigure, saveImageFigure, saveMeta, validateMeta, joinPath, type FigureMeta, type LibraryFs } from "./library";
 
 /**
@@ -68,7 +69,8 @@ export async function enregistrerGraphe(fs: LibraryFs, d: DemandeGraphe, rendu: 
 
 /**
  * Régénération d'un graphe : les données (séries, échelles) sont remplacées, la mise en forme
- * choisie dans Figures (taille, titres d'axes, bornes, légende, grille) est gardée.
+ * choisie dans Figures (taille, titres d'axes, bornes, légende, grille, style, retouches des
+ * séries de même nom) est gardée.
  */
 export async function remplacerGraphe(fs: LibraryFs, dossier: string, nouveau: unknown, rendu: RenduGraphe, now: string, host: string): Promise<FigureMeta> {
   const v = validateMeta(JSON.parse(await fs.readText(joinPath(dossier, "meta.json"))));
@@ -77,12 +79,49 @@ export async function remplacerGraphe(fs: LibraryFs, dossier: string, nouveau: u
   let doc = neuf;
   try {
     const ancien = grapheValide(JSON.parse(await fs.readText(joinPath(dossier, "graph.json"))));
-    doc = { ...ancien, series: neuf.series, x: { ...ancien.x, log: neuf.x.log }, y: { ...ancien.y, log: neuf.y.log } };
+    // Retouches d'une série (couleur, marque, tirets, type, légende) gardées si elle porte le même nom.
+    const series = neuf.series.map((sr) => {
+      const a = ancien.series.find((x) => x.name === sr.name);
+      return a ? { ...sr, type: a.type, legend: a.legend, color: a.color ?? sr.color, mark: a.mark, dash: a.dash } : sr;
+    });
+    doc = { ...ancien, series, x: { ...ancien.x, log: neuf.x.log }, y: { ...ancien.y, log: neuf.y.log } };
   } catch {
     // pas de graph.json lisible : on repart du graphe neuf
   }
   await ecrireGraphe(fs, dossier, doc, rendu);
   return saveMeta(fs, dossier, { ...v.meta, regenere: now }, { now, host });
+}
+
+export interface DemandeSchema {
+  titre: string;
+  source: string;
+  tags?: string[];
+  origine?: Origine;
+  /** Contenu de figure.json (validé ici). */
+  schema: unknown;
+}
+
+/** Rendu PNG d'un schéma (fourni par l'interface). */
+export type RenduSchema = (svg: string, doc: FigureDoc) => Promise<Uint8Array>;
+
+/**
+ * Action « figures.enregistrer-schema » : un schéma modifiable dans l'éditeur de schémas
+ * (figure.json, export.tex TikZ, export.svg, export.png), par exemple le modèle rhéologique
+ * calé dans le traitement, ses constantes en étiquettes.
+ */
+export async function enregistrerSchema(fs: LibraryFs, d: DemandeSchema, rendu: RenduSchema, now: string, host: string): Promise<string> {
+  const v = validateFigure(d.schema);
+  if (!v.ok) throw new Error(`Schéma invalide : ${v.errors.map((e) => `${e.path} : ${e.message}`).join(" ; ")}`);
+  const cree = await createFigure(fs, { title: d.titre, kind: "schema", now, host });
+  const svg = exportSvg(v.doc);
+  await fs.writeTextAtomic(joinPath(cree.folder, "figure.json"), JSON.stringify(v.doc, null, 2) + "\n");
+  await fs.writeTextAtomic(joinPath(cree.folder, "export.svg"), svg);
+  await fs.writeTextAtomic(joinPath(cree.folder, "export.tex"), exportTikz(v.doc));
+  await fs.writeBytesAtomic(joinPath(cree.folder, "export.png"), await rendu(svg, v.doc));
+  const meta: FigureMeta = { ...cree.meta, tags: d.tags ?? [], source: { type: "own", note: d.source } };
+  if (d.origine) meta.origine = d.origine;
+  await saveMeta(fs, cree.folder, meta, { now, host });
+  return cree.folder;
 }
 
 export interface DemandeImage extends Rendu {

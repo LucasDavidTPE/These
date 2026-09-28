@@ -5,7 +5,7 @@ import { bezier, circleShape, line, polylineShape } from "./free";
 import { layerStack } from "./layerStack";
 import { bogie, footprint, force, pressureProfile, uniformLoad, wheelSection } from "./loads";
 import { rectangle } from "./rectangle";
-import { generalizedMaxwell, kelvinVoigt, kvg, link, maxwell, model2s2p1d, node, parabolic, slider } from "./rheoComponents";
+import { burgers, generalizedMaxwell, huetSayegh, kelvinVoigt, kvg, link, maxwell, model2s2p1d, node, parabolic, slider, zener } from "./rheoComponents";
 import { spring } from "./spring";
 import { fixedSupport, ground, simpleSupport } from "./structure";
 
@@ -23,6 +23,9 @@ export const COMPONENT_LIST: ComponentDef[] = [
   generalizedMaxwell,
   kvg,
   model2s2p1d,
+  huetSayegh,
+  zener,
+  burgers,
   // Structure
   layerStack,
   fixedSupport,

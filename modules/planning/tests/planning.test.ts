@@ -105,3 +105,17 @@ describe("export SVG du Gantt", () => {
     expect(largeur(court)).toBe(largeur(long));
   });
 });
+
+describe("avancement de la thèse (Accueil)", () => {
+  it("part écoulée, jours restants, prochain jalon", async () => {
+    const { avancement } = await import("../core/gantt");
+    const b = (id: string, debut: string, fin: string) => ({ id, titre: id, categorie: "", debut, fin, avancement: 0 });
+    const a = avancement([b("thèse", "2025-10-01", "2028-09-30"), b("CSI 1", "2026-06-15", ""), b("CSI 2", "2027-06-15", ""), b("passé", "2026-01-10", "")], "2026-09-28")!;
+    expect(a.debut).toBe("2025-10-01");
+    expect(a.fin).toBe("2028-09-30");
+    expect(a.part).toBeCloseTo(362 / 1095, 6);
+    expect(a.joursRestants).toBe(733);
+    expect(a.prochainJalon).toEqual({ titre: "CSI 2", date: "2027-06-15", dans: 260 });
+    expect(avancement([], "2026-09-28")).toBeNull();
+  });
+});
