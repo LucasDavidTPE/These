@@ -174,3 +174,6 @@ lancent tous les tests automatiques sous Windows.
 - [x] ChaussSpec : champs dérivés (ε1, ε2, ε3, dilatation, σ1, σ2, σ3, τmax, von Mises) et combinaisons linéaires libres de composantes (1.4.0)
 - [x] Recherche globale : ouverture directe de la référence, de l'étude, de la campagne, de la figure (1.4.0)
 - [x] Accueil : les titres de « Dernières figures » ne débordent plus (1.4.0)
+- [x] Figures → Graphes : erreur type et graphe des résidus d'une régression (1.5.0)
+- [x] Numériseur : échelles de couleurs connues (jet, turbo, viridis, plasma, inferno, coolwarm, RdBu, hot, gris), inversables, sans pointer la légende (1.5.0)
+- [x] Numériseur : détection automatique des axes (extrémités des deux traits les plus longs) (1.5.0)

@@ -314,3 +314,34 @@ export function fitCorner(fitPos: LegendPos | undefined, legend: LegendPos): Exc
   if (fitPos && fitPos !== "none") return fitPos;
   return legend === "north west" ? "north east" : "north west";
 }
+
+export interface Residus {
+  x: number[];
+  /** y mesuré − y de la courbe, dans l'unité de y (même pour puissance et exponentielle). */
+  r: number[];
+  n: number;
+  /** Nombre de paramètres ajustés. */
+  p: number;
+  /** Racine de la moyenne des carrés des résidus. */
+  rmse: number;
+  /** Erreur type de l'estimation, √(Σr² / (n − p)) ; null si n ≤ p. */
+  sigma: number | null;
+  maxAbs: number;
+}
+
+/** Résidus d'une régression sur les points donnés (ceux hors du domaine de la courbe sont écartés). */
+export function fitResidus(x: number[], y: number[], f: FitResult): Residus {
+  const xs: number[] = [];
+  const r: number[] = [];
+  x.forEach((v, i) => {
+    const c = fitValue(f, v);
+    if (Number.isFinite(v) && Number.isFinite(y[i]!) && Number.isFinite(c)) {
+      xs.push(v);
+      r.push(y[i]! - c);
+    }
+  });
+  const n = r.length;
+  const p = f.kind === "origine" ? 1 : f.kind === "polynome" ? (f.coefs?.length ?? 3) : 2;
+  const sse = r.reduce((s, v) => s + v * v, 0);
+  return { x: xs, r, n, p, rmse: n ? Math.sqrt(sse / n) : 0, sigma: n > p ? Math.sqrt(sse / (n - p)) : null, maxAbs: r.reduce((m, v) => Math.max(m, Math.abs(v)), 0) };
+}

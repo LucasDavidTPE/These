@@ -37,6 +37,10 @@ export interface LegendeSaisie {
   log: boolean;
   /** Unité des valeurs (« MPa »). */
   unite: string;
+  /** Échelle de couleurs connue (« jet », « viridis »…) au lieu de la barre lue sur l'image ; « » sinon. */
+  echelle?: string;
+  /** Échelle connue lue de sa fin à son début (barre inversée). */
+  inverse?: boolean;
 }
 
 export interface Projet {
@@ -81,6 +85,12 @@ export function etalonnageDe(p: Projet): Etalonnage | null {
   const x = a(p.axes.x),
     y = a(p.axes.y);
   return x && y ? { x, y } : null;
+}
+
+/** L'échelle connue choisie, si ses deux valeurs sont saisies. */
+export function echelleConnueDe(p: Projet): { nom: string; v1: number; v2: number; log: boolean; inverse: boolean } | null {
+  const l = p.legende;
+  return l.echelle && l.v1 !== null && l.v2 !== null ? { nom: l.echelle, v1: l.v1, v2: l.v2, log: l.log, inverse: !!l.inverse } : null;
 }
 
 /** La légende, si elle est complète. */

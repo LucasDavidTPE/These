@@ -11,7 +11,8 @@ import { versDonnees } from "../core/etalonnage";
 import { chargementCarte, chargementDisques, csvCellules, csvCoupe, csvMatrice, grapheFigures, matrice, textePourExcel, type VersSI } from "../core/exports";
 import { hex } from "../core/image";
 import { moyennes, resultante, type Maillage } from "../core/maillage";
-import { etalonnageDe, legendeDe } from "../core/projet";
+import { ECHELLES, gammeConnue, NOMS_ECHELLES } from "../core/echelles";
+import { echelleConnueDe, etalonnageDe, legendeDe } from "../core/projet";
 import { useNumeriseur } from "./etat";
 import { fmt, fmtAxe, lireNombre } from "./format";
 import { Nombre } from "./Nombre";
@@ -33,7 +34,8 @@ export function PanneauCarte() {
   const s = useNumeriseur();
   const p = s.projet;
   const e = etalonnageDe(p);
-  const leg = legendeDe(p);
+  const connue = echelleConnueDe(p);
+  const leg = connue ? { log: connue.log } : legendeDe(p);
   const img = s.image;
   const [si, setSi] = useState<VersSI>({ longueur: 0.001, pression: 1e6 });
   const [seuil, setSeuil] = useState(0);
@@ -44,7 +46,7 @@ export function PanneauCarte() {
   function lire() {
     if (!img || !leg) return;
     try {
-      const gamme = lireLegende(img.rgba, leg);
+      const gamme = connue ? gammeConnue(connue.nom, connue.v1, connue.v2, connue.log, connue.inverse) : lireLegende(img.rgba, legendeDe(p)!);
       const champ = lireCarte(img.rgba, gamme, p.tolerance, p.zone, leg.log);
       let [mn, mx] = [Infinity, -Infinity];
       for (const v of champ.valeurs)
@@ -154,11 +156,29 @@ export function PanneauCarte() {
       <section className="nm-section">
         <h3>2. Légende de couleur</h3>
         <div className="rangee">
-          <button type="button" className={`petit${s.outil === "leg1" ? " actif" : ""}`} onClick={() => s.choisirOutil(s.outil === "leg1" ? null : "leg1")}>
+          <label className="nm-case" title="Si la carte a été tracée avec une échelle connue, choisissez-la et saisissez seulement les deux valeurs : inutile de pointer la légende de l'image.">
+            Échelle{" "}
+            <select className="champ" aria-label="Échelle de couleurs" value={p.legende.echelle ?? ""} onChange={(ev) => s.maj((q) => (q.legende.echelle = ev.target.value))}>
+              <option value="">lue sur l'image</option>
+              {NOMS_ECHELLES.map((n) => (
+                <option key={n} value={n}>
+                  {ECHELLES[n]!.libelle}
+                </option>
+              ))}
+            </select>
+          </label>
+          {p.legende.echelle ? (
+            <label className="nm-case">
+              <input type="checkbox" checked={!!p.legende.inverse} onChange={(ev) => s.maj((q) => (q.legende.inverse = ev.target.checked))} /> inversée
+            </label>
+          ) : null}
+        </div>
+        <div className="rangee">
+          <button type="button" className={`petit${s.outil === "leg1" ? " actif" : ""}`} disabled={!!p.legende.echelle} onClick={() => s.choisirOutil(s.outil === "leg1" ? null : "leg1")}>
             {p.legende.p1 ? "✓ " : ""}Début
           </button>
           <Nombre v={p.legende.v1} aria="Valeur au début de la légende" vide onChange={(v) => s.maj((q) => (q.legende.v1 = v))} />
-          <button type="button" className={`petit${s.outil === "leg2" ? " actif" : ""}`} onClick={() => s.choisirOutil(s.outil === "leg2" ? null : "leg2")}>
+          <button type="button" className={`petit${s.outil === "leg2" ? " actif" : ""}`} disabled={!!p.legende.echelle} onClick={() => s.choisirOutil(s.outil === "leg2" ? null : "leg2")}>
             {p.legende.p2 ? "✓ " : ""}Fin
           </button>
           <Nombre v={p.legende.v2} aria="Valeur à la fin de la légende" vide onChange={(v) => s.maj((q) => (q.legende.v2 = v))} />
@@ -177,7 +197,7 @@ export function PanneauCarte() {
             <input type="range" min={3} max={60} value={p.tolerance} onChange={(ev) => s.maj((q) => (q.tolerance = Number(ev.target.value)))} />
           </label>
         </div>
-        <button type="button" className="principal" disabled={!leg || !img} onClick={lire} title={leg ? "" : "Placer le début et la fin de la légende et saisir leurs valeurs"}>
+        <button type="button" className="principal" disabled={!leg || !img} onClick={lire} title={leg ? "" : p.legende.echelle ? "Saisir les valeurs du début et de la fin de l'échelle" : "Placer le début et la fin de la légende et saisir leurs valeurs"}>
           Lire la carte
         </button>
       </section>

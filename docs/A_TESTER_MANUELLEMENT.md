@@ -550,3 +550,19 @@ nombres doivent être identiques, dans les deux modes.
       sa fiche / sa vue, pas seulement la page du module.
 - [ ] Accueil → Dernières figures : un titre très long (par exemple avec des soulignés) tient sur
       deux lignes au plus, sans sortir de sa vignette ; l'infobulle donne le titre complet.
+
+## Régression : qualité de l'ajustement (1.5.0)
+
+- [ ] Sous l'équation : nombre de points, écart quadratique moyen, erreur type. « Voir les résidus » :
+      une droite sur des points courbes donne une forme en U ; un bon modèle, un nuage sans forme.
+- [ ] Erreur type = « trop peu de points » quand n ≤ nombre de paramètres.
+
+## Numériseur : échelles connues et détection des axes (1.5.0)
+
+- [ ] Ouvrir une image de graphique avec deux axes noirs : « Détecter les axes » pose X1, X2, Y1, Y2
+      aux extrémités des axes ; saisir les valeurs (ou déplacer les points sur des graduations) suffit.
+      Image sans axes nets : message, rien n'est posé.
+- [ ] Carte de couleurs, « Échelle » : choisir celle du logiciel qui a tracé la carte (jet, viridis…),
+      saisir les valeurs de début et de fin (case « inversée » si la barre va de haut en bas) :
+      « Lire la carte » marche sans pointer la légende. Comparer avec la lecture de la barre de l'image.
+- [ ] Sur une vraie carte COMSOL / Matlab : les valeurs lues collent à la barre (à la tolérance près).

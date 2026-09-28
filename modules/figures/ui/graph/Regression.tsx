@@ -4,7 +4,8 @@
  * équation sur la figure.
  */
 import { useState } from "react";
-import { DEGRE_MAX, DEGRE_MIN, fitInverse, fitLabel, fitSample, fitSeries, fitValue, type FitKind, type FitResult, type Series, type SeriesFit } from "../../core/graph";
+import { grapheSvg, PALETTE_THEME } from "@noyau/graphe";
+import { DEGRE_MAX, DEGRE_MIN, fitInverse, fitResidus, fitLabel, fitSample, fitSeries, fitValue, type FitKind, type FitResult, type Series, type SeriesFit } from "../../core/graph";
 import { NumberInput } from "../editor/fields";
 import { usePlageRegression } from "./plageRegression";
 import { useGraph } from "./useGraph";
@@ -40,6 +41,26 @@ function equationTexte(f: FitResult | null, fit: SeriesFit): string {
 }
 
 const nombre = (v: number) => String(Number(v.toPrecision(6))).replace(".", ",");
+
+/** Écart entre la mesure et la courbe : une tendance ou un entonnoir dit que le modèle ne convient pas. */
+function Residus({ f, x, y }: { f: FitResult; x: number[]; y: number[] }) {
+  const [ouvert, setOuvert] = useState(false);
+  const r = fitResidus(x, y, f);
+  const svg = ouvert && r.n ? grapheSvg({ series: [{ points: r.x.map((v, i) => [v, r.r[i]!] as const), mode: "points", couleur: "#2f5f8a", taille: 2.5 }], xTitre: "x", yTitre: "résidu", zeroY: true }, { largeur: 300, hauteur: 150, palette: PALETTE_THEME, id: "residus" }) : null;
+  return (
+    <div className="field">
+      <span>Qualité de l'ajustement</span>
+      <p className="muted small">
+        {r.n} point{r.n > 1 ? "s" : ""} · écart quadratique moyen {nombre(r.rmse)} · {r.sigma === null ? "erreur type : trop peu de points" : `erreur type ${nombre(r.sigma)}`} · écart maximal {nombre(r.maxAbs)} (en unités de y)
+      </p>
+      <button type="button" className="small-btn" aria-pressed={ouvert} onClick={() => setOuvert((v) => !v)}>
+        {ouvert ? "Masquer les résidus" : "Voir les résidus"}
+      </button>
+      {svg ? <div dangerouslySetInnerHTML={{ __html: svg }} /> : null}
+      {svg ? <p className="muted small">Les points doivent se répartir sans forme autour de zéro ; une courbe ou un entonnoir signale un modèle inadapté.</p> : null}
+    </div>
+  );
+}
 
 /** Calculette sur la courbe : y pour un x (interpolation ou extrapolation), x pour un y. */
 function Calculette({ f, plage }: { f: FitResult; plage: [number, number] }) {
@@ -82,9 +103,10 @@ export function RegressionSerie({ i, sr }: { i: number; sr: Series }) {
   const [xLo, xHi] = xFinis.length ? [Math.min(...xFinis), Math.max(...xFinis)] : [0, 0];
   const plage = fit && (fit.xmin !== undefined || fit.xmax !== undefined);
   let f: FitResult | null = null;
+  let echantillon: { x: number[]; y: number[] } = { x: [], y: [] };
   if (fit) {
-    const pts = fitSample(sr.x, sr.y, fit);
-    f = fitSeries(pts.x, pts.y, fit.kind, fit.degre);
+    echantillon = fitSample(sr.x, sr.y, fit);
+    f = fitSeries(echantillon.x, echantillon.y, fit.kind, fit.degre);
   }
 
   return (
@@ -139,6 +161,7 @@ export function RegressionSerie({ i, sr }: { i: number; sr: Series }) {
           </div>
           <p className="muted small">{equationTexte(f, fit)}</p>
           {f && <Calculette f={f} plage={[fit.xmin ?? xLo, fit.xmax ?? xHi]} />}
+          {f && <Residus f={f} x={echantillon.x} y={echantillon.y} />}
           {plage && (
             <label className="chip">
               <input type="checkbox" checked={!!fit.prolonger} onChange={(e) => maj({ prolonger: e.target.checked || undefined })} />

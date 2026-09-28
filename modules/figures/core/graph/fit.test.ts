@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { exportGraphSvg, exportPgfplots } from "./export";
-import { fitCorner, fitInverse, fitLabel, fitPoints, fitSample, fitSeries, fitValue, parseFit, texNumber, type FitKind, type SeriesFit } from "./fit";
+import { fitCorner, fitInverse, fitLabel, fitResidus, fitPoints, fitSample, fitSeries, fitValue, parseFit, texNumber, type FitKind, type SeriesFit } from "./fit";
 import { fitRows, graphFits, scales } from "./layout";
 import { graphTheme } from "./style";
 import { emptyGraph, validateGraph } from "./model";
@@ -151,5 +151,26 @@ describe("régressions", () => {
     expect(rs[0]).toBeCloseTo(-1, 6);
     expect(rs[1]).toBeCloseTo(1, 6);
     expect(fitInverse(q, 10, [-2, 2])).toEqual([]);
+  });
+
+  it("résidus : erreur type et nombre de paramètres", () => {
+    const x = [0, 1, 2, 3, 4, 5];
+    const y = x.map((v, i) => 2 * v + 1 + (i % 2 ? 0.5 : -0.5));
+    const f = fitSeries(x, y, "lineaire")!;
+    const r = fitResidus(x, y, f);
+    expect(r.n).toBe(6);
+    expect(r.p).toBe(2);
+    expect(r.r.reduce((a, b) => a + b, 0)).toBeCloseTo(0, 9);
+    expect(r.rmse).toBeGreaterThan(0.4);
+    expect(r.sigma!).toBeCloseTo(Math.sqrt((r.rmse ** 2 * 6) / 4), 12);
+    // Exact : résidus nuls.
+    const e = fitResidus(x, x.map((v) => 3 * v), fitSeries(x, x.map((v) => 3 * v), "origine")!);
+    expect(e.p).toBe(1);
+    expect(e.maxAbs).toBeLessThan(1e-9);
+    // Polynôme : p = degré + 1 ; points hors domaine (log) écartés.
+    expect(fitResidus(x, y, fitSeries(x, y, "polynome", 3)!).p).toBe(4);
+    const lx = [0, 1, 2, 3, 4];
+    const l = fitResidus(lx, lx.map((v) => 2 * Math.log(Math.max(v, 1)) + 1), fitSeries(lx, lx.map((v) => 2 * Math.log(Math.max(v, 1)) + 1), "logarithmique")!);
+    expect(l.n).toBe(4);
   });
 });

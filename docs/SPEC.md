@@ -270,6 +270,9 @@ Ajouts permis par l'intégration :
   sur cette plage ou, avec `prolonger`, sur toute la série ; R² passe à la ligne quand
   l'équation est trop large pour le graphe. R² de la puissance et de l'exponentielle dans
   les variables transformées, comme les courbes de tendance d'Excel.
+  **1.5.0** : sous l'équation, « Qualité de l'ajustement » : nombre de points, écart quadratique
+  moyen, erreur type √(Σr² / (n − p)) et graphe des résidus (mesure − courbe, en unités de y).
+  Pas de bande de confiance (non faite).
   **1.2.2** : « Lire sur la courbe » (panneau, pas dans la figure) : y pour un x saisi, y compris
   hors plage (extrapolation), et le ou les x pour un y (`fitInverse` : formule directe pour les
   formes monotones, recherche de racines sur la plage pour le polynôme).
@@ -552,7 +555,10 @@ photo d'un écran). Image ouverte (PNG, JPEG, WebP, BMP, GIF), collée (Ctrl+V) 
 - **Étalonnage** : deux points connus sur l'axe des x (X1, X2) et deux sur l'axe des y
   (Y1, Y2), placés à la loupe et déplaçables, avec leurs valeurs ; échelles linéaires ou
   logarithmiques ; image tournée ou axes non perpendiculaires admis (repère oblique défini
-  par les deux axes).
+  par les deux axes). **1.5.0** : « Détecter les axes » pose les quatre points aux extrémités des
+  deux traits sombres les plus longs (axe des x : le plus bas ; axe des y : le plus à gauche ;
+  seuils de plus en plus tolérants pour les traits lissés, fond transparent traité comme du blanc) ;
+  les valeurs restent à saisir (pas de reconnaissance des graduations).
 - **Courbes XY** : séries de points ; relevé automatique par la couleur (pipette ou couleurs
   dominantes proposées, anticrénelage écarté ; tolérance ΔE CIELAB ; zone de recherche) :
   en « ligne », un point tous les n pixels le long de l'axe des x, en suivant la courbe à
@@ -560,7 +566,8 @@ photo d'un écran). Image ouverte (PNG, JPEG, WebP, BMP, GIF), collée (Ctrl+V) 
   modifiables (glisser, ajouter, Suppr, tableau). Exports : CSV, copie pour Excel,
   graphe modifiable dans Figures (`figures.enregistrer-graphe`).
 - **Carte de couleurs** : légende étalonnée par deux points (début, fin) et leurs valeurs
-  (lin ou log) ; chaque pixel de la zone de la carte prend la valeur de la couleur de légende
+  (lin ou log), **ou échelle connue** (1.5.0 : jet, turbo, viridis, plasma, inferno, coolwarm,
+  RdBu, hot, gris, éventuellement inversée) dont on donne seulement les deux valeurs extrêmes ; chaque pixel de la zone de la carte prend la valeur de la couleur de légende
   la plus proche (interpolée entre deux couleurs voisines, CIELAB), rien au-delà de la
   tolérance (fond, texte, traits). Coupes le long de lignes (graphe, CSV, Figures). Moyennes
   sur un maillage : rectangulaire (matrice au format des cartes de pression de ChaussSpec),
