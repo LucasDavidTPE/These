@@ -16,6 +16,7 @@ de la thèse de Lucas David (chaussées aéronautiques, ENTPE / LTDS / LGCB) :
 | **Planning** | *(nouveau)* un Gantt de la thèse, partagé entre les deux PC | — |
 | **Accueil** | le panneau Java du hub | `lucasdavid47/lgcb-hub` |
 | **ViscoCompare** | le script de comparaison COMSOL / Viscoroute | `LucasDavidTPE/ViscoCompare` |
+| **ChaussSpec** | le code Python chausspec v0.4 (calcul spectral de chaussées) | archive `chausspec_v0.4.zip` |
 
 Principes, par ordre d'importance :
 
@@ -445,6 +446,26 @@ vérifiées par des tests ; les conventions restent modifiables à l'écran. Ajo
 fichiers écartés sont listés (le script les taisait), écart sur l'extremum de chaque
 grandeur, figures régénérables. Les classeurs `EXCEL_OUTPUT/comparaison_<v>.xlsx`
 reprennent les feuilles du script, sans ses graphiques Excel.
+
+## 11 bis. Module ChaussSpec (1.0)
+
+Portage TypeScript du code Python **chausspec v0.4** (calcul semi-analytique spectral de
+chaussées multicouches élastiques / viscoélastiques sous chargements de surface quelconques),
+sans Python : lois (élastique, 2S2P1D + WLF, KVG, Maxwell généralisé), interfaces collées ou
+glissantes, fond semi-infini ou rigide (collé, glissant), empreintes (rectangle, disque,
+séparable dont De Beer, carte de pression mesurée), atterrisseurs multi-roues, efforts
+tangentiels ; régimes statique, harmonique (HWD, champs complexes) et charge roulante ; solveur
+grille (FFT + partition de l'unité) et solveur axisymétrique. Conformité : références produites
+par le Python d'origine (noyau à 1e-9, grilles à 1e-9, 1e-7 là où interviennent Bessel et le
+régime harmonique). Un cas = `chausspec/<nom>.json` dans l'espace, au **format JSON du Python**
+(`python -m chausspec cas.json` le calcule aussi) ; une carte de pression peut y être incluse.
+Calcul dans un Worker, cartes des champs, extrêmes et ε1, coupes, jauges (charge roulante),
+export du dossier de résultats au format du Python, cartes et courbes vers Figures, constantes
+2S2P1D reprises du Traitement (action `traitement.calages`).
+
+Écart assumé : effort tangentiel + interface glissante est refusé (problème mal posé ; le
+Python renvoie des NaN). Non porté : le module texture (contact, deux échelles, éléments finis
+2D), prévu pour une version suivante.
 
 ## 12. Exigences générales
 

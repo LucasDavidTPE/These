@@ -4,6 +4,7 @@ import type { Manifeste } from "@interface/manifeste";
 import { demander, type DemandeEssai } from "./ui/demande";
 import { regenererFigure, type OrigineTraitement } from "./ui/figure";
 import { TraitementPage } from "./ui/TraitementPage";
+import { useTraitement } from "./ui/etat";
 import "./ui/traitement.css";
 
 const traitement: Manifeste = {
@@ -24,6 +25,29 @@ const traitement: Manifeste = {
       const { ctx, origine } = charge as { ctx: Contexte; origine: OrigineTraitement };
       return regenererFigure(ctx, origine);
     },
+    /**
+     * Constantes 2S2P1D (ou Huet-Sayegh) calées des essais ouverts, avec la loi WLF : pour une
+     * couche viscoélastique de ChaussSpec.
+     */
+    "traitement.calages": () =>
+      useTraitement
+        .getState()
+        .essais.filter((e) => e.modeleId === "2s2p1d" || e.modeleId === "huet-sayegh")
+        .map((e) => ({
+          nom: `${e.nom}${e.demo ? " (démonstration)" : ""} — ${e.modeleId === "2s2p1d" ? "2S2P1D" : "Huet-Sayegh"}, T_ref ${e.Tref} °C`,
+          E00: e.p.E00,
+          E0: e.p.E0,
+          k: e.p.k,
+          h: e.p.h,
+          delta: e.p.delta,
+          tauE: e.p.tauE,
+          beta: e.modeleId === "2s2p1d" ? e.p.beta : Infinity,
+          Tref: e.Tref,
+          C1: e.C1,
+          C2: e.C2,
+          nu00: e.p.nu00,
+          nu0: e.p.nu0,
+        })),
   },
 };
 

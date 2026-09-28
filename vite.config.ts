@@ -29,6 +29,8 @@ export default defineConfig({
     watch: { ignored: ["**/src-tauri/**"] },
   },
   envPrefix: ["VITE_", "TAURI_ENV_"],
+  // Calculs longs (ChaussSpec) dans un Worker : modules ES, comme l'application.
+  worker: { format: "es" },
   build: {
     // WebView2 (Chromium récent) sous Windows.
     target: "chrome105",

@@ -142,3 +142,11 @@ lancent tous les tests automatiques sous Windows.
 - [x] Retouche des courbes dans Figures → Graphes (précisé : dans l'éditeur de graphes) :
       gomme sur l'aperçu, tableau x/y modifiable, unités / signe / zéro, plage de x, lissage,
       allègement, tri, échange des axes, duplication ; Annuler / Rétablir (Ctrl+Z / Ctrl+Y)
+
+## 1.0 — ChaussSpec et finitions
+- [x] Retouche des courbes dans Figures → Graphes (gomme, tableau, unités, lissage…, Ctrl+Z)
+- [x] Module ChaussSpec : portage TypeScript de chausspec v0.4 (solveur multicouche spectral,
+      grille et axisymétrique), conformité au Python, interface (cas JSON, calcul en Worker,
+      cartes, jauges, exports)
+- [ ] ChaussSpec, phase 2 : module texture (contact.py, texture.py, fe2d.py)
+- [x] Bibliothèque : PDF pointé à la création d'une référence, renommé selon la convention

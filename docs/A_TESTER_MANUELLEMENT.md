@@ -379,3 +379,21 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] Un graphe du Traitement retouché puis enregistré : la figure garde les retouches ;
       « Régénérer » repart des données de l'essai (retouches de données perdues, mise en
       forme gardée).
+
+## ChaussSpec (1.0)
+
+- [ ] Menu ChaussSpec : l'exemple « Train A340 sur la structure PEP » s'ouvre ; « Calculer » :
+      jauge, puis résultats en une dizaine de secondes ; εyy à la base du BB-GB ≈ 316 µdef en
+      (−2,06 ; 0,69) (le Python donne 316,6 µdef au même point).
+- [ ] Changer une couche (loi, épaisseur), ajouter une roue ou le « Bogie A340 », le régime
+      (statique, roulant, harmonique), la grille ; « Calculer » ; le titre des résultats
+      signale un résultat périmé quand le cas a changé.
+- [ ] 2S2P1D : « Depuis le traitement… » reprend les constantes calées d'un essai ouvert.
+- [ ] Carte de pression : « CSV… » (1re ligne x, 1re colonne y, « ; ») ; exemple « Carte de
+      pression mesurée ».
+- [ ] « Enregistrer » : `chausspec/<nom>.json` dans l'espace, visible sur l'autre PC ;
+      `python -m chausspec` calcule le même fichier.
+- [ ] « Enregistrer les résultats… » : dossier `resultats_<nom>` avec un CSV par champ,
+      `synthese.json`, jauges, `cas.json` ; comparer à la sortie du Python.
+- [ ] « Carte → Figures », coupes et jauges « → Figures ».
+- [ ] Effort tangentiel (qx) avec une interface glissante : message clair, pas de calcul.
