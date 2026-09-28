@@ -1,11 +1,11 @@
 /** État de la page ChaussSpec : le cas en cours, son fichier dans l'espace, le dernier résultat. */
 import { create } from "zustand";
-import type { CasJSON } from "../core/cas";
+import type { CaseJSON } from "../core/io";
 import { EXEMPLES } from "./exemples";
 import type { ResultatSerialise } from "./execution";
 
 export interface EtatChaussspec {
-  cas: CasJSON;
+  cas: CaseJSON;
   /** Nom du cas (fichier `chausspec/<nom>.json` de l'espace). */
   nom: string;
   modifie: boolean;
@@ -14,8 +14,8 @@ export interface EtatChaussspec {
   casCalcule: string | null;
   calcul: { part: number; texte: string; annuler(): void } | null;
   message: { niveau: "info" | "attention" | "erreur"; texte: string } | null;
-  maj(f: (c: CasJSON) => void): void;
-  ouvrir(cas: CasJSON, nom: string): void;
+  maj(f: (c: CaseJSON) => void): void;
+  ouvrir(cas: CaseJSON, nom: string): void;
   signaler(texte: string, niveau?: "info" | "attention" | "erreur"): void;
 }
 

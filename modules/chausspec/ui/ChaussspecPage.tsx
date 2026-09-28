@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Message, Page, Section } from "@interface/composants";
 import { useContexte } from "@interface/contexte";
-import type { CasJSON } from "../core/cas";
+import type { CaseJSON } from "../core/io";
 import { EditeurCalcul, EditeurChargement, EditeurStructure } from "./EditeurCas";
 import { useChaussspec } from "./etat";
 import { EXEMPLES } from "./exemples";
@@ -47,7 +47,7 @@ export function ChaussspecPage() {
   async function ouvrirCas(nom: string) {
     try {
       const texte = await ctx.espace!.fichiers.readText(`${DOSSIER}/${nom}.json`);
-      s.ouvrir(JSON.parse(texte) as CasJSON, nom);
+      s.ouvrir(JSON.parse(texte) as CaseJSON, nom);
     } catch (e) {
       s.signaler(e instanceof Error ? e.message : String(e), "erreur");
     }
@@ -67,7 +67,7 @@ export function ChaussspecPage() {
     const f = await ctx.plateforme.ouvrirFichier("Cas chausspec (JSON)", ["json"]);
     if (!f) return;
     try {
-      const cas = JSON.parse(new TextDecoder().decode(f.octets)) as CasJSON;
+      const cas = JSON.parse(new TextDecoder().decode(f.octets)) as CaseJSON;
       if (!cas.structure || !cas.loading) throw new Error("Ce fichier n'est pas un cas chausspec (structure et loading attendus).");
       s.ouvrir(cas, slug(f.nom.replace(/\.json$/i, "")));
       const cartes = cas.loading.wheels.filter((w) => w.footprint.type === "map" && !("P" in w.footprint && w.footprint.P));
@@ -78,11 +78,11 @@ export function ChaussspecPage() {
   }
 
   function lancer() {
-    const cas = JSON.parse(JSON.stringify(s.cas)) as CasJSON;
+    const cas = JSON.parse(JSON.stringify(s.cas)) as CaseJSON;
     const c = calculer(cas, (part, texte) => useChaussspec.setState((x) => ({ calcul: x.calcul ? { ...x.calcul, part, texte } : x.calcul })));
     useChaussspec.setState({ calcul: { part: 0, texte: "Préparation…", annuler: c.annuler }, message: null });
     c.promesse.then(
-      (r) => useChaussspec.setState({ resultat: r, casCalcule: JSON.stringify(cas), calcul: null, message: { niveau: "info", texte: `Calcul terminé en ${r.meta.secondes.toFixed(1).replace(".", ",")} s.` } }),
+      (r) => useChaussspec.setState({ resultat: r, casCalcule: JSON.stringify(cas), calcul: null, message: { niveau: "info", texte: `Calcul terminé en ${r.meta.cpuS.toFixed(1).replace(".", ",")} s.` } }),
       (e: unknown) => useChaussspec.setState({ calcul: null, message: { niveau: e instanceof Error && e.message === "Calcul annulé." ? "info" : "erreur", texte: e instanceof Error ? e.message : String(e) } }),
     );
   }

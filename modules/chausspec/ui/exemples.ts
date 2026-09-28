@@ -1,11 +1,11 @@
 /** Cas d'exemple (ceux de chausspec v0.4, plus une plaque HWD). */
-import type { CasJSON } from "../core/cas";
-import { lireCarteCSV } from "../core/cas";
+import type { CaseJSON } from "../core/io";
+import { loadMapCsv } from "../core/io";
 import carteCSV from "./carte_exemple.csv?raw";
 
 const BBGB = { type: "2S2P1D" as const, E00: 65, E0: 30000, k: 0.25, h: 0.787, delta: 1.58, tau_ref: 1.22, beta: "inf" as const, T_ref: 9.3, nu: 0.35 };
 
-export const STRUCTURE_PEP: CasJSON["structure"] = {
+export const STRUCTURE_PEP: CaseJSON["structure"] = {
   bottom: "rigid_smooth",
   layers: [
     { name: "BB+GB", h: 0.32, material: BBGB },
@@ -18,7 +18,7 @@ export const STRUCTURE_PEP: CasJSON["structure"] = {
 
 const roue = (x0: number, y0: number) => ({ x0, y0, footprint: { type: "rect" as const, lx: 0.56, ly: 0.4, force: 370000 } });
 
-export const EXEMPLES: { id: string; nom: string; note: string; cas: () => CasJSON }[] = [
+export const EXEMPLES: { id: string; nom: string; note: string; cas: () => CaseJSON }[] = [
   {
     id: "tfe",
     nom: "Train A340 sur la structure PEP (TFE)",
@@ -37,7 +37,7 @@ export const EXEMPLES: { id: string; nom: string; note: string; cas: () => CasJS
     nom: "Carte de pression mesurée",
     note: "Roue isolée de 100 kN, carte CSV incluse, statique, structure souple",
     cas: () => {
-      const c = lireCarteCSV(carteCSV);
+      const c = loadMapCsv(carteCSV);
       return {
         _commentaire: "Carte de pression (format du prototype STAC) : x, y des pixels en m, valeurs en MPa (unit = 1e6).",
         structure: {

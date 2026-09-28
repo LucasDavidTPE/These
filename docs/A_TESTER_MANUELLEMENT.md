@@ -409,3 +409,27 @@ nombres doivent être identiques, dans les deux modes.
       sur place (pas de doublon).
 - [ ] Référence existante dont le PDF porte un autre nom : « Renommer selon la convention ».
 - [ ] Nom retouché à la main avant de pointer : c'est ce nom qui est utilisé.
+
+## Figures → Graphes : régression (1.0.2)
+
+- [ ] Modèle « Fatigue » ou données collées, série en points : Régression → Linéaire. La droite
+      en tirets (couleur de la série) apparaît, l'équation et le R² s'affichent sous le menu et
+      dans un encadré sur la figure, en haut à gauche (légende en haut à droite).
+- [ ] Deux séries avec régression : deux lignes dans l'encadré, chacune avec son trait.
+- [ ] « Par l'origine » : pas d'ordonnée à l'origine dans l'équation. « Puissance » en échelle
+      log-log : la courbe est une droite ; avec des x ≤ 0, message dans le panneau.
+- [ ] Décocher « Équation sur la figure » : la droite reste, l'encadré disparaît. Changer le
+      coin des équations ; même coin que la légende : l'encadré se met sous la légende.
+- [ ] Gomme sur un point aberrant : l'équation et le R² se mettent à jour.
+- [ ] « Copier pgfplots » et compilation : droite et encadré identiques à l'aperçu.
+
+## ChaussSpec : cœur réécrit (1.0.3)
+
+- [ ] Les trois exemples (Train A340, carte de pression, plaque HWD) se calculent comme avant,
+      en un temps comparable (Train A340 : une dizaine de secondes) ; Train A340 : εyy ≈ 316 µdef
+      en base de BB-GB, e1 affiché, signal de la jauge.
+- [ ] Un cas enregistré avant la 1.0.3 se rouvre et se calcule à l'identique (même format JSON).
+- [ ] Grande grille (N = 1024 × 1024) : la mémoire reste raisonnable (quelques centaines de Mo au
+      plus) et le calcul va au bout.
+- [ ] Ouvrir `modules/chausspec/core/kernel.ts` à côté de `kernel.py` : même découpage, mêmes noms.
+

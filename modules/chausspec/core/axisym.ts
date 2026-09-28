@@ -1,117 +1,122 @@
 /**
- * Solveur axisymétrique (portage de chausspec/axisym.py) : pression uniforme p sur un disque de
- * rayon a, inversion de Hankel. Même noyau que la grille ; régimes statique et harmonique.
- *   f(r) = 1/(2π) ∫ F(ξ) J0(ξr) ξ dξ,   u_r(r) = −1/(2π) ∫ U(ξ) J1(ξr) ξ dξ
+ * Solveur axisymétrique (transformée de Hankel) pour une charge circulaire uniforme (axisym.py).
+ *
+ * Même noyau que le solveur 2D ; seule l'inversion change :
+ *   f(r)   = 1/(2 pi) int_0^inf F(xi) J0(xi r) xi dxi          (grandeurs scalaires)
+ *   u_r(r) = -1/(2 pi) int_0^inf U(xi) J1(xi r) xi dxi
+ * Utile pour : la validation croisée du solveur 2D, les calculs type Burmister, et le HWD en
+ * fréquentiel (plaque circulaire, régime Harmonic). Régimes admis : Static et Harmonic
+ * (le noyau ne dépend alors que de xi).
  */
-import { lame } from "./materiaux";
-import { Noyau, nouvellesAmplitudes } from "./noyau";
-import { besselJ0, besselJ1, j1x, leggauss } from "./numerique";
-import { omega, type Regime } from "./spectral";
+import { CArray } from "./carray";
+import { StiffnessKernel } from "./kernel";
+import { Moving, Static, type Regime } from "./regimes";
+import { j0, j1, j1x, leggauss } from "./special";
+import { layerModuli } from "./spectral";
 import type { Structure } from "./structure";
 
-export const SORTIES_AXI = ["uz", "ur", "szz", "srr", "stt", "srz", "ezz", "err", "ett", "erz"] as const;
-export type SortieAxi = (typeof SORTIES_AXI)[number];
+export const AXISYM_OUTPUTS = ["uz", "ur", "szz", "srr", "stt", "srz", "ezz", "err", "ett", "erz"] as const;
+export type AxisymOutput = (typeof AXISYM_OUTPUTS)[number];
 
-function noeudsXi(a: number, rmax: number, zmin: number, ximax: number | undefined, parPanneau: number): [number[], number[]] {
-  let xm = ximax;
-  if (xm === undefined) {
-    xm = zmin > 0 ? 60 / zmin : 2000 / a;
-    xm = Math.min(xm, 4000 / a);
+/** Nœuds/poids de Gauss sur [0, xi_max] avec des panneaux adaptés aux oscillations. */
+function xiNodes(a: number, rmax: number, zmin: number, xiMax?: number, perPanel = 16): [Float64Array, Float64Array] {
+  if (xiMax === undefined) {
+    xiMax = zmin > 0 ? 60.0 / zmin : 2000.0 / a;
+    xiMax = Math.min(xiMax, 4000.0 / a);
   }
-  const largeur = Math.PI / (2 * Math.max(rmax + a, a));
-  const bords = [0];
-  let e = Math.min(largeur, 1e-3 / a);
-  while (e < largeur) {
-    bords.push(e);
+  const width = Math.PI / (2 * Math.max(rmax + a, a));
+  // panneaux géométriques près de 0, puis réguliers
+  const edges = [0.0];
+  let e = Math.min(width, 1e-3 / a);
+  while (e < width) {
+    edges.push(e);
     e *= 3;
   }
-  let x = largeur;
-  while (x < xm) {
-    bords.push(x);
-    x += largeur;
+  let x = width;
+  while (x < xiMax) {
+    edges.push(x);
+    x += width;
   }
-  bords.push(xm);
-  const [g, w] = leggauss(parPanneau);
-  const n: number[] = [],
-    p: number[] = [];
-  for (let i = 0; i + 1 < bords.length; i++) {
-    const lo = bords[i]!,
-      hi = bords[i + 1]!;
-    for (let k = 0; k < parPanneau; k++) {
-      n.push(0.5 * (hi - lo) * g[k]! + 0.5 * (hi + lo));
-      p.push(0.5 * (hi - lo) * w[k]!);
-    }
+  edges.push(xiMax);
+  const [g, w] = leggauss(perPanel);
+  const nodes: number[] = [];
+  const weights: number[] = [];
+  for (let i = 0; i + 1 < edges.length; i++) {
+    const lo = edges[i]!,
+      hi = edges[i + 1]!;
+    g.forEach((gk, k) => {
+      nodes.push(0.5 * (hi - lo) * gk + 0.5 * (hi + lo));
+      weights.push(0.5 * (hi - lo) * w[k]!);
+    });
   }
-  return [n, p];
+  return [Float64Array.from(nodes), Float64Array.from(weights)];
 }
 
-/** Réponse (tableaux nz × nr, re et im) à une pression p (Pa) sur un disque de rayon a (m). */
-export function resoudreAxisym(
-  st: Structure,
-  p: number,
-  a: number,
-  r: number[],
-  z: number[],
-  regime: Regime = { type: "static" },
-  o: { cote?: "above" | "below"; ximax?: number; parPanneau?: number } = {},
-): Record<SortieAxi, { re: number[][]; im: number[][] }> {
-  if (regime.type === "moving") throw new Error("Le solveur axisymétrique n'admet pas de charge roulante (utiliser la grille).");
-  const [xi, wq] = noeudsXi(a, Math.max(...r), Math.min(...z), o.ximax, o.parPanneau ?? 16);
-  const w = omega(regime, 0);
-  const lam = new Float64Array(2 * st.n),
-    mu = new Float64Array(2 * st.n);
-  st.couches.forEach((L, j) => {
-    const m = lame(L.materiau, w);
-    lam[2 * j] = m.lam.re;
-    lam[2 * j + 1] = m.lam.im;
-    mu[2 * j] = m.mu.re;
-    mu[2 * j + 1] = m.mu.im;
+export interface AxisymOptions {
+  regime?: Regime;
+  side?: "above" | "below";
+  xiMax?: number;
+  perPanel?: number;
+}
+
+/**
+ * Réponse d'un multicouche à une pression uniforme p (Pa) sur un disque de rayon a (m).
+ *
+ * Renvoie, pour chaque sortie (uz, ur, szz, srr, stt, srz, ezz, err, ett, erz), un tableau
+ * (nz × nr) rangé ligne par ligne (déformations tensorielles ; contraintes en Pa,
+ * compression négative).
+ */
+export function solveAxisym(structure: Structure, p: number, a: number, r: readonly number[], z: readonly number[], options: AxisymOptions = {}): Record<AxisymOutput, CArray> {
+  const regime = options.regime ?? new Static();
+  if (regime instanceof Moving) throw new Error("Le solveur axisymétrique n'admet pas de charge roulante (utiliser solveGrid).");
+  const [xi, wq] = xiNodes(a, Math.max(...r), Math.min(...z), options.xiMax, options.perPanel ?? 16);
+  const M = xi.length;
+  const omega = regime.omega(xi, new Float64Array(M));
+  const [lam, mu] = layerModuli(structure, omega);
+  const K = new StiffnessKernel(structure, xi, lam, mu);
+  const ph = xi.map((x) => p * 2 * Math.PI * a ** 2 * j1x(x * a)); // transformée de la charge
+  const base = xi.map((x, m) => (wq[m]! * x * ph[m]!) / (2 * Math.PI));
+  // J0(xi r), J1(xi r), J1(xi r)/(xi r) : une colonne par rayon
+  const bessel = r.map((rr) => {
+    const XR = xi.map((x) => x * rr);
+    return { J0: XR.map(j0), J1: XR.map(j1), J1x: XR.map((v) => (v > 1e-12 ? j1(v) / v : 0.5)) };
   });
-  const K = new Noyau(st, false);
-  const amp = nouvellesAmplitudes();
-  const out = Object.fromEntries(SORTIES_AXI.map((k) => [k, { re: z.map(() => r.map(() => 0)), im: z.map(() => r.map(() => 0)) }])) as Record<SortieAxi, { re: number[][]; im: number[][] }>;
-  const cm = (ar: number, ai: number, br: number, bi: number): [number, number] => [ar * br - ai * bi, ar * bi + ai * br];
-  xi.forEach((x, m) => {
-    K.resoudre(x, lam, mu);
-    const mr = K.mr;
-    const base = (wq[m]! * x * p * 2 * Math.PI * a * a * j1x(x * a)) / (2 * Math.PI);
-    z.forEach((zz, iz) => {
-      K.amplitudes(zz, o.cote ?? "above", amp);
-      const [lr, li, mur, mui] = K.lameCouche(amp.couche);
-      const U: [number, number] = [amp.n[0]!, amp.n[1]!],
-        W: [number, number] = [amp.n[2]!, amp.n[3]!],
-        dU: [number, number] = [amp.n[4]!, amp.n[5]!],
-        dW: [number, number] = [amp.n[6]!, amp.n[7]!];
-      r.forEach((rr, ir) => {
-        const XR = x * rr;
-        const J0 = besselJ0(XR),
-          J1 = besselJ1(XR),
-          J1x = XR > 1e-12 ? J1 / XR : 0.5;
-        const Uc: [number, number] = [U[0] / mr, U[1] / mr];
-        const v: Record<string, [number, number]> = {
-          uz: [(W[0] / (mr * x)) * J0, (W[1] / (mr * x)) * J0],
-          ur: [(-U[0] / (mr * x)) * J1, (-U[1] / (mr * x)) * J1],
-          ezz: [(dW[0] / mr) * J0, (dW[1] / mr) * J0],
-          err: [-Uc[0] * (J0 - J1x), -Uc[1] * (J0 - J1x)],
-          ett: [-Uc[0] * J1x, -Uc[1] * J1x],
-          erz: [(-0.5 * (dU[0] + W[0]) * J1) / mr, (-0.5 * (dU[1] + W[1]) * J1) / mr],
-        };
-        const tr: [number, number] = [v.err![0] + v.ett![0] + v.ezz![0], v.err![1] + v.ett![1] + v.ezz![1]];
-        const lt = cm(lr, li, ...tr);
-        const s = (e: [number, number]): [number, number] => {
-          const me = cm(mur, mui, ...e);
-          return [lt[0] + 2 * me[0], lt[1] + 2 * me[1]];
-        };
-        v.szz = s(v.ezz!);
-        v.srr = s(v.err!);
-        v.stt = s(v.ett!);
-        const mrz = cm(mur, mui, ...v.erz!);
-        v.srz = [2 * mrz[0], 2 * mrz[1]];
-        for (const k of SORTIES_AXI) {
-          out[k].re[iz]![ir] = out[k].re[iz]![ir]! + base * v[k]![0];
-          out[k].im[iz]![ir] = out[k].im[iz]![ir]! + base * v[k]![1];
-        }
-      });
+  const out = Object.fromEntries(AXISYM_OUTPUTS.map((k) => [k, CArray.zeros(z.length * r.length)])) as Record<AxisymOutput, CArray>;
+  z.forEach((zz, iz) => {
+    const amp = K.atDepth(zz, options.side ?? "above");
+    const [U, W, dU, dW] = amp.n;
+    const mr = amp.muRef;
+    const Uc = U.div(mr); //                    = xi * U_phys
+    const mrXi = mr.map((m, i) => m * xi[i]!);
+    const L_ = amp.lam;
+    const M_ = amp.mu;
+    r.forEach((_, ir) => {
+      const { J0, J1, J1x } = bessel[ir]!;
+      // grandeurs spectrales
+      const uz = W.div(mrXi).mul(J0);
+      const ur = U.div(mrXi).mul(J1).neg();
+      const ezz = dW.div(mr).mul(J0);
+      const err = Uc.mul(J0.map((v, i) => v - J1x[i]!)).neg();
+      const ett = Uc.mul(J1x).neg();
+      const erz = dU.add(W).div(mr).mul(J1).mul(-0.5);
+      const tr = err.add(ett).add(ezz);
+      const vals: Record<AxisymOutput, CArray> = {
+        uz,
+        ur,
+        ezz,
+        err,
+        ett,
+        erz,
+        szz: L_.mul(tr).add(M_.mul(2).mul(ezz)),
+        srr: L_.mul(tr).add(M_.mul(2).mul(err)),
+        stt: L_.mul(tr).add(M_.mul(2).mul(ett)),
+        srz: M_.mul(2).mul(erz),
+      };
+      for (const k of AXISYM_OUTPUTS) {
+        const [re, im] = vals[k].mul(base).sum(); // np.sum(base * v, axis=0)
+        out[k].re[iz * r.length + ir] = re;
+        out[k].im[iz * r.length + ir] = im;
+      }
     });
   });
   return out;

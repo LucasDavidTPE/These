@@ -1,59 +1,49 @@
 /**
- * Exécution d'un cas (fil principal ou Worker) : lecture du JSON, solveur grille, synthèse et
- * signaux des jauges, sous une forme transférable (pas de Map).
+ * Exécution d'un cas (fil principal ou Worker) : runCase du cœur, puis une forme transférable
+ * (pas de classe ni de Map) pour revenir du Worker.
  */
-import { casDe, sortiesDe, type CasJSON } from "../core/cas";
-import { cleChamp, resoudreGrille, type ResultatGrille } from "../core/grille";
-import { signalJauge, synthese } from "../core/resultats";
-import type { Composante } from "../core/spectral";
+import { CArray } from "../core/carray";
+import { GridResult, type GridMeta } from "../core/grid";
+import { runCase, type CaseJSON, type GaugeSignal, type Summary } from "../core/io";
+import { fieldKey, type Component } from "../core/spectral";
 
 export interface DemandeCalcul {
-  cas: CasJSON;
+  cas: CaseJSON;
 }
 
 export interface ResultatSerialise {
   x: Float64Array;
   y: Float64Array;
-  champs: { comp: Composante; z: number; re: Float64Array; im: Float64Array | null }[];
-  meta: ResultatGrille["meta"];
-  synthese: ReturnType<typeof synthese>;
-  jauges: { comp: Composante; z: number; x: number; y: number; t: number[]; v: number[] }[];
+  /** Champs calculés ; im est null pour des champs réels. */
+  champs: { comp: Component; z: number; re: Float64Array; im: Float64Array | null }[];
+  meta: GridMeta;
+  synthese: Summary;
+  jauges: GaugeSignal[];
 }
 
 export function executer(d: DemandeCalcul, progres: (part: number, texte: string) => void): ResultatSerialise {
-  const { structure, chargement, regime } = casDe(d.cas);
-  const s = sortiesDe(d.cas);
-  const r = resoudreGrille(structure, chargement, regime, { profondeurs: s.profondeurs, comps: s.comps, L: s.L, N: s.N, fenetre: s.fenetre, filtre: s.filtre, progres });
-  const jauges =
-    regime.type === "moving"
-      ? s.jauges.flatMap((g) => {
-          const c = r.champs.get(cleChamp(g.comp, g.z));
-          return c ? [{ comp: g.comp, z: g.z, x: g.x ?? 0, y: g.y, ...signalJauge(r, c.re, g.x ?? 0, g.y, regime.speed) }] : [];
-        })
-      : [];
+  const { res, summary, gauges } = runCase(d.cas, { progress: progres });
   return {
-    x: r.x,
-    y: r.y,
-    champs: r.cles.map(({ comp, z }) => ({ comp, z, ...r.champs.get(cleChamp(comp, z))! })),
-    meta: r.meta,
-    synthese: synthese(r),
-    jauges,
+    x: res.x,
+    y: res.y,
+    champs: res.keys.map(({ comp, z }) => {
+      const f = res.get(comp, z);
+      return { comp, z, re: f.re, im: res.meta.complex ? f.im : null };
+    }),
+    meta: res.meta,
+    synthese: summary,
+    jauges: gauges,
   };
 }
 
-/** Le résultat reconstitué pour les fonctions de core/resultats. */
-export function versResultat(s: ResultatSerialise): ResultatGrille {
-  return {
-    x: s.x,
-    y: s.y,
-    champs: new Map(s.champs.map((c) => [cleChamp(c.comp, c.z), { re: c.re, im: c.im }])),
-    cles: s.champs.map(({ comp, z }) => ({ comp, z })),
-    meta: s.meta,
-  };
+/** Le GridResult du cœur, reconstitué. */
+export function versResultat(s: ResultatSerialise): GridResult {
+  const fields = new Map(s.champs.map((c) => [fieldKey(c.comp, c.z), new CArray(c.re, c.im ?? undefined)]));
+  return new GridResult(s.x, s.y, fields, s.meta);
 }
 
 /** Lance le calcul dans un Worker (repli sur le fil principal si indisponible). */
-export function calculer(cas: CasJSON, progres: (part: number, texte: string) => void): { promesse: Promise<ResultatSerialise>; annuler(): void } {
+export function calculer(cas: CaseJSON, progres: (part: number, texte: string) => void): { promesse: Promise<ResultatSerialise>; annuler(): void } {
   if (typeof Worker === "undefined") {
     return { promesse: Promise.resolve().then(() => executer({ cas }, progres)), annuler: () => undefined };
   }

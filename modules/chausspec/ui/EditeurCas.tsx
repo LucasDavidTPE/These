@@ -4,8 +4,8 @@
  */
 import { useState } from "react";
 import { useContexte } from "@interface/contexte";
-import { lireCarteCSV, type CasJSON, type EmpreinteCas, type MateriauCas } from "../core/cas";
-import { COMPOSANTES, type Composante } from "../core/spectral";
+import { loadMapCsv, type CaseJSON, type FootprintJSON, type MaterialJSON } from "../core/io";
+import { ALL, type Component } from "../core/spectral";
 import { useChaussspec } from "./etat";
 
 /** Nombre saisi librement (virgule acceptée), pris dès qu'il est lisible. */
@@ -52,14 +52,14 @@ function Liste({ v, onChange, aria }: { v: number[]; onChange(v: number[]): void
   );
 }
 
-const TYPES_LOI: { v: MateriauCas["type"]; l: string }[] = [
+const TYPES_LOI: { v: MaterialJSON["type"]; l: string }[] = [
   { v: "elastic", l: "Élastique" },
   { v: "2S2P1D", l: "2S2P1D" },
   { v: "KVG", l: "Kelvin-Voigt généralisé" },
   { v: "maxwell", l: "Maxwell généralisé (Prony)" },
 ];
 
-function loiParDefaut(t: MateriauCas["type"], avant: MateriauCas): MateriauCas {
+function loiParDefaut(t: MaterialJSON["type"], avant: MaterialJSON): MaterialJSON {
   const nu = avant.nu ?? 0.35;
   if (t === "elastic") return { type: "elastic", E: "E" in avant ? avant.E : 5000, nu };
   if (t === "2S2P1D") return { type: "2S2P1D", E00: 65, E0: 30000, k: 0.25, h: 0.787, delta: 1.58, tau_ref: 1.22, beta: "inf", T_ref: 9.3, nu };
@@ -83,13 +83,13 @@ interface CalageTraitement {
   nu0?: number;
 }
 
-function Loi({ m, onChange }: { m: MateriauCas; onChange(m: MateriauCas): void }) {
+function Loi({ m, onChange }: { m: MaterialJSON; onChange(m: MaterialJSON): void }) {
   const ctx = useContexte();
   const [calages, setCalages] = useState<CalageTraitement[] | null>(null);
   const champ = (cle: string, label: string, opt?: { vide?: boolean; largeur?: number }) => (
     <label className="cs-champ">
       <span>{label}</span>
-      <Nombre v={(m as Record<string, unknown>)[cle] as number | null} vide={opt?.vide} largeur={opt?.largeur} aria={label} onChange={(v) => onChange({ ...m, [cle]: v } as MateriauCas)} />
+      <Nombre v={(m as Record<string, unknown>)[cle] as number | null} vide={opt?.vide} largeur={opt?.largeur} aria={label} onChange={(v) => onChange({ ...m, [cle]: v } as MaterialJSON)} />
     </label>
   );
   if (m.type === "elastic")
@@ -160,7 +160,7 @@ function Loi({ m, onChange }: { m: MateriauCas; onChange(m: MateriauCas): void }
   const liste = (cle: "Ei" | "taui", label: string) => (
     <label className="cs-champ" style={{ flex: 1 }}>
       <span>{label}</span>
-      <Liste v={m[cle]} aria={label} onChange={(v) => onChange({ ...m, [cle]: v } as MateriauCas)} />
+      <Liste v={m[cle]} aria={label} onChange={(v) => onChange({ ...m, [cle]: v } as MaterialJSON)} />
     </label>
   );
   return (
@@ -196,7 +196,7 @@ export function EditeurStructure() {
                     <Nombre v={L.h ?? 1} aria={`Épaisseur de la couche ${i + 1}`} largeur={70} onChange={(v) => v !== null && v > 0 && maj((c) => (c.structure.layers[i]!.h = v))} />
                   </label>
                 )}
-                <select className="champ" value={L.material.type} aria-label={`Loi de la couche ${i + 1}`} onChange={(e) => maj((c) => (c.structure.layers[i]!.material = loiParDefaut(e.target.value as MateriauCas["type"], L.material)))}>
+                <select className="champ" value={L.material.type} aria-label={`Loi de la couche ${i + 1}`} onChange={(e) => maj((c) => (c.structure.layers[i]!.material = loiParDefaut(e.target.value as MaterialJSON["type"], L.material)))}>
                   {TYPES_LOI.map((t) => (
                     <option key={t.v} value={t.v}>
                       {t.l}
@@ -258,14 +258,14 @@ export function EditeurStructure() {
   );
 }
 
-const TYPES_EMPREINTE: { v: EmpreinteCas["type"]; l: string }[] = [
+const TYPES_EMPREINTE: { v: FootprintJSON["type"]; l: string }[] = [
   { v: "rect", l: "Rectangle uniforme" },
   { v: "circle", l: "Disque uniforme" },
   { v: "separable", l: "Séparable (profils 1D)" },
   { v: "map", l: "Carte de pression (CSV)" },
 ];
 
-function empreinteParDefaut(t: EmpreinteCas["type"], force: number): EmpreinteCas {
+function empreinteParDefaut(t: FootprintJSON["type"], force: number): FootprintJSON {
   if (t === "rect") return { type: "rect", lx: 0.56, ly: 0.4, force };
   if (t === "circle") return { type: "circle", R: 0.15, force };
   if (t === "separable")
@@ -281,9 +281,9 @@ export function EditeurChargement() {
     const f = await ctx.plateforme.ouvrirFichier("Carte de pression (CSV : 1re ligne x, 1re colonne y, « ; »)", ["csv", "txt"]);
     if (!f) return;
     try {
-      const c = lireCarteCSV(new TextDecoder().decode(f.octets));
+      const c = loadMapCsv(new TextDecoder().decode(f.octets));
       maj((k) => {
-        const fp = k.loading.wheels[i]!.footprint as Extract<EmpreinteCas, { type: "map" }>;
+        const fp = k.loading.wheels[i]!.footprint as Extract<FootprintJSON, { type: "map" }>;
         Object.assign(fp, { x: c.x, y: c.y, P: c.P, file: undefined });
       });
       signaler(`Carte lue : ${c.x.length} × ${c.y.length} pixels (${f.nom}).`);
@@ -310,7 +310,7 @@ export function EditeurChargement() {
         <tbody>
           {roues.map((w, i) => {
             const fp = w.footprint;
-            const setFp = (patch: Partial<EmpreinteCas>) => maj((c) => Object.assign(c.loading.wheels[i]!.footprint, patch));
+            const setFp = (patch: Partial<FootprintJSON>) => maj((c) => Object.assign(c.loading.wheels[i]!.footprint, patch));
             return (
               <tr key={i}>
                 <td>{i + 1}</td>
@@ -321,7 +321,7 @@ export function EditeurChargement() {
                   <Nombre v={w.y0 ?? 0} aria={`y0 roue ${i + 1}`} largeur={64} onChange={(v) => maj((c) => (c.loading.wheels[i]!.y0 = v ?? 0))} />
                 </td>
                 <td>
-                  <select className="champ" value={fp.type} onChange={(e) => maj((c) => (c.loading.wheels[i]!.footprint = empreinteParDefaut(e.target.value as EmpreinteCas["type"], fp.force ?? 100000)))}>
+                  <select className="champ" value={fp.type} onChange={(e) => maj((c) => (c.loading.wheels[i]!.footprint = empreinteParDefaut(e.target.value as FootprintJSON["type"], fp.force ?? 100000)))}>
                     {TYPES_EMPREINTE.map((t) => (
                       <option key={t.v} value={t.v}>
                         {t.l}
@@ -402,8 +402,8 @@ export function EditeurCalcul() {
   const fen = g.window ?? null;
   const comps = o.components ?? ["uz", "exx", "eyy", "ezz"];
   const puissances = [64, 128, 256, 512, 1024, 2048];
-  const setG = (f: (x: NonNullable<CasJSON["grid"]>) => void) => maj((c) => f((c.grid ??= {})));
-  const setO = (f: (x: NonNullable<CasJSON["outputs"]>) => void) => maj((c) => f((c.outputs ??= {})));
+  const setG = (f: (x: NonNullable<CaseJSON["grid"]>) => void) => maj((c) => f((c.grid ??= {})));
+  const setO = (f: (x: NonNullable<CaseJSON["outputs"]>) => void) => maj((c) => f((c.outputs ??= {})));
   const cout = (N[0] * N[1]) / 2 / 1e3;
   return (
     <div className="cs-calcul">
@@ -487,9 +487,9 @@ export function EditeurCalcul() {
         </label>
       </div>
       <div className="cs-comps" role="group" aria-label="Composantes calculées">
-        {COMPOSANTES.map((c) => (
+        {ALL.map((c) => (
           <label key={c} className="petit">
-            <input type="checkbox" checked={comps.includes(c)} onChange={(e) => setO((x) => (x.components = e.target.checked ? COMPOSANTES.filter((k) => k === c || comps.includes(k)) : comps.filter((k) => k !== c)))} /> {c}
+            <input type="checkbox" checked={comps.includes(c)} onChange={(e) => setO((x) => (x.components = e.target.checked ? ALL.filter((k) => k === c || comps.includes(k)) : comps.filter((k) => k !== c)))} /> {c}
           </label>
         ))}
       </div>
@@ -498,7 +498,7 @@ export function EditeurCalcul() {
           <span className="petit">Jauges (signal vu par un point fixe au passage de la charge) :</span>
           {(o.gauges ?? []).map((j, i) => (
             <span key={i} className="rangee" style={{ gap: 4 }}>
-              <select className="champ" value={j.comp} onChange={(e) => setO((x) => (x.gauges![i]!.comp = e.target.value as Composante))}>
+              <select className="champ" value={j.comp} onChange={(e) => setO((x) => (x.gauges![i]!.comp = e.target.value as Component))}>
                 {comps.map((c) => (
                   <option key={c}>{c}</option>
                 ))}

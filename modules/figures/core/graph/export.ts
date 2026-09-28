@@ -7,7 +7,8 @@ import { escapeXml, primitiveSvg } from "../schema/export/svg";
 import { THEMES } from "../schema/theme";
 import { latexText } from "../schema/export/tikz";
 import { generateSty } from "../schema/export/sty";
-import { graphLayout } from "./layout";
+import { fitCorner } from "./fit";
+import { graphFits, graphLayout, legendRow } from "./layout";
 import { GRAPH_FORMAT, validateGraph, type GraphDoc, type GraphError } from "./model";
 import { graphTheme, isPlain } from "./style";
 import type { AxisScale } from "./ticks";
@@ -143,6 +144,29 @@ export function exportPgfplots(raw: unknown, options: PgfplotsOptions = {}): Pgf
     }
     if (s.legend && doc.legend !== "none") lines.push(`\\addlegendentry{${latexText(s.name)}}`);
   });
+  // Régressions : mêmes points que le SVG, puis l'encadré des équations.
+  const fits = graphFits(doc, xs, ys);
+  const fitDraw = (i: number) => {
+    const st = theme.graph.series[i % theme.graph.series.length]!;
+    return `draw=${st.tikz}, line width=${n(theme.strokes.trait.width)}mm, ${st.dash === "dashed" ? "dotted" : "dashed"}`;
+  };
+  for (const f of fits) {
+    lines.push("");
+    lines.push(`% Régression de la série ${f.i + 1} (${f.result.kind}, R² = ${formatData(f.result.r2)})`);
+    lines.push(`\\addplot[${fitDraw(f.i)}, mark=none, forget plot] coordinates {${f.points.map(([x, y]) => `(${formatData(x)},${formatData(y)})`).join(" ")}};`);
+  }
+  const labels = fits.filter((f) => f.label);
+  if (labels.length > 0) {
+    const corner = fitCorner(doc.fit_pos, doc.legend);
+    const east = corner.includes("east");
+    const south = corner.includes("south");
+    const legendH = corner === doc.legend ? legendRow(theme) * doc.series.filter((s) => s.legend).length + 2.5 : 0;
+    const rows = labels.map((f) => `\\tikz[baseline=-0.5ex]\\draw[${fitDraw(f.i)}] (0,0) -- (6mm,0);~${f.label}`);
+    lines.push("");
+    lines.push(
+      `\\node[anchor=${corner}, draw, fill=white, line width=${n(theme.strokes["trait fin"].width)}mm, inner sep=1mm, align=left, xshift=${east ? "-" : ""}1.5mm, yshift=${south ? "" : "-"}${n(1.5 + legendH)}mm] at (rel axis cs:${east ? 1 : 0},${south ? 0 : 1}) {${rows.join(" \\\\ ")}};`,
+    );
+  }
   if (doc.legend === "none") lines.splice(5, 1, lines[5]!.replace(/legend pos=[a-z ]+/, "legend style={draw=none}"));
   lines.push("\\end{axis}");
   lines.push("\\end{tikzpicture}");

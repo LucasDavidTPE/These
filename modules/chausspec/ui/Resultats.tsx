@@ -6,8 +6,9 @@
 import { useMemo, useState } from "react";
 import { grapheSvg, PALETTE_THEME, type Serie } from "@noyau/graphe";
 import { useContexte } from "@interface/contexte";
-import { coupeX, coupeY, csvChamp, deformationPrincipale, e6, extremes } from "../core/resultats";
-import { dessiner, fmt, unite } from "./carte";
+import { extremes, fieldCsv, fmtE6 } from "../core/io";
+import { STRAIN } from "../core/spectral";
+import { coupeX, coupeY, dessiner, fmt, unite } from "./carte";
 import { CarteChamp } from "./CarteChamp";
 import { useChaussspec } from "./etat";
 import { versResultat, type ResultatSerialise } from "./execution";
@@ -39,25 +40,24 @@ export function Resultats({ r }: { r: ResultatSerialise }) {
   const ctx = useContexte();
   const { nom, signaler, cas } = useChaussspec();
   const res = useMemo(() => versResultat(r), [r]);
-  const complexe = r.champs.some((c) => c.im !== null);
-  const toutes = ["exx", "eyy", "ezz", "exy", "exz", "eyz"];
+  const complexe = r.meta.complex;
   const zs = [...new Set(r.champs.map((c) => c.z))];
-  const avecE1 = !complexe && toutes.every((c) => r.champs.some((k) => k.comp === c));
+  const avecE1 = !complexe && STRAIN.every((c) => r.champs.some((k) => k.comp === c));
   const choix = [...r.champs.map((c) => `${c.comp}@${c.z}`), ...(avecE1 ? zs.map((z) => `e1@${z}`) : [])];
   const [cle, setCle] = useState(choix[0]!);
   const [vue, setVue] = useState<Vue>("re");
   const [comp, zTxt] = cle.split("@") as [string, string];
   const z = Number(zTxt);
   const f = useMemo(() => {
-    if (comp === "e1") return deformationPrincipale(res, z);
+    if (comp === "e1") return res.principalStrains(z)[2];
     const c = r.champs.find((k) => k.comp === comp && k.z === z)!;
     if (vue === "re" || !c.im) return c.re;
     return vue === "im" ? c.im : Float64Array.from(c.re, (v, i) => Math.hypot(v, c.im![i]!));
   }, [comp, z, vue, r, res]);
   const ext = extremes(res, f);
   const { k, u } = unite(comp);
-  const cx = coupeX(res, f, ext.y_max),
-    cy = coupeY(res, f, ext.x_max);
+  const cx = coupeX(res.x, res.y, f, ext.y_max),
+    cy = coupeY(res.x, res.y, f, ext.x_max);
   const regime = cas.regime?.type ?? "static";
 
   async function enregistrerDossier() {
@@ -67,9 +67,9 @@ export function Resultats({ r }: { r: ResultatSerialise }) {
       const fs = ctx.plateforme.fichiers(dossier);
       const sous = `resultats_${nom}`;
       await fs.ensureDir(sous);
-      for (const c of r.champs) await fs.writeTextAtomic(`${sous}/${c.comp}_z${c.z.toFixed(3)}.csv`, csvChamp(res, c.comp, c.z));
+      for (const c of r.champs) await fs.writeTextAtomic(`${sous}/${c.comp}_z${c.z.toFixed(3)}.csv`, fieldCsv(res, c.comp, c.z));
       await fs.writeTextAtomic(`${sous}/synthese.json`, JSON.stringify(r.synthese, null, 1) + "\n");
-      for (const [i, j] of r.jauges.entries()) await fs.writeTextAtomic(`${sous}/jauge${i + 1}_${j.comp}.csv`, ["t (s);valeur", ...j.t.map((t, q) => `${e6(t)};${e6(j.v[q]!)}`)].join("\n") + "\n");
+      for (const [i, j] of r.jauges.entries()) await fs.writeTextAtomic(`${sous}/jauge${i + 1}_${j.comp}.csv`, ["t (s);valeur", ...j.t.map((t, q) => `${fmtE6(t)};${fmtE6(j.f[q]!)}`)].join("\n") + "\n");
       await fs.writeTextAtomic(`${sous}/cas.json`, JSON.stringify(cas, null, 2) + "\n");
       signaler(`Résultats écrits dans ${dossier}/${sous} (même format que python -m chausspec).`);
     } catch (e) {
@@ -178,7 +178,7 @@ export function Resultats({ r }: { r: ResultatSerialise }) {
             </tbody>
           </table>
           <p className="discret petit">
-            Calcul : {r.meta.secondes.toFixed(1).replace(".", ",")} s, grille {r.meta.N[0]} × {r.meta.N[1]} sur {r.meta.L[0]} × {r.meta.L[1]} m, {r.meta.noeudsBande[0]} + {r.meta.noeudsBande[1]} nœuds de bande ; charge totale {Math.round(r.meta.force / 1000).toLocaleString("fr-FR")} kN.
+            Calcul : {r.meta.cpuS.toFixed(1).replace(".", ",")} s, grille {r.meta.N[0]} × {r.meta.N[1]} sur {r.meta.L[0]} × {r.meta.L[1]} m, {r.meta.nBandNodes[0]} + {r.meta.nBandNodes[1]} nœuds de bande ; charge totale {Math.round(r.meta.force / 1000).toLocaleString("fr-FR")} kN.
             {complexe ? " Régime harmonique : champs complexes." : ""}
           </p>
         </div>
@@ -221,7 +221,7 @@ export function Resultats({ r }: { r: ResultatSerialise }) {
                     graphe(
                       "$t$ (s)",
                       "valeur",
-                      r.jauges.map((j) => ({ name: `${j.comp} z = ${j.z} m (${j.x} ; ${j.y})`, x: j.t, y: j.v.map((v) => v * unite(j.comp).k) })),
+                      r.jauges.map((j) => ({ name: `${j.comp} z = ${j.z} m (${j.x} ; ${j.y})`, x: j.t, y: j.f.map((v) => v * unite(j.comp).k) })),
                     ),
                   )
                 }
@@ -231,7 +231,7 @@ export function Resultats({ r }: { r: ResultatSerialise }) {
             ) : null}
           </div>
           <GrapheXY
-            series={r.jauges.map((j, i) => ({ points: j.t.map((t, q) => [t, j.v[q]! * unite(j.comp).k] as const), mode: "ligne" as const, couleur: ["#b2182b", "#2166ac", "#1b9e77", "#7570b3"][i % 4]!, epaisseur: 1.6, libelle: `${j.comp} à z = ${j.z} m` }))}
+            series={r.jauges.map((j, i) => ({ points: j.t.map((t, q) => [t, j.f[q]! * unite(j.comp).k] as const), mode: "ligne" as const, couleur: ["#b2182b", "#2166ac", "#1b9e77", "#7570b3"][i % 4]!, epaisseur: 1.6, libelle: `${j.comp} à z = ${j.z} m` }))}
             xTitre="t (s)"
             yTitre={r.jauges.length === 1 ? `${r.jauges[0]!.comp} (${unite(r.jauges[0]!.comp).u})` : "valeur"}
           />

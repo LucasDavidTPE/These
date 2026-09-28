@@ -223,6 +223,12 @@ Ajouts permis par l'intégration :
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,
   duplication ; historique Annuler / Rétablir. « Régénérer » depuis l'essai repart des
   données : les retouches de données sont alors perdues (la mise en forme reste).
+- **régression** par série (1.0.2) : champ facultatif `fit: {kind, label}` d'une série
+  (`lineaire` y = a·x + b, `origine` y = a·x, `puissance` y = a·xᵇ par moindres carrés en
+  log-log) ; courbe en tirets de la couleur de la série sur l'étendue de ses x, et, si
+  `label`, équation et R² (4 chiffres significatifs, virgule décimale) dans un encadré au coin
+  `fit_pos` du graphe (par défaut, en haut du côté opposé à la légende). Même rendu en SVG et
+  en pgfplots (`\addplot coordinates` + `\node` à `rel axis cs`) ; ignorée pour les barres.
 
 ## 7. Module Traitement 2S2P1D
 
@@ -466,6 +472,12 @@ régime harmonique). Un cas = `chausspec/<nom>.json` dans l'espace, au **format 
 Calcul dans un Worker, cartes des champs, extrêmes et ε1, coupes, jauges (charge roulante),
 export du dossier de résultats au format du Python, cartes et courbes vers Figures, constantes
 2S2P1D reprises du Traitement (action `traitement.calages`).
+
+Organisation du code (1.0.3) : `core/` suit le paquet Python fichier par fichier
+(`kernel.ts` ↔ `kernel.py`, `grid.ts` ↔ `grid.py`…), avec les mêmes noms de classes et de
+fonctions, les mêmes étapes et les mêmes commentaires, et calcule comme numpy sur des paquets
+de nombres d'onde (`core/carray.ts`) ; une modification du Python se reporte au même endroit.
+La correspondance et les conventions d'écriture sont dans `modules/chausspec/README.md`.
 
 Écart assumé : effort tangentiel + interface glissante est refusé (problème mal posé ; le
 Python renvoie des NaN). Non porté : le module texture (contact, deux échelles, éléments finis

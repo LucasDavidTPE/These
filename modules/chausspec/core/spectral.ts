@@ -1,194 +1,134 @@
-/**
- * Régimes et assemblage des multiplicateurs spectraux (portage de regimes.py et
- * spectral.py) : pour un nombre d'onde (k1, k2) et le spectre du chargement, les transformées
- * des composantes demandées aux profondeurs demandées.
- */
-import { lame } from "./materiaux";
-import { Noyau, nouvellesAmplitudes, type Amplitudes } from "./noyau";
+/** Assemblage des multiplicateurs spectraux : noyau x chargement -> composantes transformées (spectral.py). */
+import { CArray, meshgrid, mul } from "./carray";
+import { StiffnessKernel, type Amplitudes } from "./kernel";
+import type { Loading } from "./loads";
+import type { Regime } from "./regimes";
 import type { Structure } from "./structure";
 
-export const DEPLACEMENTS = ["ux", "uy", "uz"] as const;
-export const DEFORMATIONS = ["exx", "eyy", "ezz", "exy", "exz", "eyz"] as const;
-export const CONTRAINTES = ["sxx", "syy", "szz", "sxy", "sxz", "syz"] as const;
-export const COMPOSANTES = [...DEPLACEMENTS, ...DEFORMATIONS, ...CONTRAINTES] as const;
-export type Composante = (typeof COMPOSANTES)[number];
+export const DISP = ["ux", "uy", "uz"] as const;
+export const STRAIN = ["exx", "eyy", "ezz", "exy", "exz", "eyz"] as const;
+export const STRESS = ["sxx", "syy", "szz", "sxy", "sxz", "syz"] as const;
+export const ALL = [...DISP, ...STRAIN, ...STRESS] as const;
+export type Component = (typeof ALL)[number];
 
-/**
- * Régime : pulsation vue par le matériau pour chaque nombre d'onde.
- * statique ω = 0 ; harmonique ω = 2πf (champs complexes) ; roulant ω = −k1·V (repère mobile,
- * charge avançant vers +x, inertie négligée).
- */
-export type Regime = { type: "static" } | { type: "harmonic"; freq: number } | { type: "moving"; speed: number };
+/** Clé d'un champ : le couple (comp, z) du Python, écrit « comp@z ». */
+export const fieldKey = (comp: string, z: number) => `${comp}@${z}`;
 
-export const hermitien = (r: Regime) => r.type !== "harmonic";
-export function omega(r: Regime, k1: number): number {
-  return r.type === "static" ? 0 : r.type === "harmonic" ? 2 * Math.PI * r.freq : -k1 * r.speed;
-}
-
-export interface Cle {
-  comp: Composante;
-  z: number;
+export function layerModuli(structure: Structure, omega: Float64Array): [CArray[], CArray[]] {
+  const lam: CArray[] = [];
+  const mu: CArray[] = [];
+  for (const L of structure.layers) {
+    const [l, m] = L.material.lame(omega);
+    lam.push(l);
+    mu.push(m);
+  }
+  return [lam, mu];
 }
 
 /**
- * Évalue le spectre des composantes demandées, un nombre d'onde à la fois. Les modules de
- * Lamé sont gardés tant que la pulsation ne change pas (une fois par colonne k1 en roulant,
- * une fois pour tout le calcul en statique).
+ * Transformées de Fourier des composantes demandées à une profondeur.
+ *
+ * amp : amplitudes renvoyées par StiffnessKernel.atDepth ; p = p^ ; T0, R0 : décomposition
+ * P-SV / SH des efforts tangentiels de surface (ou null).
  */
-export class Evaluateur {
-  readonly cles: Cle[];
-  private readonly noyau: Noyau;
-  private readonly amp: Amplitudes = nouvellesAmplitudes();
-  private readonly lam: Float64Array;
-  private readonly mu: Float64Array;
-  private omegaCourant = NaN;
-  private readonly profondeurs: number[];
-
-  constructor(
-    private readonly st: Structure,
-    private readonly regime: Regime,
-    comps: readonly Composante[],
-    profondeurs: readonly number[],
-    private readonly cote: "above" | "below" = "above",
-    private readonly tangentiel = false,
-    private readonly filtre = 0,
-  ) {
-    this.profondeurs = [...profondeurs];
-    this.cles = comps.flatMap((comp) => this.profondeurs.map((z) => ({ comp, z })));
-    this.noyau = new Noyau(st, tangentiel);
-    this.lam = new Float64Array(2 * st.n);
-    this.mu = new Float64Array(2 * st.n);
-    this.comps = [...comps];
+export function componentsFromAmplitudes(amp: Amplitudes, xi: Float64Array, c1: Float64Array, c2: Float64Array, p: CArray, T0: CArray | null, R0: CArray | null, comps: readonly Component[]): Map<Component, CArray> {
+  const mr = amp.muRef;
+  const [Un, Wn, dUn, dWn] = amp.n;
+  let U = Un.mul(p);
+  let W = Wn.mul(p);
+  let dU = dUn.mul(p);
+  let dW = dWn.mul(p);
+  let V = CArray.zeros(xi.length);
+  let dV = CArray.zeros(xi.length);
+  if (T0 !== null && R0 !== null) {
+    const [Ut, Wt, dUt, dWt] = amp.t!;
+    U = U.add(Ut.mul(T0));
+    W = W.add(Wt.mul(T0));
+    dU = dU.add(dUt.mul(T0));
+    dW = dW.add(dWt.mul(T0));
+    const [Vs, dVs] = amp.sh!;
+    V = Vs.mul(R0);
+    dV = dVs.mul(R0);
   }
-  private readonly comps: Composante[];
-
-  private modules(k1: number) {
-    const w = omega(this.regime, k1);
-    if (w === this.omegaCourant) return;
-    this.omegaCourant = w;
-    this.st.couches.forEach((L, j) => {
-      const { lam, mu } = lame(L.materiau, w);
-      this.lam[2 * j] = lam.re;
-      this.lam[2 * j + 1] = lam.im;
-      this.mu[2 * j] = mu.re;
-      this.mu[2 * j + 1] = mu.im;
-    });
+  const out = new Map<Component, CArray>();
+  const need = new Set(comps);
+  const e: Partial<Record<(typeof STRAIN)[number], CArray>> = {};
+  if ([...STRAIN, ...STRESS].some((c) => need.has(c))) {
+    e.exx = mul(c1, mul(c1, U).sub(mul(c2, V))).neg().div(mr); //  -c1 (c1 U - c2 V) / mr
+    e.eyy = mul(c2, mul(c2, U).add(mul(c1, V))).neg().div(mr); //  -c2 (c2 U + c1 V) / mr
+    e.ezz = dW.div(mr); //                                          dW / mr
+    const c1c2 = c1.map((a, i) => a * c2[i]!);
+    const halfDiff = c1.map((a, i) => 0.5 * (a ** 2 - c2[i]! ** 2));
+    e.exy = mul(c1c2, U).add(mul(halfDiff, V)).neg().div(mr); //   -(c1 c2 U + 0.5 (c1^2 - c2^2) V) / mr
+    const dUW = dU.add(W);
+    e.exz = mul(c1, dUW).sub(mul(c2, dV)).mulI().mul(0.5).div(mr); // 0.5j (c1 (dU + W) - c2 dV) / mr
+    e.eyz = mul(c2, dUW).add(mul(c1, dV)).mulI().mul(0.5).div(mr); // 0.5j (c2 (dU + W) + c1 dV) / mr
   }
-
-  /**
-   * Transformées au point (k1, k2) : out[2·i], out[2·i+1] pour la clé i (ordre de `cles`).
-   * p : spectre de pression ; qx, qy : spectres tangentiels (ou null).
-   */
-  evaluer(k1: number, k2: number, pr: number, pi: number, qx: [number, number] | null, qy: [number, number] | null, out: Float64Array): void {
-    const xi = Math.hypot(k1, k2);
-    if (xi === 0) throw new Error("ξ = 0 doit être traité à part.");
-    const c1 = k1 / xi,
-      c2 = k2 / xi;
-    this.modules(k1);
-    if (this.filtre > 0) {
-      const f = Math.exp(-0.5 * (xi * this.filtre) ** 2);
-      pr *= f;
-      pi *= f;
-    }
-    // décomposition P-SV / SH des efforts tangentiels : T0 = i(c1 qx + c2 qy), R0 = i(−c2 qx + c1 qy)
-    let T0r = 0,
-      T0i = 0,
-      R0r = 0,
-      R0i = 0;
-    const tang = this.tangentiel;
-    if (tang) {
-      const ax = qx ?? [0, 0],
-        ay = qy ?? [0, 0];
-      const sr = c1 * ax[0] + c2 * ay[0],
-        si = c1 * ax[1] + c2 * ay[1];
-      T0r = -si;
-      T0i = sr;
-      const rr = -c2 * ax[0] + c1 * ay[0],
-        ri = -c2 * ax[1] + c1 * ay[1];
-      R0r = -ri;
-      R0i = rr;
-    }
-    this.noyau.resoudre(xi, this.lam, this.mu);
-    const mr = this.noyau.mr;
-    const nz = this.profondeurs.length;
-    for (let iz = 0; iz < nz; iz++) {
-      const a = this.noyau.amplitudes(this.profondeurs[iz]!, this.cote, this.amp);
-      const n = a.n;
-      // U, W, dU, dW = amplitudes × p (+ tangentiel × T0) ; V, dV = SH × R0
-      const mulp = (k: number): [number, number] => {
-        let re = n[2 * k]! * pr - n[2 * k + 1]! * pi,
-          im = n[2 * k]! * pi + n[2 * k + 1]! * pr;
-        if (tang) {
-          re += a.t[2 * k]! * T0r - a.t[2 * k + 1]! * T0i;
-          im += a.t[2 * k]! * T0i + a.t[2 * k + 1]! * T0r;
-        }
-        return [re, im];
-      };
-      const U = mulp(0),
-        W = mulp(1),
-        dU = mulp(2),
-        dW = mulp(3);
-      let V: [number, number] = [0, 0],
-        dV: [number, number] = [0, 0];
-      if (tang) {
-        V = [a.sh[0]! * R0r - a.sh[1]! * R0i, a.sh[0]! * R0i + a.sh[1]! * R0r];
-        dV = [a.sh[2]! * R0r - a.sh[3]! * R0i, a.sh[2]! * R0i + a.sh[3]! * R0r];
-      }
-      // déformations
-      const exx: [number, number] = [(-c1 * (c1 * U[0] - c2 * V[0])) / mr, (-c1 * (c1 * U[1] - c2 * V[1])) / mr];
-      const eyy: [number, number] = [(-c2 * (c2 * U[0] + c1 * V[0])) / mr, (-c2 * (c2 * U[1] + c1 * V[1])) / mr];
-      const ezz: [number, number] = [dW[0] / mr, dW[1] / mr];
-      const exy: [number, number] = [-(c1 * c2 * U[0] + 0.5 * (c1 * c1 - c2 * c2) * V[0]) / mr, -(c1 * c2 * U[1] + 0.5 * (c1 * c1 - c2 * c2) * V[1]) / mr];
-      // 0.5 i (…) : (re, im) → (−0.5 im, 0.5 re)
-      const sxzR = c1 * (dU[0] + W[0]) - c2 * dV[0],
-        sxzI = c1 * (dU[1] + W[1]) - c2 * dV[1];
-      const exz: [number, number] = [(-0.5 * sxzI) / mr, (0.5 * sxzR) / mr];
-      const syzR = c2 * (dU[0] + W[0]) + c1 * dV[0],
-        syzI = c2 * (dU[1] + W[1]) + c1 * dV[1];
-      const eyz: [number, number] = [(-0.5 * syzI) / mr, (0.5 * syzR) / mr];
-      const e: Record<string, [number, number]> = { exx, eyy, ezz, exy, exz, eyz };
-      const [lr, li, mur, mui] = this.noyau.lameCouche(a.couche);
-      const tr: [number, number] = [exx[0] + eyy[0] + ezz[0], exx[1] + eyy[1] + ezz[1]];
-      this.comps.forEach((comp, ic) => {
-        let v: [number, number];
-        switch (comp) {
-          case "ux": {
-            const sr = c1 * U[0] - c2 * V[0],
-              si = c1 * U[1] - c2 * V[1];
-            v = [-si / (mr * xi), sr / (mr * xi)];
-            break;
-          }
-          case "uy": {
-            const sr = c2 * U[0] + c1 * V[0],
-              si = c2 * U[1] + c1 * V[1];
-            v = [-si / (mr * xi), sr / (mr * xi)];
-            break;
-          }
-          case "uz":
-            v = [W[0] / (mr * xi), W[1] / (mr * xi)];
-            break;
-          case "sxx":
-          case "syy":
-          case "szz": {
-            const ee = e["e" + comp.slice(1)]!;
-            // λ tr + 2 μ e
-            v = [lr * tr[0] - li * tr[1] + 2 * (mur * ee[0] - mui * ee[1]), lr * tr[1] + li * tr[0] + 2 * (mur * ee[1] + mui * ee[0])];
-            break;
-          }
-          case "sxy":
-          case "sxz":
-          case "syz": {
-            const ee = e["e" + comp.slice(1)]!;
-            v = [2 * (mur * ee[0] - mui * ee[1]), 2 * (mur * ee[1] + mui * ee[0])];
-            break;
-          }
-          default:
-            v = e[comp]!;
-        }
-        const o = 2 * (ic * nz + iz);
-        out[o] = v[0];
-        out[o + 1] = v[1];
-      });
+  const mrXi = mr.map((m, i) => m * xi[i]!);
+  for (const c of comps) {
+    if (c === "ux") out.set(c, mul(c1, U).sub(mul(c2, V)).mulI().div(mrXi)); //  1j (c1 U - c2 V) / (mr xi)
+    else if (c === "uy") out.set(c, mul(c2, U).add(mul(c1, V)).mulI().div(mrXi)); // 1j (c2 U + c1 V) / (mr xi)
+    else if (c === "uz") out.set(c, W.div(mrXi)); //                                  W / (mr xi)
+    else if ((STRAIN as readonly string[]).includes(c)) out.set(c, e[c as keyof typeof e]!);
+  }
+  if (STRESS.some((c) => need.has(c))) {
+    const lam = amp.lam;
+    const mu = amp.mu;
+    const tr = e.exx!.add(e.eyy!).add(e.ezz!);
+    for (const c of comps) {
+      const eps = e[`e${c.slice(1)}` as keyof typeof e];
+      if (c === "sxx" || c === "syy" || c === "szz") out.set(c, lam.mul(tr).add(mu.mul(2).mul(eps!))); // lam tr + 2 mu e
+      else if (c === "sxy" || c === "sxz" || c === "syz") out.set(c, mu.mul(2).mul(eps!)); //             2 mu e
     }
   }
+  return out;
+}
+
+/** (T0, R0) tels que sigma_xz(0) = -qx et sigma_yz(0) = -qy (voir notice §3.4). */
+export function tangentialDecomposition(c1: Float64Array, c2: Float64Array, qx: CArray | null, qy: CArray | null): [CArray | null, CArray | null] {
+  if (qx === null && qy === null) return [null, null];
+  const zero = CArray.zeros(c1.length);
+  const Qx = qx ?? zero;
+  const Qy = qy ?? zero;
+  const T0 = mul(c1, Qx).add(mul(c2, Qy)).mulI(); //        1j (c1 qx + c2 qy)
+  const R0 = mul(c2, Qx).neg().add(mul(c1, Qy)).mulI(); //  1j (-c2 qx + c1 qy)
+  return [T0, R0];
+}
+
+export interface SpectralOptions {
+  side?: "above" | "below";
+  /** Largeur (m) d'un filtre gaussien appliqué au chargement (0 = aucun). */
+  filterWidth?: number;
+}
+
+/**
+ * Calcule, pour un paquet de nombres d'onde, les transformées des composantes demandées à
+ * chaque profondeur. Renvoie une Map fieldKey(comp, z) -> tableau.
+ *
+ * Différence d'écriture avec le Python : le paquet est la grille tensorielle k2 (lignes) × k1
+ * (colonnes), donnée par ses deux axes (le Python reçoit np.meshgrid(k1, k2)) ; les tableaux
+ * renvoyés sont rangés ligne par ligne (k2.length × k1.length).
+ * k1_shift (texture sous enveloppe roulante) n'est pas porté.
+ */
+export function spectralFields(structure: Structure, regime: Regime, loading: Loading, k1: Float64Array, k2: Float64Array, depths: readonly number[], comps: readonly Component[], options: SpectralOptions = {}): Map<string, CArray> {
+  const [a, b] = meshgrid(k1, k2);
+  const xi = a.map((v, i) => Math.hypot(v, b[i]!));
+  if (xi.some((v) => v === 0)) throw new Error("xi = 0 doit être traité par moyenne de cellule.");
+  const c1 = a.map((v, i) => v / xi[i]!);
+  const c2 = b.map((v, i) => v / xi[i]!);
+  const omega = regime.omega(a, b);
+  const [lam, mu] = layerModuli(structure, omega);
+  const load = loading.ftGrid(k1, k2);
+  let p = load.p;
+  const fw = options.filterWidth ?? 0;
+  if (fw > 0) p = mul(p, xi.map((x) => Math.exp(-0.5 * (x * fw) ** 2)));
+  const [T0, R0] = tangentialDecomposition(c1, c2, load.qx, load.qy);
+  const K = new StiffnessKernel(structure, xi, lam, mu, T0 !== null);
+  const out = new Map<string, CArray>();
+  for (const z of depths) {
+    const amp = K.atDepth(z, options.side ?? "above");
+    const comp = componentsFromAmplitudes(amp, xi, c1, c2, p, T0, R0, comps);
+    for (const [c, v] of comp) out.set(fieldKey(c, z), v);
+  }
+  return out;
 }
