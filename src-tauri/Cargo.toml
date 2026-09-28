@@ -29,6 +29,7 @@ notify = "8"
 # décodage et encodage d'images. Absent de l'installeur « Traitement 2S2P1D ».
 ort = { version = "=2.0.0-rc.13", default-features = false, features = ["std", "load-dynamic", "api-27"], optional = true }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp", "gif", "webp"], optional = true }
+ureq = "3"
 
 [target.'cfg(windows)'.dependencies]
 clipboard-win = { version = "5", optional = true }

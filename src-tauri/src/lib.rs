@@ -6,6 +6,7 @@ pub mod copie;
 pub mod fichiers;
 #[cfg(feature = "figures")]
 pub mod figures;
+pub mod liens;
 pub mod poste;
 pub mod surveillance;
 
@@ -13,6 +14,7 @@ pub mod surveillance;
 pub fn run() {
     use copie::copie_dossier;
     use fichiers::commands::*;
+    use liens::lien_verifier;
     use poste::*;
     use surveillance::*;
     let builder = tauri::Builder::default()
@@ -36,7 +38,7 @@ pub fn run() {
             fichiers_supprimer_temporaire, verrou_lire, verrou_poser, verrou_lever, poste_nom,
             poste_lire_reglages, poste_ecrire_reglages, poste_dossiers_onedrive,
             poste_dossier_existe, poste_creer_dossier, poste_ecrire_fichier, poste_lire_fichier, poste_ouvrir_vscode,
-            surveillance_demarrer, surveillance_arreter, copie_dossier
+            surveillance_demarrer, surveillance_arreter, copie_dossier, lien_verifier
             $(, $module)*
             ]
         };

@@ -20,6 +20,13 @@ export interface RapportCopie {
   octets: number;
 }
 
+/** Réponse à la vérification d'un lien : code HTTP final, ou l'erreur. */
+export interface ReponseLien {
+  code: number | null;
+  urlFinale: string;
+  erreur: string;
+}
+
 export interface Plateforme {
   genre: "tauri" | "demo";
   nomDuPoste(): Promise<string>;
@@ -57,6 +64,8 @@ export interface Plateforme {
   ouvrirDossier(chemin: string): Promise<void>;
   /** Ouvre une adresse web dans le navigateur par défaut. */
   ouvrirLien(url: string): Promise<void>;
+  /** Interroge une adresse web (HEAD, sinon GET) ; seulement sur un geste de l'utilisateur. */
+  verifierLien(url: string): Promise<ReponseLien>;
   /**
    * Surveille une racine : `rappel` reçoit les chemins relatifs modifiés (par cette
    * application ou par OneDrive). Renvoie la fonction d'arrêt.
