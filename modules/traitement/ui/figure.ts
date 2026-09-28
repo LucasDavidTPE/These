@@ -8,7 +8,8 @@ import { svgTexteEnPng } from "@interface/image";
 import type { Contexte } from "@interface/contexte";
 import { appliquerProjet, essaiDepuisLecture, type Essai } from "../core/essai";
 import { fichierDepuisOctets, lireFichier } from "../core/io/lecture";
-import { vuesCalage, vuesSynthese, type Vue } from "../core/vues";
+import { vueEnGraphe, type GrapheFigurine } from "../core/figurine";
+import { vuesCalage, vuesSynthese, type Langue, type Vue } from "../core/vues";
 import type { DemandeEssai } from "./demande";
 import { essaiActif, useTraitement } from "./etat";
 import type { FigureDemandee } from "./Graphe";
@@ -20,12 +21,14 @@ export interface OrigineTraitement {
   demande: DemandeEssai;
   graphe: IdGraphe;
   titre: string;
+  /** Langue des titres d'axes (absente : français, figures d'avant la 0.2.7). */
+  langue?: Langue;
 }
 
-function vueDe(e: Essai, g: IdGraphe): Vue {
-  if (g === "isothermesE") return vuesSynthese(e).module;
-  if (g === "isothermesP") return vuesSynthese(e).phase;
-  return vuesCalage(e)[g];
+function vueDe(e: Essai, g: IdGraphe, langue: Langue): Vue {
+  if (g === "isothermesE") return vuesSynthese(e, langue).module;
+  if (g === "isothermesP") return vuesSynthese(e, langue).phase;
+  return vuesCalage(e, langue)[g];
 }
 
 /** Pour les étapes : ce qu'il faut à « → Figures » (titre, source, origine si l'essai vient d'une campagne). */
@@ -40,13 +43,13 @@ export function useFigure(): (titre: string, graphe: IdGraphe) => FigureDemandee
       titre: t,
       source: c ? `Traitement 2S2P1D : ${c.titre}` : `Traitement 2S2P1D : ${e.nom}`,
       tags: ["2S2P1D", e.nom],
-      origine: c ? ({ module: "traitement", demande: c, graphe, titre: t } satisfies OrigineTraitement) : undefined,
+      origine: c ? ({ module: "traitement", demande: c, graphe, titre: t, langue: s.langue } satisfies OrigineTraitement) : undefined,
     };
   };
 }
 
 /** Action « traitement.regenerer-figure ». */
-export async function regenererFigure(ctx: Contexte, o: OrigineTraitement): Promise<{ svg: string; png: Uint8Array }> {
+export async function regenererFigure(ctx: Contexte, o: OrigineTraitement): Promise<{ svg: string; png: Uint8Array; graphe: GrapheFigurine }> {
   if (!ctx.espace) throw new Error("Aucun espace Thèse ouvert.");
   const d = o.demande;
   if (!(await ctx.plateforme.dossierExiste(d.dossierDonnees))) throw new Error(`Données de l'essai absentes de ce poste (${d.dossierDonnees}).`);
@@ -59,7 +62,8 @@ export async function regenererFigure(ctx: Contexte, o: OrigineTraitement): Prom
   }
   const e = essaiDepuisLecture(await lireFichier(fichierDepuisOctets(d.fichier, octets)), 0);
   await appliquerProjet([e], JSON.parse(projet) as Parameters<typeof appliquerProjet>[1]);
-  const vue = vueDe(e, o.graphe);
+  const vue = vueDe(e, o.graphe, o.langue ?? "fr");
   const svg = grapheSvg(vue.spec, { largeur: 760, hauteur: 420, titre: o.titre, legende: vue.legende, id: "figure" });
-  return { svg, png: await svgTexteEnPng(svg) };
+  // Le PNG sert aux figures « image » d'avant la 0.2.7 ; un graphe modifiable reprend `graphe`.
+  return { svg, png: await svgTexteEnPng(svg), graphe: vueEnGraphe(vue) };
 }

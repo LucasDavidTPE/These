@@ -30,6 +30,7 @@ import {
 } from "../core/essai";
 import { vueEcartsCapteurs, vueSignal, vuesCalage, vuesComparaison, vuesSynthese } from "../core/vues";
 import { feuillesEssai } from "../core/exports";
+import { POINTS_MAX, vueEnGraphe } from "../core/figurine";
 
 async function essaiSignal() {
   const table = signalDemo();
@@ -129,4 +130,37 @@ describe("vues", () => {
     expect(c.aT.spec.series[1]!.points.length).toBeGreaterThan(10);
     expect(vuesComparaison([e, nouvelEssai("vide")]).module.legende).toEqual([["démonstration", e.couleur]]);
   }, 30000);
+});
+
+describe("graphes pour Figures et langue des axes", () => {
+  it("titres d'axes en français ou en anglais", async () => {
+    const e = await essaiDemo();
+    expect(vueSignal(e, 0, 0, "mc", "en")!.spec.yTitre).toBe("centred signal");
+    expect(vueEcartsCapteurs(e, 0, "en")!.spec.yTitre).toBe("deviation (%)");
+    expect(vueEcartsCapteurs(e, 0)!.spec.yTitre).toBe("écart (%)");
+    expect(vuesCalage(e, "en").aT.spec.series[0]!.libelle).toBe("measured");
+  }, 30000);
+
+  it("une vue devient un graph.json : échelles, titres, séries, légende", async () => {
+    const e = await essaiDemo();
+    const g = vueEnGraphe(vuesCalage(e).maitreE);
+    expect(g.format).toBe("figurine-graph/1");
+    expect(g.x).toEqual({ label: "f·a_T (Hz)", log: true });
+    expect(g.y).toEqual({ label: "|E*| (MPa)", log: true });
+    expect(g.series.length).toBe(9);
+    expect(g.series.at(-1)!.type).toBe("line");
+    expect(g.series.at(-1)!.name).toMatch(/^modèle /);
+    expect(g.series.every((s) => s.legend && s.x.length === s.y.length && s.x.every((v) => v > 0))).toBe(true);
+    expect(g.legend).toBe("south east");
+  }, 30000);
+
+  it("ligne + points du même capteur : une série « linepoints », longues séries allégées", async () => {
+    const e = await essaiDemo();
+    const g = vueEnGraphe(vueEcartsCapteurs(e, 0)!);
+    expect(g.series.every((s) => s.type === "linepoints")).toBe(true);
+    expect(g.series).toHaveLength(5);
+    const long = vueEnGraphe({ spec: { series: [{ points: Array.from({ length: 9001 }, (_, i) => [i, i] as const), mode: "ligne", couleur: "#000" }] }, format: () => "" });
+    expect(long.series[0]!.x.length).toBeLessThanOrEqual(POINTS_MAX);
+    expect(long.legend).toBe("none");
+  });
 });

@@ -7,7 +7,8 @@
  *   remplace l'image, la fiche restant la même.
  * Pur : le système de fichiers et l'horloge sont passés en paramètres.
  */
-import { saveImageFigure, saveMeta, validateMeta, joinPath, type FigureMeta, type LibraryFs } from "./library";
+import { exportGraphSvg, exportPgfplots, validateGraph, type GraphDoc } from "./graph";
+import { createFigure, saveImageFigure, saveMeta, validateMeta, joinPath, type FigureMeta, type LibraryFs } from "./library";
 
 /**
  * D'où vient une figure, pour la refaire : le module qui l'a produite et ce dont il a
@@ -18,10 +19,70 @@ export interface Origine {
   [parametre: string]: unknown;
 }
 
-/** Image rendue par un module : PNG, et SVG quand le module sait le produire. */
+/** Image rendue par un module : PNG, et SVG quand le module sait le produire ; un graphe modifiable s'il en est un. */
 export interface Rendu {
   png: Uint8Array;
   svg?: string;
+  /** Contenu de graph.json (figures « graphe » : données, axes, légende modifiables dans Figures). */
+  graphe?: unknown;
+}
+
+/** Rendu PNG d'un graphe (fourni par l'interface : il faut un navigateur pour rastériser). */
+export type RenduGraphe = (doc: GraphDoc) => Promise<Uint8Array>;
+
+function grapheValide(brut: unknown): GraphDoc {
+  const v = validateGraph(brut);
+  if (!v.ok) throw new Error(`Graphe invalide : ${v.errors.map((e) => `${e.path} : ${e.message}`).join(" ; ")}`);
+  return v.doc;
+}
+
+/** graph.json, export.tex (pgfplots), export.svg et export.png d'un graphe. */
+async function ecrireGraphe(fs: LibraryFs, dossier: string, doc: GraphDoc, rendu: RenduGraphe): Promise<void> {
+  const pgf = exportPgfplots(doc);
+  await fs.writeTextAtomic(joinPath(dossier, "graph.json"), JSON.stringify(doc, null, 2) + "\n");
+  await fs.writeTextAtomic(joinPath(dossier, "export.tex"), pgf.tex);
+  for (const [nom, contenu] of Object.entries(pgf.files)) await fs.writeTextAtomic(joinPath(dossier, nom), contenu);
+  await fs.writeTextAtomic(joinPath(dossier, "export.svg"), exportGraphSvg(doc));
+  await fs.writeBytesAtomic(joinPath(dossier, "export.png"), await rendu(doc));
+}
+
+export interface DemandeGraphe {
+  titre: string;
+  source: string;
+  tags?: string[];
+  origine?: Origine;
+  /** Contenu de graph.json (validé ici). */
+  graphe: unknown;
+}
+
+/** Action « figures.enregistrer-graphe » : un graphe modifiable (axes, légende, export pgfplots) plutôt qu'une image. */
+export async function enregistrerGraphe(fs: LibraryFs, d: DemandeGraphe, rendu: RenduGraphe, now: string, host: string): Promise<string> {
+  const doc = grapheValide(d.graphe);
+  const cree = await createFigure(fs, { title: d.titre, kind: "graph", now, host });
+  await ecrireGraphe(fs, cree.folder, doc, rendu);
+  const meta: FigureMeta = { ...cree.meta, tags: d.tags ?? [], source: { type: "own", note: d.source } };
+  if (d.origine) meta.origine = d.origine;
+  await saveMeta(fs, cree.folder, meta, { now, host });
+  return cree.folder;
+}
+
+/**
+ * Régénération d'un graphe : les données (séries, échelles) sont remplacées, la mise en forme
+ * choisie dans Figures (taille, titres d'axes, bornes, légende, grille) est gardée.
+ */
+export async function remplacerGraphe(fs: LibraryFs, dossier: string, nouveau: unknown, rendu: RenduGraphe, now: string, host: string): Promise<FigureMeta> {
+  const v = validateMeta(JSON.parse(await fs.readText(joinPath(dossier, "meta.json"))));
+  if (!v.ok) throw new Error(`meta.json invalide dans ${dossier}.`);
+  const neuf = grapheValide(nouveau);
+  let doc = neuf;
+  try {
+    const ancien = grapheValide(JSON.parse(await fs.readText(joinPath(dossier, "graph.json"))));
+    doc = { ...ancien, series: neuf.series, x: { ...ancien.x, log: neuf.x.log }, y: { ...ancien.y, log: neuf.y.log } };
+  } catch {
+    // pas de graph.json lisible : on repart du graphe neuf
+  }
+  await ecrireGraphe(fs, dossier, doc, rendu);
+  return saveMeta(fs, dossier, { ...v.meta, regenere: now }, { now, host });
 }
 
 export interface DemandeImage extends Rendu {
@@ -67,4 +128,14 @@ export async function remplacerImage(fs: LibraryFs, dossier: string, rendu: Rend
   await fs.writeBytesAtomic(joinPath(dossier, "export.png"), rendu.png);
   if (rendu.svg !== undefined) await fs.writeTextAtomic(joinPath(dossier, "export.svg"), rendu.svg);
   return saveMeta(fs, dossier, { ...v.meta, regenere: now }, { now, host });
+}
+
+/**
+ * Régénération selon la nature de la figure : une figure « graphe » reprend le graph.json
+ * rendu (mise en forme gardée) ; une figure « image » (d'avant la 0.2.7) reste une image.
+ */
+export async function regenerer(fs: LibraryFs, dossier: string, r: Rendu, rendu: RenduGraphe, now: string, host: string): Promise<FigureMeta> {
+  const v = validateMeta(JSON.parse(await fs.readText(joinPath(dossier, "meta.json"))));
+  if (v.ok && v.meta.kind === "graph" && r.graphe !== undefined) return remplacerGraphe(fs, dossier, r.graphe, rendu, now, host);
+  return remplacerImage(fs, dossier, r, now, host);
 }

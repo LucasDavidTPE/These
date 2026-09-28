@@ -17,7 +17,7 @@ const STATS: [Statistique, string][] = [
 export function EtapeSynthese() {
   const s = useTraitement();
   const e = essaiActif(s)!;
-  const v = vuesSynthese(e);
+  const v = vuesSynthese(e, s.langue);
   const figure = useFigure();
   return (
     <>

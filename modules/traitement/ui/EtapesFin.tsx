@@ -12,7 +12,7 @@ import { Graphe } from "./Graphe";
 
 export function EtapeComparaison() {
   const s = useTraitement();
-  const v = vuesComparaison(s.essais);
+  const v = vuesComparaison(s.essais, s.langue);
   const cles: string[] = [];
   for (const e of s.essais) for (const p of modele(e.modeleId).parametres) if (!cles.includes(p.cle)) cles.push(p.cle);
   cles.push("C1", "C2", "Tref");

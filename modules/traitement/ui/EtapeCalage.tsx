@@ -23,7 +23,7 @@ export function EtapeCalage() {
   const s = useTraitement();
   const e = essaiActif(s)!;
   const m = modele(e.modeleId);
-  const v = vuesCalage(e);
+  const v = vuesCalage(e, s.langue);
   const ts = temperaturesCalage(e);
   const ec = ecartsCalage(e);
   const figure = useFigure();

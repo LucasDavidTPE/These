@@ -154,7 +154,14 @@ export function TraitementPage() {
               </button>
             </span>
           ) : null}
-          <button type="button" className="tr-mini a-droite" title="La page d'origine, en secours tant que celle-ci n'est pas validée" onClick={() => setAncienne(true)}>
+          <span className="tr-segmente a-droite" role="group" aria-label="Langue des axes" title="Langue des titres d'axes et des légendes, à l'écran et dans Figures">
+            {(["fr", "en"] as const).map((l) => (
+              <button key={l} type="button" aria-pressed={s.langue === l} className={s.langue === l ? "actif" : undefined} onClick={() => s.maj((x) => (x.langue = l))}>
+                {l === "fr" ? "Axes FR" : "Axes EN"}
+              </button>
+            ))}
+          </span>
+          <button type="button" className="tr-mini" title="La page d'origine, en secours tant que celle-ci n'est pas validée" onClick={() => setAncienne(true)}>
             Ancienne page
           </button>
         </div>

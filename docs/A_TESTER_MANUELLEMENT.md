@@ -293,3 +293,16 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] « Rattacher une figure… » → rechercher → la figure (ex. une photo, un schéma) apparaît,
       « détacher » la retire ; même chose sur la page d'une étude.
 - [ ] Dans Figures, la fiche indique « Rattachée à : … » ; sur l'autre PC, mêmes rattachements.
+
+## Graphes du traitement modifiables dans Figures, axes FR/EN (0.2.7)
+
+- [ ] Traitement → Calage → « → Figures » sur la courbe maîtresse : dans Figures, la figure est
+      un **Graphe** (onglet Graphes) : changer un titre d'axe, la taille, la position de la
+      légende, exporter en pgfplots (`export.tex`) → compile dans le manuscrit.
+- [ ] Bouton « Axes EN » en haut du traitement : titres d'axes et légendes en anglais à
+      l'écran (« centred signal », « deviation (%) », « measured », « model ») ; « → Figures »
+      garde l'anglais.
+- [ ] Essai ouvert depuis une campagne, graphe envoyé dans Figures, titre d'axe retouché dans
+      Figures, puis « Régénérer » après un nouveau calage : les données changent, le titre
+      retouché et la taille restent.
+- [ ] Une figure « image » envoyée avant la 0.2.7 se régénère toujours en image.

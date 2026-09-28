@@ -6,6 +6,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { disposer, grapheSvg, PALETTE_THEME, plusProche } from "@noyau/graphe";
 import { useContexte } from "@interface/contexte";
 import { svgTexteEnPng } from "@interface/image";
+import { vueEnGraphe } from "../core/figurine";
 import type { Vue } from "../core/vues";
 import { useTraitement } from "./etat";
 
@@ -49,9 +50,15 @@ export function Graphe({ vue, titre, sous, hauteur = 260, figure }: { vue: Vue |
   async function versFigures() {
     if (!vue || !figure) return;
     try {
-      const svgFixe = grapheSvg(vue.spec, { largeur: 760, hauteur: 420, titre: figure.titre, legende: vue.legende, id: "figure" });
-      const png = await svgTexteEnPng(svgFixe);
-      const dossier = await ctx.registre.executer("figures.enregistrer-image", { ctx, titre: figure.titre, png, svg: svgFixe, source: figure.source, tags: figure.tags ?? ["2S2P1D"], origine: figure.origine });
+      const commun = { ctx, titre: figure.titre, source: figure.source, tags: figure.tags ?? ["2S2P1D"], origine: figure.origine };
+      let dossier: unknown;
+      if (ctx.registre.aAction("figures.enregistrer-graphe")) {
+        // Graphe modifiable : titres d'axes, légende, taille et export pgfplots se règlent dans Figures.
+        dossier = await ctx.registre.executer("figures.enregistrer-graphe", { ...commun, graphe: vueEnGraphe(vue) });
+      } else {
+        const svgFixe = grapheSvg(vue.spec, { largeur: 760, hauteur: 420, titre: figure.titre, legende: vue.legende, id: "figure" });
+        dossier = await ctx.registre.executer("figures.enregistrer-image", { ...commun, png: await svgTexteEnPng(svgFixe), svg: svgFixe });
+      }
       signaler(`Figure enregistrée dans la bibliothèque : ${String(dossier)}${figure.origine ? " (régénérable depuis l'essai)" : ""}.`);
     } catch (e) {
       signaler(e instanceof Error ? e.message : String(e), "erreur");
@@ -65,8 +72,8 @@ export function Graphe({ vue, titre, sous, hauteur = 260, figure }: { vue: Vue |
           <h3>{titre}</h3>
           <p className="discret petit">{survol?.texte ?? vue?.sous ?? sous ?? " "}</p>
         </div>
-        {figure && vue && ctx.registre.aAction("figures.enregistrer-image") ? (
-          <button type="button" className="tr-mini" title="Enregistrer ce graphique dans la bibliothèque de figures" onClick={() => void versFigures()}>
+        {figure && vue && (ctx.registre.aAction("figures.enregistrer-graphe") || ctx.registre.aAction("figures.enregistrer-image")) ? (
+          <button type="button" className="tr-mini" title="Enregistrer ce graphique dans Figures, comme graphe modifiable (axes, légende, export pgfplots)" onClick={() => void versFigures()}>
             → Figures
           </button>
         ) : null}

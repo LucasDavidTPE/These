@@ -111,9 +111,9 @@ export function EtapeCycles() {
               ))}
             </select>
           </label>
-          <Graphe titre="Signal mesuré et sinusoïde ajustée" sous="choisir un cycle dans le tableau" vue={vueSignal(e, iPalier, s.cycle, s.voie)} />
+          <Graphe titre="Signal mesuré et sinusoïde ajustée" sous="choisir un cycle dans le tableau" vue={vueSignal(e, iPalier, s.cycle, s.voie, s.langue)} />
         </div>
-        <Graphe titre="Écart d'amplitude entre capteurs" vue={vueEcartsCapteurs(e, iPalier)} />
+        <Graphe titre="Écart d'amplitude entre capteurs" vue={vueEcartsCapteurs(e, iPalier, s.langue)} />
       </div>
 
       <Bloc titre="Cycles écartés du calcul" aide="ils restent dans les tableaux et l'export, marqués, avec le motif">

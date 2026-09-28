@@ -20,7 +20,9 @@ import {
   type LibraryIndex,
   type LibrarySort,
 } from "../../core/library";
-import { remplacerImage, type Rendu } from "../../core/action";
+import { regenerer, type Rendu } from "../../core/action";
+import { exportGraphSvg } from "../../core/graph";
+import { svgToPng } from "../editor/raster";
 import { parseSettings, serializeSettings } from "../../core/settings";
 import { getBackend, type Backend } from "../platform/backend";
 
@@ -203,7 +205,7 @@ export const useLibrary = create<LibraryState>()((set, get) => {
     regenerate: async (folder, rendu) =>
       guard(async () => {
         const { backend, root } = need();
-        await remplacerImage(backend.fs(root), folder, rendu, nowIso(), get().host);
+        await regenerer(backend.fs(root), folder, rendu, (doc) => svgToPng(exportGraphSvg(doc), doc.width, doc.height, 300), nowIso(), get().host);
         await get().rescan();
       }),
 

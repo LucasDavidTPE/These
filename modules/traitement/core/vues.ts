@@ -10,6 +10,14 @@ import { modele } from "./modeles";
 import { maximum, minimum, uniques } from "./nombres";
 import { couleurTemperature, type Point, type Serie, type SpecGraphe } from "@noyau/graphe";
 
+export type Langue = "fr" | "en";
+
+/** Titres d'axes et libellés, en français et en anglais (figures pour un article). */
+export const TEXTES = {
+  fr: { t: "t (s)", signal: "signal centré", mesure: "mesure", cycle: "cycle", ecart: "écart (%)", f: "f (Hz)", module: "|E*| (MPa)", phi: "φ (°)", E1: "E₁ (MPa)", E2: "E₂ (MPa)", faT: "f·a_T (Hz)", nu: "|ν*|", T: "T (°C)", aT: "a_T", modele: "modèle", mesureAT: "mesuré" },
+  en: { t: "t (s)", signal: "centred signal", mesure: "measured", cycle: "cycle", ecart: "deviation (%)", f: "f (Hz)", module: "|E*| (MPa)", phi: "φ (°)", E1: "E₁ (MPa)", E2: "E₂ (MPa)", faT: "f·a_T (Hz)", nu: "|ν*|", T: "T (°C)", aT: "a_T", modele: "model", mesureAT: "measured" },
+} as const;
+
 /** Couleur du modèle (courbes continues) et des mesures brutes. */
 export const ACCENT = "#0b5f5c";
 export const ENCRE = "#8a8a84";
@@ -34,7 +42,8 @@ const avecPalier = (p: unknown) => {
 
 /* ─────────────────────────── étape 02 : cycles ─────────────────────────── */
 
-export function vueSignal(e: Essai, iPalier: number, iCycle: number, voie: CleVoie): Vue | null {
+export function vueSignal(e: Essai, iPalier: number, iCycle: number, voie: CleVoie, langue: Langue = "fr"): Vue | null {
+  const x = TEXTES[langue];
   const p = e.paliers[iPalier];
   const l = p?.lignes[iCycle];
   if (!p || !l) return null;
@@ -53,11 +62,11 @@ export function vueSignal(e: Essai, iPalier: number, iCycle: number, voie: CleVo
   return {
     spec: {
       series: [
-        { points: mesure, mode: "points", couleur: ENCRE, taille: 1.7, libelle: "mesure" },
-        { points: ajuste, mode: "ligne", couleur: ACCENT, epaisseur: 1.6 },
+        { points: mesure, mode: "points", couleur: ENCRE, taille: 1.7, libelle: x.mesure },
+        { points: ajuste, mode: "ligne", couleur: ACCENT, epaisseur: 1.6, libelle: x.modele },
       ],
-      xTitre: "t (s)",
-      yTitre: "signal centré",
+      xTitre: x.t,
+      yTitre: x.signal,
       zeroY: true,
     },
     format: (x, y) => `t = ${nb(x, 1)} s · ${nb(y, 6)}`,
@@ -67,7 +76,8 @@ export function vueSignal(e: Essai, iPalier: number, iCycle: number, voie: CleVo
 
 export const NOMS_VOIES: [CleVoie, string][] = VOIES.map((v) => [v.cle, v.nom]);
 
-export function vueEcartsCapteurs(e: Essai, iPalier: number): Vue | null {
+export function vueEcartsCapteurs(e: Essai, iPalier: number, langue: Langue = "fr"): Vue | null {
+  const x = TEXTES[langue];
   const p = e.paliers[iPalier];
   if (!p) return null;
   const cles = (
@@ -87,7 +97,7 @@ export function vueEcartsCapteurs(e: Essai, iPalier: number): Vue | null {
     ...cles.map(([cle, nom], i) => ({ points: p.lignes.map((l) => [l.cycle, l[cle] as number] as Point), mode: "points" as const, couleur: couleur(i), taille: 2, libelle: nom })),
   ];
   return {
-    spec: { series, xTitre: "cycle", yTitre: "écart (%)", zeroY: true },
+    spec: { series, xTitre: x.cycle, yTitre: x.ecart, zeroY: true },
     format: (x, y) => `cycle ${Math.round(x)} · ${nb(y, 2)} %`,
     legende: cles.map(([, nom], i) => [nom, couleur(i)]),
   };
@@ -95,7 +105,8 @@ export function vueEcartsCapteurs(e: Essai, iPalier: number): Vue | null {
 
 /* ─────────────────────────── étape 03 : synthèse ─────────────────────────── */
 
-export function vuesSynthese(e: Essai): { module: Vue; phase: Vue } {
+export function vuesSynthese(e: Essai, langue: Langue = "fr"): { module: Vue; phase: Vue } {
+  const x = TEXTES[langue];
   const parT: Record<number, typeof e.synthese> = {};
   for (const a of e.synthese) (parT[a.T] ||= []).push(a);
   const ts = uniques(Object.keys(parT).map(Number));
@@ -112,8 +123,8 @@ export function vuesSynthese(e: Essai): { module: Vue; phase: Vue } {
     legende.push([`${T} °C`, c]);
   });
   return {
-    module: { spec: { series: sE, xLog: true, yLog: true, xTitre: "f (Hz)", yTitre: "|E*| (MPa)" }, format: (x, y) => `${freq(x)} Hz · ${nb(y, 0)} MPa`, legende },
-    phase: { spec: { series: sP, xLog: true, xTitre: "f (Hz)", yTitre: "φ (°)" }, format: (x, y) => `${freq(x)} Hz · ${nb(y, 2)} °`, legende },
+    module: { spec: { series: sE, xLog: true, yLog: true, xTitre: x.f, yTitre: x.module }, format: (a, b) => `${freq(a)} Hz · ${nb(b, 0)} MPa`, legende },
+    phase: { spec: { series: sP, xLog: true, xTitre: x.f, yTitre: x.phi }, format: (a, b) => `${freq(a)} Hz · ${nb(b, 2)} °`, legende },
   };
 }
 
@@ -128,7 +139,8 @@ export interface VuesCalage {
   aT: Vue;
 }
 
-export function vuesCalage(e: Essai): VuesCalage {
+export function vuesCalage(e: Essai, langue: Langue = "fr"): VuesCalage {
+  const X = TEXTES[langue];
   const m = modele(e.modeleId);
   const points = pointsCalage(e);
   const ts = temperaturesCalage(e);
@@ -168,7 +180,7 @@ export function vuesCalage(e: Essai): VuesCalage {
     expNu.push(s(g.map((p) => [p.f * a, p.nu ?? NaN, p])));
     legende.push([`${T} °C`, c]);
   });
-  const ligne = (pts: Point[]): Serie => ({ points: pts, mode: "ligne", couleur: ACCENT, epaisseur: 1.8 });
+  const ligne = (pts: Point[]): Serie => ({ points: pts, mode: "ligne", couleur: ACCENT, epaisseur: 1.8, libelle: `${X.modele} ${m.nom}` });
   const fmtMaitre = (x: number, y: number, p?: unknown) => `${avecPalier(p)}f·a_T = ${nb(x)} Hz · ${nb(y)}`;
 
   const wlf: Point[] = [];
@@ -179,23 +191,23 @@ export function vuesCalage(e: Essai): VuesCalage {
   }
   return {
     cole: {
-      spec: { series: [...expCole, ligne(courbeCole)], xTitre: "E₁ (MPa)", yTitre: "E₂ (MPa)", zeroY: true },
+      spec: { series: [...expCole, ligne(courbeCole)], xTitre: X.E1, yTitre: X.E2, zeroY: true },
       format: (x, y, p) => `${avecPalier(p)}E₁ ${nb(x, 0)} · E₂ ${nb(y, 0)} MPa`,
       legende,
     },
-    black: { spec: { series: [...expBlack, ligne(courbeBlack)], yLog: true, xTitre: "φ (°)", yTitre: "|E*| (MPa)" }, format: (x, y, p) => `${avecPalier(p)}φ ${nb(x, 2)} ° · ${nb(y, 0)} MPa`, legende },
-    maitreE: { spec: { series: [...expE, ligne(courbeE)], xLog: true, yLog: true, xTitre: "f·a_T (Hz)", yTitre: "|E*| (MPa)" }, format: fmtMaitre, legende },
-    maitreP: { spec: { series: [...expP, ligne(courbeP)], xLog: true, xTitre: "f·a_T (Hz)", yTitre: "φ (°)" }, format: fmtMaitre, legende },
-    nu: { spec: { series: courbeNu.length ? [...expNu, ligne(courbeNu)] : expNu, xLog: true, xTitre: "f·a_T (Hz)", yTitre: "|ν*|" }, format: fmtMaitre, legende },
+    black: { spec: { series: [...expBlack, ligne(courbeBlack)], yLog: true, xTitre: X.phi, yTitre: X.module }, format: (x, y, p) => `${avecPalier(p)}φ ${nb(x, 2)} ° · ${nb(y, 0)} MPa`, legende },
+    maitreE: { spec: { series: [...expE, ligne(courbeE)], xLog: true, yLog: true, xTitre: X.faT, yTitre: X.module }, format: fmtMaitre, legende },
+    maitreP: { spec: { series: [...expP, ligne(courbeP)], xLog: true, xTitre: X.faT, yTitre: X.phi }, format: fmtMaitre, legende },
+    nu: { spec: { series: courbeNu.length ? [...expNu, ligne(courbeNu)] : expNu, xLog: true, xTitre: X.faT, yTitre: X.nu }, format: fmtMaitre, legende },
     aT: {
       spec: {
         series: [
-          { points: ts.map((T) => [T, e.aT[T]!] as Point), mode: "points", couleur: ENCRE, taille: 3.4, libelle: "mesuré" },
-          { points: wlf, mode: "ligne", couleur: ACCENT, epaisseur: 1.8 },
+          { points: ts.map((T) => [T, e.aT[T]!] as Point), mode: "points", couleur: ENCRE, taille: 3.4, libelle: X.mesureAT },
+          { points: wlf, mode: "ligne", couleur: ACCENT, epaisseur: 1.8, libelle: "WLF" },
         ],
         yLog: true,
-        xTitre: "T (°C)",
-        yTitre: "a_T",
+        xTitre: X.T,
+        yTitre: X.aT,
       },
       format: (x, y) => `${nb(x, 1)} °C · a_T = ${nb(y)}`,
     },
@@ -204,7 +216,8 @@ export function vuesCalage(e: Essai): VuesCalage {
 
 /* ─────────────────────────── étape 05 : comparaison ─────────────────────────── */
 
-export function vuesComparaison(essais: readonly Essai[]): { module: Vue; cole: Vue; black: Vue; aT: Vue } {
+export function vuesComparaison(essais: readonly Essai[], langue: Langue = "fr"): { module: Vue; cole: Vue; black: Vue; aT: Vue } {
+  const X = TEXTES[langue];
   const visibles = essais.filter((e) => e.visible && pointsCalage(e).length);
   const sE: Serie[] = [],
     sCole: Serie[] = [],
@@ -229,9 +242,9 @@ export function vuesComparaison(essais: readonly Essai[]): { module: Vue; cole: 
   }
   const fmt = (x: number, y: number, p?: unknown) => `${avecPalier(p)}${nb(x)} · ${nb(y)}`;
   return {
-    module: { spec: { series: sE, xLog: true, yLog: true, xTitre: "f·a_T (Hz)", yTitre: "|E*| (MPa)" }, format: fmt, legende },
-    cole: { spec: { series: sCole, xTitre: "E₁ (MPa)", yTitre: "E₂ (MPa)", zeroY: true }, format: fmt, legende },
-    black: { spec: { series: sBlack, yLog: true, xTitre: "φ (°)", yTitre: "|E*| (MPa)" }, format: fmt, legende },
-    aT: { spec: { series: sAT, yLog: true, xTitre: "T (°C)", yTitre: "a_T" }, format: (x, y) => `${nb(x, 1)} °C · ${nb(y)}`, legende },
+    module: { spec: { series: sE, xLog: true, yLog: true, xTitre: X.faT, yTitre: X.module }, format: fmt, legende },
+    cole: { spec: { series: sCole, xTitre: X.E1, yTitre: X.E2, zeroY: true }, format: fmt, legende },
+    black: { spec: { series: sBlack, yLog: true, xTitre: X.phi, yTitre: X.module }, format: fmt, legende },
+    aT: { spec: { series: sAT, yLog: true, xTitre: X.T, yTitre: X.aT }, format: (x, y) => `${nb(x, 1)} °C · ${nb(y)}`, legende },
   };
 }

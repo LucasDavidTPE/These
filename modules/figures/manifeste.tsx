@@ -2,7 +2,9 @@ import { IconeFigures } from "@interface/icones";
 import type { Contexte } from "@interface/contexte";
 import type { Manifeste } from "@interface/manifeste";
 import { isoAvecDecalage } from "@noyau/dates";
-import { enregistrerImage, type DemandeImage } from "./core/action";
+import { enregistrerGraphe, enregistrerImage, type DemandeGraphe, type DemandeImage } from "./core/action";
+import { exportGraphSvg } from "./core/graph";
+import { svgToPng } from "./ui/editor/raster";
 import { figuresRecentes } from "./core/recentes";
 import { detacher, figuresDe, rattacher, type Cible } from "./core/rattachement";
 import { scanLibrary } from "./core/library";
@@ -36,6 +38,13 @@ const figures: Manifeste = {
           type: f.vignette?.endsWith(".svg") ? "image/svg+xml" : "image/png",
         })),
       );
+    },
+    /** Un graphe modifiable dans Figures (données, titres d'axes, légende, export pgfplots) ; renvoie son dossier. */
+    "figures.enregistrer-graphe": async (charge) => {
+      const { ctx, ...demande } = charge as DemandeGraphe & { ctx: Contexte };
+      const racine = ctx.reglages.figures;
+      if (!racine) throw new Error("Choisissez d'abord le dossier de la bibliothèque de figures (Réglages du poste).");
+      return enregistrerGraphe(ctx.plateforme.fichiers(racine), demande, (doc) => svgToPng(exportGraphSvg(doc), doc.width, doc.height, 300), isoAvecDecalage(new Date(), -new Date().getTimezoneOffset()), ctx.poste);
     },
     /** Les figures d'une campagne ou d'une étude (origine ou rattachement), avec leur vignette ; charge : { ctx, cible }. */
     "figures.liste": async (charge) => {

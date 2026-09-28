@@ -6,6 +6,7 @@
 import { create } from "zustand";
 import type { CleVoie } from "../core/donnees";
 import type { Essai } from "../core/essai";
+import type { Langue } from "../core/vues";
 import type { DemandeEssai } from "./demande";
 
 export type Statistique = "" | "_max" | "_min" | "_et";
@@ -28,6 +29,8 @@ export interface EtatTraitement {
   campagne: { essaiId: string; demande: DemandeEssai } | null;
   /** « Enregistré à 10:42 » : dernier enregistrement automatique dans l'espace. */
   enregistre: string | null;
+  /** Langue des titres d'axes et des légendes (figures pour un article en anglais). */
+  langue: Langue;
   /** Modifie l'état (essais compris) puis redessine. */
   maj(f: (s: EtatTraitement) => void): void;
   /** Tâche longue avec voile de progression ; l'erreur devient un message. */
@@ -55,6 +58,7 @@ export const useTraitement = create<EtatTraitement>()((set, get) => ({
   infoDetection: "",
   campagne: null,
   enregistre: null,
+  langue: "fr",
   maj: (f) => {
     const s = get();
     f(s);
