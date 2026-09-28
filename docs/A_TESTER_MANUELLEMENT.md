@@ -306,3 +306,20 @@ nombres doivent être identiques, dans les deux modes.
       Figures, puis « Régénérer » après un nouveau calage : les données changent, le titre
       retouché et la taille restent.
 - [ ] Une figure « image » envoyée avant la 0.2.7 se régénère toujours en image.
+
+## Calage : correctif des graphes vides, modèles élémentaires, séries de Prony (0.2.7)
+
+- [ ] **Correctif** : sur un vrai essai (plusieurs températures), Calage → « Caler tout » :
+      toutes les isothermes restent sur la courbe maîtresse (le compteur « Points » ne baisse
+      pas), la courbe du modèle s'affiche. Avant, une isotherme mal décrite pouvait partir à
+      a_T = 0 ou ∞ et disparaître des graphes.
+- [ ] Loi de comportement → Maxwell, Kelvin-Voigt, Zener, Burgers : « Caler tout » cale leurs
+      constantes sans toucher aux a_T ; revenir au 2S2P1D retrouve son calage intact.
+- [ ] Kelvin-Voigt généralisé (dérivé du 2S2P1D) : la courbe s'affiche (elle était vide).
+- [ ] « Ajouter une série de Prony » : Maxwell généralisé sur les mesures → tirets orange
+      sur Cole-Cole, Black et courbes maîtresses ; écart |E*| de l'ordre du pourcent ;
+      graphe E(t). Kelvin-Voigt généralisé → J(t).
+- [ ] Exports : « Abaqus .inp » s'inclut dans un modèle Abaqus (*ELASTIC instantané,
+      *VISCOELASTIC Prony, *TRS WLF) ; « COMSOL .txt » se charge dans le tableau des branches
+      du matériau viscoélastique (G en Pa) ; « Tableau .csv » s'ouvre dans Excel.
+- [ ] Les réglages Prony se retrouvent en rouvrant le dépouillement enregistré.

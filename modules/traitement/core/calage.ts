@@ -359,6 +359,9 @@ export function calerPoisson(m: Modele, points: readonly PointMesure[], aT: Tran
  * températures sauf celle de référence. Le point de départ est le recalage géométrique, qui
  * place déjà correctement les isothermes riches en information.
  */
+/** |log10 a_T| au-delà duquel une translation n'a plus de sens (30 décades). */
+export const LOG_AT_MAX = 30;
+
 export function calageConjoint(
   m: ModeleCale,
   parTemperature: Record<number, readonly PointMesure[]>,
@@ -379,8 +382,10 @@ export function calageConjoint(
   const ouvrir = (v: number[]) => {
     const p = borner(m, { ...p0, ...Object.fromEntries(cles.map((c, i) => [c, v[i]! * echelle[i]!])) });
     const aT: Translations = { [Tref]: 1 };
+    // log a_T borné : sans borne, l'optimiseur pouvait envoyer une isotherme mal décrite à
+    // l'infini (a_T = 0 ou ∞), ce qui la retirait du coût… et de tous les graphiques.
     libres.forEach((T, i) => {
-      aT[T] = 10 ** v[cles.length + i]!;
+      aT[T] = 10 ** Math.min(LOG_AT_MAX, Math.max(-LOG_AT_MAX, v[cles.length + i]!));
     });
     return { p, aT };
   };

@@ -13,8 +13,9 @@ import { construireDonnees, CORRESPONDANCE_PAR_DEFAUT, type Correspondance, type
 import { CONSTANTES_DEMO, pointsDemo, signalDemo, WLF_DEMO, type PointDemo } from "./demo";
 import { entier, freq, nb } from "./format";
 import type { Lu } from "./io/lecture";
-import { modele, parametresInitiaux, type ChaineGKV, type Complexe, type Constantes, type ModeleCale } from "./modeles";
+import { CLES_TEMPS, modele, parametresInitiaux, type ChaineGKV, type Complexe, type Constantes, type ModeleCale } from "./modeles";
 import { identifierGKV, moduleGKV } from "./modeles/gkv";
+import { calerProny, grilleTau, type PointComplexe, type ReglagesProny, type SerieProny } from "./prony";
 import { maximum, minimum, uniques } from "./nombres";
 import { synthetiser, type Palier } from "./synthese";
 import { traiterPalier, type LigneCycle } from "./traitement";
@@ -80,6 +81,8 @@ export interface Essai {
   source?: string;
   /** Où le dépouillement s'enregistre dans l'espace, s'il s'y enregistre. */
   enregistrement?: Enregistrement;
+  /** Série de Prony demandée (réglages) ; la série elle-même se recalcule (serieProny). */
+  prony?: ReglagesProny;
 }
 
 let compteur = 0;
@@ -367,8 +370,7 @@ export function changerTref(e: Essai, T: number): void {
   e.Tref = T;
   const k = e.aT[e.Tref] || 1;
   for (const t of Object.keys(e.aT)) e.aT[Number(t)]! /= k;
-  e.p.tauE! *= k;
-  if (Number.isFinite(e.p.tauNu)) e.p.tauNu! *= k;
+  for (const cle of CLES_TEMPS) if (Number.isFinite(e.p[cle])) e.p[cle]! *= k;
   constantesChangees(e);
 }
 
@@ -384,8 +386,9 @@ function calerLoiWLF(e: Essai): void {
   e.C2 = w.C2;
 }
 
-/** « Caler tout » : constantes et a_T ensemble, puis la loi WLF. */
+/** « Caler tout » : constantes et a_T ensemble, puis la loi WLF (constantes seules pour un modèle élémentaire). */
 export function calerTout(e: Essai): void {
+  if (modele(e.modeleId).elementaire) return calerConstantes(e);
   const r = calageConjoint(modeleCale(e), grouperParT(e), e.Tref, e.p, e.aT);
   e.p = r.parametres;
   e.aT = r.aT;
@@ -404,9 +407,51 @@ export function calerNu(e: Essai): void {
 }
 
 export function reinitialiser(e: Essai): void {
-  e.p = parametresInitiaux(modele(e.modeleId));
+  const m = modele(e.modeleId);
+  // les constantes des autres modèles restent (le GKV se construit sur celles du 2S2P1D)
+  const autres = Object.fromEntries(Object.entries(e.p).filter(([cle]) => !(cle in m.defauts)));
+  e.p = parametresInitiaux(m, autres);
   e.chaine = null;
   constantesChangees(e);
+}
+
+/* ══════════════════════════════════════════════════════ séries de Prony */
+
+/** Plage des fréquences réduites mesurées (f·a_T). */
+export function plageReduite(e: Essai): [number, number] | null {
+  const fr = pointsCalage(e)
+    .map((p) => p.f * (e.aT[p.T] || NaN))
+    .filter((f) => f > 0 && Number.isFinite(f));
+  return fr.length ? [Math.min(...fr), Math.max(...fr)] : null;
+}
+
+/** La série de Prony demandée, calée sur les mesures translatées ou sur le modèle continu. */
+export function serieProny(e: Essai, r: ReglagesProny | undefined = e.prony): SerieProny | null {
+  const plage = plageReduite(e);
+  if (!r || !plage) return null;
+  let points: PointComplexe[];
+  let [fMin, fMax] = plage;
+  if (r.source === "mesures") {
+    points = pointsCalage(e).flatMap((p) => {
+      const a = e.aT[p.T],
+        f = p.f * (a ?? NaN);
+      if (!(f > 0) || !Number.isFinite(p.module) || !Number.isFinite(p.phi)) return [];
+      const phi = (p.phi / 180) * Math.PI;
+      return [{ f, re: p.module * Math.cos(phi), im: p.module * Math.sin(phi) }];
+    });
+  } else {
+    // le modèle calé, prolongé de deux décades de part et d'autre des mesures
+    fMin /= 100;
+    fMax *= 100;
+    const decades = Math.log10(fMax / fMin),
+      n = Math.max(40, Math.round(decades * 12));
+    points = Array.from({ length: n }, (_, i) => {
+      const f = fMin * 10 ** ((decades * i) / (n - 1));
+      const m = evaluer(e, f);
+      return { f, re: m.re, im: m.im };
+    });
+  }
+  return calerProny(points, r.type, grilleTau(fMin, fMax, r.parDecade));
 }
 
 export function recaler(e: Essai): void {
@@ -652,6 +697,7 @@ interface EssaiSauve {
   couleur?: string;
   exclus?: string[];
   motifs?: Record<string, string>;
+  prony?: ReglagesProny;
 }
 
 /** Le fichier projet (même format, version 2, que la page d'origine et le site en ligne). */
@@ -679,6 +725,8 @@ export function projetJSON(essais: readonly Essai[]): string {
         couleur: e.couleur,
         exclus: [...e.exclus],
         motifs: e.motifs,
+        // absent tant qu'aucune série n'est demandée : le fichier reste celui de la page d'origine
+        prony: e.prony,
       })),
     },
     null,

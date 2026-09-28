@@ -1,9 +1,10 @@
-/** Étape 04 : calage du modèle (2S2P1D, Huet-Sayegh, Kelvin-Voigt), translation des isothermes, WLF. */
+/** Étape 04 : calage du modèle (2S2P1D, Huet-Sayegh, Kelvin-Voigt, modèles élémentaires), translation des isothermes, WLF, série de Prony. */
 import { aTwlf } from "../core/calage";
 import { ajusterWLF, calerConstantes, calerNu, calerTout, changerModele, changerTref, constantesChangees, ecartsCalage, recaler, reinitialiser, temperaturesCalage } from "../core/essai";
 import { nb } from "../core/format";
 import { MODELES, modele, type Parametre } from "../core/modeles";
 import { vuesCalage } from "../core/vues";
+import { BlocProny } from "./BlocProny";
 import { Bloc, ChampNombre, Indicateur } from "./champs";
 import { essaiActif, useTraitement } from "./etat";
 import { Graphe } from "./Graphe";
@@ -83,6 +84,11 @@ export function EtapeCalage() {
             <Curseur key={d.cle} d={d} valeur={e.p[d.cle]!} onChange={(x) => regler(d.cle, x)} />
           ))}
           {m.derive ? <p className="discret petit">Ce modèle découle du 2S2P1D calé : rien à caler ici, seulement la discrétisation.</p> : null}
+          {m.elementaire ? (
+            <p className="discret petit">
+              Modèle élémentaire : un ou deux temps seulement, il ne suit pas un enrobé sur toute la courbe maîtresse. Ses constantes se calent sur les a_T actuels, sans les déplacer. Pour un calcul aux éléments finis, voir la série de Prony plus bas.
+            </p>
+          ) : null}
           <div className="rangee">
             <button type="button" className="principal" disabled={!m.ajustables.length} onClick={() => long("Calage des constantes et des a_T…", () => calerTout(e))}>
               Caler tout
@@ -154,6 +160,8 @@ export function EtapeCalage() {
           </div>
         </Bloc>
       </div>
+
+      <BlocProny e={e} vue={v.prony} />
     </div>
   );
 }
