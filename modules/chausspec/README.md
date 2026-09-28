@@ -4,6 +4,8 @@ Portage TypeScript de **chausspec v0.4** (L. David, LTDS / ENTPE, 2026) : calcul
 spectral de chaussées multicouches élastiques / viscoélastiques (2S2P1D, KVG, Maxwell généralisé)
 sous chargements de surface quelconques, en régime statique, harmonique ou de charge roulante.
 
+**Pas à pas, sans le code : [`docs/CHAUSSSPEC_EXPLIQUE.md`](../../docs/CHAUSSSPEC_EXPLIQUE.md)** (le modèle semi-analytique et la méthode spectrale expliqués simplement).
+
 ## Lire le code
 
 `core/` suit le paquet Python **fichier par fichier** : mêmes classes, mêmes fonctions (en
