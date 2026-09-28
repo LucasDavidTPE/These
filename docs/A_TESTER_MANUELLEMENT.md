@@ -227,3 +227,13 @@ Ce qui change avec l'intégration :
       feuille « Ecarts » ; les graphiques Excel du script ne sont pas refaits (ils sont
       dans l'application et dans Figures).
 - [ ] « Enregistrer dans Figures » puis « Régénérer » après avoir remplacé un `.csv`.
+
+## Manuscrits : sources LaTeX
+
+- [ ] Manuscrits → « Sources LaTeX » → choisir le dossier du manuscrit : figures TikZ
+      (`standalone`), documents et chapitres classés comme dans le tableau de bord de
+      these-lgcb ; les dossiers `build`, `out`, `.git` sont ignorés.
+- [ ] Une figure incluse par un chapitre (`\input` ou `\includegraphics` de son PDF)
+      affiche ce chapitre dans « Utilisé par ».
+- [ ] Renommer une image utilisée : elle apparaît dans « Inclusions introuvables ».
+- [ ] « VS Code », « PDF » (si compilé à côté) et « Dossier » ouvrent ce qu'il faut.

@@ -1,5 +1,6 @@
 /** Lecture et écriture des versions dans l'espace ; lecture des .docx dans leur dossier. */
 import { joindre, type Fichiers } from "@noyau/stockage";
+import { IGNORES, type Source } from "../core/latex";
 import { dossierManuscrit, empreinte, lireVersion, nomVersion, type Version } from "../core/versions";
 
 /** Les .docx du dossier des manuscrits et de ses sous-dossiers directs (pas les « ~$… » de Word). */
@@ -45,4 +46,22 @@ export async function enregistrerVersion(espace: Fichiers, octets: Uint8Array, c
   const fiche = { source: chemin, date: v.date, poste: v.poste, note: v.note, taille: v.taille, empreinte: v.empreinte };
   await espace.writeTextNew(joindre(dossier, `${base}.json`), JSON.stringify(fiche, null, 2) + "\n");
   return v;
+}
+
+/** Toutes les sources .tex sous la racine « latex », et les autres fichiers utiles (images, PDF). */
+export async function parcourirLatex(fs: Fichiers, limite = 2000): Promise<{ sources: Source[]; autres: string[] }> {
+  const sources: Source[] = [];
+  const autres: string[] = [];
+  const parcourir = async (dossier: string) => {
+    for (const e of await fs.listDir(dossier).catch(() => [])) {
+      const chemin = dossier ? `${dossier}/${e.name}` : e.name;
+      if (e.kind === "dir") {
+        if (!e.name.startsWith(".") && !IGNORES.includes(e.name.toLowerCase())) await parcourir(chemin);
+      } else if (/\.tex$/i.test(e.name)) {
+        if (sources.length < limite) sources.push({ chemin, texte: await fs.readText(chemin).catch(() => "") });
+      } else if (/\.(pdf|png|jpe?g|eps|svg)$/i.test(e.name)) autres.push(chemin);
+    }
+  };
+  await parcourir("");
+  return { sources, autres };
 }

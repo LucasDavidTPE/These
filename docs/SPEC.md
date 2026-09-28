@@ -270,8 +270,9 @@ graphe dans Figures**, **ouvrir dans le traitement 2S2P1D**.
 
 ### 8.4 Reprise de l'existant
 Import unique des fiches `projects/*.toml`, des aperçus et des notes de these-lgcb.
-Les **études** (`studies/…/run.py`) et l'**index LaTeX** ne sont pas repris en V1
-(voir `QUESTIONS.md`).
+Les **études** sont reprises par le module Études (P7). L'**index LaTeX** est repris dans
+Manuscrits (onglet Sources LaTeX, racine `latex`), sans la compilation ni les vignettes de
+`lgcb/tex.py` : l'application ne lance pas LaTeX, elle montre le PDF déjà compilé.
 
 ## 9. Module Bibliothèque (ex-classeur Excel)
 

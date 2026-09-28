@@ -110,7 +110,10 @@ lancent tous les tests automatiques sous Windows.
 - [x] Module Manuscrits : versions datées des `.docx` (racine `manuscrits`), avec une note,
       copiées dans l'espace (`manuscrits/<fichier>/`), état « modifié depuis la dernière
       version », ouvrir une version, en faire une copie ailleurs
-- [ ] Index des figures LaTeX des manuscrits
+- [x] Index des sources LaTeX (Manuscrits → Sources LaTeX, racine `latex`) : classement de
+      `lgcb/tex.py` (figure autonome, document, fragment), inclusions, « utilisé par »,
+      inclusions introuvables ; ouverture dans VS Code, PDF compilé s'il existe. Pas de
+      compilation par l'application
 - [x] Module ViscoCompare : portage de `LucasDavidTPE/ViscoCompare/main.py` (lecture COMSOL
       et Viscoroute, profil en x = 0, conversions, interpolation), courbes superposées,
       écart sur l'extremum, classeurs `EXCEL_OUTPUT`, figures régénérables
