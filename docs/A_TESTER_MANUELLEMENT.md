@@ -343,3 +343,11 @@ nombres doivent être identiques, dans les deux modes.
       auto » ou double-clic pour revenir. Coordonnées sous le curseur en bas.
 - [ ] Un graphe du Traitement envoyé dans Figures garde les couleurs de l'écran ; après
       « Régénérer », couleurs et style retouchés dans Figures restent.
+
+## Figures : photos HEIC (0.2.7)
+
+- [ ] Recadrage → « Ouvrir… » : les fichiers `.heic` / `.heif` (photos d'iPhone) sont
+      proposés ; une photo s'ouvre (quelques secondes la première fois, le temps de charger
+      le décodeur), dans le bon sens.
+- [ ] Même chose dans Détourage (« Ouvrir… » et glisser-déposer d'un `.heic`).
+- [ ] Une photo HEIC abîmée donne un message clair, sans bloquer la page.

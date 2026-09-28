@@ -189,7 +189,7 @@ export function demoBackend(): Backend {
       new Promise((resolve) => {
         const input = document.createElement("input");
         input.type = "file";
-        input.accept = "image/*";
+        input.accept = "image/*,.heic,.heif";
         input.onchange = async () => {
           const f = input.files?.[0];
           resolve(f ? new Uint8Array(await f.arrayBuffer()) : null);

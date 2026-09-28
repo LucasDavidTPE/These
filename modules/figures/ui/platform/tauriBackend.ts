@@ -83,7 +83,7 @@ export function tauriBackend(): Backend {
       const path = await open({
         multiple: false,
         title: "Ouvrir une image",
-        filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "bmp", "gif", "webp"] }],
+        filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "bmp", "gif", "webp", "heic", "heif"] }],
       });
       if (typeof path !== "string") return null;
       return asBytes(await call<ArrayBuffer>("file_read_image", { path }, path));
