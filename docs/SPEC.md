@@ -349,7 +349,8 @@ continue à travailler dans Excel et on réimporte. Les PDF restent dans le doss
 
 Exigence : un test lit le classeur, importe, recalcule citation / état / alerte / score
 / temps et tous les indicateurs du tableau de bord, et les compare aux **valeurs mises
-en cache par Excel**. Même démarche que pour le 2S2P1D.
+en cache par Excel**. Même démarche que pour le 2S2P1D. Le classeur réel est versionné dans
+`modules/bibliotheque/tests/fixtures/` (le dépôt est privé).
 
 Deux défauts du classeur, constatés par ce test (26/09/2026), sont corrigés dans
 l'application :

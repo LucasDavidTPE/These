@@ -5,10 +5,11 @@ le dépouillement 2S2P1D, les campagnes d'essais, la bibliographie et le plannin
 partagé entre deux PC par OneDrive.
 
 - [Cahier des charges](docs/SPEC.md)
-- [Feuille de route](docs/ROADMAP.md) — phase P0 (socle) terminée
+- [Feuille de route](docs/ROADMAP.md)
 - [Questions ouvertes](docs/QUESTIONS.md)
 - [À tester manuellement](docs/A_TESTER_MANUELLEMENT.md)
 - [Mises à jour](docs/MISES_A_JOUR.md) : publier une version, mise à jour automatique
+- [Bascule](docs/BASCULE.md) : ce qui remplace chaque ancien dépôt, avant de les archiver
 
 ## Installer
 

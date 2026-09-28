@@ -95,7 +95,8 @@ lancent tous les tests automatiques sous Windows.
       dans la galerie (visible aussi sur le PC sans données brutes)
 - [x] Zoom dans les courbes (glisser une plage, double-clic pour revenir), export d'un essai
       en CSV pour Excel (« ; », virgule décimale)
-- [ ] Plus tard : copie des données brutes d'un essai vers une sauvegarde
+- [x] Copie des données brutes d'un essai (ou de la campagne) vers un dossier choisi,
+      incrémentale, sans rien supprimer
 
 ## P6 — Liaisons et finitions
 - [x] Accueil complet : Cette semaine, derniers essais (action `campagnes.recents`, clic →
@@ -104,7 +105,8 @@ lancent tous les tests automatiques sous Windows.
 - [x] Graphes régénérables : une figure garde son `origine` ; « Régénérer depuis les
       données » demande l'action `<module>.regenerer-figure` (courbes d'un essai avec voies
       et plage, Gantt, ViscoCompare). Traceur SVG commun dans `noyau/courbes`
-- [ ] Archivage des anciens dépôts (hub, these-lgcb) une fois la bascule faite
+- [ ] Archivage des anciens dépôts une fois la bascule faite : liste de contrôle dépôt par
+      dépôt dans `docs/BASCULE.md` ; l'archivage lui-même se fait à la main sur GitHub
 
 ## P7 — Plus tard (à décider)
 - [x] Module Études : une étude = un dossier dans l'espace (fiche, `run.py`, outil
