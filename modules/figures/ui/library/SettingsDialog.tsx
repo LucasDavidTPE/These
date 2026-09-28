@@ -1,3 +1,4 @@
+import { useContexte } from "@interface/contexte";
 import { useLibrary } from "./useLibrary";
 
 /** Réglages propres à ce poste (hors OneDrive). */
@@ -6,6 +7,8 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
   const root = useLibrary((s) => s.root);
   const backend = useLibrary((s) => s.backend);
   const setRoot = useLibrary((s) => s.setRoot);
+  // Dans Thèse, la bibliothèque vit dans l'espace : pas de dossier à choisir.
+  const dansEspace = !!useContexte().espace;
 
   const change = async () => {
     const picked = await backend?.pickFolder(root ?? undefined);
@@ -28,9 +31,13 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
           <code>{root}</code>
         </dd>
       </dl>
-      <button type="button" onClick={change}>
-        Changer de dossier…
-      </button>
+      {dansEspace ? (
+        <p className="muted small">La bibliothèque vit dans l'espace Thèse (dossier « figures »), comme tout le reste.</p>
+      ) : (
+        <button type="button" onClick={change}>
+          Changer de dossier…
+        </button>
+      )}
       <p className="muted small">
         Ces réglages restent sur ce PC (dossier de configuration de l'appli), pas dans OneDrive.
         {backend?.kind === "demo" && " Mode démonstration : aucune donnée n'est enregistrée."}

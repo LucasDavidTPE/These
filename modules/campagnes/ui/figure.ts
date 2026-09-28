@@ -5,7 +5,7 @@
  */
 import { courbesSvg, type Vue } from "@noyau/courbes";
 import { lireCsv } from "@noyau/formats/wavematrix";
-import { resoudre } from "@noyau/poste/racines";
+import { fichiersDonnees } from "@interface/donnees";
 import { svgTexteEnPng } from "@interface/image";
 import type { Contexte } from "@interface/contexte";
 import { panneaux } from "../core/courbes";
@@ -36,11 +36,10 @@ export async function regenererCourbes(ctx: Contexte, o: OrigineCourbes): Promis
   const c = (await chargerCampagnes(ctx.espace.fichiers)).campagnes.find((x) => x.slug === o.campagne);
   if (!c) throw new Error(`Campagne introuvable dans l'espace : ${o.campagne}.`);
   if (!c.campagne.donnees) throw new Error(`La campagne « ${c.campagne.titre} » n'a pas de dossier de données.`);
-  const d = resoudre(c.campagne.donnees, ctx.reglages.racines);
-  if (!d.ok || !(await ctx.plateforme.dossierExiste(d.chemin))) throw new Error(`Données brutes absentes de ce poste (${c.campagne.donnees}) : régénérez depuis le PC qui les a.`);
-  const fs = ctx.plateforme.fichiers(d.chemin);
+  // Par la copie dans l'espace : marche aussi sur le poste qui n'a pas les données brutes.
+  const fs = fichiersDonnees(ctx, c.campagne.donnees);
   const fichier = (await fs.listDir(o.essai)).find((f) => f.name.endsWith(SUFFIXE_SUIVI));
-  if (!fichier) throw new Error(`Pas d'export ${SUFFIXE_SUIVI} dans ${o.essai}.`);
+  if (!fichier) throw new Error(`Pas d'export ${SUFFIXE_SUIVI} de ${o.essai}, ni dans l'espace ni sur ce poste (${c.campagne.donnees}).`);
   const serie = lireCsv(new TextDecoder().decode(await fs.readBytes(`${o.essai}/${fichier.name}`)));
   return renduCourbes(panneaux(serie), titreFigure(c.campagne.titre, o.essai), o.vue);
 }

@@ -8,6 +8,7 @@
 import { ecrireReglages } from "@noyau/poste/reglages";
 import { FichiersMemoire, type Fichiers } from "@noyau/stockage";
 import type { Plateforme } from "@interface/plateforme";
+import { zipSync } from "fflate";
 
 const ONEDRIVE = "C:\\Users\\DAVID\\OneDrive - entpe.fr";
 const ESPACE = `${ONEDRIVE}\\Thèse\\Espace`;
@@ -117,7 +118,7 @@ export function plateformeDemo(scenario: string | null): Plateforme {
     creerDossier: async (chemin) => {
       dossier(chemin);
     },
-    copierDossier: async function (source, destination) {
+    copierDossier: async function (source, destination, options) {
       const src = this.fichiers(source);
       const dst = this.fichiers(destination);
       const r = { copies: 0, aJour: 0, octets: 0 };
@@ -126,6 +127,7 @@ export function plateformeDemo(scenario: string | null): Plateforme {
         for (const e of await src.listDir(chemin)) {
           const c = chemin ? `${chemin}/${e.name}` : e.name;
           if (e.kind === "dir") await copier(c);
+          else if (options?.sansEcraser && (await dst.exists(c))) r.aJour++;
           else {
             const octets = await src.readBytes(c);
             await dst.writeBytesAtomic(c, octets);
@@ -136,6 +138,24 @@ export function plateformeDemo(scenario: string | null): Plateforme {
       };
       await copier("");
       return r;
+    },
+    archiverDossier: async function (source, nom) {
+      const src = this.fichiers(source);
+      const contenu: Record<string, Uint8Array> = {};
+      let octets = 0;
+      const parcourir = async (chemin: string) => {
+        for (const e of await src.listDir(chemin)) {
+          const c = chemin ? `${chemin}/${e.name}` : e.name;
+          if (e.kind === "dir") await parcourir(c);
+          else if (!/\.(tmp|lock)$/i.test(e.name)) {
+            contenu[c] = await src.readBytes(c);
+            octets += contenu[c].length;
+          }
+        }
+      };
+      await parcourir("");
+      const ok = await this.enregistrerSous(nom, zipSync(contenu, { level: 6 }));
+      return ok ? { fichiers: Object.keys(contenu).length, octets } : null;
     },
     fichiers: (racine) => {
       const sous = !dossiers.has(normaliser(racine)) ? parent(racine) : null;

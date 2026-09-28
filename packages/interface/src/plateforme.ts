@@ -20,6 +20,12 @@ export interface RapportCopie {
   octets: number;
 }
 
+/** Bilan de l'export d'un dossier en zip. */
+export interface RapportArchive {
+  fichiers: number;
+  octets: number;
+}
+
 /** Réponse à la vérification d'un lien : code HTTP final, ou l'erreur. */
 export interface ReponseLien {
   code: number | null;
@@ -42,9 +48,15 @@ export interface Plateforme {
   creerDossier(chemin: string): Promise<void>;
   /**
    * Copie un dossier (chemins absolus) : incrémentale, rien n'est supprimé à la destination,
-   * qui est créée au besoin.
+   * qui est créée au besoin. `sansEcraser` : un fichier déjà à la destination n'est jamais
+   * remplacé (rapatriement dans l'espace).
    */
-  copierDossier(source: string, destination: string): Promise<RapportCopie>;
+  copierDossier(source: string, destination: string, options?: { sansEcraser?: boolean }): Promise<RapportCopie>;
+  /**
+   * Boîte « Enregistrer sous » (nom proposé `nom`, en .zip) puis archive tout le dossier
+   * `source` (absolu) ; null si l'utilisateur annule.
+   */
+  archiverDossier(source: string, nom: string): Promise<RapportArchive | null>;
   /** Accès aux fichiers sous une racine absolue. */
   fichiers(racine: string): Fichiers;
   /** Supprime un fichier temporaire `*.tmp` laissé par une écriture interrompue. */

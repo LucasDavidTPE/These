@@ -9,7 +9,7 @@ import { openPath, openUrl } from "@tauri-apps/plugin-opener";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
 import { erreurDepuisIpc, type Entree } from "@noyau/stockage";
-import type { Plateforme, RapportCopie, ReponseLien } from "@interface/plateforme";
+import type { Plateforme, RapportArchive, RapportCopie, ReponseLien } from "@interface/plateforme";
 
 async function appel<T>(cmd: string, args: Record<string, unknown> = {}, chemin = ""): Promise<T> {
   try {
@@ -47,7 +47,12 @@ export function plateformeTauri(): Plateforme {
     },
     dossierExiste: (chemin) => appel<boolean>("poste_dossier_existe", { chemin }),
     creerDossier: (chemin) => appel<void>("poste_creer_dossier", { chemin }, chemin),
-    copierDossier: (source, destination) => appel<RapportCopie>("copie_dossier", { source, destination }, destination),
+    copierDossier: (source, destination, options) => appel<RapportCopie>("copie_dossier", { source, destination, sansEcraser: options?.sansEcraser ?? false }, destination),
+    archiverDossier: async (source, nom) => {
+      const destination = await save({ title: "Exporter l'espace", defaultPath: nom, filters: [{ name: "Archive zip", extensions: ["zip"] }] });
+      if (!destination) return null;
+      return appel<RapportArchive>("archive_dossier", { source, destination }, destination);
+    },
     fichiers: (racine) => ({
       listDir: (chemin) => appel<Entree[]>("fichiers_lister", { racine, chemin }, chemin),
       exists: (chemin) => appel<boolean>("fichiers_existe", { racine, chemin }, chemin),

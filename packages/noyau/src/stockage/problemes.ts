@@ -19,7 +19,9 @@ export type Probleme =
   /** Fichier présent mais inexploitable (JSON abîmé, champ manquant…). */
   | { type: "illisible"; chemin: string; detail: string }
   /** Une racine de données déclarée n'existe pas sur ce poste. */
-  | { type: "racine-absente"; racine: string; chemin: string };
+  | { type: "racine-absente"; racine: string; chemin: string }
+  /** Ancien emplacement, hors de l'espace, des PDF ou des figures : à copier dans l'espace. */
+  | { type: "hors-espace"; quoi: "biblio-pdf" | "figures"; chemin: string };
 
 export interface Description {
   titre: string;
@@ -45,6 +47,11 @@ export function decrire(p: Probleme): Description {
         titre: `Dossier « ${p.racine} » introuvable sur ce poste`,
         detail: `${p.chemin} n'existe pas ici. Ce qui en dépend est grisé ; corrigez le chemin dans les réglages du poste s'il a changé.`,
       };
+    case "hors-espace":
+      return {
+        titre: p.quoi === "biblio-pdf" ? "Les PDF de la bibliographie sont encore hors de l'espace" : "La bibliothèque de figures est encore hors de l'espace",
+        detail: `Tout vit désormais dans l'espace. « Rapatrier » copie ${p.chemin} dans l'espace (rien n'est supprimé) ; supprimez l'ancien dossier vous-même une fois rassuré.`,
+      };
   }
 }
 
@@ -58,5 +65,7 @@ export function cleProbleme(p: Probleme): string {
       return `${p.type}:${p.chemin}`;
     case "racine-absente":
       return `racine:${p.racine}`;
+    case "hors-espace":
+      return `hors-espace:${p.quoi}`;
   }
 }

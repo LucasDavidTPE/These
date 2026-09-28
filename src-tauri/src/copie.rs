@@ -46,8 +46,18 @@ fn canonique(p: &Path) -> std::path::PathBuf {
     }
 }
 
-/// Copie récursivement `source` dans `destination` (créée au besoin).
+/// Copie récursivement `source` dans `destination` (créée au besoin). Avec `sans_ecraser`,
+/// un fichier déjà présent à la destination n'est jamais remplacé, quelle que soit sa date :
+/// c'est le rapatriement dans l'espace, où la version de l'espace peut être la plus récente.
 pub fn copier_dossier(source: &str, destination: &str) -> LibResult<RapportCopie> {
+    copier_dossier_avec(source, destination, false)
+}
+
+pub fn copier_dossier_avec(
+    source: &str,
+    destination: &str,
+    sans_ecraser: bool,
+) -> LibResult<RapportCopie> {
     let src = absolu(source)?;
     let dst = absolu(destination)?;
     if !src.is_dir() {
@@ -60,7 +70,7 @@ pub fn copier_dossier(source: &str, destination: &str) -> LibResult<RapportCopie
         ));
     }
     let mut r = RapportCopie::default();
-    copier(src, dst, &cd, 0, &mut r)?;
+    copier(src, dst, &cd, 0, sans_ecraser, &mut r)?;
     Ok(r)
 }
 
@@ -72,6 +82,7 @@ fn copier(
     dst: &Path,
     garde: &Path,
     profondeur: usize,
+    sans_ecraser: bool,
     r: &mut RapportCopie,
 ) -> LibResult<()> {
     if profondeur > PROFONDEUR_MAX {
@@ -91,10 +102,14 @@ fn copier(
         if genre.is_dir() {
             // Jamais la destination elle-même, où qu'elle soit (seconde sécurité).
             if canonique(&de) != garde {
-                copier(&de, &vers, garde, profondeur + 1, r)?;
+                copier(&de, &vers, garde, profondeur + 1, sans_ecraser, r)?;
             }
         } else if genre.is_file() {
-            copier_fichier(&de, &vers, r)?;
+            if sans_ecraser && vers.exists() {
+                r.a_jour += 1;
+            } else {
+                copier_fichier(&de, &vers, r)?;
+            }
         }
         // Les liens symboliques ne sont pas suivis.
     }
@@ -134,10 +149,16 @@ fn copier_fichier(de: &Path, vers: &Path, r: &mut RapportCopie) -> LibResult<()>
 }
 
 #[tauri::command]
-pub async fn copie_dossier(source: String, destination: String) -> LibResult<RapportCopie> {
-    tauri::async_runtime::spawn_blocking(move || copier_dossier(&source, &destination))
-        .await
-        .map_err(|e| LibError::NotAllowed(e.to_string()))?
+pub async fn copie_dossier(
+    source: String,
+    destination: String,
+    sans_ecraser: Option<bool>,
+) -> LibResult<RapportCopie> {
+    tauri::async_runtime::spawn_blocking(move || {
+        copier_dossier_avec(&source, &destination, sans_ecraser.unwrap_or(false))
+    })
+    .await
+    .map_err(|e| LibError::NotAllowed(e.to_string()))?
 }
 
 #[cfg(test)]
@@ -193,6 +214,33 @@ mod tests {
             }
         );
         assert!(!dst.join("sous/journal.log.tmp").exists());
+    }
+
+    #[test]
+    fn sans_ecraser_garde_ce_qui_est_deja_la() {
+        let t = tempfile::tempdir().unwrap();
+        let src = t.path().join("BIBLIO");
+        fs::create_dir_all(&src).unwrap();
+        fs::write(src.join("BIB-001.pdf"), "ancien").unwrap();
+        fs::write(src.join("BIB-002.pdf"), "b").unwrap();
+        let dst = t.path().join("Espace/bibliotheque/pdf");
+        fs::create_dir_all(&dst).unwrap();
+        fs::write(dst.join("BIB-001.pdf"), "version de l'espace").unwrap();
+
+        let r = copier_dossier_avec(src.to_str().unwrap(), dst.to_str().unwrap(), true).unwrap();
+        assert_eq!(
+            r,
+            RapportCopie {
+                copies: 1,
+                a_jour: 1,
+                octets: 1
+            }
+        );
+        assert_eq!(
+            fs::read_to_string(dst.join("BIB-001.pdf")).unwrap(),
+            "version de l'espace"
+        );
+        assert_eq!(fs::read_to_string(dst.join("BIB-002.pdf")).unwrap(), "b");
     }
 
     #[test]

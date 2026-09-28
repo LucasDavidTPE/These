@@ -455,3 +455,28 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] « Enregistrer » : `numeriseur/<nom>.json` et l'image dans l'espace ; rouvrir le projet
       sur l'autre PC, tout est à sa place.
 
+
+## Espace autonome (1.2)
+
+- [ ] Accueil → « À régler » : « Les PDF de la bibliographie sont encore hors de l'espace »
+      et « La bibliothèque de figures… » ; le bouton mène aux réglages.
+- [ ] Réglages → « Rapatrier dans l'espace » pour les PDF : bilan (fichiers copiés, Mo), les
+      PDF sont dans `Espace\bibliotheque\pdf`, « Ouvrir le PDF » d'une fiche marche ; le
+      dossier `BIBLIO` est intact (le supprimer soi-même ensuite).
+- [ ] Idem pour les figures : la bibliothèque s'affiche depuis `Espace\figures`, avec ses
+      verrous et ses aperçus ; l'ancien dossier est intact.
+- [ ] Sur l'autre PC (après synchronisation OneDrive) : « Rapatrier » ne recopie rien
+      (tout « déjà présent ») et n'écrase aucune figure modifiée entre-temps.
+- [ ] Campagne : « Courbes » puis « 2S2P1D » sur un essai : l'export apparaît dans
+      `Espace\donnees\essais\…` ; sur le PC sans `E:\`, les courbes et le dépouillement
+      s'ouvrent quand même (les essais jamais ouverts restent indisponibles).
+- [ ] Traitement : ouvrir un fichier hors de toute racine (Bureau) : il est copié dans
+      `donnees\importes` ; le dépouillement se rouvre sur l'autre PC.
+- [ ] Un dépouillement enregistré avant la 1.2 (chemin absolu) se rouvre et son fichier
+      part dans `donnees\importes`.
+- [ ] ViscoCompare : « Tout exporter » écrit les classeurs dans `Espace\viscocompare\…` ; le
+      dossier COMSOL / VISCOROUTE n'est pas modifié ; l'étude se rouvre sur l'autre PC.
+- [ ] Réglages → « Exporter l'espace (.zip)… » : le zip s'ouvre dans l'Explorateur, contient
+      tout l'espace (sans `.tmp` ni `.lock`) ; refus propre si on l'enregistre dans l'espace.
+- [ ] Taille de l'espace dans OneDrive après quelques semaines : raisonnable (seuls les
+      fichiers ouverts sont copiés).

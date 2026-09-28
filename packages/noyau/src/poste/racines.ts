@@ -62,3 +62,33 @@ export function referenceDepuisChemin(chemin: string, racines: Record<string, st
   if (!meilleure) return null;
   return ecrireReference({ racine: meilleure.nom, chemin: cible.slice(meilleure.base.length).replace(/^\/+/, "") });
 }
+
+/**
+ * Ce qui vit toujours dans l'espace (SPEC §4.1), quoi que dise le poste : les PDF de la
+ * bibliographie et la bibliothèque de figures. Une racine « biblio-pdf » ou un dossier de
+ * figures encore déclarés ailleurs sur un poste sont d'anciens emplacements, à rapatrier.
+ */
+export const DANS_L_ESPACE = { "biblio-pdf": "bibliotheque/pdf", figures: "figures" } as const;
+export type DansLEspace = keyof typeof DANS_L_ESPACE;
+
+/** Racines vues par les modules : celles du poste, plus celles qui vivent dans l'espace. */
+export function racinesEffectives(racines: Record<string, string>, espace: string | null): Record<string, string> {
+  return espace ? { ...racines, "biblio-pdf": absolu(espace, DANS_L_ESPACE["biblio-pdf"]) } : racines;
+}
+
+/** Dossier de la bibliothèque de figures : dans l'espace ; sans espace (produit Figurine seul), celui du poste. */
+export function dossierFigures(figuresDuPoste: string | null, espace: string | null): string | null {
+  return espace ? absolu(espace, DANS_L_ESPACE.figures) : figuresDuPoste;
+}
+
+const memeDossier = (a: string, b: string) => a.replace(/\\/g, "/").replace(/\/+$/, "").toLowerCase() === b.replace(/\\/g, "/").replace(/\/+$/, "").toLowerCase();
+
+/** Anciens emplacements encore déclarés sur ce poste, hors de l'espace : à rapatrier. */
+export function horsEspace(r: { racines: Record<string, string>; figures: string | null }, espace: string | null): { quoi: DansLEspace; chemin: string }[] {
+  if (!espace) return [];
+  const out: { quoi: DansLEspace; chemin: string }[] = [];
+  const pdf = r.racines["biblio-pdf"];
+  if (pdf && !memeDossier(pdf, absolu(espace, DANS_L_ESPACE["biblio-pdf"]))) out.push({ quoi: "biblio-pdf", chemin: pdf });
+  if (r.figures && !memeDossier(r.figures, absolu(espace, DANS_L_ESPACE.figures))) out.push({ quoi: "figures", chemin: r.figures });
+  return out;
+}

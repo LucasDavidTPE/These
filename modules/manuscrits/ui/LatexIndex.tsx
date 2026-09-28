@@ -19,7 +19,7 @@ const NATURES: [Nature | "", string][] = [
 
 export function LatexIndex() {
   const ctx = useContexte();
-  const racine = ctx.reglages.racines.latex;
+  const racine = ctx.racines.latex;
   const [index, setIndex] = useState<EntreeIndex[] | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [nature, setNature] = useState<Nature | "">("figure");

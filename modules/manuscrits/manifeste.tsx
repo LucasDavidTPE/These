@@ -8,7 +8,7 @@ const manuscrits: Manifeste = {
   resume: "Versions datées de vos manuscrits Word, avec une note",
   Icone: IconeManuscrits,
   Page: ManuscritsPage,
-  etat: async (ctx) => (ctx.reglages.racines.manuscrits ? `Dossier : ${ctx.reglages.racines.manuscrits.split(/[\\/]/).filter(Boolean).pop()}` : "Dossier à choisir"),
+  etat: async (ctx) => (ctx.racines.manuscrits ? `Dossier : ${ctx.racines.manuscrits.split(/[\\/]/).filter(Boolean).pop()}` : "Dossier à choisir"),
 };
 
 export default manuscrits;

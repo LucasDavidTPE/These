@@ -62,12 +62,15 @@ export function espacePropose(oneDrive: string): string {
   return sous(oneDrive, "Thèse", "Espace");
 }
 
-/** Racines que les modules savent utiliser, proposées dans les réglages. */
+/**
+ * Racines que les modules savent utiliser, proposées dans les réglages : les dossiers d'où
+ * viennent les données (lues, copiées dans l'espace, jamais modifiées). Les PDF de la
+ * bibliographie n'en sont plus une : ils vivent dans l'espace (voir DANS_L_ESPACE).
+ */
 export const RACINES_CONNUES: readonly { nom: string; description: string; exemple: string }[] = [
   { nom: "essais", description: "Données brutes des essais (sorties machine)", exemple: "E:\\" },
   { nom: "recherche", description: "Dossier de recherche du Bureau (données d'essai triées)", exemple: "C:\\Users\\DAVID\\Desktop\\Recherche" },
   { nom: "manuscrits", description: "Manuscrits Word (.docx) dont on garde des versions", exemple: "C:\\Users\\DAVID\\OneDrive - entpe.fr\\Thèse\\Rédaction" },
-  { nom: "biblio-pdf", description: "PDF de la bibliographie", exemple: "C:\\Users\\DAVID\\OneDrive - entpe.fr\\Thèse\\BIBLIO" },
   { nom: "latex", description: "Sources LaTeX (figures TikZ, chapitres) à indexer", exemple: "C:\\Users\\DAVID\\OneDrive - entpe.fr\\Thèse\\Rédaction" },
   { nom: "viscocompare", description: "Comparaisons COMSOL / Viscoroute (dossiers COMSOL et VISCOROUTE)", exemple: "C:\\Users\\DAVID\\Desktop\\Recherche\\ViscoCompare" },
 ];

@@ -1,13 +1,17 @@
 /**
  * ViscoCompare : comparaison des profils calculés par COMSOL et par Viscoroute, vitesse par
- * vitesse (portage de LucasDavidTPE/ViscoCompare, sans Python). Les résultats restent dans
- * leur dossier (racine « viscocompare ») ; rien n'est écrit dans l'espace.
+ * vitesse (portage de LucasDavidTPE/ViscoCompare, sans Python). Les fichiers de calcul sont lus
+ * dans leur dossier (racine « viscocompare ») et copiés dans l'espace au passage : la
+ * comparaison se rouvre sur l'autre PC. Le dossier source n'est jamais écrit ; les classeurs
+ * produits vont dans l'espace (`viscocompare/<étude>/`).
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { VUE_ENTIERE, formaterNombre, type Vue } from "@noyau/courbes";
 import { ecrireClasseur } from "@noyau/formats/xlsx-ecriture";
+import { slugifier } from "@noyau/texte";
 import { Message, Page, Section } from "@interface/composants";
 import { useContexte } from "@interface/contexte";
+import { fichiersDonnees } from "@interface/donnees";
 import { Courbes } from "@interface/Courbes";
 import { ecarts, feuillesCas, panneauxCas } from "../core/comparaison";
 import { chargerEtude, trouverEtudes, type Etude } from "../core/dossier";
@@ -54,7 +58,16 @@ function Conv({ c, onChange }: { c: Conventions; onChange(c: Conventions): void 
 
 export function ViscoComparePage() {
   const ctx = useContexte();
-  const racine = ctx.reglages.racines.viscocompare;
+  const racine = ctx.racines.viscocompare;
+  // Le dossier vu à travers sa copie dans l'espace : lisible même sans la source sur ce poste.
+  const fs = useMemo(() => {
+    try {
+      return fichiersDonnees(ctx, "viscocompare:");
+    } catch {
+      return null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx.espace, ctx.racines, ctx.plateforme]);
   const [etudes, setEtudes] = useState<string[] | null>(null);
   const [etude, setEtude] = useState<string>("");
   const [conventions, setConventions] = useState<Conventions>(CONVENTIONS_SCRIPT);
@@ -64,11 +77,10 @@ export function ViscoComparePage() {
   const [msg, setMsg] = useState<Msg | null>(null);
 
   useEffect(() => {
-    if (!racine) return;
+    if (!fs) return;
     let annule = false;
     (async () => {
-      if (!(await ctx.plateforme.dossierExiste(racine))) throw new Error(`${racine} est introuvable sur ce poste.`);
-      const e = await trouverEtudes(ctx.plateforme.fichiers(racine));
+      const e = await trouverEtudes(fs);
       if (annule) return;
       setEtudes(e);
       setEtude((x) => (e.includes(x) ? x : (e[0] ?? "")));
@@ -76,12 +88,12 @@ export function ViscoComparePage() {
     return () => {
       annule = true;
     };
-  }, [racine, ctx.plateforme]);
+  }, [fs]);
 
   useEffect(() => {
-    if (!racine || !etudes?.includes(etude)) return;
+    if (!fs || !etudes?.includes(etude)) return;
     let annule = false;
-    chargerEtude(ctx.plateforme.fichiers(racine), etude, conventions)
+    chargerEtude(fs, etude, conventions)
       .then((d) => {
         if (annule) return;
         setDonnees(d);
@@ -91,7 +103,7 @@ export function ViscoComparePage() {
     return () => {
       annule = true;
     };
-  }, [racine, etudes, etude, conventions, ctx.plateforme]);
+  }, [fs, etudes, etude, conventions]);
 
   async function choisir() {
     const d = await ctx.plateforme.choisirDossier("Dossier des comparaisons (contenant COMSOL et VISCOROUTE, ou des sous-dossiers qui les contiennent)", racine);
@@ -105,15 +117,15 @@ export function ViscoComparePage() {
     await ctx.plateforme.enregistrerSous(`comparaison_${cas.nom}.xlsx`, ecrireClasseur(feuillesCas(cas)));
   }
 
-  /** Comme le script : un classeur par cas dans EXCEL_OUTPUT, à côté des dossiers COMSOL et VISCOROUTE. */
+  /** Comme le script, un classeur par cas ; mais dans l'espace, les calculs d'origine ne sont jamais touchés. */
   async function exporterTout() {
-    if (!racine || !donnees) return;
+    if (!ctx.espace || !donnees) return;
     try {
-      const fs = ctx.plateforme.fichiers(racine);
-      const dossier = etude ? `${etude}/EXCEL_OUTPUT` : "EXCEL_OUTPUT";
-      await fs.ensureDir(dossier);
-      for (const c of donnees.cas) await fs.writeBytesAtomic(`${dossier}/comparaison_${c.nom}.xlsx`, ecrireClasseur(feuillesCas(c)));
-      setMsg({ niveau: "info", texte: `${donnees.cas.length} classeur(s) écrit(s) dans ${dossier}.` });
+      const esp = ctx.espace.fichiers;
+      const dossier = `viscocompare/${slugifier(etude) || "comparaison"}`;
+      await esp.ensureDir(dossier);
+      for (const c of donnees.cas) await esp.writeBytesAtomic(`${dossier}/comparaison_${c.nom}.xlsx`, ecrireClasseur(feuillesCas(c)));
+      setMsg({ niveau: "info", texte: `${donnees.cas.length} classeur(s) écrit(s) dans l'espace : ${dossier}.` });
     } catch (e) {
       setMsg({ niveau: "erreur", texte: message(e) });
     }
@@ -138,8 +150,8 @@ export function ViscoComparePage() {
       actions={
         <>
           {donnees?.cas.length ? (
-            <button type="button" onClick={() => void exporterTout()} title="Un classeur par vitesse, dans EXCEL_OUTPUT (comme le script)">
-              Tout exporter (EXCEL_OUTPUT)
+            <button type="button" disabled={!ctx.espace} onClick={() => void exporterTout()} title="Un classeur par vitesse (comme le script), rangé dans l'espace">
+              Tout exporter (classeurs)
             </button>
           ) : null}
           <button type="button" onClick={() => void choisir()}>
@@ -149,11 +161,11 @@ export function ViscoComparePage() {
       }
     >
       {msg ? <Message niveau={msg.niveau}>{msg.texte}</Message> : null}
-      {!racine ? (
+      {!racine && !etudes?.length ? (
         <div className="carte">
           <p>
             Indiquez le dossier qui contient <code>COMSOL</code> (un export <code>.csv</code> par vitesse, « V=0.1 » dans le nom) et <code>VISCOROUTE</code> (un dossier
-            « Vitesse_0.1 » par vitesse, un <code>.json</code> par grandeur), ou plusieurs sous-dossiers organisés ainsi. Les fichiers restent où ils sont.
+            « Vitesse_0.1 » par vitesse, un <code>.json</code> par grandeur), ou plusieurs sous-dossiers organisés ainsi. Les fichiers lus sont copiés dans l'espace ; le dossier n'est jamais modifié.
           </p>
         </div>
       ) : etudes === null ? (

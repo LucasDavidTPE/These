@@ -22,9 +22,12 @@ Principes, par ordre d'importance :
 
 1. **Ça marche, sans rien installer d'autre.** Un installeur `.exe`, et c'est tout : ni
    Python, ni Node, ni Java, ni serveur local, ni navigateur à ouvrir.
-2. **Les données restent à leur place.** Les données brutes restent sur `E:\` et le
-   Bureau, les PDF dans `OneDrive\Thèse\BIBLIO`, les figures dans la bibliothèque
-   Figurine. L'application les référence, elle ne les copie jamais.
+2. **L'espace se suffit à lui-même** (décidé en 1.2, remplace « les données restent à leur
+   place »). Tout ce que l'application utilise ou produit vit dans l'espace : fiches, PDF
+   de la bibliographie, figures, dépouillements, et une copie de chaque fichier de données
+   ouvert pour une analyse. Les disques de données brutes (`E:\`, sorties machine) ne sont
+   que des points d'entrée : lus, jamais modifiés. L'espace s'ouvre tel quel sur l'autre PC
+   et s'exporte en un seul `.zip`.
 3. **Deux PC, un seul état, via OneDrive.** Tout ce que l'on saisit (références, notes,
    phases du planning, fiches de campagne) vit dans un dossier OneDrive, en fichiers
    JSON lisibles. Aucune dépendance à Google, Microsoft ou un autre service en ligne.
@@ -125,6 +128,7 @@ deux objets différents ne se gênent jamais, et un conflit OneDrive ne touche q
   bibliotheque/
     parametres.json            axes, mois du plan, capacité, barème, listes de choix
     references/BIB-001.json    une référence (métadonnées, lecture, fiche, notes)
+    pdf/BIB-001_….pdf          les PDF (1.2 ; avant : dossier BIBLIO, racine « biblio-pdf »)
     demandes/DEM-001.json
     corrections/COR-001.json   corrections TFE
     pistes/PIS-001.json
@@ -141,10 +145,31 @@ deux objets différents ne se gênent jamais, et un conflit OneDrive ne touche q
       essais/Essai1/
         essai.json             métadonnées, notes courtes
         traitement.json        le projet 2S2P1D de cet essai (tri des cycles, calages)
+  figures/                     la bibliothèque de Figures (1.2 ; format de Figurine 1.0)
+  traitement/, chausspec/, numeriseur/, etudes/, viscocompare/, manuscrits/, planning/ …
+  donnees/                     copies des données brutes ouvertes pour une analyse (1.2)
+    essais/tsrst-lucas/Essai1/Essai1.steps.tracking.csv    ← essais:tsrst-lucas/Essai1/…
+    importes/mesure.csv        fichier ouvert hors de toute racine
 ```
 
-La bibliothèque de **Figures** garde son propre dossier (celui de Figurine 1.0) :
-l'espace ne fait que pointer dessus.
+**Données brutes (1.2).** Un fichier ouvert pour une analyse (Traitement, courbes d'une
+campagne, ViscoCompare) est copié dans `donnees/<racine>/<chemin>` ; la référence de
+racine reste le nom du fichier (`essais:…`). À la lecture : la source si elle est là (la
+copie est mise à jour si le fichier a changé, par exemple un essai en cours), sinon la
+copie. Sur l'autre PC, sans le disque, tout ce qui a déjà été ouvert reste lisible. La
+source n'est jamais écrite. Seuls les fichiers ouverts sont copiés, pas les dossiers
+d'essai entiers (décision : OneDrive reste léger).
+
+**Ce qui vivait ailleurs (1.2).** Les PDF (`bibliotheque/pdf`) et la bibliothèque de
+figures (`figures`) sont toujours dans l'espace. Un poste qui déclare encore l'ancien
+emplacement (racine « biblio-pdf », dossier de figures) le voit dans « À régler » et dans
+les réglages : « Rapatrier dans l'espace » copie sans rien écraser (la version de l'espace
+gagne toujours), vérifie que chaque fichier est arrivé, puis le poste oublie l'ancien
+emplacement. L'ancien dossier n'est jamais supprimé par l'application.
+
+**Export (1.2).** Réglages du poste → « Exporter l'espace (.zip) » : tout l'espace, chemins
+conservés, sans les `.tmp` ni les verrous ; écrit à côté puis renommé. Pour archiver la
+thèse ou la garder hors du OneDrive de l'école.
 
 Règles, reprises de Figurine et généralisées à tous les modules :
 
@@ -153,7 +178,7 @@ Règles, reprises de Figurine et généralisées à tous les modules :
   scannant.
 - **Écriture atomique** (fichier temporaire puis renommage).
 - **Chemins relatifs uniquement** dans l'espace. Les données brutes sont désignées par
-  **racine** : `essais:tsrst-lucas/Essai1`, `biblio-pdf:BIB-001_….pdf` (comme dans le
+  **racine** : `essais:tsrst-lucas/Essai1` (comme dans le
   `config.toml` de these-lgcb).
 - **Surveillance du dossier** : quand OneDrive apporte une modification faite sur l'autre
   PC, la vue se met à jour seule.
@@ -166,19 +191,18 @@ Règles, reprises de Figurine et généralisées à tous les modules :
 
 ### 4.2 Réglages de chaque poste (local, jamais dans OneDrive)
 
-`%APPDATA%\<identifiant du produit>\poste.json` : chemin de l'espace, chemin de la
-bibliothèque de figures, **racines de données** de ce poste, taille des fenêtres,
-filtres mémorisés.
+`%APPDATA%\<identifiant du produit>\poste.json` : chemin de l'espace, **racines de
+données** de ce poste (d'où viennent les données brutes), taille des fenêtres, filtres
+mémorisés. Le dossier de figures n'y sert plus qu'au produit Figurine seul, sans espace.
 
 ```json
 { "espace": "C:/Users/DAVID/OneDrive - entpe.fr/Thèse/Espace",
-  "racines": { "essais": "E:/", "recherche": "C:/Users/DAVID/Desktop/Recherche",
-               "biblio-pdf": "C:/Users/DAVID/OneDrive - entpe.fr/Thèse/BIBLIO" } }
+  "racines": { "essais": "E:/", "recherche": "C:/Users/DAVID/Desktop/Recherche" } }
 ```
 
 Une racine absente sur ce poste (les données brutes sur le PC perso) n'est **pas une
-erreur** : l'application affiche ce qui est dans l'espace (fiches, notes, aperçus,
-résultats de calage) et grise ce qui demande les données brutes, en le disant.
+erreur** : l'application lit la copie de l'espace de tout ce qui a déjà été ouvert, et ne
+grise que ce qui n'a jamais été copié (découvrir de nouveaux essais, par exemple).
 
 ## 5. Module Accueil
 
@@ -264,7 +288,9 @@ Ce qui change à l'étape 2 :
 - **Enregistrement automatique** (0.2.7) : un essai de campagne s'enregistre avec lui dès
   sa première modification ; un fichier ouvert à la main s'enregistre dans
   `traitement/<nom>-<id>.json` avec la référence de son fichier de mesure (racine du poste,
-  sinon chemin absolu) et se rouvre depuis « Dépouillements enregistrés ».
+  sinon sa copie `donnees/importes/…`) et se rouvre depuis « Dépouillements enregistrés »,
+  sur l'un ou l'autre PC (1.2 : le fichier de mesure est copié dans l'espace ; un ancien
+  enregistrement à chemin absolu est rapatrié à sa réouverture).
 - **Calage étendu** (0.2.7) : modèles élémentaires Maxwell, Kelvin-Voigt, Zener, Burgers
   (constantes propres, « Caler tout » ne touche pas aux a_T) ; **séries de Prony** (Maxwell
   ou Kelvin-Voigt généralisé, τ sur une grille, modules par moindres carrés positifs) calées
@@ -357,7 +383,7 @@ ENTPE.
   doi.org, Scholar, Marquer lu, PDF récupéré. **Bloc PDF** (1.0) : « Pointer le PDF… »
   le renomme selon la convention des PDF rangés (`ID_Auteur[-Auteur2|-etal]_Année_Titre-court.pdf`,
   titre court = six mots significatifs sans accents ; nom modifiable), le renomme sur place
-  s'il est déjà dans la racine `biblio-pdf`, sinon l'y copie (l'original reste), et note son
+  s'il est déjà dans `bibliotheque/pdf` de l'espace, sinon l'y copie (l'original reste), et note son
   nom dans la fiche ; « Renommer selon la convention » pour un PDF déjà rattaché.
 - **Plan de lecture** : un bloc par mois (objectif de fin de mois, documents à demander
   en amont, avancement, liste des références) ; changer le mois d'une référence la
@@ -387,8 +413,8 @@ ENTPE.
 
 ### 9.4 Migration
 **Import du classeur** (`.xlsx`) relançable : tant que la bascule n'est pas faite, on
-continue à travailler dans Excel et on réimporte. Les PDF restent dans le dossier
-`BIBLIO` (racine `biblio-pdf`).
+continue à travailler dans Excel et on réimporte. Les PDF du dossier `BIBLIO` sont
+rapatriés dans l'espace (`bibliotheque/pdf`, 1.2).
 
 Exigence : un test lit le classeur, importe, recalcule citation / état / alerte / score
 / temps et tous les indicateurs du tableau de bord, et les compare aux **valeurs mises
@@ -454,8 +480,10 @@ renommées, déplacements COMSOL en µm, `arc_length` − 5 m, profil Viscoroute
 signe inversé pour UX et UZ, × 10⁶, interpolation sur le y de la première grandeur),
 vérifiées par des tests ; les conventions restent modifiables à l'écran. Ajouts : les
 fichiers écartés sont listés (le script les taisait), écart sur l'extremum de chaque
-grandeur, figures régénérables. Les classeurs `EXCEL_OUTPUT/comparaison_<v>.xlsx`
-reprennent les feuilles du script, sans ses graphiques Excel.
+grandeur, figures régénérables. Les classeurs `comparaison_<v>.xlsx` reprennent les
+feuilles du script, sans ses graphiques Excel ; ils vont dans l'espace
+(`viscocompare/<étude>/`, 1.2) et non plus dans `EXCEL_OUTPUT` à côté des calculs, qui ne
+sont jamais modifiés. Les fichiers lus sont copiés dans `donnees/viscocompare/`.
 
 ## 11 bis. Module ChaussSpec (1.0)
 

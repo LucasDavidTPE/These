@@ -12,7 +12,7 @@ import { Introuvable } from "@noyau/stockage";
 import { useContexte } from "@interface/contexte";
 import { appliquerProjet, detecter, essaiDemo, essaiDepuisLecture, resumeEssai, traiter, type Mode } from "../core/essai";
 import { fichierDepuisOctets, lireFichier } from "../core/io/lecture";
-import { prendre, surDemande, type DemandeEssai } from "./demande";
+import { lireExport, prendre, surDemande, type DemandeEssai } from "./demande";
 import { EtapeCalage } from "./EtapeCalage";
 import { EtapeCycles } from "./EtapeCycles";
 import { EtapeEssai } from "./EtapeEssai";
@@ -44,7 +44,7 @@ export function TraitementPage() {
     async (d: DemandeEssai) => {
       const st = useTraitement.getState();
       await st.tache(`Lecture de ${d.fichier}…`, async (progres) => {
-        const octets = await ctx.plateforme.fichiers(d.dossierDonnees).readBytes(d.fichier);
+        const octets = await lireExport({ espace: ctx.espace, plateforme: ctx.plateforme, racines: ctx.racines }, d);
         let projet: string | null = null;
         if (ctx.espace) {
           try {
@@ -76,7 +76,9 @@ export function TraitementPage() {
         st.signaler(projet ? "Dépouillement enregistré rouvert." : "Nouveau dépouillement : enregistrez-le avec l'essai quand il vous convient.");
       });
     },
-    [ctx.plateforme, ctx.espace],
+    // Pas `ctx` entier : il change à chaque écriture dans l'espace (la copie des données en
+    // est une), ce qui relancerait l'ouverture en cours.
+    [ctx.plateforme, ctx.espace, ctx.racines],
   );
 
   // Essai demandé par Campagnes avant l'ouverture du module, ou pendant qu'il est affiché.

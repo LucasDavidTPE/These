@@ -160,3 +160,9 @@ lancent tous les tests automatiques sous Windows.
 - [x] Carte de couleurs : légende étalonnée, coupes, maillages rectangle / disques / polaire
 - [x] Vers ChaussSpec : empreinte hétérogène = ensemble de charges circulaires (ou carte de pression)
 - [ ] Idées : détection automatique des axes et des graduations, légende en échelle de couleurs connue (jet, viridis) sans barre sur l'image
+
+## 1.2 — Espace autonome
+- [x] Principe : tout vit dans l'espace ; les disques de données brutes ne sont que lus
+- [x] Données brutes ouvertes pour une analyse copiées dans `donnees/` (Traitement, Campagnes, ViscoCompare), relues depuis la copie sur l'autre PC
+- [x] PDF de la bibliographie (`bibliotheque/pdf`) et bibliothèque de figures (`figures`) dans l'espace, rapatriement vérifié sans rien écraser
+- [x] Export de tout l'espace en `.zip` (Réglages du poste)

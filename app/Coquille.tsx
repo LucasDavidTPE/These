@@ -2,9 +2,10 @@
  * La coquille : barre des modules, page courante, et ce qu'elle partage avec les modules
  * (contexte, registre, surveillance de l'espace, liste « À régler »).
  */
-import { avecGarde } from "@noyau/stockage";
+import { absolu, avecGarde } from "@noyau/stockage";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { problemesRacine } from "@noyau/espace/espace";
+import { DANS_L_ESPACE, dossierFigures, horsEspace, racinesEffectives } from "@noyau/poste/racines";
 import type { ReglagesPoste } from "@noyau/poste/reglages";
 import type { Produit } from "@noyau/produits";
 import { Registre } from "@noyau/registre";
@@ -62,6 +63,16 @@ export function Coquille({ produit, manifestes, plateforme, poste, reglages, enr
     };
   }, [espace, plateforme]);
 
+  const cheminEspace = espace?.racine ?? null;
+  const racines = useMemo(() => racinesEffectives(reglages.racines, cheminEspace), [reglages.racines, cheminEspace]);
+  const figures = useMemo(() => dossierFigures(reglages.figures, cheminEspace), [reglages.figures, cheminEspace]);
+
+  // Ce qui vit dans l'espace y a toujours son dossier, même vide (PDF, figures).
+  useEffect(() => {
+    if (!cheminEspace) return;
+    for (const d of Object.values(DANS_L_ESPACE)) void plateforme.creerDossier(absolu(cheminEspace, d)).catch(() => undefined);
+  }, [cheminEspace, plateforme]);
+
   const rafraichir = useCallback(() => setRevision((r) => r + 1), []);
 
   const contexte: Contexte = useMemo(
@@ -71,6 +82,8 @@ export function Coquille({ produit, manifestes, plateforme, poste, reglages, enr
       poste,
       plateforme,
       reglages,
+      racines,
+      dossierFigures: figures,
       espace,
       registre,
       revision,
@@ -79,7 +92,7 @@ export function Coquille({ produit, manifestes, plateforme, poste, reglages, enr
       naviguer: setPage,
       enregistrerReglages,
     }),
-    [produit, poste, plateforme, reglages, espace, registre, revision, problemes, rafraichir, enregistrerReglages],
+    [produit, poste, plateforme, reglages, racines, figures, espace, registre, revision, problemes, rafraichir, enregistrerReglages],
   );
 
   // « À régler » : racine de l'espace, racines de données absentes, puis chaque module.
@@ -93,9 +106,12 @@ export function Coquille({ produit, manifestes, plateforme, poste, reglages, enr
       } catch {
         // espace momentanément inaccessible (OneDrive) : le diagnostic le dira
       }
+      const anciens = horsEspace(reglages, espace.racine);
       for (const [racine, chemin] of Object.entries(reglages.racines)) {
+        if (anciens.some((a) => a.quoi === racine)) continue;
         if (!(await plateforme.dossierExiste(chemin))) out.push({ source: "poste", probleme: { type: "racine-absente", racine, chemin } });
       }
+      for (const a of anciens) out.push({ source: "poste", probleme: { type: "hors-espace", ...a } });
       for (const m of manifestes) {
         if (!m.problemes) continue;
         try {
@@ -111,7 +127,7 @@ export function Coquille({ produit, manifestes, plateforme, poste, reglages, enr
     };
     // `contexte` change à chaque nouvelle liste de problèmes : on ne recalcule que sur les vraies causes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [espace, revision, reglages.racines, manifestes, plateforme]);
+  }, [espace, revision, reglages.racines, reglages.figures, manifestes, plateforme]);
 
   const courant = manifestes.find((m) => m.id === page);
   const seul = manifestes.length === 1 && !produit.espace;

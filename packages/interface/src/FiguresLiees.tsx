@@ -73,7 +73,7 @@ export function FiguresLiees({ cible }: { cible: CibleFigures }) {
   return (
     <div className="figures-liees">
       {erreur ? <p className="erreur-texte">{erreur}</p> : null}
-      {!ctx.reglages.figures ? (
+      {!ctx.dossierFigures ? (
         <p className="discret">Choisissez le dossier de la bibliothèque de figures dans les réglages du poste.</p>
       ) : liste === null ? (
         <p className="discret">Lecture de la bibliothèque…</p>

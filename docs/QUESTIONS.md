@@ -16,4 +16,5 @@ reportée dans `SPEC.md` et la question est supprimée d'ici.
 4. **Site 2S2P1D en ligne (P2).** Le laisser en ligne, figé, avec un lien vers
    l'installeur, ou le retirer ?
 5. **Emplacement de l'espace (P0).** `OneDrive - entpe.fr\Thèse\Espace` convient-il ?
-   Le OneDrive de l'école reste-t-il accessible après la thèse ?
+   Le OneDrive de l'école reste-t-il accessible après la thèse ? *(1.2 : l'espace se suffit
+   à lui-même et s'exporte en un `.zip` depuis les réglages ; reste à choisir où archiver.)*

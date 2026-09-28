@@ -24,6 +24,13 @@ export interface Contexte {
   poste: string;
   plateforme: Plateforme;
   reglages: ReglagesPoste;
+  /**
+   * Racines vues par les modules : celles du poste, plus celles qui vivent dans l'espace
+   * (« biblio-pdf »). Les modules lisent celles-ci, jamais `reglages.racines`.
+   */
+  racines: Record<string, string>;
+  /** Bibliothèque de figures : `<espace>/figures` (ou le dossier du poste pour Figurine seul). */
+  dossierFigures: string | null;
   /** L'espace ouvert (produits qui en ont un). */
   espace: { racine: string; fichiers: Fichiers } | null;
   registre: Registre<Manifeste>;

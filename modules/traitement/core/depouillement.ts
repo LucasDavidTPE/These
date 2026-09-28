@@ -4,11 +4,11 @@
  * - Essai ouvert depuis une campagne : le projet va avec l'essai
  *   (`campagnes/<c>/essais/<e>/traitement.json`, format « projet » de la page d'origine).
  * - Fichier ouvert à la main : `traitement/<nom>-<id>.json`, qui garde en plus d'où vient le
- *   fichier de mesure — une référence à une racine du poste (« recherche:B2C4/Essai1.csv »)
- *   quand il est sous l'une d'elles, sinon son chemin absolu.
- * Les données brutes ne sont jamais copiées : on les relit à la réouverture.
+ *   fichier de mesure — une référence de racine (« recherche:B2C4/Essai1.csv ») quand il est
+ *   sous l'une d'elles, sinon le chemin de sa copie dans l'espace (« donnees/importes/… »).
+ * Le fichier de mesure est copié dans l'espace à l'ouverture (SPEC §4.1) : le dépouillement
+ * se rouvre sur n'importe quel poste, même sans les données brutes.
  */
-import { lireReference, referenceDepuisChemin, resoudre } from "@noyau/poste/racines";
 import { slugifier } from "@noyau/texte";
 
 export const DOSSIER_DEPOUILLEMENTS = "traitement";
@@ -22,7 +22,7 @@ export interface Enregistrement {
 export interface Depouillement {
   version: 1;
   nom: string;
-  /** Référence de racine, ou chemin absolu du fichier de mesure. */
+  /** Référence de racine, chemin dans l'espace, ou (anciens enregistrements) chemin absolu. */
   source: string;
   /** Nom du fichier de mesure. */
   fichier: string;
@@ -35,24 +35,6 @@ export interface Depouillement {
 
 export function cheminDepouillement(nom: string, id: string): string {
   return `${DOSSIER_DEPOUILLEMENTS}/${slugifier(nom) || "essai"}-${id}.json`;
-}
-
-/** Ce qu'on écrit de la source : une référence de racine si possible. */
-export function sourceDepuisChemin(chemin: string, racines: Record<string, string>): string {
-  return referenceDepuisChemin(chemin, racines) ?? chemin;
-}
-
-/** Dossier absolu et nom du fichier de mesure sur ce poste ; message si la racine manque. */
-export function localiserSource(source: string, racines: Record<string, string>): { ok: true; dossier: string; fichier: string } | { ok: false; message: string } {
-  let absolu = source;
-  if (lireReference(source)) {
-    const r = resoudre(source, racines);
-    if (!r.ok) return { ok: false, message: r.message };
-    absolu = r.chemin;
-  }
-  const i = Math.max(absolu.lastIndexOf("/"), absolu.lastIndexOf("\\"));
-  if (i <= 0) return { ok: false, message: `Chemin du fichier de mesure illisible : « ${source} ».` };
-  return { ok: true, dossier: absolu.slice(0, i), fichier: absolu.slice(i + 1) };
 }
 
 export function lireDepouillement(brut: unknown): Depouillement {
