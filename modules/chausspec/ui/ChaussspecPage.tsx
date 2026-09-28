@@ -10,6 +10,7 @@ import type { CaseJSON } from "../core/io";
 import { EditeurCalcul, EditeurChargement, EditeurStructure } from "./EditeurCas";
 import { useChaussspec } from "./etat";
 import { EXEMPLES } from "./exemples";
+import { Explication } from "./Explication";
 import { calculer } from "./execution";
 import { Resultats } from "./Resultats";
 import "./chausspec.css";
@@ -29,6 +30,7 @@ export function ChaussspecPage() {
   const [liste, setListe] = useState<string[]>([]);
 
   const [tour, setTour] = useState(0);
+  const [aide, setAide] = useState(false);
   const relire = useCallback(() => setTour((t) => t + 1), []);
   // Cas enregistrés de l'espace, relus quand l'espace change (autre poste, OneDrive).
   useEffect(() => {
@@ -125,6 +127,9 @@ export function ChaussspecPage() {
               ))}
             </optgroup>
           </select>
+          <button type="button" aria-pressed={aide} onClick={() => setAide((v) => !v)}>
+            Comment ça marche ?
+          </button>
           <button type="button" onClick={() => void importer()}>
             Importer un JSON…
           </button>
@@ -134,6 +139,7 @@ export function ChaussspecPage() {
         </>
       }
     >
+      {aide ? <Explication /> : null}
       <div className="cs-nom rangee">
         <label className="cs-champ">
           <span>Nom du cas</span>

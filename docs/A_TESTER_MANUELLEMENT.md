@@ -504,3 +504,10 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] Polynôme : un y atteint deux fois donne les deux x, séparés par « ; » ; un y jamais
       atteint dans la plage affiche « aucun dans la plage ».
 - [ ] Exponentielle avec y négatif, logarithmique / puissance : « aucun » plutôt qu'une erreur.
+
+## ChaussSpec : « Comment ça marche ? » (1.2.3)
+
+- [ ] Bouton « Comment ça marche ? » en haut de ChaussSpec : le panneau s'ouvre et se referme ;
+      schéma en quatre étapes lisible (même fenêtre étroite), cinq rubriques dépliables.
+- [ ] Le texte est compréhensible sans lire le code ; noter ce qui reste obscur (à
+      compléter). Notice complète : `docs/CHAUSSSPEC_EXPLIQUE.md`.

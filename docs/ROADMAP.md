@@ -168,3 +168,4 @@ lancent tous les tests automatiques sous Windows.
 - [x] Export de tout l'espace en `.zip` (Réglages du poste)
 - [x] Figures → Graphes : régressions polynôme (degré 2 à 6), exponentielle, logarithmique ; plage de x choisie (saisie ou sur l'aperçu), prolongement (1.2.1)
 - [x] Figures → Graphes : « Lire sur la courbe » (y pour un x, x pour un y, extrapolation) (1.2.2)
+- [x] ChaussSpec : panneau « Comment ça marche ? » (modèle semi-analytique, méthode spectrale) (1.2.3)
