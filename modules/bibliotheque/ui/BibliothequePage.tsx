@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { Message, Page } from "@interface/composants";
 import { BandeauHorsEspace } from "@interface/BandeauHorsEspace";
 import { useContexte } from "@interface/contexte";
+import { useOuverture } from "@interface/ouverture";
 import { versBibtex, versRis } from "../core/exports";
 import { importerClasseur, type ImportClasseur } from "../core/import";
 import { libelleLien, lienARevoir, liensAVerifier } from "../core/liens";
@@ -36,7 +37,7 @@ export function BibliothequePage() {
   const d = useBiblio();
   const b = d.biblio;
   const [onglet, setOnglet] = useState<Onglet>("tableau");
-  const [fiche, setFiche] = useState<string | null>(null);
+  const [fiche, setFiche] = useOuverture("bibliotheque");
   const [filtres, setFiltres] = useState<Filtres>(FILTRES_VIDES);
   const [aImporter, setAImporter] = useState<{ nom: string; imp: ImportClasseur } | null>(null);
   const [message, setMessage] = useState<string | null>(null);

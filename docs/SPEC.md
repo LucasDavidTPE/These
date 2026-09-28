@@ -102,7 +102,7 @@ plus que le détail. Chaque module déclare son contenu par `indexer(ctx)` dans 
 (références, campagnes et essais, études, figures, éléments du planning, cas ChaussSpec,
 projets du Numériseur, présentations) ; la coquille les réunit à l'ouverture de la palette et
 les classe (`noyau/recherche.ts`). Un résultat ouvre son élément par une action du registre
-quand le module en offre une (`chausspec.ouvrir-cas`), sinon la page du module. La palette
+quand le module en offre une (`chausspec.ouvrir-cas`, `bibliotheque.ouvrir`, `etudes.ouvrir`, `campagnes.ouvrir`, `figures.ouvrir`), sinon la page du module. La palette
 propose aussi les pages (Réglages, Diagnostic…). Rien n'est lu tant qu'elle n'est pas ouverte.
 
 ### 3.1 Installeurs
@@ -530,7 +530,7 @@ grille (FFT + partition de l'unité) et solveur axisymétrique. Conformité : r�
 par le Python d'origine (noyau à 1e-9, grilles à 1e-9, 1e-7 là où interviennent Bessel et le
 régime harmonique). Un cas = `chausspec/<nom>.json` dans l'espace, au **format JSON du Python**
 (`python -m chausspec cas.json` le calcule aussi) ; une carte de pression peut y être incluse.
-Calcul dans un Worker, cartes des champs, extrêmes et ε1, coupes, jauges (charge roulante),
+Calcul dans un Worker, cartes des champs, extrêmes, champs dérivés (ε1 à ε3, σ1 à σ3, τmax, von Mises, dilatation) et combinaisons linéaires, coupes, jauges (charge roulante),
 export du dossier de résultats au format du Python, cartes et courbes vers Figures, constantes
 2S2P1D reprises du Traitement (action `traitement.calages`).
 

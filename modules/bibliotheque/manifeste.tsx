@@ -1,4 +1,5 @@
 import { IconeBibliotheque } from "@interface/icones";
+import { demanderOuverture } from "@interface/ouverture";
 import type { Contexte } from "@interface/contexte";
 import type { Manifeste } from "@interface/manifeste";
 import { dateLimite, premierJourDuMois, ajouterJours } from "./core/calculs";
@@ -29,8 +30,15 @@ const bibliotheque: Manifeste = {
       titre: r.valeur.titre,
       detail: [r.valeur.auteurs, r.valeur.annee].filter(Boolean).join(" · "),
       mots: [r.valeur.cle, r.valeur.doi, r.valeur.statut, r.valeur.categories.join(" ")].join(" "),
+      ouvrir: { action: "bibliotheque.ouvrir", charge: { id: r.id } },
     })),
   actions: {
+    /** Ouvre la fiche d'une référence ; charge : { ctx, id }. */
+    "bibliotheque.ouvrir": async (charge) => {
+      const { ctx, id } = charge as { ctx: Contexte; id: string };
+      demanderOuverture("bibliotheque", id);
+      ctx.naviguer("bibliotheque");
+    },
     /**
      * Pour le Planning : un bloc par mois du plan de lecture, et les dates limites des
      * demandes en jalons (SPEC §10.2).

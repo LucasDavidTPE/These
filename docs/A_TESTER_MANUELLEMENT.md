@@ -533,3 +533,20 @@ nombres doivent être identiques, dans les deux modes.
       modèle est gardé (`presentations/modeles/`), appliqué, et se retrouve sur l'autre PC.
 - [ ] Les quatre modèles de base (clair, sombre, bleu, chaud) : lisibles en projection.
 - [ ] Deux colonnes avec une image à droite et des puces à gauche ; une diapo de section.
+
+## ChaussSpec : champs dérivés et combinaisons (1.4.0)
+
+- [ ] Après un calcul, le menu « Champ » propose, en plus des composantes : ε1, ε2, ε3, εv (si les six
+      déformations sont calculées) et σ1, σ2, σ3, τmax, σ von Mises (si les six contraintes le sont),
+      pour chaque profondeur. Vérifier ε1 contre l'ancien affichage (identique) et τmax = (σ1 − σ3) / 2.
+- [ ] « Combinaison linéaire… » : saisir `exx - eyy`, `0,5 exx + 0,5 eyy`, `sxx + syy + szz` ; la carte,
+      les extrêmes et les coupes suivent. Une composante non calculée, ou une faute de frappe,
+      affiche un message clair (pas d'écran blanc). L'unité est celle de la grandeur (µdef, MPa, mm).
+- [ ] En régime harmonique (champs complexes), les champs dérivés ne sont pas proposés.
+
+## Recherche globale : ouverture directe et Accueil (1.4.0)
+
+- [ ] Ctrl+K sur une référence, une étude, une campagne, une figure : Entrée ouvre directement
+      sa fiche / sa vue, pas seulement la page du module.
+- [ ] Accueil → Dernières figures : un titre très long (par exemple avec des soulignés) tient sur
+      deux lignes au plus, sans sortir de sa vignette ; l'infobulle donne le titre complet.

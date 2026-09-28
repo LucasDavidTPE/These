@@ -171,3 +171,6 @@ lancent tous les tests automatiques sous Windows.
 - [x] ChaussSpec : panneau « Comment ça marche ? » (modèle semi-analytique, méthode spectrale) (1.2.3)
 - [x] Recherche globale Ctrl+K dans tout l'espace (références, essais, figures, cas, planning…) (1.3.0)
 - [x] Manuscrits → Présentations : Markdown vers .pptx, figures de la bibliothèque, modèles créables (1.3.0)
+- [x] ChaussSpec : champs dérivés (ε1, ε2, ε3, dilatation, σ1, σ2, σ3, τmax, von Mises) et combinaisons linéaires libres de composantes (1.4.0)
+- [x] Recherche globale : ouverture directe de la référence, de l'étude, de la campagne, de la figure (1.4.0)
+- [x] Accueil : les titres de « Dernières figures » ne débordent plus (1.4.0)

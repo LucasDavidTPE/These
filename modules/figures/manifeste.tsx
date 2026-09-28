@@ -21,7 +21,7 @@ const figures: Manifeste = {
   indexer: async (ctx) => {
     if (!ctx.dossierFigures) return [];
     const { figures } = await scanLibrary(ctx.plateforme.fichiers(ctx.dossierFigures));
-    return figures.flatMap((f) => (f.meta ? [{ id: f.id, module: "figures", genre: "Figure", titre: f.meta.title, detail: f.id, mots: f.meta.tags.join(" ") }] : []));
+    return figures.flatMap((f) => (f.meta ? [{ id: f.id, module: "figures", genre: "Figure", titre: f.meta.title, detail: f.id, mots: f.meta.tags.join(" "), ouvrir: { action: "figures.ouvrir", charge: { dossier: f.folder } } }] : []));
   },
   actions: {
     /** Une image d'un autre module devient une figure de la bibliothèque ; renvoie son dossier. */

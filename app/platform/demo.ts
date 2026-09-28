@@ -123,6 +123,8 @@ export function plateformeDemo(scenario: string | null): Plateforme {
     figures.poser("FIG-0001_courbe/meta.json", JSON.stringify({ id: "FIG-0001", title: "Courbe maîtresse", kind: "graph", created: "2026-09-20T10:00:00Z", modified: "2026-09-20T10:00:00Z", tags: ["2s2p1d"], used_in: [] }));
     const png = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg=="), (c) => c.charCodeAt(0));
     void figures.writeBytesAtomic("FIG-0001_courbe/export.png", png);
+    figures.poser("FIG-0002_long/meta.json", JSON.stringify({ id: "FIG-0002", title: "Comparaison_des_modules_complexes_2S2P1D_COMSOL_Viscoroute_vitesse_0.66_ms_essai_TSRST_final", kind: "graph", created: "2026-09-21T10:00:00Z", modified: "2026-09-21T10:00:00Z", tags: [], used_in: [] }));
+    figures.poser("FIG-0003_long/meta.json", JSON.stringify({ id: "FIG-0003", title: "Schéma du modèle de Huet-Sayegh généralisé avec amortisseurs paraboliques", kind: "schema", created: "2026-09-22T10:00:00Z", modified: "2026-09-22T10:00:00Z", tags: [], used_in: [] }));
   }
 
   return {

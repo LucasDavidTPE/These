@@ -5,14 +5,14 @@
 import { useEffect, useRef, useState } from "react";
 import { dessiner, fmt, RDBU, unite } from "./carte";
 
-export function CarteChamp({ x, y, f, comp, z }: { x: Float64Array; y: Float64Array; f: Float64Array; comp: string; z: number }) {
+export function CarteChamp({ x, y, f, comp, z, echelle }: { x: Float64Array; y: Float64Array; f: Float64Array; comp: string; z: number; echelle?: { k: number; u: string } }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [survol, setSurvol] = useState<string>("");
   const nx = x.length,
     ny = y.length;
   let vmax = 0;
   for (const v of f) vmax = Math.max(vmax, Math.abs(v));
-  const { k, u } = unite(comp);
+  const { k, u } = echelle ?? unite(comp);
   useEffect(() => {
     if (ref.current) dessiner(ref.current, f, nx, ny, vmax);
   }, [f, nx, ny, vmax]);

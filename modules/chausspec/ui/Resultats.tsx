@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import { grapheSvg, PALETTE_THEME, type Serie } from "@noyau/graphe";
 import { useContexte } from "@interface/contexte";
 import { extremes, fieldCsv, fmtE6 } from "../core/io";
-import { STRAIN } from "../core/spectral";
+import { analyserCombinaison, calculerDerive, classeCombinaison, combiner, DERIVES, derivesPossibles, estDerive } from "../core/derives";
 import { coupeX, coupeY, dessiner, fmt, unite } from "./carte";
 import { CarteChamp } from "./CarteChamp";
 import { useChaussspec } from "./etat";
@@ -36,26 +36,41 @@ function graphe(xLabel: string, yLabel: string, series: { name: string; x: numbe
   };
 }
 
+/** « e1@0.32 » → « ε1 (déformation principale max) à z = 0.32 m ». */
+function libelle(cle: string): string {
+  const [c, z] = cle.split("@") as [string, string];
+  const nom = c === "combi" ? "Combinaison linéaire…" : estDerive(c) ? DERIVES[c].libelle : c;
+  return `${nom} à z = ${z} m`;
+}
+
 export function Resultats({ r }: { r: ResultatSerialise }) {
   const ctx = useContexte();
   const { nom, signaler, cas } = useChaussspec();
   const res = useMemo(() => versResultat(r), [r]);
   const complexe = r.meta.complex;
   const zs = [...new Set(r.champs.map((c) => c.z))];
-  const avecE1 = !complexe && STRAIN.every((c) => r.champs.some((k) => k.comp === c));
-  const choix = [...r.champs.map((c) => `${c.comp}@${c.z}`), ...(avecE1 ? zs.map((z) => `e1@${z}`) : [])];
+  const presentes = (z: number) => new Set(r.champs.filter((c) => c.z === z).map((c) => c.comp));
+  const choix = [
+    ...r.champs.map((c) => `${c.comp}@${c.z}`),
+    ...(complexe ? [] : zs.flatMap((z) => [...derivesPossibles(presentes(z)).map((d) => `${d}@${z}`), `combi@${z}`])),
+  ];
   const [cle, setCle] = useState(choix[0]!);
+  const [expr, setExpr] = useState("");
   const [vue, setVue] = useState<Vue>("re");
   const [comp, zTxt] = cle.split("@") as [string, string];
   const z = Number(zTxt);
+  const combi = useMemo(() => (comp === "combi" ? analyserCombinaison(expr, presentes(z)) : null), [comp, expr, z, r]); // eslint-disable-line react-hooks/exhaustive-deps
   const f = useMemo(() => {
-    if (comp === "e1") return res.principalStrains(z)[2];
+    if (comp === "combi") return combi?.ok ? combiner(res, combi.termes, z) : new Float64Array(res.x.length * res.y.length);
+    if (estDerive(comp)) return calculerDerive(res, comp, z);
     const c = r.champs.find((k) => k.comp === comp && k.z === z)!;
     if (vue === "re" || !c.im) return c.re;
     return vue === "im" ? c.im : Float64Array.from(c.re, (v, i) => Math.hypot(v, c.im![i]!));
-  }, [comp, z, vue, r, res]);
+  }, [comp, z, vue, r, res, combi]);
   const ext = extremes(res, f);
-  const { k, u } = unite(comp);
+  const classe = combi?.ok ? classeCombinaison(combi.termes) : null;
+  const { k, u } = comp === "combi" ? (classe === "e" ? { k: 1e6, u: "µdef" } : classe === "s" ? { k: 1e-6, u: "MPa" } : classe === "u" ? { k: 1e3, u: "mm" } : { k: 1, u: "SI" }) : unite(comp);
+  const nomChamp = comp === "combi" ? (combi?.ok ? expr.trim() : "combinaison") : comp;
   const cx = coupeX(res.x, res.y, f, ext.y_max),
     cy = coupeY(res.x, res.y, f, ext.x_max);
   const regime = cas.regime?.type ?? "static";
@@ -92,8 +107,8 @@ export function Resultats({ r }: { r: ResultatSerialise }) {
       g.imageSmoothingEnabled = false;
       g.drawImage(canvas, 0, 0, grand.width, grand.height);
       const png = new Uint8Array(await (await new Promise<Blob>((ok) => grand.toBlob((b) => ok(b!), "image/png"))).arrayBuffer());
-      const titre = `ChaussSpec ${nom} : ${comp} à z = ${z} m`;
-      await ctx.registre.executer("figures.enregistrer-image", { ctx, titre, png, source: `ChaussSpec, cas ${nom} (±${fmt(vmax * k)} ${u}, x ${fmt(res.x[0]!)} à ${fmt(res.x.at(-1)!)} m, y ${fmt(res.y[0]!)} à ${fmt(res.y.at(-1)!)} m)`, tags: ["ChaussSpec", comp] });
+      const titre = `ChaussSpec ${nom} : ${nomChamp} à z = ${z} m`;
+      await ctx.registre.executer("figures.enregistrer-image", { ctx, titre, png, source: `ChaussSpec, cas ${nom} (±${fmt(vmax * k)} ${u}, x ${fmt(res.x[0]!)} à ${fmt(res.x.at(-1)!)} m, y ${fmt(res.y[0]!)} à ${fmt(res.y.at(-1)!)} m)`, tags: ["ChaussSpec", nomChamp] });
       signaler("Carte enregistrée dans Figures.");
     } catch (e) {
       signaler(e instanceof Error ? e.message : String(e), "erreur");
@@ -110,7 +125,7 @@ export function Resultats({ r }: { r: ResultatSerialise }) {
   }
 
   const peutFigures = ctx.registre.aAction("figures.enregistrer-graphe");
-  const lbl = `${comp} (${u})`;
+  const lbl = `${nomChamp} (${u})`;
 
   return (
     <div className="cs-resultats">
@@ -120,12 +135,12 @@ export function Resultats({ r }: { r: ResultatSerialise }) {
           <select className="champ" value={cle} onChange={(e) => setCle(e.target.value)}>
             {choix.map((c) => (
               <option key={c} value={c}>
-                {c.replace("@", " à z = ")} m
+                {libelle(c)}
               </option>
             ))}
           </select>
         </label>
-        {complexe && comp !== "e1" ? (
+        {complexe ? (
           <label className="cs-champ">
             <span>Harmonique</span>
             <select className="champ" value={vue} onChange={(e) => setVue(e.target.value as Vue)}>
@@ -146,7 +161,17 @@ export function Resultats({ r }: { r: ResultatSerialise }) {
         ) : null}
       </div>
       <div className="cs-resultats-grille">
-        <CarteChamp x={res.x} y={res.y} f={f} comp={comp} z={z} />
+        <div>
+          {comp === "combi" ? (
+            <div className="cs-champ" style={{ marginBottom: 8 }}>
+              <span>Combinaison linéaire de composantes</span>
+              <input className="champ" value={expr} placeholder="par exemple : exx - eyy   ou   0,5 exx + 0,5 eyy   ou   sxx + syy + szz" onChange={(e) => setExpr(e.target.value)} />
+              {combi && !combi.ok && expr.trim() ? <span className="petit" style={{ color: "var(--erreur)" }}>{combi.message}</span> : null}
+              {!expr.trim() ? <span className="discret petit">Composantes disponibles à z = {z} m : {[...presentes(z)].join(", ")}.</span> : null}
+            </div>
+          ) : null}
+          <CarteChamp x={res.x} y={res.y} f={f} comp={nomChamp} z={z} echelle={{ k, u }} />
+        </div>
         <div>
           <table className="cs-table">
             <thead>
@@ -188,7 +213,7 @@ export function Resultats({ r }: { r: ResultatSerialise }) {
           <div className="rangee">
             <strong className="petit">Coupe longitudinale en y = {fmt(ext.y_max)} m</strong>
             {peutFigures ? (
-              <button type="button" className="petit" onClick={() => void grapheVersFigures(`${comp}, coupe en y = ${fmt(ext.y_max)} m, z = ${z} m`, graphe("$x$ (m)", lbl, [{ name: comp, x: Array.from(cx.x), y: Array.from(cx.v, (v) => v * k) }]))}>
+              <button type="button" className="petit" onClick={() => void grapheVersFigures(`${nomChamp}, coupe en y = ${fmt(ext.y_max)} m, z = ${z} m`, graphe("$x$ (m)", lbl, [{ name: nomChamp, x: Array.from(cx.x), y: Array.from(cx.v, (v) => v * k) }]))}>
                 → Figures
               </button>
             ) : null}
@@ -199,7 +224,7 @@ export function Resultats({ r }: { r: ResultatSerialise }) {
           <div className="rangee">
             <strong className="petit">Coupe transversale en x = {fmt(ext.x_max)} m</strong>
             {peutFigures ? (
-              <button type="button" className="petit" onClick={() => void grapheVersFigures(`${comp}, coupe en x = ${fmt(ext.x_max)} m, z = ${z} m`, graphe("$y$ (m)", lbl, [{ name: comp, x: Array.from(cy.y), y: Array.from(cy.v, (v) => v * k) }]))}>
+              <button type="button" className="petit" onClick={() => void grapheVersFigures(`${nomChamp}, coupe en x = ${fmt(ext.x_max)} m, z = ${z} m`, graphe("$y$ (m)", lbl, [{ name: nomChamp, x: Array.from(cy.y), y: Array.from(cy.v, (v) => v * k) }]))}>
                 → Figures
               </button>
             ) : null}

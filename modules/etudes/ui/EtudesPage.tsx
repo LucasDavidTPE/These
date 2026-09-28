@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { absolu, joindre } from "@noyau/stockage";
 import { Message, Page, Pastille, Section } from "@interface/composants";
 import { useContexte } from "@interface/contexte";
+import { useOuverture } from "@interface/ouverture";
 import { IconeDossier } from "@interface/icones";
 import { DOSSIER, STATUTS, type Etude, type Execution } from "../core/modele";
 import { chargerEtudes, creerEtude, enregistrerEtude, poserOutil, type EtudeChargee, type Noeud } from "./donnees";
@@ -235,7 +236,7 @@ export function EtudesPage() {
   const ctx = useContexte();
   const fs = ctx.espace?.fichiers;
   const [etudes, setEtudes] = useState<EtudeChargee[] | null>(null);
-  const [ouverte, setOuverte] = useState<string | null>(null);
+  const [ouverte, setOuverte] = useOuverture("etudes");
   const [nouvelle, setNouvelle] = useState<{ titre: string; question: string } | null>(null);
   const [campagnes, setCampagnes] = useState<{ slug: string; titre: string }[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
