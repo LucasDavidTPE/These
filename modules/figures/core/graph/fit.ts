@@ -183,6 +183,57 @@ export function fitValue(f: FitResult, x: number): number {
 }
 
 /**
+ * Les x où la courbe vaut y. Formule directe pour les cinq formes monotones (sans borne :
+ * c'est aussi de l'extrapolation) ; pour un polynôme, recherche des changements de signe
+ * sur [lo, hi] puis dichotomie (un polynôme peut avoir plusieurs racines).
+ */
+export function fitInverse(f: FitResult, y: number, [lo, hi]: [number, number]): number[] {
+  if (!Number.isFinite(y)) return [];
+  let x: number | null;
+  switch (f.kind) {
+    case "puissance":
+      x = f.a !== 0 && f.b !== 0 && y / f.a > 0 ? (y / f.a) ** (1 / f.b) : null;
+      break;
+    case "exponentielle":
+      x = f.a !== 0 && f.b !== 0 && y / f.a > 0 ? Math.log(y / f.a) / f.b : null;
+      break;
+    case "logarithmique":
+      x = f.a !== 0 ? Math.exp((y - f.b) / f.a) : null;
+      break;
+    case "polynome": {
+      if (!(hi > lo)) return [];
+      const N = 2000;
+      const g = (v: number) => fitValue(f, v) - y;
+      const racines: number[] = [];
+      let x0 = lo;
+      let g0 = g(x0);
+      for (let k = 1; k <= N; k++) {
+        const x1 = lo + ((hi - lo) * k) / N;
+        const g1 = g(x1);
+        if (g0 === 0) racines.push(x0);
+        else if (g0 * g1 < 0) {
+          let a = x0;
+          let b = x1;
+          for (let it = 0; it < 60; it++) {
+            const m = (a + b) / 2;
+            if (g(a) * g(m) <= 0) b = m;
+            else a = m;
+          }
+          racines.push((a + b) / 2);
+        }
+        x0 = x1;
+        g0 = g1;
+      }
+      if (g0 === 0) racines.push(x0);
+      return racines;
+    }
+    default:
+      x = f.a !== 0 ? (y - f.b) / f.a : null;
+  }
+  return x !== null && Number.isFinite(x) ? [x] : [];
+}
+
+/**
  * Points de la courbe sur l'étendue des x donnés : deux pour une droite en échelle
  * linéaire, sinon un échantillonnage régulier (géométrique si l'axe des x est log).
  */

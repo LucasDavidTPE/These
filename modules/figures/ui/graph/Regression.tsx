@@ -3,7 +3,8 @@
  * plage des x prise en compte (saisie, ou tirée sur l'aperçu), prolongement de la courbe,
  * équation sur la figure.
  */
-import { DEGRE_MAX, DEGRE_MIN, fitLabel, fitSample, fitSeries, type FitKind, type Series, type SeriesFit } from "../../core/graph";
+import { useState } from "react";
+import { DEGRE_MAX, DEGRE_MIN, fitInverse, fitLabel, fitSample, fitSeries, fitValue, type FitKind, type FitResult, type Series, type SeriesFit } from "../../core/graph";
 import { NumberInput } from "../editor/fields";
 import { usePlageRegression } from "./plageRegression";
 import { useGraph } from "./useGraph";
@@ -24,9 +25,7 @@ const CONDITION: Partial<Record<FitKind, string>> = {
 };
 
 /** Équation lisible dans le panneau (le TeX de la figure, sans les commandes). */
-function equationTexte(sr: Series, fit: SeriesFit): string {
-  const pts = fitSample(sr.x, sr.y, fit);
-  const f = fitSeries(pts.x, pts.y, fit.kind, fit.degre);
+function equationTexte(f: FitResult | null, fit: SeriesFit): string {
   if (!f) return fit.kind === "polynome" ? `Il faut au moins ${(fit.degre ?? DEGRE_MIN) + 1} x distincts dans la plage.` : (CONDITION[fit.kind] ?? "Pas assez de points distincts dans la plage.");
   const eq = fitLabel(f)
     .replace(/\$/g, "")
@@ -41,6 +40,29 @@ function equationTexte(sr: Series, fit: SeriesFit): string {
 }
 
 const nombre = (v: number) => String(Number(v.toPrecision(6))).replace(".", ",");
+
+/** Calculette sur la courbe : y pour un x (interpolation ou extrapolation), x pour un y. */
+function Calculette({ f, plage }: { f: FitResult; plage: [number, number] }) {
+  const [xq, setXq] = useState<number | undefined>();
+  const [yq, setYq] = useState<number | undefined>();
+  const yDeX = xq === undefined ? null : fitValue(f, xq);
+  const xDeY = yq === undefined ? null : fitInverse(f, yq, plage);
+  return (
+    <div className="field">
+      <span>Lire sur la courbe</span>
+      <div className="row">
+        <span className="muted small">x =</span>
+        <NumberInput value={xq} title="Un x : donne le y de la courbe (au-delà de la plage, c'est une extrapolation)" onChange={setXq} />
+        <span className="muted small">y = {yDeX === null ? "…" : Number.isFinite(yDeX) ? nombre(yDeX) : "indéfini"}</span>
+      </div>
+      <div className="row">
+        <span className="muted small">y =</span>
+        <NumberInput value={yq} title="Un y : donne le ou les x où la courbe le prend" onChange={setYq} />
+        <span className="muted small">x = {xDeY === null ? "…" : xDeY.length ? xDeY.map(nombre).join(" ; ") : f.kind === "polynome" ? "aucun dans la plage" : "aucun"}</span>
+      </div>
+    </div>
+  );
+}
 
 export function RegressionSerie({ i, sr }: { i: number; sr: Series }) {
   const s = useGraph();
@@ -59,6 +81,11 @@ export function RegressionSerie({ i, sr }: { i: number; sr: Series }) {
   const xFinis = sr.x.filter(Number.isFinite);
   const [xLo, xHi] = xFinis.length ? [Math.min(...xFinis), Math.max(...xFinis)] : [0, 0];
   const plage = fit && (fit.xmin !== undefined || fit.xmax !== undefined);
+  let f: FitResult | null = null;
+  if (fit) {
+    const pts = fitSample(sr.x, sr.y, fit);
+    f = fitSeries(pts.x, pts.y, fit.kind, fit.degre);
+  }
 
   return (
     <>
@@ -110,7 +137,8 @@ export function RegressionSerie({ i, sr }: { i: number; sr: Series }) {
               </button>
             </div>
           </div>
-          <p className="muted small">{equationTexte(sr, fit)}</p>
+          <p className="muted small">{equationTexte(f, fit)}</p>
+          {f && <Calculette f={f} plage={[fit.xmin ?? xLo, fit.xmax ?? xHi]} />}
           {plage && (
             <label className="chip">
               <input type="checkbox" checked={!!fit.prolonger} onChange={(e) => maj({ prolonger: e.target.checked || undefined })} />

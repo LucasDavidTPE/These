@@ -260,6 +260,9 @@ Ajouts permis par l'intégration :
   sur cette plage ou, avec `prolonger`, sur toute la série ; R² passe à la ligne quand
   l'équation est trop large pour le graphe. R² de la puissance et de l'exponentielle dans
   les variables transformées, comme les courbes de tendance d'Excel.
+  **1.2.2** : « Lire sur la courbe » (panneau, pas dans la figure) : y pour un x saisi, y compris
+  hors plage (extrapolation), et le ou les x pour un y (`fitInverse` : formule directe pour les
+  formes monotones, recherche de racines sur la plage pour le polynôme).
 
 ## 7. Module Traitement 2S2P1D
 

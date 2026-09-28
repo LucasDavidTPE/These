@@ -167,3 +167,4 @@ lancent tous les tests automatiques sous Windows.
 - [x] PDF de la bibliographie (`bibliotheque/pdf`) et bibliothèque de figures (`figures`) dans l'espace, rapatriement vérifié sans rien écraser
 - [x] Export de tout l'espace en `.zip` (Réglages du poste)
 - [x] Figures → Graphes : régressions polynôme (degré 2 à 6), exponentielle, logarithmique ; plage de x choisie (saisie ou sur l'aperçu), prolongement (1.2.1)
+- [x] Figures → Graphes : « Lire sur la courbe » (y pour un x, x pour un y, extrapolation) (1.2.2)

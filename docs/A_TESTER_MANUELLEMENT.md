@@ -495,3 +495,12 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] Polynôme de degré 3 dans un graphe étroit : R² passe sous l'équation, en SVG comme en
       pgfplots compilé.
 - [ ] Enregistrer, rouvrir le graphe : type, degré, plage et prolongement sont gardés.
+
+## Figures → Graphes : lire sur la courbe (1.2.2)
+
+- [ ] Avec une régression choisie, « Lire sur la courbe » : saisir un x donne le y de la
+      courbe, saisir un y donne le x. Vérifier avec l'équation affichée (et Excel).
+- [ ] Un x hors de la plage de la série : le y est une extrapolation (aucun blocage).
+- [ ] Polynôme : un y atteint deux fois donne les deux x, séparés par « ; » ; un y jamais
+      atteint dans la plage affiche « aucun dans la plage ».
+- [ ] Exponentielle avec y négatif, logarithmique / puissance : « aucun » plutôt qu'une erreur.

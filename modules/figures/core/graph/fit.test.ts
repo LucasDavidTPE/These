@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { exportGraphSvg, exportPgfplots } from "./export";
-import { fitCorner, fitLabel, fitPoints, fitSample, fitSeries, fitValue, parseFit, texNumber, type SeriesFit } from "./fit";
+import { fitCorner, fitInverse, fitLabel, fitPoints, fitSample, fitSeries, fitValue, parseFit, texNumber, type FitKind, type SeriesFit } from "./fit";
 import { fitRows, graphFits, scales } from "./layout";
 import { graphTheme } from "./style";
 import { emptyGraph, validateGraph } from "./model";
@@ -123,5 +123,33 @@ describe("régressions", () => {
       { i: 0, text: "$y = 1\\,x$", trait: true },
       { i: 0, text: "$R^2 = 1$", trait: false },
     ]);
+  });
+
+  it("inverse : retrouve x pour un y, sur chaque forme", () => {
+    const x = [1, 2, 3, 4, 5, 6];
+    const cas: [FitKind, (v: number) => number][] = [
+      ["lineaire", (v) => 3 * v + 2],
+      ["puissance", (v) => 2 * v ** 1.5],
+      ["exponentielle", (v) => 0.5 * Math.exp(0.4 * v)],
+      ["logarithmique", (v) => 2 * Math.log(v) + 1],
+    ];
+    for (const [kind, g] of cas) {
+      const f = fitSeries(x, x.map(g), kind)!;
+      const r = fitInverse(f, g(3.7), [1, 6]);
+      expect(r).toHaveLength(1);
+      expect(r[0]).toBeCloseTo(3.7, 6);
+    }
+    // Extrapolation : au-delà de la plage de la série.
+    const d = fitSeries(x, x.map((v) => 3 * v + 2), "lineaire")!;
+    expect(fitInverse(d, 62, [1, 6])[0]).toBeCloseTo(20, 8);
+    // Sans solution : y négatif pour une exponentielle.
+    expect(fitInverse(fitSeries(x, x.map((v) => Math.exp(v)), "exponentielle")!, -1, [1, 6])).toEqual([]);
+    // Polynôme : deux racines pour y = 1 sur x² (−1 et 1).
+    const q = fitSeries([-2, -1, 0, 1, 2], [4, 1, 0, 1, 4], "polynome", 2)!;
+    const rs = fitInverse(q, 1, [-2, 2]);
+    expect(rs).toHaveLength(2);
+    expect(rs[0]).toBeCloseTo(-1, 6);
+    expect(rs[1]).toBeCloseTo(1, 6);
+    expect(fitInverse(q, 10, [-2, 2])).toEqual([]);
   });
 });
