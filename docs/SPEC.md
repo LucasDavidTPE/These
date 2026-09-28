@@ -223,6 +223,12 @@ Ajouts permis par l'intégration :
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,
   duplication ; historique Annuler / Rétablir. « Régénérer » depuis l'essai repart des
   données : les retouches de données sont alors perdues (la mise en forme reste).
+- **régression** par série (1.0.2) : champ facultatif `fit: {kind, label}` d'une série
+  (`lineaire` y = a·x + b, `origine` y = a·x, `puissance` y = a·xᵇ par moindres carrés en
+  log-log) ; courbe en tirets de la couleur de la série sur l'étendue de ses x, et, si
+  `label`, équation et R² (4 chiffres significatifs, virgule décimale) dans un encadré au coin
+  `fit_pos` du graphe (par défaut, en haut du côté opposé à la légende). Même rendu en SVG et
+  en pgfplots (`\addplot coordinates` + `\node` à `rel axis cs`) ; ignorée pour les barres.
 
 ## 7. Module Traitement 2S2P1D
 

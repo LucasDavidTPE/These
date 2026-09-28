@@ -1,6 +1,7 @@
 /**
  * Modèle d'un graphe (SPEC §10), stocké dans `graph.json` (kind = graph).
  */
+import { parseFit, type SeriesFit } from "./fit";
 import { parseSeriesLook, parseStyle, type GraphStyle, type SeriesLook } from "./style";
 
 export const GRAPH_FORMAT = "figurine-graph/1";
@@ -15,6 +16,8 @@ export interface Series extends SeriesLook {
   y: number[];
   /** Apparaît dans la légende. */
   legend: boolean;
+  /** Régression tracée par-dessus la série. */
+  fit?: SeriesFit;
 }
 
 export interface AxisSpec {
@@ -39,6 +42,8 @@ export interface GraphDoc {
   bar_width: number;
   /** Apparence (palette, cadre, épaisseurs) ; absent : rendu du thème. */
   style?: GraphStyle;
+  /** Coin des équations de régression ; absent : opposé à la légende. */
+  fit_pos?: Exclude<LegendPos, "none">;
   series: Series[];
 }
 
@@ -114,6 +119,7 @@ export function validateGraph(raw: unknown): { ok: true; doc: GraphDoc } | { ok:
   };
   const style = parseStyle(raw.style);
   if (style) doc.style = style;
+  if (LEGENDS.includes(raw.fit_pos as LegendPos) && raw.fit_pos !== "none") doc.fit_pos = raw.fit_pos as Exclude<LegendPos, "none">;
   if (!Array.isArray(raw.series)) err("series", "doit être une liste.");
   (Array.isArray(raw.series) ? raw.series : []).forEach((s: unknown, i) => {
     const p = `series[${i}]`;
@@ -125,6 +131,8 @@ export function validateGraph(raw: unknown): { ok: true; doc: GraphDoc } | { ok:
     if ((x as number[]).length !== (y as number[]).length) return err(p, "x et y doivent avoir la même longueur.");
     const type = TYPES.includes(s.type as SeriesType) ? (s.type as SeriesType) : "linepoints";
     doc.series.push({ name: typeof s.name === "string" ? s.name : `Série ${i + 1}`, type, x: [...(x as number[])], y: [...(y as number[])], legend: s.legend !== false, ...parseSeriesLook(s) });
+    const fit = parseFit(s.fit);
+    if (fit) doc.series.at(-1)!.fit = fit;
   });
   for (const [k, a] of [["x", doc.x], ["y", doc.y]] as const) {
     if (a.log && doc.series.some((s) => (k === "x" ? s.x : s.y).some((v) => v <= 0))) err(`${k}.log`, "échelle logarithmique impossible : des valeurs sont ≤ 0.");

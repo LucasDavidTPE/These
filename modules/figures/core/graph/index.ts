@@ -1,5 +1,6 @@
 export * from "./edit";
 export * from "./export";
+export * from "./fit";
 export * from "./layout";
 export * from "./model";
 export * from "./source";

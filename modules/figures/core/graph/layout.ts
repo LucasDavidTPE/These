@@ -7,6 +7,7 @@ import { measureLabel } from "../math/tex";
 import type { Primitive } from "../schema/geometry";
 import type { Theme } from "../schema/theme";
 import type { Pt } from "../schema/types";
+import { fitCorner, fitLabel, fitPoints, fitSeries, type FitResult } from "./fit";
 import type { GraphDoc, Series } from "./model";
 import { graphTheme } from "./style";
 import { formatTick, linearScale, logScale, project, type AxisScale } from "./ticks";
@@ -176,6 +177,17 @@ export function graphLayout(doc: GraphDoc): GraphLayout {
     }
   });
 
+  // Régressions : courbe en tirets de la couleur de la série.
+  const fits = graphFits(doc, xs, ys);
+  for (const f of fits) {
+    const st = theme.graph.series[f.i % theme.graph.series.length]!;
+    const pts: Pt[] = f.points.map(([xv, yv]) => [X(xv), Y(yv)]);
+    for (let j = 0; j + 1 < pts.length; j++) {
+      const seg = clipSegment(pts[j]!, pts[j + 1]!, box);
+      if (seg) out.push(line(seg, { stroke: "trait", color: st.svg, dash: st.dash === "dashed" ? "dotted" : true }));
+    }
+  }
+
   // Cadre, graduations (intérieures, en bas et à gauche) et libellés.
   if (doc.style?.frame === "axes") {
     out.push(line([[box.x, box.y], [box.x, box.y + box.h], [box.x + box.w, box.y + box.h]]));
@@ -209,12 +221,65 @@ export function graphLayout(doc: GraphDoc): GraphLayout {
   // Légende (dans un coin de la boîte).
   const entries = doc.series.map((s, i) => ({ s, i })).filter(({ s }) => s.legend);
   if (doc.legend !== "none" && entries.length > 0) out.push(...legend(doc, theme, box, entries));
+  const labels = fits.filter((f) => f.label);
+  if (labels.length > 0) out.push(...fitBox(doc, theme, box, labels));
   return { box, xs, ys, primitives: out };
+}
+
+export interface GraphFit {
+  /** Indice de la série. */
+  i: number;
+  result: FitResult;
+  /** Points de la courbe, en données. */
+  points: [number, number][];
+  /** Équation à écrire sur la figure (null si masquée). */
+  label: string | null;
+}
+
+/** Régressions des séries qui en demandent une (hors barres), pour le SVG et pgfplots. */
+export function graphFits(doc: GraphDoc, xs: AxisScale, ys: AxisScale): GraphFit[] {
+  const out: GraphFit[] = [];
+  doc.series.forEach((s, i) => {
+    if (!s.fit || s.type === "bar") return;
+    const result = fitSeries(s.x, s.y, s.fit.kind);
+    if (!result) return;
+    out.push({ i, result, points: fitPoints(result, s.x, xs.log, ys.log), label: s.fit.label ? fitLabel(result) : null });
+  });
+  return out;
+}
+
+/** Hauteur d'une ligne de légende (mm). */
+export function legendRow(theme: Theme): number {
+  return Math.max(theme.text.sizeMm * 1.4, 3.6);
+}
+
+/** Encadré des équations : un échantillon du trait de la régression puis l'équation. */
+function fitBox(doc: GraphDoc, theme: Theme, box: GraphLayout["box"], fits: GraphFit[]): Primitive[] {
+  const size = theme.text.sizeMm;
+  const rowH = legendRow(theme) * 1.15;
+  const sample = 6;
+  const textW = Math.max(...fits.map((f) => measureLabel(f.label!, size).w));
+  const w = 1.5 + sample + 1.5 + textW + 1.5;
+  const h = rowH * fits.length + 1;
+  const pad = 1.5;
+  const corner = fitCorner(doc.fit_pos, doc.legend);
+  // Même coin que la légende : on se place juste en dessous (ou au-dessus).
+  const legendH = corner === doc.legend ? legendRow(theme) * doc.series.filter((s) => s.legend).length + 1 + pad : 0;
+  const x = corner.includes("east") ? box.x + box.w - w - pad : box.x + pad;
+  const y = corner.includes("south") ? box.y + box.h - h - pad - legendH : box.y + pad + legendH;
+  const out: Primitive[] = [{ kind: "rect", x, y, w, h, stroke: "trait fin", fill: "none", fillColor: "white" }];
+  fits.forEach((f, k) => {
+    const st = theme.graph.series[f.i % theme.graph.series.length]!;
+    const cy = y + 0.5 + rowH * (k + 0.5);
+    out.push({ kind: "path", segs: [{ op: "M", p: [x + 1.5, cy] }, { op: "L", p: [x + 1.5 + sample, cy] }], stroke: "trait", fill: "none", color: st.svg, dash: st.dash === "dashed" ? "dotted" : true });
+    out.push({ kind: "text", at: [x + 3 + sample, cy], text: f.label!, anchor: "west", halo: false });
+  });
+  return out;
 }
 
 function legend(doc: GraphDoc, theme: Theme, box: GraphLayout["box"], entries: { s: Series; i: number }[]): Primitive[] {
   const size = theme.text.sizeMm;
-  const rowH = Math.max(size * 1.4, 3.6);
+  const rowH = legendRow(theme);
   const sample = 6;
   const textW = Math.max(...entries.map(({ s }) => measureLabel(s.name, size).w));
   const w = 1.5 + sample + 1.5 + textW + 1.5;
