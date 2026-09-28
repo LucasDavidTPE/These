@@ -1,64 +1,98 @@
-/** Structure multicouche (portage de chausspec/structure.py). z vers le bas, en m. */
-import type { Materiau } from "./materiaux";
+/** Description de la structure multicouche (structure.py). */
+import type { Material } from "./materials";
 
-export type Fond = "halfspace" | "rigid_bonded" | "rigid_smooth";
-export type Interface = "bonded" | "slip";
+export const BOTTOMS = ["halfspace", "rigid_bonded", "rigid_smooth"] as const;
+export const INTERFACES = ["bonded", "slip"] as const;
+export type Bottom = (typeof BOTTOMS)[number];
+export type InterfaceKind = (typeof INTERFACES)[number];
 
-export interface Couche {
-  materiau: Materiau;
-  /** Épaisseur (m) ; ignorée pour le massif semi-infini du fond. */
-  epaisseur: number;
-  nom?: string;
+/** Couche horizontale. thickness en m (Infinity pour le massif semi-infini de fond). */
+export class Layer {
+  constructor(
+    readonly material: Material,
+    readonly thickness: number,
+    readonly name = "",
+  ) {}
 }
 
+/**
+ * Empilement de couches, de la surface (z = 0) vers le bas (z > 0).
+ *
+ * bottom :
+ *   - "halfspace"     : la dernière couche est semi-infinie (épaisseur ignorée) ;
+ *   - "rigid_bonded"  : la dernière couche repose sur un substratum rigide collé (u = 0) ;
+ *   - "rigid_smooth"  : substratum rigide glissant (u_z = 0, cisaillement nul) — c'est la
+ *                       condition « déplacement vertical bloqué » du modèle COMSOL du TFE.
+ * interfaces : liste de layers.length - 1 éléments "bonded" (collée) ou "slip" (glissante).
+ */
 export class Structure {
-  readonly couches: Couche[];
-  readonly fond: Fond;
-  readonly interfaces: Interface[];
+  readonly layers: Layer[];
+  readonly bottom: Bottom;
+  readonly interfaces: InterfaceKind[];
 
-  constructor(couches: Couche[], fond: Fond = "halfspace", interfaces?: Interface[]) {
-    if (!["halfspace", "rigid_bonded", "rigid_smooth"].includes(fond)) throw new Error(`Fond inconnu : ${fond}`);
-    if (!couches.length) throw new Error("Il faut au moins une couche.");
-    const n = couches.length;
-    const inter = interfaces ?? Array<Interface>(n - 1).fill("bonded");
-    if (inter.length !== n - 1) throw new Error("Il faut une condition d'interface de moins que de couches.");
-    for (const i of inter) if (i !== "bonded" && i !== "slip") throw new Error(`Interface inconnue : ${String(i)}`);
-    couches.forEach((L, i) => {
-      if (!(i === n - 1 && fond === "halfspace") && !(Number.isFinite(L.epaisseur) && L.epaisseur > 0)) throw new Error(`Épaisseur invalide pour la couche ${i + 1} (${L.nom ?? ""}).`);
+  constructor(layers: Layer[], bottom: Bottom = "halfspace", interfaces?: InterfaceKind[]) {
+    if (!BOTTOMS.includes(bottom)) throw new Error(`bottom doit être dans ${BOTTOMS.join(", ")}`);
+    const n = layers.length;
+    if (n === 0) throw new Error("Il faut au moins une couche.");
+    const inter = interfaces ?? Array<InterfaceKind>(n - 1).fill("bonded");
+    if (inter.length !== n - 1) throw new Error("Il faut len(layers)-1 conditions d'interface.");
+    for (const c of inter) if (!INTERFACES.includes(c)) throw new Error(`interface inconnue : ${String(c)}`);
+    layers.forEach((L, i) => {
+      const last = i === n - 1;
+      if (!(last && bottom === "halfspace") && !(Number.isFinite(L.thickness) && L.thickness > 0)) throw new Error(`Épaisseur invalide pour la couche ${i} (${L.name}).`);
     });
-    this.couches = couches;
-    this.fond = fond;
+    this.layers = layers;
+    this.bottom = bottom;
     this.interfaces = inter;
   }
 
+  // ------------------------------------------------------------------------------
   get n(): number {
-    return this.couches.length;
+    return this.layers.length;
   }
 
-  /** Épaisseurs (Infinity pour le massif semi-infini). */
-  get epaisseurs(): number[] {
-    return this.couches.map((L, i) => (i === this.n - 1 && this.fond === "halfspace" ? Infinity : L.epaisseur));
+  get thicknesses(): number[] {
+    const h = this.layers.map((L) => L.thickness);
+    if (this.bottom === "halfspace") h[h.length - 1] = Infinity;
+    return h;
   }
 
-  get toits(): number[] {
-    const h = this.epaisseurs;
-    const t = [0];
-    for (let i = 0; i < h.length - 1; i++) t.push(t[i]! + h[i]!);
-    return t;
+  /** Cote du toit de chaque couche. */
+  get tops(): number[] {
+    const h = this.thicknesses;
+    const tops = [0];
+    for (let i = 0; i < h.length - 1; i++) tops.push(tops[i]! + h[i]!);
+    return tops;
   }
 
-  /** (couche, cote locale) de la profondeur z ; sur une interface, `cote` choisit la couche. */
-  localiser(z: number, cote: "above" | "below" = "above"): [number, number] {
-    const tops = this.toits,
-      h = this.epaisseurs;
-    if (z < 0) throw new Error("z doit être ≥ 0 (axe z vers le bas).");
+  /**
+   * Renvoie (indice de couche, cote locale s) pour la profondeur z.
+   *
+   * Si z tombe exactement sur une interface, side="above" choisit la couche du dessus
+   * (utile pour la « base de couche liée »), side="below" celle du dessous.
+   */
+  locate(z: number, side: "above" | "below" = "above"): [number, number] {
+    const tops = this.tops;
+    const h = this.thicknesses;
+    const bots = tops.map((t, j) => t + h[j]!);
+    if (z < 0) throw new Error("z doit être >= 0 (axe z vers le bas).");
     const tol = 1e-12;
     for (let j = 0; j < this.n; j++) {
-      const bot = tops[j]! + h[j]!;
-      if (cote === "above") {
-        if (tops[j]! - tol <= z && z <= bot + tol) return [j, Math.min(Math.max(z - tops[j]!, 0), h[j]!)];
-      } else if ((tops[j]! - tol <= z && z < bot - tol) || (j === this.n - 1 && z <= bot + tol)) return [j, Math.max(z - tops[j]!, 0)];
+      if (side === "above") {
+        if (tops[j]! - tol <= z && z <= bots[j]! + tol) return [j, Math.min(Math.max(z - tops[j]!, 0), h[j]!)];
+      } else if ((tops[j]! - tol <= z && z < bots[j]! - tol) || (j === this.n - 1 && z <= bots[j]! + tol)) return [j, Math.max(z - tops[j]!, 0)];
     }
     throw new Error(`z = ${z} m est sous le fond de la structure.`);
+  }
+
+  describe(): string {
+    const lines: string[] = [];
+    this.layers.forEach((L, i) => {
+      const h = i === this.n - 1 && this.bottom === "halfspace" ? Infinity : L.thickness;
+      lines.push(`  [${i}] ${(L.name || "-").padEnd(14)} h = ${String(h).padStart(6)} m  loi = ${L.material.name}`);
+      if (i < this.n - 1) lines.push(`      interface : ${this.interfaces[i]}`);
+    });
+    lines.push(`  fond : ${this.bottom}`);
+    return lines.join("\n");
   }
 }

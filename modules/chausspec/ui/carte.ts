@@ -41,3 +41,22 @@ export function dessiner(canvas: HTMLCanvasElement, f: Float64Array, nx: number,
   ctx.putImageData(img, 0, 0);
 }
 
+const plusProche = (a: Float64Array, v: number) => {
+  let k = 0;
+  for (let i = 1; i < a.length; i++) if (Math.abs(a[i]! - v) < Math.abs(a[k]! - v)) k = i;
+  return k;
+};
+
+/** Coupe selon x en y = y0 (nœud le plus proche) d'un tableau affiché (ny × nx). */
+export function coupeX(x: Float64Array, y: Float64Array, f: Float64Array, y0: number): { x: Float64Array; v: Float64Array } {
+  const j = plusProche(y, y0),
+    nx = x.length;
+  return { x, v: f.slice(j * nx, (j + 1) * nx) };
+}
+
+/** Coupe selon y en x = x0 (nœud le plus proche). */
+export function coupeY(x: Float64Array, y: Float64Array, f: Float64Array, x0: number): { y: Float64Array; v: Float64Array } {
+  const i = plusProche(x, x0),
+    nx = x.length;
+  return { y, v: Float64Array.from(y, (_, j) => f[j * nx + i]!) };
+}

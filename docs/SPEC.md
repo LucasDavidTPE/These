@@ -473,6 +473,12 @@ Calcul dans un Worker, cartes des champs, extrêmes et ε1, coupes, jauges (char
 export du dossier de résultats au format du Python, cartes et courbes vers Figures, constantes
 2S2P1D reprises du Traitement (action `traitement.calages`).
 
+Organisation du code (1.0.3) : `core/` suit le paquet Python fichier par fichier
+(`kernel.ts` ↔ `kernel.py`, `grid.ts` ↔ `grid.py`…), avec les mêmes noms de classes et de
+fonctions, les mêmes étapes et les mêmes commentaires, et calcule comme numpy sur des paquets
+de nombres d'onde (`core/carray.ts`) ; une modification du Python se reporte au même endroit.
+La correspondance et les conventions d'écriture sont dans `modules/chausspec/README.md`.
+
 Écart assumé : effort tangentiel + interface glissante est refusé (problème mal posé ; le
 Python renvoie des NaN). Non porté : le module texture (contact, deux échelles, éléments finis
 2D), prévu pour une version suivante.

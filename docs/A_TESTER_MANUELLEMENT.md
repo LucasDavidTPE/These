@@ -422,3 +422,14 @@ nombres doivent être identiques, dans les deux modes.
       coin des équations ; même coin que la légende : l'encadré se met sous la légende.
 - [ ] Gomme sur un point aberrant : l'équation et le R² se mettent à jour.
 - [ ] « Copier pgfplots » et compilation : droite et encadré identiques à l'aperçu.
+
+## ChaussSpec : cœur réécrit (1.0.3)
+
+- [ ] Les trois exemples (Train A340, carte de pression, plaque HWD) se calculent comme avant,
+      en un temps comparable (Train A340 : une dizaine de secondes) ; Train A340 : εyy ≈ 316 µdef
+      en base de BB-GB, e1 affiché, signal de la jauge.
+- [ ] Un cas enregistré avant la 1.0.3 se rouvre et se calcule à l'identique (même format JSON).
+- [ ] Grande grille (N = 1024 × 1024) : la mémoire reste raisonnable (quelques centaines de Mo au
+      plus) et le calcul va au bout.
+- [ ] Ouvrir `modules/chausspec/core/kernel.ts` à côté de `kernel.py` : même découpage, mêmes noms.
+

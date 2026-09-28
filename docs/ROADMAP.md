@@ -152,3 +152,4 @@ lancent tous les tests automatiques sous Windows.
 - [x] Bibliothèque : PDF pointé à la création d'une référence, renommé selon la convention
 - [x] Accueil redessiné (1.0.1)
 - [x] Figures → Graphes : régression par série (linéaire, par l'origine, puissance), équation et R² sur la figure (1.0.2)
+- [x] ChaussSpec : cœur réécrit calqué sur le Python (fichiers, noms, étapes), calcul par paquets façon numpy, conformité et vitesse inchangées (1.0.3)
