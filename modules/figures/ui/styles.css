@@ -993,3 +993,41 @@ button.small-btn.actif {
   gap: 0;
   align-items: normal;
 }
+
+/* Retouche des données */
+.zone-trace.gomme {
+  border-color: #b3261e;
+  background: rgb(179 38 30 / 10%);
+}
+
+.small-select {
+  font-size: 12px;
+  padding: 1px 4px;
+}
+
+.donnees-serie {
+  margin: 6px 0;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.donnees-ligne {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.donnees-ligne input {
+  width: 64px;
+}
+
+.donnees-serie textarea {
+  width: 100%;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+}

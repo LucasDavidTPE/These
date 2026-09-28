@@ -3,7 +3,7 @@
  * les données (tirer un rectangle fixe les bornes des axes ; « Axes auto » les libère). Les
  * coordonnées sous le curseur s'affichent en bas.
  */
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { exportGraphSvg, graphLayout, unproject, validateGraph, type GraphDoc } from "../../core/graph";
 import { useGraph } from "./useGraph";
 
@@ -19,7 +19,26 @@ export function Apercu() {
   const s = useGraph();
   const zone = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState<number | null>(null); // null : ajusté à la place
-  const [mode, setMode] = useState<"normal" | "zone">("normal");
+  const [mode, setMode] = useState<"normal" | "zone" | "gomme">("normal");
+  const [cible, setCible] = useState<number | null>(null);
+
+  // Ctrl+Z / Ctrl+Y (ou Ctrl+Maj+Z) : historique du graphe, sauf dans un champ de saisie.
+  useEffect(() => {
+    const clavier = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (!(e.ctrlKey || e.metaKey) || (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable))) return;
+      const k = e.key.toLowerCase();
+      if (k === "z" && !e.shiftKey) {
+        e.preventDefault();
+        useGraph.getState().undo();
+      } else if (k === "y" || (k === "z" && e.shiftKey)) {
+        e.preventDefault();
+        useGraph.getState().redo();
+      }
+    };
+    window.addEventListener("keydown", clavier);
+    return () => window.removeEventListener("keydown", clavier);
+  }, []);
   const [trace, setTrace] = useState<Rect | null>(null);
   const [curseur, setCurseur] = useState<string>("");
   const [place, setPlace] = useState({ w: 600, h: 400 });
@@ -78,6 +97,7 @@ export function Apercu() {
     const a = donnees(t.x0, t.y0),
       b = donnees(t.x1, t.y1);
     if (!a || !b) return;
+    if (mode === "gomme") return s.eraseBox({ x0: a.x, x1: b.x, y0: a.y, y1: b.y }, cible);
     const doc: GraphDoc = s.doc;
     const borne = (u: number, v: number, log: boolean) => {
       const [lo, hi] = u < v ? [u, v] : [v, u];
@@ -115,19 +135,40 @@ export function Apercu() {
           <button type="button" className="small-btn" disabled={!axesFixes} title="Bornes des axes calculées d'après les données" onClick={() => s.update({ x: { label: s.doc.x.label, log: s.doc.x.log }, y: { label: s.doc.y.label, log: s.doc.y.log } })}>
             Axes auto
           </button>
+          <span className="sep" />
+          <button type="button" className={`small-btn${mode === "gomme" ? " actif" : ""}`} aria-pressed={mode === "gomme"} title="Tirer un rectangle : les points dedans sont retirés (Ctrl+Z pour annuler)" onClick={() => setMode(mode === "gomme" ? "normal" : "gomme")}>
+            ⌫ Gommer des points
+          </button>
+          {mode === "gomme" && s.doc.series.length > 1 ? (
+            <select className="small-select" value={cible ?? ""} aria-label="Série à gommer" onChange={(e) => setCible(e.target.value === "" ? null : Number(e.target.value))}>
+              <option value="">toutes les séries</option>
+              {s.doc.series.map((sr, i) => (
+                <option key={i} value={i}>
+                  {i + 1}. {sr.name}
+                </option>
+              ))}
+            </select>
+          ) : null}
+          <span className="sep" />
+          <button type="button" className="small-btn" disabled={!s.past.length} title="Annuler (Ctrl+Z)" aria-label="Annuler" onClick={s.undo}>
+            ↶
+          </button>
+          <button type="button" className="small-btn" disabled={!s.future.length} title="Rétablir (Ctrl+Y)" aria-label="Rétablir" onClick={s.redo}>
+            ↷
+          </button>
           <span className="grow" />
           <span className="muted small">{zoom === null ? `ajusté (${Math.round((ajuste / PX_MM) * 100)} %)` : `${Math.round((zoom / PX_MM) * 100)} %`}</span>
         </div>
       ) : null}
       <div
-        className={`graph-preview checker${mode === "zone" ? " mode-zone" : ""}`}
+        className={`graph-preview checker${mode !== "normal" ? " mode-zone" : ""}`}
         ref={zone}
         onWheel={(e) => {
           if (!e.ctrlKey || !rendu.svg) return;
           e.preventDefault();
           changer(e.deltaY < 0 ? PAS : 1 / PAS);
         }}
-        onMouseDown={(e) => mode === "zone" && e.button === 0 && (e.preventDefault(), setTrace({ x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY }))}
+        onMouseDown={(e) => mode !== "normal" && e.button === 0 && (e.preventDefault(), setTrace({ x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY }))}
         onMouseMove={(e) => {
           if (trace) setTrace({ ...trace, x1: e.clientX, y1: e.clientY });
           const d = donnees(e.clientX, e.clientY);
@@ -145,7 +186,7 @@ export function Apercu() {
           />
         ) : null}
       </div>
-      <div className="apercu-pied muted small">{curseur || (mode === "zone" ? "Tirez un rectangle sur la zone à agrandir ; double-clic : axes auto." : " ")}</div>
+      <div className="apercu-pied muted small">{curseur || (mode === "zone" ? "Tirez un rectangle sur la zone à agrandir ; double-clic : axes auto." : mode === "gomme" ? "Tirez un rectangle autour des points à retirer (Ctrl+Z pour annuler)." : " ")}</div>
     </div>
   );
 }

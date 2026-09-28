@@ -365,3 +365,17 @@ nombres doivent être identiques, dans les deux modes.
       éprouvette qui s'allonge (fluage) ou effort qui baisse (relaxation).
 - [ ] « → Figures (schéma TikZ) » avec et sans les valeurs : le schéma s'ouvre dans l'éditeur
       de schémas de Figures ; l'export TikZ compile dans le manuscrit.
+
+## Figures → Graphes : retouche des courbes (0.2.8)
+
+- [ ] « ⌫ Gommer des points » puis tirer un rectangle sur l'aperçu : les points dedans
+      disparaissent (toutes les séries, ou celle choisie) ; Ctrl+Z les remet, Ctrl+Y ou ↷
+      les retire à nouveau.
+- [ ] Sous une série, « ▸ Données… » : −y, ×1000, ÷1000, zéro, x ↔ y, trier, dupliquer ;
+      garder / retirer une plage de x ; lisser ; alléger ; chaque opération s'annule par
+      Ctrl+Z.
+- [ ] Tableau x ↹ y : corriger une valeur ou coller des colonnes d'Excel, « Appliquer le
+      tableau » ; « Copier » puis coller dans Excel.
+- [ ] Un graphe du Traitement retouché puis enregistré : la figure garde les retouches ;
+      « Régénérer » repart des données de l'essai (retouches de données perdues, mise en
+      forme gardée).

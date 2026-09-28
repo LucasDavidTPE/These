@@ -9,6 +9,7 @@ import {
   extractSeries,
   looksLikeHeader,
   readDataFile,
+  eraseBox as gommer,
   readPasted,
   parseStyle,
   STYLES_DIR,
@@ -16,6 +17,7 @@ import {
   validateGraph,
   type GraphDoc,
   type GraphStyle,
+  type Box,
   type Series,
   type Sheet,
 } from "../../core/graph";
@@ -68,6 +70,16 @@ interface GraphState {
   deleteStyle(name: string): Promise<void>;
   /** Remplace le graphe par un modèle (nouvelle figure). */
   fromTemplate(doc: GraphDoc, title: string): void;
+  /** Historique des modifications du graphe (données comprises). */
+  past: GraphDoc[];
+  future: GraphDoc[];
+  undo(): void;
+  redo(): void;
+  /** Retouche d'une série (fonction pure de core/graph/edit.ts). */
+  editSeries(i: number, f: (s: Series) => Series, note?: string): void;
+  duplicateSeries(i: number): void;
+  /** Gomme : retire les points du rectangle (données) dans une série, ou dans toutes (null). */
+  eraseBox(box: Box, series: number | null): void;
 }
 
 function msg(e: unknown): string {
@@ -91,6 +103,16 @@ export const useGraph = create<GraphState>()((set, get) => {
       set({ busy: false });
     }
   };
+  // Historique : chaque changement du graphe passe par commit ; la saisie au clavier
+  // (plusieurs changements en moins d'une seconde sur le même champ) n'en fait qu'un.
+  let dernier = { cle: "", quand: 0 };
+  const commit = (doc: GraphDoc, cle = "") => {
+    const now = Date.now();
+    const fusion = cle !== "" && cle === dernier.cle && now - dernier.quand < 1000;
+    dernier = { cle, quand: now };
+    set({ doc, past: fusion ? get().past : [...get().past.slice(-99), get().doc], future: [] });
+  };
+  const oublier = () => set({ past: [], future: [] });
   const checked = () => {
     const v = validateGraph(get().doc);
     if (!v.ok) throw new Error(v.errors.map((e) => `${e.path} : ${e.message}`).join("\n"));
@@ -119,15 +141,61 @@ export const useGraph = create<GraphState>()((set, get) => {
     busy: false,
     message: null,
     userStyles: [],
+    past: [],
+    future: [],
 
-    update: (patch) => set({ doc: { ...get().doc, ...patch } }),
-    setSeries: (i, patch) => set({ doc: { ...get().doc, series: get().doc.series.map((s, j) => (j === i ? { ...s, ...patch } : s)) } }),
-    removeSeries: (i) => set({ doc: { ...get().doc, series: get().doc.series.filter((_, j) => j !== i) } }),
+    undo: () => {
+      const { past, doc, future } = get();
+      if (!past.length) return;
+      dernier = { cle: "", quand: 0 };
+      set({ doc: past.at(-1)!, past: past.slice(0, -1), future: [doc, ...future] });
+    },
+    redo: () => {
+      const { past, doc, future } = get();
+      if (!future.length) return;
+      dernier = { cle: "", quand: 0 };
+      set({ doc: future[0]!, past: [...past, doc], future: future.slice(1) });
+    },
+    editSeries: (i, f, note) => {
+      const doc = get().doc;
+      const s = doc.series[i];
+      if (!s) return;
+      const n = f(s);
+      if (n.x.length === 0) return set({ message: { kind: "error", text: "La série serait vide : modification annulée." } });
+      commit({ ...doc, series: doc.series.map((x, j) => (j === i ? n : x)) });
+      if (note) set({ message: { kind: "info", text: `${note} (${n.x.length} points). Ctrl+Z pour annuler.` } });
+    },
+    duplicateSeries: (i) => {
+      const doc = get().doc;
+      const s = doc.series[i];
+      if (!s) return;
+      const copie = { ...s, name: `${s.name} (copie)`, x: [...s.x], y: [...s.y] };
+      commit({ ...doc, series: [...doc.series.slice(0, i + 1), copie, ...doc.series.slice(i + 1)] });
+    },
+    eraseBox: (box, cible) => {
+      const doc = get().doc;
+      let total = 0;
+      const series = doc.series.map((s, j) => {
+        if (cible !== null && j !== cible) return s;
+        const r = gommer(s, box);
+        // une série n'est jamais vidée par la gomme
+        if (r.series.x.length === 0) return s;
+        total += r.removed;
+        return r.series;
+      });
+      if (!total) return set({ message: { kind: "info", text: "Aucun point dans ce rectangle." } });
+      commit({ ...doc, series });
+      set({ message: { kind: "info", text: `${total} point(s) retiré(s). Ctrl+Z pour annuler.` } });
+    },
+
+    update: (patch) => commit({ ...get().doc, ...patch }, `doc:${Object.keys(patch).join(",")}`),
+    setSeries: (i, patch) => commit({ ...get().doc, series: get().doc.series.map((s, j) => (j === i ? { ...s, ...patch } : s)) }, `serie:${i}:${Object.keys(patch).join(",")}`),
+    removeSeries: (i) => commit({ ...get().doc, series: get().doc.series.filter((_, j) => j !== i) }),
     moveSeries: (i, d) => {
       const series = [...get().doc.series];
       const [s] = series.splice(i, 1);
       series.splice(Math.max(0, Math.min(series.length, i + d)), 0, s!);
-      set({ doc: { ...get().doc, series } });
+      commit({ ...get().doc, series });
     },
 
     openFile: () =>
@@ -165,8 +233,8 @@ export const useGraph = create<GraphState>()((set, get) => {
       }
       const header = pick.header ? rows[pick.firstRow] : undefined;
       const xLabel = doc.x.label || (header ? String(header[pick.x] ?? "") : "");
+      commit({ ...doc, series: [...doc.series, ...added], x: { ...doc.x, label: xLabel } });
       set({
-        doc: { ...doc, series: [...doc.series, ...added], x: { ...doc.x, label: xLabel } },
         message: { kind: "info", text: `${added.length} série(s) ajoutée(s)${skipped ? ` ; ${skipped} ligne(s) non numérique(s) ignorée(s)` : ""}.` },
       });
     },
@@ -174,6 +242,7 @@ export const useGraph = create<GraphState>()((set, get) => {
     newGraph: () => {
       void releaseLock();
       set({ doc: emptyGraph(), folder: null, meta: null, title: "", message: null });
+      oublier();
     },
 
     openFromLibrary: (folder) =>
@@ -192,6 +261,7 @@ export const useGraph = create<GraphState>()((set, get) => {
           throw e;
         }
         set({ doc: v.doc, folder, meta: m.ok ? m.meta : null, title: m.ok ? m.meta.title : folder });
+        oublier();
       }),
 
     saveToLibrary: () =>
@@ -297,7 +367,8 @@ export const useGraph = create<GraphState>()((set, get) => {
 
     fromTemplate: (doc, title) => {
       void releaseLock();
-      set({ doc: JSON.parse(JSON.stringify(doc)) as GraphDoc, folder: null, meta: null, title, message: { kind: "info", text: `Modèle « ${title} » : valeurs d'exemple, à remplacer par vos données (Données à gauche).` } });
+      commit(JSON.parse(JSON.stringify(doc)) as GraphDoc);
+      set({ folder: null, meta: null, title, message: { kind: "info", text: `Modèle « ${title} » : valeurs d'exemple, à remplacer par vos données (Données à gauche).` } });
     },
 
     set: (patch) => {

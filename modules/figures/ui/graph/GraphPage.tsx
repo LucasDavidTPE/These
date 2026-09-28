@@ -4,6 +4,7 @@ import { NumberInput, TextInput } from "../editor/fields";
 import { useLibrary } from "../library/useLibrary";
 import { Apercu } from "./Apercu";
 import { Apparence, SerieLook } from "./Apparence";
+import { DonneesSerie } from "./DonneesSerie";
 import { Modeles } from "./Modeles";
 import { useGraph } from "./useGraph";
 
@@ -26,6 +27,7 @@ const LEGENDS: { value: LegendPos; label: string }[] = [
 export function GraphPage() {
   const s = useGraph();
   const [pasted, setPasted] = useState("");
+  const [ouverte, setOuverte] = useState<number | null>(null);
 
   const root = useLibrary((l) => l.root);
   const loadStyles = useGraph((g) => g.loadStyles);
@@ -257,6 +259,10 @@ export function GraphPage() {
                 </select>
               </label>
               <SerieLook i={i} sr={sr} />
+              <button type="button" className="small-btn" aria-expanded={ouverte === i} onClick={() => setOuverte(ouverte === i ? null : i)}>
+                {ouverte === i ? "▾" : "▸"} Données…
+              </button>
+              {ouverte === i ? <DonneesSerie key={`${i}-${sr.x.length}`} i={i} sr={sr} /> : null}
               <label className="chip">
                 <input type="checkbox" checked={sr.legend} onChange={(e) => s.setSeries(i, { legend: e.target.checked })} />
                 Dans la légende

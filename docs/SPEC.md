@@ -216,7 +216,12 @@ Ajouts permis par l'intégration :
   SVG et pgfplots identiques (couleurs xcolor explicites) ;
 - **modèles de graphes** (courbe maîtresse, Cole-Cole, orniérage, fatigue, TSRST, suivi
   temporel, barres) avec des valeurs d'exemple inventées ; **zoom** de l'aperçu (ajusté,
-  Ctrl + molette, taille réelle) et zoom sur une zone des données (fixe les bornes des axes).
+  Ctrl + molette, taille réelle) et zoom sur une zone des données (fixe les bornes des axes) ;
+- **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
+  toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
+  plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,
+  duplication ; historique Annuler / Rétablir. « Régénérer » depuis l'essai repart des
+  données : les retouches de données sont alors perdues (la mise en forme reste).
 
 ## 7. Module Traitement 2S2P1D
 

@@ -139,4 +139,6 @@ lancent tous les tests automatiques sous Windows.
 - [x] Figures → Graphes : styles, palettes (import coolors.co), couleurs par série, styles
       enregistrés, modèles de graphes, zoom de l'aperçu et zoom sur une zone
 - [x] Figures : photos HEIC / HEIF
-- [ ] « Modifier les courbes avant traitement » : à préciser (voir `QUESTIONS.md`)
+- [x] Retouche des courbes dans Figures → Graphes (précisé : dans l'éditeur de graphes) :
+      gomme sur l'aperçu, tableau x/y modifiable, unités / signe / zéro, plage de x, lissage,
+      allègement, tri, échange des axes, duplication ; Annuler / Rétablir (Ctrl+Z / Ctrl+Y)
