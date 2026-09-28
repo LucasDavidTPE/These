@@ -24,7 +24,7 @@ export function FigureGrid({ entries }: { entries: FigureEntry[] }) {
               title={e.folder}
             >
               <div className="thumb">
-                {thumb ? <img src={imageUrl(`${e.folder}/${thumb}`)} alt="" loading="lazy" /> : <span>Pas d'aperçu</span>}
+                {thumb ? <img src={`${imageUrl(`${e.folder}/${thumb}`)}${e.meta ? `?v=${encodeURIComponent(e.meta.modified)}` : ""}`} alt="" loading="lazy" /> : <span>Pas d'aperçu</span>}
               </div>
               <div className="card-id">
                 {e.id}

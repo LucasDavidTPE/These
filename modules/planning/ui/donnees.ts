@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { chargerCollection, creerObjet, enregistrerObjet, jsonStable, type Fichiers, type ObjetCharge, type Probleme } from "@noyau/stockage";
 import type { Contexte } from "@interface/contexte";
-import type { Barre } from "../core/gantt";
+import { svgTexteEnPng } from "@interface/image";
+import { barresDepuis, grouper, type Barre, type Groupe } from "../core/gantt";
+import { ganttSvg } from "../core/svg";
 import { DOSSIER_SUPPRIMES, ELEMENTS, FICHIER_CATEGORIES, lireCategories, type Categorie, type Element } from "../core/modele";
 
 export interface Planning {
@@ -63,6 +65,24 @@ export async function chargerPlanning(ctx: Contexte): Promise<Planning | null> {
     }
   }
   return { elements: col.objets, categories, externes: ext, problemes };
+}
+
+/** Ce que montre le Gantt : éléments actifs et éléments fournis, par catégorie active. */
+export function groupesDe(p: Planning): Groupe[] {
+  return grouper([...barresDepuis(p.elements), ...p.externes], p.categories);
+}
+
+export function aujourdhui(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export const TITRE_FIGURE = "Planning de la thèse";
+
+/** Le Gantt de toute la thèse, en SVG et en PNG (export, Figures, régénération). */
+export async function renduGantt(p: Planning, jour = aujourdhui()): Promise<{ svg: string; png: Uint8Array }> {
+  const svg = ganttSvg(groupesDe(p), jour, { titre: `${TITRE_FIGURE} — ${new Date(`${jour}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}` });
+  return { svg, png: await svgTexteEnPng(svg) };
 }
 
 export function usePlanning(ctx: Contexte) {

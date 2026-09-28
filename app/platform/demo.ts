@@ -187,6 +187,13 @@ export function plateformeDemo(scenario: string | null): Plateforme {
     ouvrirLien: async (url) => {
       window.open(url, "_blank", "noopener");
     },
+    verifierLien: async (url) => {
+      // Démonstration : aucune requête ; une réponse plausible, stable pour une adresse.
+      await new Promise((ok) => setTimeout(ok, 60));
+      const h = [...url].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+      const code = h % 11 === 0 ? 404 : h % 7 === 0 ? 403 : 200;
+      return { code, urlFinale: url, erreur: "" };
+    },
     surveiller: async (racine, rappel) => {
       const cle = normaliser(racine);
       const set = abonnes.get(cle) ?? new Set();

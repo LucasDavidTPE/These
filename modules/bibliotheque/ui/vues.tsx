@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { correspond } from "@noyau/texte";
 import { Section } from "@interface/composants";
 import { libelleMois, type Calcule } from "../core/calculs";
+import { lienARevoir } from "../core/liens";
 import { PRIORITES, STATUTS } from "../core/modele";
 import { PastilleEtat } from "./commun";
 import { FILTRES_VIDES, pourcent, type Filtres } from "./format";
@@ -19,8 +20,19 @@ function Tuile({ valeur, titre, niveau }: { valeur: string | number; titre: stri
 
 export function TableauDeBordVue({ b, ouvrir }: { b: Biblio; ouvrir(id: string): void }) {
   const t = b.tb;
+  const liensMorts = b.references.filter((r) => lienARevoir(r.valeur.etatLien));
   return (
     <>
+      {liensMorts.length ? (
+        <div className="message message-attention">
+          <strong>Liens à revoir ({liensMorts.length}) :</strong>{" "}
+          {liensMorts.map((r) => (
+            <button key={r.id} type="button" className="lien" title={`${r.valeur.etatLien} — contrôlé le ${r.valeur.lienControleLe}`} onClick={() => ouvrir(r.id)}>
+              {r.id}
+            </button>
+          ))}
+        </div>
+      ) : null}
       {b.doublons.length ? (
         <div className="message message-attention">
           <strong>Doublons possibles :</strong>{" "}

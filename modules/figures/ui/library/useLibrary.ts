@@ -20,6 +20,7 @@ import {
   type LibraryIndex,
   type LibrarySort,
 } from "../../core/library";
+import { remplacerImage, type Rendu } from "../../core/action";
 import { parseSettings, serializeSettings } from "../../core/settings";
 import { getBackend, type Backend } from "../platform/backend";
 
@@ -58,6 +59,8 @@ interface LibraryState {
   resolveConflict(folder: string, conflict: ConflictCopy, keep: "original" | "copy"): Promise<void>;
   renumber(entry: FigureEntry): Promise<void>;
   cleanTemp(folder: string, file: string): Promise<void>;
+  /** Remplace l'image d'une figure refaite par le module d'origine. */
+  regenerate(folder: string, rendu: Rendu): Promise<void>;
   readText(path: string): Promise<string>;
   imageUrl(path: string): string;
 }
@@ -194,6 +197,13 @@ export const useLibrary = create<LibraryState>()((set, get) => {
       guard(async () => {
         const { backend, root } = need();
         await backend.removeTemp(root, `${folder}/${file}`);
+        await get().rescan();
+      }),
+
+    regenerate: async (folder, rendu) =>
+      guard(async () => {
+        const { backend, root } = need();
+        await remplacerImage(backend.fs(root), folder, rendu, nowIso(), get().host);
         await get().rescan();
       }),
 

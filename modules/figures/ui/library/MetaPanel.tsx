@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useContexte } from "@interface/contexte";
+import { actionRegeneration, origineDe, type Rendu } from "../../core/action";
 import {
   LICENSE_SUGGESTIONS,
   SOURCE_TYPES,
@@ -98,11 +100,47 @@ export function MetaPanel({ entry }: { entry: FigureEntry }) {
           Recadrer
         </button>
       )}
+      {!isEditing && <Regenerer entry={entry} />}
       {entry.meta?.derived_from && <p className="muted small">D'après {entry.meta.derived_from}.</p>}
       <p className="muted small">
         Dossier : <code>{entry.folder}</code>
       </p>
     </aside>
+  );
+}
+
+/**
+ * Figure produite par un autre module (courbes d'un essai, Gantt…) : elle se refait depuis
+ * les données actuelles, si ce module est dans cet installeur.
+ */
+function Regenerer({ entry }: { entry: FigureEntry }) {
+  const ctx = useContexte();
+  const regenerate = useLibrary((s) => s.regenerate);
+  const [etat, setEtat] = useState<string | null>(null);
+  const origine = origineDe(entry.meta);
+  if (!origine) return null;
+  const action = actionRegeneration(origine);
+  if (!ctx.registre.aAction(action)) return <p className="muted small">Produite par le module « {origine.module} », absent de cette version : elle ne peut pas être refaite ici.</p>;
+  return (
+    <>
+      <button
+        type="button"
+        title="Refait l'image depuis les données actuelles ; la fiche (titre, tags, légende) ne change pas"
+        onClick={async () => {
+          setEtat("Régénération…");
+          try {
+            const rendu = (await ctx.registre.executer(action, { ctx, origine })) as Rendu;
+            await regenerate(entry.folder, rendu);
+            setEtat(`Refaite le ${new Date().toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}.`);
+          } catch (e) {
+            setEtat(`Impossible de la refaire : ${e instanceof Error ? e.message : String(e)}`);
+          }
+        }}
+      >
+        Régénérer depuis les données
+      </button>
+      {etat && <p className="muted small">{etat}</p>}
+    </>
   );
 }
 

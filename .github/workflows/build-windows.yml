@@ -93,3 +93,29 @@ jobs:
           path: |
             src-tauri/target/release/bundle/msi/*.msi
             src-tauri/target/release/bundle/nsis/*.exe
+
+  # Installeur « Traitement 2S2P1D » seul (SPEC §3.1) : sans espace OneDrive, sans détourage
+  # (ni modèle ni ONNX Runtime), pour un collègue. En parallèle de celui de Thèse.
+  build-traitement:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: traitement
+      - run: npm ci
+      - run: npm run construire -- traitement
+      - uses: actions/upload-artifact@v4
+        with:
+          name: traitement-2s2p1d-installeurs
+          if-no-files-found: error
+          path: |
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/nsis/*.exe

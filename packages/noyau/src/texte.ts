@@ -46,3 +46,8 @@ export function slugifier(titre: string): string {
   const tiret = coupe.lastIndexOf("-");
   return (tiret > SLUG_MAX / 2 ? coupe.slice(0, tiret) : coupe).replace(/-+$/, "");
 }
+
+/** Texte sûr dans un document XML (SVG) : `&`, `<`, `>` et guillemets échappés. */
+export function echapperXml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}

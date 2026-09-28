@@ -74,3 +74,34 @@ describe("Gantt", () => {
     expect(t).toContain("\\ganttmilestone[milestone/.append style={fill={[HTML]8A5A00}}]{Comité}{2027-03-01}\n\\end{ganttchart}");
   });
 });
+
+describe("export SVG du Gantt", () => {
+  const groupes = () =>
+    grouper(
+      [b("Revue <bibliographique> & état de l'art", "biblio", "2026-01-01", "2026-06-30"), b("Comité de suivi", "reunion", "2026-05-15"), { ...b("Mois 3", "biblio", "2026-03-01", "2026-03-31"), source: "bibliotheque", avancement: 40 }],
+      CATEGORIES_PAR_DEFAUT,
+    );
+
+  it("est un SVG autonome, déterministe, aux textes échappés", async () => {
+    const { ganttSvg } = await import("../core/svg");
+    const svg = ganttSvg(groupes(), "2026-04-01", { titre: "Planning — thèse" });
+    expect(svg).toBe(ganttSvg(groupes(), "2026-04-01", { titre: "Planning — thèse" }));
+    expect(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" width="')).toBe(true);
+    expect(svg).toContain("Revue &lt;bibliographique&gt; &amp; état de l'art");
+    expect(svg).toContain(">Bibliographie</text>");
+    expect(svg).toContain(">aujourd'hui</text>");
+    // Un jalon est un losange, une période une barre ; l'avancement est tracé.
+    expect(svg.match(/<path d="M/g)).toHaveLength(1);
+    expect(svg).toContain('fill-opacity="0.55"');
+    expect(svg).toContain('fill-opacity="0.6"');
+    expect(svg).not.toMatch(/NaN|undefined/);
+  });
+
+  it("la largeur de la frise est fixée, quelle que soit la durée", async () => {
+    const { ganttSvg } = await import("../core/svg");
+    const largeur = (s: string) => Number(/width="([\d.]+)"/.exec(s)![1]);
+    const court = ganttSvg(grouper([b("a", "biblio", "2026-01-01", "2026-01-10")], CATEGORIES_PAR_DEFAUT), "2026-01-05", { largeurFrise: 600 });
+    const long = ganttSvg(grouper([b("a", "biblio", "2026-01-01", "2029-12-31")], CATEGORIES_PAR_DEFAUT), "2026-01-05", { largeurFrise: 600 });
+    expect(largeur(court)).toBe(largeur(long));
+  });
+});

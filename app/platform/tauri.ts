@@ -9,7 +9,7 @@ import { openPath, openUrl } from "@tauri-apps/plugin-opener";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
 import { erreurDepuisIpc, type Entree } from "@noyau/stockage";
-import type { Plateforme, RapportCopie } from "@interface/plateforme";
+import type { Plateforme, RapportCopie, ReponseLien } from "@interface/plateforme";
 
 async function appel<T>(cmd: string, args: Record<string, unknown> = {}, chemin = ""): Promise<T> {
   try {
@@ -97,6 +97,7 @@ export function plateformeTauri(): Plateforme {
     ouvrirVSCode: (chemin) => appel<void>("poste_ouvrir_vscode", { chemin }, chemin),
     ouvrirDossier: (chemin) => openPath(chemin),
     ouvrirLien: (url) => openUrl(url),
+    verifierLien: (url) => appel<ReponseLien>("lien_verifier", { url }),
     surveiller: async (racine, rappel) => {
       const id = await appel<number>("surveillance_demarrer", { racine });
       const arret = await listen<EvenementModifies>("fichiers-modifies", (e) => {

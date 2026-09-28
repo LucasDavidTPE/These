@@ -8,6 +8,7 @@ import { Message, Section } from "@interface/composants";
 import { useContexte } from "@interface/contexte";
 import { libelleMois, type Calcule } from "../core/calculs";
 import { cleProposee, depuisCrossref, urlCrossref } from "../core/doi";
+import { libelleLien, lienARevoir } from "../core/liens";
 import { ACCES_DOCUMENT, PRIORITES, STATUTS, VERIFICATIONS, type FicheLecture, type NotesLecture, type Reference } from "../core/modele";
 import { ChampChoix, ChampTexte, Libelle } from "./champs";
 import { PastilleEtat } from "./commun";
@@ -115,6 +116,20 @@ export function Fiche({ b, c, onEnregistrer, onFermer }: { b: Biblio; c: Calcule
           <button type="button" onClick={ouvrirPdf}>
             Ouvrir le PDF
           </button>
+        ) : null}
+        {/^https?:\/\//i.test(r.url.trim()) ? (
+          <button
+            type="button"
+            title="Interroge le site et note le résultat dans « État du lien »"
+            onClick={async () => maj({ etatLien: libelleLien(await ctx.plateforme.verifierLien(r.url)), lienControleLe: aujourdhui() })}
+          >
+            Vérifier le lien
+          </button>
+        ) : null}
+        {r.etatLien ? (
+          <span className={lienARevoir(r.etatLien) ? "pastille pastille-erreur" : "discret"} title={r.lienControleLe ? `Contrôlé le ${r.lienControleLe}` : undefined}>
+            Lien : {r.etatLien}
+          </span>
         ) : null}
       </div>
       {erreur ? <Message niveau="erreur">{erreur}</Message> : null}

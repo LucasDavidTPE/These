@@ -4,37 +4,14 @@
  * voie, réticule qui affiche les valeurs, zoom en glissant sur une plage de temps (double-
  * clic pour revenir). Partagé entre les modules.
  */
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { cadrer, COULEURS, formaterNombre, graduer, type Panneau, type Trace, type Vue } from "@noyau/courbes";
 
-export interface Trace {
-  nom: string;
-  x: number[];
-  y: number[];
-}
+export type { Panneau, Trace, Vue } from "@noyau/courbes";
 
-export interface Panneau {
-  titre: string;
-  unite: string;
-  traces: Trace[];
-}
-
-const COULEURS = ["#2f5f8a", "#b0602c", "#2e7d4f", "#a8326e", "#6b4fa0", "#8a5a00", "#4f7a8a", "#777777"];
 const H = 170;
 const M = { g: 58, d: 12, h: 10, b: 22 };
-
-/** Graduations « rondes » entre a et b (environ n). */
-function graduer(a: number, b: number, n = 5): number[] {
-  if (!Number.isFinite(a) || !Number.isFinite(b)) return [];
-  if (a === b) return [a];
-  const brut = (b - a) / n;
-  const p = 10 ** Math.floor(Math.log10(brut));
-  const pas = [1, 2, 2.5, 5, 10].map((k) => k * p).find((s) => s >= brut) ?? brut;
-  const out: number[] = [];
-  for (let v = Math.ceil(a / pas) * pas; v <= b + pas * 1e-9; v += pas) out.push(Number(v.toPrecision(12)));
-  return out;
-}
-
-const fmt = (v: number) => (Math.abs(v) >= 1000 || (Math.abs(v) < 0.01 && v !== 0) ? v.toExponential(1) : String(Number(v.toPrecision(4))));
+const fmt = formaterNombre;
 
 interface Props {
   p: Panneau;
@@ -50,21 +27,7 @@ interface Props {
 
 function Graphe({ p, largeur, xLibelle, masquees, basculer, curseur, setCurseur, plage, setPlage }: Props) {
   const [selection, setSelection] = useState<[number, number] | null>(null);
-  const dans = (x: number) => !plage || (x >= plage[0] && x <= plage[1]);
-  const traces = p.traces.map((t) => {
-    const i = t.x.map((x, j) => (dans(x) ? j : -1)).filter((j) => j >= 0);
-    return { ...t, x: i.map((j) => t.x[j]!), y: i.map((j) => t.y[j]!) };
-  });
-  const visibles = traces.filter((t) => !masquees.has(t.nom) && t.x.length);
-  const toutes = visibles.length ? visibles : traces;
-  const xs = toutes.flatMap((t) => t.x);
-  const ys = toutes.flatMap((t) => t.y).filter(Number.isFinite);
-  const [x0, x1] = plage ?? [Math.min(...xs), Math.max(...xs)];
-  let [y0, y1] = [Math.min(...ys), Math.max(...ys)];
-  if (y0 === y1) [y0, y1] = [y0 - 1, y1 + 1];
-  const pad = (y1 - y0) * 0.05;
-  y0 -= pad;
-  y1 += pad;
+  const { traces, x0, x1, y0, y1 } = cadrer(p, { masquees: [...masquees], plage });
   const W = largeur - M.g - M.d;
   const px = (v: number) => M.g + ((v - x0) / (x1 - x0 || 1)) * W;
   const py = (v: number) => M.h + (1 - (v - y0) / (y1 - y0)) * (H - M.h - M.b);
@@ -145,7 +108,11 @@ function Graphe({ p, largeur, xLibelle, masquees, basculer, curseur, setCurseur,
   );
 }
 
-export function Courbes({ panneaux, xLibelle }: { panneaux: Panneau[]; xLibelle: string }) {
+/**
+ * `onVue` reçoit les voies masquées et la plage zoomée à chaque changement : de quoi
+ * refaire la même figure plus tard (Enregistrer dans Figures, puis Régénérer).
+ */
+export function Courbes({ panneaux, xLibelle, onVue }: { panneaux: Panneau[]; xLibelle: string; onVue?(v: Vue): void }) {
   const boite = useRef<HTMLDivElement>(null);
   const [largeur, setLargeur] = useState(800);
   const [masquees, setMasquees] = useState<Set<string>>(new Set());
@@ -158,6 +125,7 @@ export function Courbes({ panneaux, xLibelle }: { panneaux: Panneau[]; xLibelle:
     o.observe(el);
     return () => o.disconnect();
   }, []);
+  useEffect(() => onVue?.({ masquees: [...masquees], plage }), [masquees, plage, onVue]);
   const basculer = useMemo(() => (n: string) => setMasquees((m) => (m.has(n) ? new Set([...m].filter((x) => x !== n)) : new Set([...m, n]))), []);
   return (
     <div className="courbes" ref={boite}>

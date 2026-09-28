@@ -2,14 +2,16 @@
  * Module Bibliothèque (SPEC §9) : le classeur de bibliographie, avec une interface faite
  * pour ça. Onglets comme les feuilles, fiche d'une référence sur une page.
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Message, Page } from "@interface/composants";
 import { useContexte } from "@interface/contexte";
 import { versBibtex, versRis } from "../core/exports";
 import { importerClasseur, type ImportClasseur } from "../core/import";
+import { libelleLien, lienARevoir, liensAVerifier } from "../core/liens";
+import { nomNote, noteReference, pointMensuel } from "../core/markdown";
 import { nouvelleReference } from "../core/modele";
 import { Fiche } from "./Fiche";
-import { useBiblio } from "./donnees";
+import { aujourdhui, useBiblio } from "./donnees";
 import { AnalyseVue, CorrectionsVue, DemandesVue, PistesVue } from "./suivi";
 import { FILTRES_VIDES, type Filtres } from "./format";
 import { PlanVue, ReferencesVue, TableauDeBordVue } from "./vues";
@@ -38,6 +40,8 @@ export function BibliothequePage() {
   const [aImporter, setAImporter] = useState<{ nom: string; imp: ImportClasseur } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [verification, setVerification] = useState<{ fait: number; total: number; aRevoir: number } | null>(null);
+  const arret = useRef(false);
 
   async function choisirClasseur() {
     setErreur(null);
@@ -66,6 +70,46 @@ export function BibliothequePage() {
       octetsTexte(format === "ris" ? versRis(refs, b.parametres) : versBibtex(refs)),
     );
     if (ok) setMessage(`${refs.length} références exportées en ${format === "ris" ? "RIS" : "BibTeX"}.`);
+  }
+
+  /**
+   * VerifierLiens : une requête par lien, l'une après l'autre (pas de rafale chez un même
+   * éditeur), le résultat noté aussitôt dans la référence. Interruptible.
+   */
+  async function verifierLiens() {
+    if (!b) return;
+    const refs = liensAVerifier(b.references);
+    if (!window.confirm(`Vérifier ${refs.length} liens ? L'application va interroger chaque site (quelques minutes). Vous pouvez arrêter à tout moment.`)) return;
+    arret.current = false;
+    const jour = aujourdhui();
+    let aRevoir = 0;
+    setVerification({ fait: 0, total: refs.length, aRevoir });
+    for (const [i, r] of refs.entries()) {
+      if (arret.current) break;
+      const etat = libelleLien(await ctx.plateforme.verifierLien(r.valeur.url));
+      if (lienARevoir(etat)) aRevoir++;
+      await d.enregistrerReference(r.id, { ...r.valeur, etatLien: etat, lienControleLe: jour });
+      setVerification({ fait: i + 1, total: refs.length, aRevoir });
+    }
+    setVerification(null);
+    setMessage(`${arret.current ? "Vérification arrêtée" : "Liens vérifiés"} : ${aRevoir} lien(s) à revoir (morts ou injoignables), notés dans « État du lien ».`);
+  }
+
+  /** GenererNotesObsidian et GenererPointMensuel : une note par référence et le point du mois, dans un dossier choisi. */
+  async function exporterMarkdown() {
+    if (!b) return;
+    const dossier = await ctx.plateforme.choisirDossier("Dossier des notes Markdown (par exemple un coffre Obsidian)");
+    if (!dossier) return;
+    try {
+      const fs = ctx.plateforme.fichiers(dossier);
+      const cles = new Set(b.references.map((r) => r.valeur.cle).filter(Boolean));
+      for (const c of b.calc) await fs.writeTextAtomic(nomNote(c.id, c.ref), noteReference(c, b.parametres, cles));
+      const mois = Math.min(Math.max(b.tb.moisCourant, 1), b.parametres.nbMois);
+      await fs.writeTextAtomic(`Point mensuel - mois ${mois}.md`, pointMensuel(mois, b.calc, b.demandes.map((x) => x.valeur), b.parametres, b.aujourdhui));
+      setMessage(`${b.calc.length} notes et le point du mois ${mois} écrits dans ${dossier} (les notes existantes de même nom sont remplacées).`);
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : String(e));
+    }
   }
 
   async function nouvelle() {
@@ -98,6 +142,12 @@ export function BibliothequePage() {
               <button type="button" onClick={() => void exporter("bib")}>
                 Exporter BibTeX
               </button>
+              <button type="button" onClick={() => void exporterMarkdown()} title="Une note par référence et le point du mois (Obsidian ou tout éditeur Markdown)">
+                Exporter Markdown…
+              </button>
+              <button type="button" disabled={verification !== null} onClick={() => void verifierLiens()} title="Teste chaque lien et note le résultat dans « État du lien »">
+                Vérifier les liens
+              </button>
             </>
           ) : null}
         </>
@@ -105,6 +155,17 @@ export function BibliothequePage() {
     >
       {erreur || d.erreur ? <Message niveau="erreur">{erreur ?? d.erreur}</Message> : null}
       {message ? <Message niveau="info">{message}</Message> : null}
+      {verification ? (
+        <div className="message message-info rangee">
+          <span>
+            Vérification des liens : {verification.fait} / {verification.total} · {verification.aRevoir} à revoir
+          </span>
+          <progress max={verification.total} value={verification.fait} />
+          <button type="button" onClick={() => (arret.current = true)}>
+            Arrêter
+          </button>
+        </div>
+      ) : null}
       {aImporter ? (
         <div className="message message-attention">
           <p>
