@@ -225,8 +225,10 @@ LibreOffice depuis `Calcul.xlsx`) sont portés et **restent verts à l'identique
 
 Mise en œuvre en deux étapes. **Étape 1 (faite)** : la page existante est reprise telle
 quelle dans `modules/traitement/statique/` et affichée dans le module ; ses exports passent
-par « Enregistrer sous ». **Étape 2** : cœur porté en TypeScript et interface React, avec
-les liens ci-dessous.
+par « Enregistrer sous ». **Étape 2 (faite, 0.2.6)** : cœur porté en TypeScript
+(`modules/traitement/core/`, calculs inchangés, vérifiés bit à bit contre le JavaScript
+d'origine) et interface React ; l'ancienne page reste accessible (« Ancienne page ») jusqu'à
+validation sous Windows, puis sera retirée.
 
 Ce qui change à l'étape 2 :
 

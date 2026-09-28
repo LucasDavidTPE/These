@@ -409,7 +409,7 @@ export function calageConjoint(
 }
 
 /** Écarts moyens entre modèle et mesure, pour l'affichage. */
-export function ecarts(m: ModeleCale, points: readonly PointMesure[], aT: Translations, p: Constantes): { module: number; phase: number; n: number } {
+export function ecarts(m: Pick<ModeleCale, "module">, points: readonly PointMesure[], aT: Translations, p: Constantes): { module: number; phase: number; n: number } {
   let eE = 0,
     eP = 0,
     n = 0;

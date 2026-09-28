@@ -33,7 +33,7 @@ lancent tous les tests automatiques sous Windows.
 - [x] Action `figures.enregistrer-image` offerte aux autres modules ; utilisée par les
       courbes d'un essai (Campagnes) : PNG + source dans la bibliothèque de figures
 
-## P2 — Traitement 2S2P1D (étape 1 ✔)
+## P2 — Traitement 2S2P1D (étapes 1 et 2 ✔)
 - [x] Page de dépouillement reprise telle quelle (`modules/traitement/statique/`, commit
       260bb55 de 2S2P1D-traitement), sans réseau (polices Google retirées), servie par
       l'application ; seuls les modules du produit sont embarqués
@@ -44,8 +44,13 @@ lancent tous les tests automatiques sous Windows.
       `.steps.tracking.csv` est chargé directement, le projet est enregistré avec l'essai
       (`campagnes/<campagne>/essais/<essai>/traitement.json`) ; lecture des exports WaveMatrix
       corrigée (séparateur, guillemets), boucle infinie sans colonne de cycles corrigée
-- [ ] Plus tard : cœur en TypeScript dans `modules/traitement/core`, interface React,
-      « Enregistrer dans Figures »
+- [x] Étape 2 : cœur en TypeScript dans `modules/traitement/core` (tests de conformité
+      portés à l'identique, plus un test « mêmes nombres, bit à bit, que le JavaScript
+      d'origine »), interface React en sept étapes, graphiques par le traceur commun
+      (`noyau/graphe`), « → Figures » sur chaque graphique (régénérable pour un essai de
+      campagne : action `traitement.regenerer-figure`)
+- [ ] Retirer l'ancienne page (`statique/`, bouton « Ancienne page ») une fois la nouvelle
+      validée sous Windows
 - [x] Installeur `Traitement 2S2P1D` seul, produit par la CI (job `build-traitement`,
       artefact `traitement-2s2p1d-installeurs`), compilé sans la *feature* `figures`
 

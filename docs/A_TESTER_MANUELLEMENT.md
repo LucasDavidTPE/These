@@ -237,3 +237,28 @@ Ce qui change avec l'intégration :
       affiche ce chapitre dans « Utilisé par ».
 - [ ] Renommer une image utilisée : elle apparaît dans « Inclusions introuvables ».
 - [ ] « VS Code », « PDF » (si compilé à côté) et « Dossier » ouvrent ce qu'il faut.
+
+## Traitement 2S2P1D : nouvelle interface (0.2.6)
+
+À comparer avec « Ancienne page » (bouton en haut à droite) sur les mêmes fichiers : les
+nombres doivent être identiques, dans les deux modes.
+
+- [ ] À l'ouverture : l'essai de démonstration, calé (écart |E*| < 1 %), en quelques secondes.
+- [ ] 01 Essai : déposer (ou cliquer et choisir) un export MTS `.csv` réel, puis un export
+      WaveMatrix `.steps.tracking.csv` et un `.xlsx` : voies reconnues, matrice T × f
+      détectée, « Traiter la campagne » ; un second fichier s'ajoute pour la comparaison.
+- [ ] 02 Cycles : case « Retenu », touche X sur une ligne, « Proposer » avec les seuils,
+      « Tout remettre » ; le signal et la sinusoïde suivent le cycle et la voie choisis.
+- [ ] 03 Synthèse : moyenne / maximum / minimum / écart-type ; isothermes.
+- [ ] 04 Calage : « Caler tout », « Constantes seules », « Ajuster ν* », « Recaler les
+      isothermes », « Ajuster WLF », curseurs et champs ; changer de Tref ; modèle
+      Huet-Sayegh puis Kelvin-Voigt généralisé ; survol d'un point (palier affiché).
+- [ ] 05 Comparaison et 06 Fidélité Excel : mêmes tableaux que l'ancienne page.
+- [ ] 07 Export : `.xlsx` (Data avec la colonne Retenu, Calcul, Modele), trois CSV qui
+      s'ouvrent dans Excel, projet `.json` enregistré puis rouvert (tri et calages
+      retrouvés) ; un projet enregistré par l'ancienne page ou le site se rouvre aussi.
+- [ ] Depuis une campagne : « 2S2P1D » ouvre l'essai, « Enregistrer avec l'essai »,
+      « ← Campagne » (bouton « 2S2P1D ✓ »), rouvrir : le dépouillement revient sur Calage.
+- [ ] « → Figures » sur la courbe maîtresse d'un essai de campagne, puis dans Figures
+      « Régénérer depuis les données » après avoir modifié le calage et réenregistré.
+- [ ] Installeur Traitement seul : pas de bouton « → Figures », tout le reste fonctionne.
