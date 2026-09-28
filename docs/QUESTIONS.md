@@ -17,3 +17,7 @@ reportée dans `SPEC.md` et la question est supprimée d'ici.
    l'installeur, ou le retirer ?
 5. **Emplacement de l'espace (P0).** `OneDrive - entpe.fr\Thèse\Espace` convient-il ?
    Le OneDrive de l'école reste-t-il accessible après la thèse ?
+6. **Modifier les courbes avant traitement (0.2.7).** Qu'attendre exactement : retirer une
+   zone (début d'essai, cycles parasites), recaler un zéro, inverser le signe d'une voie,
+   lisser, rééchantillonner ? Aujourd'hui on écarte des cycles un par un (étape Cycles) ;
+   le reste n'est pas fait tant que le besoin n'est pas précisé.
