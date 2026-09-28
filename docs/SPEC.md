@@ -348,7 +348,11 @@ ENTPE.
   par poste), couleurs d'état comme dans le classeur, recherche sans accents.
 - **Fiche d'une référence** : tous les blocs sur une page, onglets Métadonnées /
   Fiche de lecture / Mes notes ; boutons Ouvrir le lien (avec proxy), Ouvrir le PDF,
-  doi.org, Scholar, Marquer lu, PDF récupéré.
+  doi.org, Scholar, Marquer lu, PDF récupéré. **Bloc PDF** (1.0) : « Pointer le PDF… »
+  le renomme selon la convention des PDF rangés (`ID_Auteur[-Auteur2|-etal]_Année_Titre-court.pdf`,
+  titre court = six mots significatifs sans accents ; nom modifiable), le renomme sur place
+  s'il est déjà dans la racine `biblio-pdf`, sinon l'y copie (l'original reste), et note son
+  nom dans la fiche ; « Renommer selon la convention » pour un PDF déjà rattaché.
 - **Plan de lecture** : un bloc par mois (objectif de fin de mois, documents à demander
   en amont, avancement, liste des références) ; changer le mois d'une référence la
   déplace. Les mois alimentent le **Planning** (§10).

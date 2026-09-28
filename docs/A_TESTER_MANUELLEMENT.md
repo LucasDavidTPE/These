@@ -397,3 +397,15 @@ nombres doivent être identiques, dans les deux modes.
       `synthese.json`, jauges, `cas.json` ; comparer à la sortie du Python.
 - [ ] « Carte → Figures », coupes et jauges « → Figures ».
 - [ ] Effort tangentiel (qx) avec une interface glissante : message clair, pas de calcul.
+
+## Bibliothèque : PDF d'une référence (1.0)
+
+- [ ] « Nouvelle référence » : la fiche s'ouvre avec le bloc PDF en évidence ; remplir auteurs,
+      année, titre (ou par le DOI) : le nom proposé suit (`BIB-180_Auteur-etal_2025_Titre-court.pdf`).
+- [ ] « Pointer le PDF… » sur un PDF des Téléchargements : il est copié dans le dossier des PDF
+      (racine « biblio-pdf ») sous ce nom, l'original reste ; « Ouvrir le PDF » l'ouvre ; la
+      référence passe en « PDF récupéré ».
+- [ ] PDF déjà déposé dans le dossier des PDF sous un autre nom : « Pointer le PDF… » le renomme
+      sur place (pas de doublon).
+- [ ] Référence existante dont le PDF porte un autre nom : « Renommer selon la convention ».
+- [ ] Nom retouché à la main avant de pointer : c'est ce nom qui est utilisé.
