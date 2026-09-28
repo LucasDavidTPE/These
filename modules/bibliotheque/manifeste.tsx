@@ -21,6 +21,15 @@ const bibliotheque: Manifeste = {
     return `${b.tb.lues} / ${b.tb.total} lues · mois ${b.tb.libelleMoisCourant} · ${b.tb.ceMois} à lire ce mois-ci`;
   },
   problemes: async (ctx) => (await charger(ctx))?.problemes ?? [],
+  indexer: async (ctx) =>
+    ((await charger(ctx))?.references ?? []).map((r) => ({
+      id: r.id,
+      module: "bibliotheque",
+      genre: "Référence",
+      titre: r.valeur.titre,
+      detail: [r.valeur.auteurs, r.valeur.annee].filter(Boolean).join(" · "),
+      mots: [r.valeur.cle, r.valeur.doi, r.valeur.statut, r.valeur.categories.join(" ")].join(" "),
+    })),
   actions: {
     /**
      * Pour le Planning : un bloc par mois du plan de lecture, et les dates limites des

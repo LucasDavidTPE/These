@@ -9,6 +9,7 @@ import { isoAvecDecalage } from "@noyau/dates";
 import { etat, dossierManuscrit, type Etat, type Version } from "../core/versions";
 import { chargerVersions, enregistrerVersion, listerManuscrits } from "./donnees";
 import { LatexIndex } from "./LatexIndex";
+import { PresentationsPage } from "./PresentationsPage";
 
 interface Ligne {
   chemin: string;
@@ -33,7 +34,7 @@ export function ManuscritsPage() {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<{ niveau: "info" | "erreur"; texte: string } | null>(null);
   const [tour, setTour] = useState(0);
-  const [vue, setVue] = useState<"word" | "latex">("word");
+  const [vue, setVue] = useState<"word" | "latex" | "presentations">("word");
 
   useEffect(() => {
     if (!racine || !espace) return;
@@ -102,10 +103,15 @@ export function ManuscritsPage() {
         <button type="button" className={vue === "latex" ? "actif" : undefined} onClick={() => setVue("latex")}>
           Sources LaTeX
         </button>
+        <button type="button" className={vue === "presentations" ? "actif" : undefined} onClick={() => setVue("presentations")}>
+          Présentations
+        </button>
       </nav>
       {message ? <Message niveau={message.niveau}>{message.texte}</Message> : null}
       {vue === "latex" ? (
         <LatexIndex />
+      ) : vue === "presentations" ? (
+        <PresentationsPage />
       ) : !racine ? (
         <div className="carte">
           <p>Indiquez le dossier où sont vos manuscrits (.docx). Ils restent où ils sont ; chaque version enregistrée est une copie datée, avec une note, dans l'espace OneDrive (<code>manuscrits/</code>), visible depuis les deux PC.</p>

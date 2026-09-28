@@ -713,3 +713,143 @@ table.tableau th {
 .petit {
   font-size: 12px;
 }
+
+/* Palette Ctrl+K */
+.recherche-fond {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 12vh;
+}
+.recherche {
+  width: min(640px, 92vw);
+  background: var(--surface);
+  color: var(--texte);
+  border: 1px solid var(--bordure);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+.recherche-champ {
+  width: 100%;
+  box-sizing: border-box;
+  border: 0;
+  border-bottom: 1px solid var(--bordure);
+  padding: 14px 16px;
+  font-size: 16px;
+  background: transparent;
+  color: inherit;
+  outline: none;
+}
+.recherche-liste {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  max-height: 52vh;
+  overflow-y: auto;
+}
+.recherche-liste li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.recherche-liste li.actif {
+  background: var(--accent);
+  color: var(--accent-texte);
+}
+.recherche-liste li.recherche-vide {
+  cursor: default;
+  color: var(--discret);
+}
+.recherche-genre {
+  flex: 0 0 96px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+.recherche-texte {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.recherche-titre {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.recherche-detail {
+  font-size: 12px;
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.recherche-pied {
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--discret);
+  border-top: 1px solid var(--bordure);
+}
+.barre-recherche {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 8px;
+  color: var(--discret);
+}
+.barre-recherche kbd {
+  font-size: 11px;
+  border: 1px solid var(--bordure);
+  border-radius: 4px;
+  padding: 0 5px;
+  background: var(--surface);
+}
+
+/* Manuscrits : présentations */
+.pres-colonnes {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(240px, 1fr);
+  gap: 14px;
+  margin-top: 12px;
+}
+.pres-editeur {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 460px;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+.pres-plan {
+  margin: 0;
+  padding-left: 20px;
+}
+.pres-echantillon {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+}
+.pres-modele {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.pres-modele label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}

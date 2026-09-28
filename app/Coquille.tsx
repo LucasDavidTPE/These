@@ -15,6 +15,7 @@ import type { Manifeste } from "@interface/manifeste";
 import type { Plateforme } from "@interface/plateforme";
 import { BandeauMiseAJour } from "./BandeauMiseAJour";
 import { DiagnosticPage } from "./DiagnosticPage";
+import { Palette } from "./Palette";
 import { ReglagesPage } from "./ReglagesPage";
 
 interface Props {
@@ -34,6 +35,19 @@ export function Coquille({ produit, manifestes, plateforme, poste, reglages, enr
   const [page, setPage] = useState<Destination>(manifestes[0]?.id ?? "reglages");
   const [revision, setRevision] = useState(0);
   const [problemes, setProblemes] = useState<ProblemeSitue[]>([]);
+  const [palette, setPalette] = useState(false);
+
+  // Ctrl+K (ou Cmd+K) ouvre et ferme la recherche globale.
+  useEffect(() => {
+    const touche = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPalette((o) => !o);
+      }
+    };
+    window.addEventListener("keydown", touche);
+    return () => window.removeEventListener("keydown", touche);
+  }, []);
 
   const espace = useMemo(
     () => (produit.espace && reglages.espace ? { racine: reglages.espace, fichiers: avecGarde(plateforme.fichiers(reglages.espace)) } : null),
@@ -138,6 +152,10 @@ export function Coquille({ produit, manifestes, plateforme, poste, reglages, enr
         {seul ? null : (
           <nav className="barre" aria-label="Modules">
             <div className="barre-titre">{produit.nom}</div>
+            <button type="button" className="barre-recherche" onClick={() => setPalette(true)} title="Chercher dans tout l'espace">
+              <span>Rechercher…</span>
+              <kbd>Ctrl K</kbd>
+            </button>
             <ul>
               {manifestes.map((m) => (
                 <li key={m.id}>
@@ -172,6 +190,7 @@ export function Coquille({ produit, manifestes, plateforme, poste, reglages, enr
           {produit.id === "these" ? <BandeauMiseAJour plateforme={plateforme} version={__APP_VERSION__} /> : null}
           {page === "reglages" ? <ReglagesPage /> : page === "diagnostic" ? <DiagnosticPage /> : courant ? <courant.Page /> : null}
         </main>
+        {palette ? <Palette manifestes={manifestes} fermer={() => setPalette(false)} /> : null}
       </div>
     </ContexteReact.Provider>
   );

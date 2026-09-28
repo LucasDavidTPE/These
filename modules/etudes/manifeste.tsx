@@ -9,6 +9,11 @@ const etudes: Manifeste = {
   resume: "Scripts Python d'analyse, exécutions et sorties tracées",
   Icone: IconeEtudes,
   Page: EtudesPage,
+  indexer: async (ctx) => {
+    if (!ctx.espace) return [];
+    const { etudes } = await chargerEtudes(ctx.espace.fichiers);
+    return etudes.map((e) => ({ id: e.dossier, module: "etudes", genre: "Étude", titre: e.etude.titre, detail: [e.etude.statut, e.etude.date].filter(Boolean).join(" · "), mots: `${e.etude.question} ${e.etude.conclusion} ${e.etude.tags.join(" ")}` }));
+  },
   etat: async (ctx) => {
     if (!ctx.espace) return null;
     const { etudes } = await chargerEtudes(ctx.espace.fichiers);

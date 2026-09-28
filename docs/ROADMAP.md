@@ -169,3 +169,5 @@ lancent tous les tests automatiques sous Windows.
 - [x] Figures → Graphes : régressions polynôme (degré 2 à 6), exponentielle, logarithmique ; plage de x choisie (saisie ou sur l'aperçu), prolongement (1.2.1)
 - [x] Figures → Graphes : « Lire sur la courbe » (y pour un x, x pour un y, extrapolation) (1.2.2)
 - [x] ChaussSpec : panneau « Comment ça marche ? » (modèle semi-analytique, méthode spectrale) (1.2.3)
+- [x] Recherche globale Ctrl+K dans tout l'espace (références, essais, figures, cas, planning…) (1.3.0)
+- [x] Manuscrits → Présentations : Markdown vers .pptx, figures de la bibliothèque, modèles créables (1.3.0)

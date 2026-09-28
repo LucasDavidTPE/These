@@ -95,6 +95,16 @@ racine (identité, page, état pour l'Accueil, problèmes, actions).
   (« ouvrir l'essai X dans le traitement », « enregistrer ce graphe dans Figures »). Si
   le module cible n'est pas compilé dans l'installeur, l'action n'apparaît pas.
 
+### 3.0 Recherche globale (Ctrl+K)
+Ctrl+K (ou le champ « Rechercher » de la barre) ouvre une palette qui cherche dans tout
+l'espace, sans accents ni casse, tous les mots dans n'importe quel ordre, le titre comptant
+plus que le détail. Chaque module déclare son contenu par `indexer(ctx)` dans son manifeste
+(références, campagnes et essais, études, figures, éléments du planning, cas ChaussSpec,
+projets du Numériseur, présentations) ; la coquille les réunit à l'ouverture de la palette et
+les classe (`noyau/recherche.ts`). Un résultat ouvre son élément par une action du registre
+quand le module en offre une (`chausspec.ouvrir-cas`), sinon la page du module. La palette
+propose aussi les pages (Réglages, Diagnostic…). Rien n'est lu tant qu'elle n'est pas ouverte.
+
 ### 3.1 Installeurs
 
 Le même code produit plusieurs installeurs. Le produit est choisi à la compilation par
@@ -344,6 +354,19 @@ glisser, double-clic pour revenir, réticule, légende cliquable. Décimation po
 fichiers (lecture en Rust). Actions : **exporter en Excel** (`.xlsx`), **copier ou
 exporter les données brutes** d'un essai vers un dossier choisi, **enregistrer le
 graphe dans Figures**, **ouvrir dans le traitement 2S2P1D**.
+
+### Présentations (Manuscrits → Présentations)
+Une présentation est un fichier Markdown de l'espace (`presentations/<nom>.md`), une diapo
+par section séparée par `---` : en-tête (titre, auteur, date, modèle), titres, puces à
+niveaux, **gras** et *italique*, `|||` pour deux colonnes, `Source: …`, images
+`![légende](figure:FIG-0001)` (bibliothèque de Figures, par l'action `figures.image`) ou
+chemin relatif dans l'espace. La mise en page (titre, section, contenu, figure, deux colonnes)
+est déduite du contenu ou imposée par `mise-en-page:`. Un **modèle** est un petit JSON
+(`presentations/modeles/<nom>.json` : couleurs, polices, tailles, pied de page, numéros) ; quatre
+modèles de base sont fournis, on en crée d'autres depuis l'application. L'export écrit un
+.pptx 16:9 (Office Open XML, sans bibliothèque de présentation) : textes modifiables dans
+PowerPoint, titres reconnus comme titres, figures en images. Les équations `$$…$$` sont posées
+en texte (LaTeX brut) ; les notes d'orateur ne sont pas gérées.
 
 ### 8.4 Reprise de l'existant
 Import unique des fiches `projects/*.toml`, des aperçus et des notes de these-lgcb.

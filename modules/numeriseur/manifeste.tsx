@@ -8,6 +8,14 @@ const numeriseur: Manifeste = {
   resume: "Relever les valeurs d'un graphique ou d'une carte de couleurs à partir de son image",
   Icone: IconeNumeriseur,
   Page: NumeriseurPage,
+  indexer: async (ctx) => {
+    if (!ctx.espace) return [];
+    try {
+      return (await ctx.espace.fichiers.listDir("numeriseur")).filter((e) => e.name.endsWith(".json")).map((e) => ({ id: e.name, module: "numeriseur", genre: "Projet", titre: e.name.replace(/\.json$/, "") }));
+    } catch {
+      return [];
+    }
+  },
   etat: async (ctx) => {
     if (!ctx.espace) return null;
     try {

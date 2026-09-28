@@ -4,6 +4,7 @@
  */
 import type { ComponentType } from "react";
 import type { ModuleId } from "@noyau/produits";
+import type { EntreeRecherche } from "@noyau/recherche";
 import type { Gestionnaire } from "@noyau/registre";
 import type { Probleme } from "@noyau/stockage";
 import type { Contexte } from "./contexte";
@@ -19,6 +20,8 @@ export interface Manifeste {
   aVenir?: string;
   /** État en une ligne pour la carte de l'Accueil (« 179 références, 12 lues »). */
   etat?(ctx: Contexte): Promise<string | null>;
+  /** Ce que le module contient, pour la recherche globale (Ctrl+K). */
+  indexer?(ctx: Contexte): Promise<EntreeRecherche[]>;
   /** Ce que le module a trouvé à régler dans ses fichiers. */
   problemes?(ctx: Contexte): Promise<Probleme[]>;
   /** Actions offertes aux autres modules, par nom complet (« figures.enregistrer »). */

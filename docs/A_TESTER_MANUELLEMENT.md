@@ -511,3 +511,25 @@ nombres doivent être identiques, dans les deux modes.
       schéma en quatre étapes lisible (même fenêtre étroite), cinq rubriques dépliables.
 - [ ] Le texte est compréhensible sans lire le code ; noter ce qui reste obscur (à
       compléter). Notice complète : `docs/CHAUSSSPEC_EXPLIQUE.md`.
+
+## Recherche globale Ctrl+K (1.3.0)
+
+- [ ] Ctrl+K (et le champ « Rechercher » de la barre) ouvre la palette ; Échap la ferme ;
+      ↑ ↓ Entrée naviguent. Vide : la liste des pages.
+- [ ] Taper un bout de titre de référence, d'essai, de figure, de cas ChaussSpec, de tâche du
+      planning : les résultats apparaissent, avec leur module. Sans accents, mots en désordre.
+- [ ] Entrée sur un cas ChaussSpec : le cas s'ouvre directement ; sur les autres, la page du module.
+- [ ] Sur un gros espace (plusieurs centaines de références), l'ouverture de la palette reste fluide.
+
+## Manuscrits → Présentations (1.3.0)
+
+- [ ] Nouvelle (exemple), Enregistrer : `presentations/<nom>.md` apparaît dans l'espace, l'autre PC le voit.
+- [ ] Exporter en .pptx, ouvrir dans **PowerPoint** : 5 diapos, aucun message de réparation, textes
+      modifiables, titre reconnu (mode Plan), numéros de diapo, pied de page.
+- [ ] `![…](figure:FIG-xxxx)` avec une vraie figure de la bibliothèque : l'image est bien
+      dans la diapo, proportions respectées, légende dessous ; un identifiant faux : message
+      « image introuvable » à l'export, texte de remplacement dans la diapo.
+- [ ] Nouveau modèle depuis celui-ci : changer l'accent, la police, le pied de page ; le
+      modèle est gardé (`presentations/modeles/`), appliqué, et se retrouve sur l'autre PC.
+- [ ] Les quatre modèles de base (clair, sombre, bleu, chaud) : lisibles en projection.
+- [ ] Deux colonnes avec une image à droite et des puces à gauche ; une diapo de section.

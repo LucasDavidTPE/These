@@ -2,6 +2,7 @@ import { IconeFigures } from "@interface/icones";
 import type { Contexte } from "@interface/contexte";
 import type { Manifeste } from "@interface/manifeste";
 import { isoAvecDecalage } from "@noyau/dates";
+import { svgTexteEnPng } from "@interface/image";
 import { enregistrerGraphe, enregistrerImage, enregistrerSchema, type DemandeGraphe, type DemandeImage, type DemandeSchema } from "./core/action";
 import { exportGraphSvg } from "./core/graph";
 import { svgToPng } from "./ui/editor/raster";
@@ -17,6 +18,11 @@ const figures: Manifeste = {
   resume: "Bibliothèque de figures, détourage, schémas TikZ, recadrage, graphes",
   Icone: IconeFigures,
   Page: FiguresPage,
+  indexer: async (ctx) => {
+    if (!ctx.dossierFigures) return [];
+    const { figures } = await scanLibrary(ctx.plateforme.fichiers(ctx.dossierFigures));
+    return figures.flatMap((f) => (f.meta ? [{ id: f.id, module: "figures", genre: "Figure", titre: f.meta.title, detail: f.id, mots: f.meta.tags.join(" ") }] : []));
+  },
   actions: {
     /** Une image d'un autre module devient une figure de la bibliothèque ; renvoie son dossier. */
     "figures.enregistrer-image": async (charge) => {
@@ -66,6 +72,27 @@ const figures: Manifeste = {
           type: f.vignette?.endsWith(".svg") ? "image/svg+xml" : "image/png",
         })),
       );
+    },
+    /**
+     * L'image d'une figure, pour l'insérer dans un document (présentation…) ; charge : { ctx, id }.
+     * Renvoie null si la figure n'existe pas ou n'a pas d'image ; un SVG est rendu en PNG.
+     */
+    "figures.image": async (charge) => {
+      const { ctx, id } = charge as { ctx: Contexte; id: string };
+      if (!ctx.dossierFigures) return null;
+      const fs = ctx.plateforme.fichiers(ctx.dossierFigures);
+      const { figures } = await scanLibrary(fs);
+      const f = figures.find((x) => x.id === id);
+      if (!f) return null;
+      const fichier = ["export.png", "original.png", "export.svg"].find((n) => f.files.includes(n));
+      if (!fichier) return null;
+      const octets = await fs.readBytes(`${f.folder}/${fichier}`);
+      if (fichier.endsWith(".svg")) {
+        // Les SVG de la bibliothèque sont dimensionnés en mm : le rendu du navigateur veut des pixels.
+        const svg = new TextDecoder().decode(octets).replace(/(<svg[^>]*\s(?:width|height)=")([\d.]+)mm"/g, (_m, a: string, v: string) => `${a}${Math.round(Number(v) * 3.78)}"`);
+        return { octets: await svgTexteEnPng(svg).catch(() => null), titre: f.meta?.title ?? id, legende: f.meta?.caption ?? "" };
+      }
+      return { octets, titre: f.meta?.title ?? id, legende: f.meta?.caption ?? "" };
     },
     /** Toutes les figures (identifiant, titre, dossier), pour en choisir une à rattacher. */
     "figures.catalogue": async (charge) => {

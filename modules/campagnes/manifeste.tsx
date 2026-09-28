@@ -23,6 +23,11 @@ const campagnes: Manifeste = {
     return `${r.campagnes.length} campagne(s), ${essais} essai(s) · ${enCours} en cours`;
   },
   problemes: async (ctx) => (await charger(ctx))?.problemes ?? [],
+  indexer: async (ctx) =>
+    ((await charger(ctx))?.campagnes ?? []).flatMap((c) => [
+      { id: c.slug, module: "campagnes", genre: "Campagne", titre: c.campagne.titre, detail: `${typeDe(c.campagne.type).libelle} · ${c.campagne.statut}`, mots: `${c.campagne.materiau} ${c.campagne.notes}` },
+      ...Object.keys(c.essais).map((e) => ({ id: `${c.slug}/${e}`, module: "campagnes", genre: "Essai", titre: e, detail: c.campagne.titre, mots: c.campagne.materiau })),
+    ]),
   actions: {
     /** Pour les Études : les campagnes auxquelles une étude peut se rattacher. */
     "campagnes.liste": async (ctx) => ((await charger(ctx as Contexte))?.campagnes ?? []).map((c) => ({ slug: c.slug, titre: c.campagne.titre })),
