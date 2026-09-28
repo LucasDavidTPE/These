@@ -112,6 +112,14 @@ export const IconeChaussspec = (p: P) => (
   </Trace>
 );
 
+export const IconeNumeriseur = (p: P) => (
+  <Trace {...p}>
+    <path d="M4 3v17h17" />
+    <path d="M7 16c3-1 4-7 7-8s4 2 6 1" />
+    <path d="M14 8v12M7 13h14" strokeDasharray="1.5 2" />
+  </Trace>
+);
+
 export const IconeManuscrits = (p: P) => (
   <Trace {...p}>
     <path d="M7 3h7l5 5v13H7z" />

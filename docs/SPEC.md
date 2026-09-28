@@ -483,6 +483,36 @@ La correspondance et les conventions d'écriture sont dans `modules/chausspec/RE
 Python renvoie des NaN). Non porté : le module texture (contact, deux échelles, éléments finis
 2D), prévu pour une version suivante.
 
+## 11 ter. Module Numériseur (1.1)
+
+Relever les valeurs d'un graphique à partir de son image (capture d'un article, d'un PDF,
+photo d'un écran). Image ouverte (PNG, JPEG, WebP, BMP, GIF), collée (Ctrl+V) ou déposée.
+
+- **Étalonnage** : deux points connus sur l'axe des x (X1, X2) et deux sur l'axe des y
+  (Y1, Y2), placés à la loupe et déplaçables, avec leurs valeurs ; échelles linéaires ou
+  logarithmiques ; image tournée ou axes non perpendiculaires admis (repère oblique défini
+  par les deux axes).
+- **Courbes XY** : séries de points ; relevé automatique par la couleur (pipette ou couleurs
+  dominantes proposées, anticrénelage écarté ; tolérance ΔE CIELAB ; zone de recherche) :
+  en « ligne », un point tous les n pixels le long de l'axe des x, en suivant la courbe à
+  travers les croisements ; en « symboles », un point au centre de chaque symbole. Points
+  modifiables (glisser, ajouter, Suppr, tableau). Exports : CSV, copie pour Excel,
+  graphe modifiable dans Figures (`figures.enregistrer-graphe`).
+- **Carte de couleurs** : légende étalonnée par deux points (début, fin) et leurs valeurs
+  (lin ou log) ; chaque pixel de la zone de la carte prend la valeur de la couleur de légende
+  la plus proche (interpolée entre deux couleurs voisines, CIELAB), rien au-delà de la
+  tolérance (fond, texte, traits). Coupes le long de lignes (graphe, CSV, Figures). Moyennes
+  sur un maillage : rectangulaire (matrice au format des cartes de pression de ChaussSpec),
+  disques de rayon R sur une trame carrée ou hexagonale, polaire (anneaux × secteurs) ;
+  résultante Σ valeur × aire.
+- **Vers ChaussSpec** : les disques deviennent un ensemble de charges circulaires uniformes,
+  le maillage rectangulaire une carte de pression, avec conversion des unités (axes en m, cm
+  ou mm ; valeurs en Pa, kPa, MPa, bar) ; ils remplacent le chargement du cas ouvert
+  (action `chausspec.importer-chargement`, la structure est gardée).
+- Un projet = `numeriseur/<nom>.json` (format `numeriseur/1`) et son image à côté, dans
+  l'espace. Calculs dans `modules/numeriseur/core/` (TypeScript pur, testés sur des images
+  dessinées par les tests). Axes supposés linéaires pour les moyennes de maillage.
+
 ## 12. Exigences générales
 
 - Interface et messages **en français** ; code, identifiants et commits en anglais

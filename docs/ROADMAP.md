@@ -153,3 +153,10 @@ lancent tous les tests automatiques sous Windows.
 - [x] Accueil redessiné (1.0.1)
 - [x] Figures → Graphes : régression par série (linéaire, par l'origine, puissance), équation et R² sur la figure (1.0.2)
 - [x] ChaussSpec : cœur réécrit calqué sur le Python (fichiers, noms, étapes), calcul par paquets façon numpy, conformité et vitesse inchangées (1.0.3)
+
+## 1.1 — Numériseur
+- [x] Étalonnage des axes (4 points, lin/log, image tournée), loupe, points déplaçables
+- [x] Courbes XY : relevé automatique par couleur (ligne, symboles), édition, CSV, Excel, Figures
+- [x] Carte de couleurs : légende étalonnée, coupes, maillages rectangle / disques / polaire
+- [x] Vers ChaussSpec : empreinte hétérogène = ensemble de charges circulaires (ou carte de pression)
+- [ ] Idées : détection automatique des axes et des graduations, légende en échelle de couleurs connue (jet, viridis) sans barre sur l'image

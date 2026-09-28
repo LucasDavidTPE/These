@@ -20,6 +20,7 @@ const TEINTES: Record<string, number> = {
   manuscrits: 350,
   viscocompare: 192,
   chausspec: 12,
+  numeriseur: 52,
   bibliotheque: 128,
   planning: 245,
 };

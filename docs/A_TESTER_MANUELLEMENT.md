@@ -433,3 +433,25 @@ nombres doivent être identiques, dans les deux modes.
       plus) et le calcul va au bout.
 - [ ] Ouvrir `modules/chausspec/core/kernel.ts` à côté de `kernel.py` : même découpage, mêmes noms.
 
+## Numériseur (1.1)
+
+- [ ] Capture d'un graphique d'article (Win+Maj+S) puis Ctrl+V dans le Numériseur : l'image
+      s'affiche, l'outil X1 est actif, la loupe suit le curseur.
+- [ ] Placer X1, X2, Y1, Y2 sur des graduations, saisir leurs valeurs : « Étalonnage prêt » ;
+      la lecture sous le curseur donne des valeurs justes ailleurs sur le graphique.
+- [ ] Graphique log-log (courbe maîtresse) : cocher « log » sur les deux axes, relever une
+      courbe, la comparer aux valeurs de l'article.
+- [ ] Relevé automatique d'une courbe qui en croise une autre : la courbe suivie ne saute pas
+      sur l'autre ; corriger un point faux en le glissant, en supprimer un (Suppr).
+- [ ] Nuage de points (symboles) : un point par symbole ; ajouter un point oublié à la main.
+- [ ] « Copier pour Excel » puis coller dans Excel : colonnes x, y par série, virgule décimale.
+- [ ] « → Figures » : le graphe arrive dans Figures, modifiable dans Graphes.
+- [ ] Carte de pression (exemple « pneu », puis une vraie carte) : légende, zone, « Lire la
+      carte » ≈ 100 % ; la valeur sous le curseur correspond à la légende.
+- [ ] Coupe : graphe cohérent avec l'image ; CSV et → Figures.
+- [ ] Maillage rectangulaire → « Matrice CSV… » ouverte dans ChaussSpec comme carte (import CSV).
+- [ ] Maillage en disques → « → ChaussSpec » : le chargement du cas ouvert est remplacé par
+      les charges circulaires, charge totale égale à celle annoncée ; calcul lancé.
+- [ ] « Enregistrer » : `numeriseur/<nom>.json` et l'image dans l'espace ; rouvrir le projet
+      sur l'autre PC, tout est à sa place.
+
