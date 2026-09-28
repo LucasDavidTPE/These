@@ -29,7 +29,8 @@ describe.skipIf(!python)("outil Python : une exécution laisse sa trace", () => 
     expect(x.statut).toBe("ok");
     expect(x.fichiers.map((f) => f.nom)).toEqual(["resultat.txt"]);
     expect(x.fichiers[0]!.octets).toBeGreaterThan(0);
-    expect(x.entrees).toEqual([{ reference: "recherche:Sergio CM test Bio B2C4 brutes/Essai1", chemin: "/donnees/Sergio CM test Bio B2C4 brutes/Essai1" }]);
+    // Le chemin est écrit par Python dans la forme du système (« \donnees\… » sous Windows).
+    expect(x.entrees.map((e) => ({ ...e, chemin: e.chemin.replace(/\\/g, "/") }))).toEqual([{ reference: "recherche:Sergio CM test Bio B2C4 brutes/Essai1", chemin: "/donnees/Sergio CM test Bio B2C4 brutes/Essai1" }]);
 
     writeFileSync(join(d, "casse.py"), "from these_etude import Etude\nimport time\nEtude(__file__)\ntime.sleep(1.1)\nraise ValueError('palier introuvable')\n");
     spawnSync(python!, ["casse.py"], { cwd: d, env: { ...process.env, APPDATA: appdata } });
