@@ -658,3 +658,58 @@ table.tableau th {
   border-color: var(--bordure);
   font-weight: 600;
 }
+
+/* Figures d'une campagne ou d'une étude. */
+.figures-liees-grille {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.figures-liees-grille li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.figures-liees-grille li > button:first-child {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 6px;
+  text-align: left;
+}
+
+.figures-liees-grille img {
+  width: 100%;
+  height: 110px;
+  object-fit: contain;
+  background: #ffffff;
+  border-radius: 4px;
+}
+
+.figures-liees-titre {
+  font-size: 12.5px;
+}
+
+.figures-liees-choix ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.figures-liees-choix li {
+  padding: 2px 0;
+}
+
+.erreur-texte {
+  color: var(--erreur);
+}
+
+.petit {
+  font-size: 12px;
+}

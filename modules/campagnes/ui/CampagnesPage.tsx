@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { resoudre, referenceDepuisChemin } from "@noyau/poste/racines";
 import { Message, Page, Pastille, Section } from "@interface/composants";
 import { Apercu, Courbes } from "@interface/Courbes";
+import { FiguresLiees } from "@interface/FiguresLiees";
 import { VUE_ENTIERE, type Vue } from "@noyau/courbes";
 import { lireCsv, tableauEssai, versCsvExcel, type Serie } from "@noyau/formats/wavematrix";
 import { ecrireXlsx } from "@noyau/formats/xlsx-ecriture";
@@ -430,6 +431,12 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
           }
         >
           {courbes.panneaux ? <Courbes key={courbes.essai} panneaux={courbes.panneaux} xLibelle="temps (h)" onVue={setVue} regressionsInitiales={c.essais[courbes.essai]?.regressions} /> : <p className="discret">Lecture de l'export…</p>}
+        </Section>
+      ) : null}
+
+      {ctx.registre.aAction("figures.liste") ? (
+        <Section titre="Figures">
+          <FiguresLiees cible={{ type: "campagne", id: c.slug, titre: k.titre }} />
         </Section>
       ) : null}
 

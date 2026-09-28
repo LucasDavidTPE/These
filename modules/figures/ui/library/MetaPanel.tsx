@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useContexte } from "@interface/contexte";
 import { actionRegeneration, origineDe, type Rendu } from "../../core/action";
+import { ciblesDeOrigine, rattachementsDe } from "../../core/rattachement";
 import {
   LICENSE_SUGGESTIONS,
   SOURCE_TYPES,
@@ -152,6 +153,14 @@ function MetaView({ meta, onEdit }: { meta: FigureMeta; onEdit?: () => void }) {
       <dl>
         <dt>Type</dt>
         <dd>{KIND_LABELS[meta.kind]}</dd>
+        {ciblesDeOrigine(meta).length + rattachementsDe(meta).length ? (
+          <>
+            <dt>Rattachée à</dt>
+            <dd>
+              {[...ciblesDeOrigine(meta).map((c) => `campagne ${c.id} (origine)`), ...rattachementsDe(meta).map((c) => `${c.type === "campagne" ? "campagne" : "étude"} ${c.titre ?? c.id}`)].join(" · ")}
+            </dd>
+          </>
+        ) : null}
         <dt>Tags</dt>
         <dd>{meta.tags.length ? meta.tags.join(", ") : "—"}</dd>
         <dt>Source</dt>

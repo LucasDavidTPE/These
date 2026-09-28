@@ -4,6 +4,8 @@ import type { Manifeste } from "@interface/manifeste";
 import { isoAvecDecalage } from "@noyau/dates";
 import { enregistrerImage, type DemandeImage } from "./core/action";
 import { figuresRecentes } from "./core/recentes";
+import { detacher, figuresDe, rattacher, type Cible } from "./core/rattachement";
+import { scanLibrary } from "./core/library";
 import { useNavigation } from "./ui/navigation";
 import { FiguresPage } from "./ui/FiguresPage";
 
@@ -34,6 +36,39 @@ const figures: Manifeste = {
           type: f.vignette?.endsWith(".svg") ? "image/svg+xml" : "image/png",
         })),
       );
+    },
+    /** Les figures d'une campagne ou d'une étude (origine ou rattachement), avec leur vignette ; charge : { ctx, cible }. */
+    "figures.liste": async (charge) => {
+      const { ctx, cible } = charge as { ctx: Contexte; cible: Cible };
+      const racine = ctx.reglages.figures;
+      if (!racine) return [];
+      const fs = ctx.plateforme.fichiers(racine);
+      return Promise.all(
+        (await figuresDe(fs, cible)).map(async (f) => ({
+          ...f,
+          image: f.vignette ? await fs.readBytes(`${f.dossier}/${f.vignette}`).catch(() => null) : null,
+          type: f.vignette?.endsWith(".svg") ? "image/svg+xml" : "image/png",
+        })),
+      );
+    },
+    /** Toutes les figures (identifiant, titre, dossier), pour en choisir une à rattacher. */
+    "figures.catalogue": async (charge) => {
+      const ctx = charge as Contexte;
+      const racine = ctx.reglages.figures;
+      if (!racine) return [];
+      const { figures } = await scanLibrary(ctx.plateforme.fichiers(racine));
+      return figures.flatMap((f) => (f.meta ? [{ dossier: f.folder, id: f.id, titre: f.meta.title }] : []));
+    },
+    /** Rattache (ou détache) une figure à une campagne ou une étude ; charge : { ctx, dossier, cible }. */
+    "figures.rattacher": async (charge) => {
+      const { ctx, dossier, cible } = charge as { ctx: Contexte; dossier: string; cible: Cible };
+      if (!ctx.reglages.figures) throw new Error("Choisissez d'abord le dossier de la bibliothèque de figures (Réglages du poste).");
+      await rattacher(ctx.plateforme.fichiers(ctx.reglages.figures), dossier, cible, isoAvecDecalage(new Date(), -new Date().getTimezoneOffset()), ctx.poste);
+    },
+    "figures.detacher": async (charge) => {
+      const { ctx, dossier, cible } = charge as { ctx: Contexte; dossier: string; cible: Cible };
+      if (!ctx.reglages.figures) return;
+      await detacher(ctx.plateforme.fichiers(ctx.reglages.figures), dossier, cible, isoAvecDecalage(new Date(), -new Date().getTimezoneOffset()), ctx.poste);
     },
     /** Ouvre une figure dans la bibliothèque ; charge : { ctx, dossier }. */
     "figures.ouvrir": async (charge) => {

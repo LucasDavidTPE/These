@@ -284,3 +284,12 @@ nombres doivent être identiques, dans les deux modes.
       « Rouvrir » : même tri des cycles, mêmes calages, ouverture sur l'étape Calage.
 - [ ] Fichier hors de toute racine : rouvrable sur ce PC seulement (chemin absolu) ; message
       clair sur l'autre PC. « Retirer » range l'entrée dans `traitement/.supprimes/`.
+
+## Figures d'une campagne ou d'une étude (0.2.7)
+
+- [ ] Page de campagne → section « Figures » : les courbes d'essais et les graphiques du
+      traitement 2S2P1D enregistrés depuis cette campagne y sont (« issue de la campagne ») ;
+      un clic ouvre la figure dans Figures.
+- [ ] « Rattacher une figure… » → rechercher → la figure (ex. une photo, un schéma) apparaît,
+      « détacher » la retire ; même chose sur la page d'une étude.
+- [ ] Dans Figures, la fiche indique « Rattachée à : … » ; sur l'autre PC, mêmes rattachements.
