@@ -18,7 +18,6 @@ const TEINTES: Record<string, number> = {
   campagnes: 28,
   etudes: 212,
   manuscrits: 350,
-  viscocompare: 192,
   chausspec: 12,
   numeriseur: 52,
   bibliotheque: 128,

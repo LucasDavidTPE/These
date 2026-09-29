@@ -95,6 +95,13 @@ racine (identité, page, état pour l'Accueil, problèmes, actions).
   (« ouvrir l'essai X dans le traitement », « enregistrer ce graphe dans Figures »). Si
   le module cible n'est pas compilé dans l'installeur, l'action n'apparaît pas.
 
+### 3.0 bis Menu en sections (1.7.0)
+La barre des modules est rangée en sections dépliables (`noyau/menu.ts`) : Accueil, Calendrier
+(Planning), Bibliographie (Bibliothèque), Essais (Campagnes, Traitement 2S2P1D, Études), Outils
+(Figures, ChaussSpec, Numériseur), Rédaction (Manuscrits). Une section d'un seul module est un
+lien direct ; la section de la page ouverte reste dépliée ; les sections repliées sont gardées
+sur le poste (préférence d'affichage, pas une donnée).
+
 ### 3.0 Recherche globale (Ctrl+K)
 Ctrl+K (ou le champ « Rechercher » de la barre) ouvre une palette qui cherche dans tout
 l'espace, sans accents ni casse, tous les mots dans n'importe quel ordre, le titre comptant
@@ -378,6 +385,14 @@ modèles de base sont fournis, on en crée d'autres depuis l'application. L'expo
 PowerPoint, titres reconnus comme titres, figures en images. Les équations `$$…$$` sont posées
 en texte (LaTeX brut) ; les notes d'orateur ne sont pas gérées.
 
+### Aperçu des PDF (1.7.0)
+La fiche d'une référence qui a un PDF montre sa première page, rendue sur place par pdf.js
+(version « legacy », qui embarque les compléments JavaScript récents absents de certains
+WebView2 ; chargé seulement à la demande, sans réseau). L'image est gardée dans l'espace
+(`bibliotheque/apercus/<id>.png`, avec `<id>.json` : nom du PDF et empreinte = taille + FNV-1a des
+64 premiers et derniers ko) : elle s'affiche tout de suite sur les deux PC et n'est refaite que si
+le PDF change. Clic : ouvre le PDF ; « actualiser » la refait.
+
 ### Citations de la Bibliothèque (1.6.0)
 Dans le texte d'une présentation, `[@BIB-020]` (identifiant ou clé BibTeX ; plusieurs clés séparées
 par « ; », précision après une virgule : `[@BIB-065, p. 12]`) devient « (Olard & Di Benedetto,
@@ -524,7 +539,11 @@ Gantt** (on les modifie à leur source, un clic y mène) :
 - Export **PNG / SVG** et **pgfgantt** (TikZ) pour un comité de suivi ou le manuscrit,
   via Figures.
 
-## 11. Module ViscoCompare
+## 11. Module ViscoCompare (retiré en 1.7.0)
+
+**Retiré de l'application en 1.7.0**, à la demande de l'utilisateur (jugé inutile). Le code reste
+dans l'historique git ; les fichiers déjà produits dans l'espace (`viscocompare/`) ne sont pas
+touchés. Ce qui suit décrit le module tel qu'il était.
 
 Remplace le script `main.py` de `LucasDavidTPE/ViscoCompare` (Python, pandas, xlsxwriter).
 La racine de poste `viscocompare` désigne un dossier organisé comme celui du script

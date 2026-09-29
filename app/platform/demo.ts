@@ -16,6 +16,28 @@ const BIBLIO = `${ONEDRIVE}\\Thèse\\BIBLIO`;
 const RECHERCHE = "C:\\Users\\DAVID\\Desktop\\Recherche";
 
 /** Essai de démonstration au format WaveMatrix : paliers de température, force cyclique. */
+/** Un petit PDF d'une page (titre, auteurs, un peu de texte), pour l'aperçu de la Bibliothèque. */
+function pdfDemo(titre: string, auteurs: string): string {
+  const lignes = [`BT /F1 22 Tf 60 740 Td (${titre}) Tj ET`, `BT /F1 13 Tf 60 712 Td (${auteurs}) Tj ET`, ...Array.from({ length: 30 }, (_, i) => `BT /F1 10 Tf 60 ${660 - i * 16} Td (Lorem ipsum dolor sit amet, consectetur adipiscing elit, ligne ${i + 1}.) Tj ET`)];
+  const flux = lignes.join("\n");
+  const objets = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+    `<< /Length ${flux.length} >>\nstream\n${flux}\nendstream`,
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+  ];
+  let pdf = "%PDF-1.4\n";
+  const pos: number[] = [];
+  objets.forEach((o, i) => {
+    pos.push(pdf.length);
+    pdf += `${i + 1} 0 obj\n${o}\nendobj\n`;
+  });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objets.length + 1}\n0000000000 65535 f \n${pos.map((p) => `${String(p).padStart(10, "0")} 00000 n \n`).join("")}`;
+  return pdf + `trailer\n<< /Size ${objets.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+}
+
 function essaiDemo(): Record<string, string> {
   const l = ['"Nombre total de cycles";"Temps total (s)";"Force(8800 (0,1):Charge) (kN)";"Personnalisée(103 (0,3):Lion171144) (µm)";"Personnalisée(103 (0,5):Défini par utilisateur) (°C)";'];
   for (let i = 0; i < 6000; i++) {
@@ -108,6 +130,8 @@ export function plateformeDemo(scenario: string | null): Plateforme {
     ref(1, "Viscoelastic response of asphalt pavements under moving loads", "Lee, S.; Kim, J.", 2019);
     ref(2, "Spectral method for layered media", "David, L.", 2024);
     ref(20, "General 2S2P1D model and relation between the linear viscoelastic behaviours of bituminous binders and mixes", "Olard, F.; Di Benedetto, H.", 2003);
+    espace.poser("bibliotheque/references/BIB-020.json", JSON.stringify({ titre: "General 2S2P1D model and relation between the linear viscoelastic behaviours of bituminous binders and mixes", auteurs: "Olard, F.; Di Benedetto, H.", annee: 2003, cle: "ref20", fichierPdf: "BIB-020_Olard-DiBenedetto_2003_General-2S2P1D-model.pdf" }));
+    dossier(`${ESPACE}\\bibliotheque\\pdf`).poser("BIB-020_Olard-DiBenedetto_2003_General-2S2P1D-model.pdf", pdfDemo("General 2S2P1D model", "F. Olard, H. Di Benedetto (2003)"));
     ref(65, "The general theory of stresses and displacements in layered systems", "Burmister, D. M.", 1945);
     espace.poser("planning/PH-0001.json", JSON.stringify({ titre: "Rédiger le chapitre ChaussSpec", categorie: "", debut: "2026-10-05", fin: "2026-10-30" }));
     espace.poser(

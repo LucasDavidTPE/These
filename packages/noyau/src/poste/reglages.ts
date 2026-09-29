@@ -72,5 +72,4 @@ export const RACINES_CONNUES: readonly { nom: string; description: string; exemp
   { nom: "recherche", description: "Dossier de recherche du Bureau (données d'essai triées)", exemple: "C:\\Users\\DAVID\\Desktop\\Recherche" },
   { nom: "manuscrits", description: "Manuscrits Word (.docx) dont on garde des versions", exemple: "C:\\Users\\DAVID\\OneDrive - entpe.fr\\Thèse\\Rédaction" },
   { nom: "latex", description: "Sources LaTeX (figures TikZ, chapitres) à indexer", exemple: "C:\\Users\\DAVID\\OneDrive - entpe.fr\\Thèse\\Rédaction" },
-  { nom: "viscocompare", description: "Comparaisons COMSOL / Viscoroute (dossiers COMSOL et VISCOROUTE)", exemple: "C:\\Users\\DAVID\\Desktop\\Recherche\\ViscoCompare" },
 ];

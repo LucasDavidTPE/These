@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useContexte } from "@interface/contexte";
 import type { Reference } from "../core/modele";
 import { dansRacine, nomPdf } from "../core/pdf";
+import { ApercuPdf } from "./ApercuPdf";
 
 export function BlocPdf({ id, r, maj }: { id: string; r: Reference; maj(p: Partial<Reference>): void }) {
   const ctx = useContexte();
@@ -64,6 +65,7 @@ export function BlocPdf({ id, r, maj }: { id: string; r: Reference; maj(p: Parti
   const aRenommer = r.fichierPdf && r.fichierPdf !== cible;
   return (
     <div className={`bloc-pdf${r.fichierPdf ? "" : " bloc-pdf-manquant"}`}>
+      <ApercuPdf id={id} fichierPdf={r.fichierPdf} />
       <div className="rangee">
         <strong>PDF</strong>
         {r.fichierPdf ? <span className="discret">{r.fichierPdf}</span> : <span>Pas encore de PDF : pointez-le, il sera renommé et rangé avec les autres.</span>}

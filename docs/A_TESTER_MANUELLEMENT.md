@@ -588,3 +588,13 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] ChaussSpec → « Comment ça marche ? » : lignes « Sources : » sous les rubriques ; clic → la fiche.
 - [ ] Bibliothèque : décocher « Citations [@…] dans l'application » → plus de « Sources », et `[@…]`
       reste tel qu'écrit dans les présentations ; l'autre PC voit le même réglage.
+
+## Aperçu des PDF, menu en sections, ViscoCompare retiré (1.7.0)
+
+- [ ] Fiche d'une référence avec PDF : la première page apparaît à droite du bloc PDF (quelques
+      secondes la première fois), puis instantanément ; clic → le PDF s'ouvre dans ton lecteur.
+- [ ] Un vrai article (PDF d'éditeur, scanné, protégé) : l'aperçu est correct ; sinon le message dit pourquoi.
+- [ ] Remplacer le PDF d'une référence : l'aperçu se refait ; `bibliotheque/apercus/` sur l'autre PC.
+- [ ] Barre de gauche : sections Essais et Outils dépliables, la section de la page ouverte reste
+      dépliée, le repli est gardé au relancement.
+- [ ] ViscoCompare n'apparaît plus (menu, Accueil, Ctrl+K, Réglages → racines suggérées).
