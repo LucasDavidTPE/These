@@ -1,0 +1,29 @@
+{
+  "_commentaire": "Train A340 (4 roues de 370 kN) sur la structure PEP, BB-GB en 2S2P1D (TFE, Tab. 6), charge roulante à 0,66 m/s. x = longitudinal, y = transversal, z vers le bas. Unités SI (MPa pour les modules).",
+  "structure": {
+    "bottom": "rigid_smooth",
+    "layers": [
+      {"name": "BB+GB", "h": 0.32, "material": {"type": "2S2P1D", "E00": 65, "E0": 30000, "k": 0.25, "h": 0.787, "delta": 1.58, "tau_ref": 1.22, "beta": "inf", "T_ref": 9.3, "nu": 0.35}},
+      {"name": "GRH", "h": 0.60, "material": {"type": "elastic", "E": 150, "nu": 0.35}},
+      {"name": "Subgrade 1", "h": 1.00, "material": {"type": "elastic", "E": 75, "nu": 0.35}},
+      {"name": "Subgrade 2", "h": 1.00, "material": {"type": "elastic", "E": 150, "nu": 0.35}},
+      {"name": "Substratum", "h": 2.00, "material": {"type": "elastic", "E": 30000, "nu": 0.35}}
+    ]
+  },
+  "loading": {
+    "wheels": [
+      {"x0": 0.0,   "y0": -0.7, "footprint": {"type": "rect", "lx": 0.56, "ly": 0.40, "force": 370000}},
+      {"x0": 0.0,   "y0":  0.7, "footprint": {"type": "rect", "lx": 0.56, "ly": 0.40, "force": 370000}},
+      {"x0": -1.98, "y0": -0.7, "footprint": {"type": "rect", "lx": 0.56, "ly": 0.40, "force": 370000}},
+      {"x0": -1.98, "y0":  0.7, "footprint": {"type": "rect", "lx": 0.56, "ly": 0.40, "force": 370000}}
+    ]
+  },
+  "regime": {"type": "moving", "speed": 0.66},
+  "grid": {"L": [32, 32], "N": [512, 1024], "window": [-5, 3, -2, 2]},
+  "outputs": {
+    "dir": "resultats_tfe_rect",
+    "depths": [0.0, 0.32],
+    "components": ["uz", "exx", "eyy", "ezz", "exy", "exz", "eyz"],
+    "gauges": [{"comp": "eyy", "z": 0.32, "x": 0.0, "y": 0.7}]
+  }
+}

@@ -1,0 +1,74 @@
+{
+ "gauss_MPD1.0|A_centre_roue": {
+  "ezz@2mm": {
+   "max_pression": 390.32090609691716,
+   "max_reponses": 390.32090609831397
+  },
+  "exz@2mm": {
+   "max_pression": 175.2217136145843,
+   "max_reponses": 175.2217136151875
+  },
+  "ezz@5mm": {
+   "max_pression": 227.49770122126614,
+   "max_reponses": 227.49770122206317
+  },
+  "exz@5mm": {
+   "max_pression": 105.52314913631871,
+   "max_reponses": 105.52314913668536
+  }
+ },
+ "gauss_MPD1.0|B_epaulement": {
+  "ezz@2mm": {
+   "max_pression": 409.4637801481876,
+   "max_reponses": 409.463780149652
+  },
+  "exz@2mm": {
+   "max_pression": 225.35562173200012,
+   "max_reponses": 225.35562173277984
+  },
+  "ezz@5mm": {
+   "max_pression": 236.8544585476544,
+   "max_reponses": 236.85445854843695
+  },
+  "exz@5mm": {
+   "max_pression": 126.85459049024246,
+   "max_reponses": 126.85459049067634
+  }
+ },
+ "rainures_vives|A_centre_roue": {
+  "ezz@2mm": {
+   "max_pression": 167.4577513340581,
+   "max_reponses": 167.457751334716
+  },
+  "exz@2mm": {
+   "max_pression": 131.28115357169273,
+   "max_reponses": 131.2811535721936
+  },
+  "ezz@5mm": {
+   "max_pression": 100.94897647048924,
+   "max_reponses": 100.94897647088332
+  },
+  "exz@5mm": {
+   "max_pression": 61.603675995628386,
+   "max_reponses": 61.60367599586728
+  }
+ },
+ "rainures_vives|B_epaulement": {
+  "ezz@2mm": {
+   "max_pression": 267.1582816354352,
+   "max_reponses": 267.1582816364537
+  },
+  "exz@2mm": {
+   "max_pression": 210.31646759859652,
+   "max_reponses": 210.31646759939528
+  },
+  "ezz@5mm": {
+   "max_pression": 161.9088719369038,
+   "max_reponses": 161.90887193753485
+  },
+  "exz@5mm": {
+   "max_pression": 99.57496845678371,
+   "max_reponses": 99.57496845717715
+  }
+ }
+}

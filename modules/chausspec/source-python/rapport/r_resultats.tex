@@ -1,0 +1,208 @@
+Toutes les valeurs concernent la roue arrière droite du bogie, où se trouvent les maxima du TFE,
+avec le KVG du TFE à \SI{0.66}{m/s} et \SI{9.3}{\celsius}. Le cas « lisse » est le TFE recalculé
+par \cs : il coïncide avec la validation V5 de la notice.
+
+\subsection{Contact}
+\input{r_tab_surfaces_ref.tex}
+\begin{figure}[H]\centering\includegraphics[width=0.7\linewidth]{figures/r_aire.pdf}
+\caption{Aire de contact en fonction de la pression nominale locale. Sous le pneu, celle-ci varie
+de 0 à \SI{3.4}{MPa} (empreinte hétérogène) : la surface en contact change donc fortement d'un
+point à l'autre de l'empreinte.}\end{figure}
+Sous la pression nominale du TFE, le pneu ne touche que 30 à 85\,\% de la surface selon la
+texture et la raideur du caoutchouc. La pression locale y atteint 5 à \SI{15}{MPa}, soit 3 à 9
+fois la pression nominale. Sur piste rainurée, le contact couvre les plats (83\,\%) avec une
+surpression d'arête.
+
+\subsection{Empreinte hétérogène (cas de référence)}
+\begin{table}[H]\centering\footnotesize
+\caption{Empreinte hétérogène : déformation principale majeure $\epsilon_1$ maximale (µdef), et entre parenthèses le facteur par rapport au lisse. TFE en surface : 202 µdef (COMSOL), 181 µdef (\cs).}\label{tab:het_e1}
+\begin{tabular}{lrrrrrr}
+\toprule
+Surface \textbackslash{} profondeur & 1 mm & 2 mm & 5 mm & 10 mm & 20 mm & 40 mm\\
+\midrule
+\textbf{lisse (TFE)} & \textbf{182} & \textbf{184} & \textbf{186} & \textbf{188} & \textbf{185} & \textbf{170}\\ \midrule
+rainures FAA, arêtes vives & 317 (1,74) & 305 (1,66) & 234 (1,26) & 197 (1,05) & 185 (1,00) & 169 (1,00)\\
+rainures FAA, arêtes $r$ = 1 mm & 315 (1,73) & 306 (1,67) & 243 (1,31) & 203 (1,08) & 186 (1,00) & 169 (1,00)\\
+aléatoire, MPD 0,6 mm & 298 (1,64) & 281 (1,53) & 262 (1,41) & 219 (1,17) & 187 (1,01) & 170 (1,00)\\
+aléatoire, MPD 1,0 mm & 321 (1,76) & 301 (1,64) & 268 (1,44) & 226 (1,21) & 187 (1,01) & 169 (1,00)\\
+aléatoire, MPD 1,5 mm & 358 (1,97) & 327 (1,78) & 271 (1,46) & 231 (1,23) & 187 (1,01) & 169 (1,00)\\
+négative, MPD 1,0 mm & 328 (1,80) & 311 (1,70) & 269 (1,45) & 218 (1,16) & 188 (1,01) & 170 (1,00)\\
+positive, MPD 1,0 mm & 342 (1,88) & 285 (1,55) & 265 (1,43) & 225 (1,20) & 188 (1,01) & 170 (1,00)\\
+MPD 1,0 ; $E_r$ = 5 MPa & 293 (1,61) & 274 (1,49) & 259 (1,39) & 215 (1,15) & 187 (1,01) & 170 (1,00)\\
+MPD 1,0 ; $E_r$ = 20 MPa & 395 (2,17) & 342 (1,86) & 272 (1,46) & 236 (1,26) & 188 (1,02) & 170 (1,00)\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering\footnotesize
+\caption{Empreinte hétérogène : centile 99,9\,\% de $\epsilon_1$ (µdef), indicateur robuste (dépassé sur environ \SI{4}{cm^2}).}\label{tab:het_e1p}
+\begin{tabular}{lrrrrrr}
+\toprule
+Surface \textbackslash{} profondeur & 1 mm & 2 mm & 5 mm & 10 mm & 20 mm & 40 mm\\
+\midrule
+\textbf{lisse (TFE)} & \textbf{182} & \textbf{183} & \textbf{185} & \textbf{187} & \textbf{184} & \textbf{169}\\ \midrule
+rainures FAA, arêtes vives & 301 (1,66) & 294 (1,60) & 226 (1,22) & 190 (1,02) & 184 (1,00) & 169 (1,00)\\
+rainures FAA, arêtes $r$ = 1 mm & 299 (1,64) & 297 (1,62) & 236 (1,27) & 195 (1,04) & 184 (1,00) & 169 (1,00)\\
+aléatoire, MPD 0,6 mm & 272 (1,50) & 263 (1,44) & 242 (1,31) & 203 (1,08) & 185 (1,00) & 169 (1,00)\\
+aléatoire, MPD 1,0 mm & 291 (1,60) & 281 (1,53) & 253 (1,37) & 211 (1,13) & 185 (1,01) & 169 (1,00)\\
+aléatoire, MPD 1,5 mm & 308 (1,69) & 294 (1,60) & 260 (1,40) & 218 (1,17) & 186 (1,01) & 169 (1,00)\\
+négative, MPD 1,0 mm & 298 (1,64) & 288 (1,58) & 257 (1,39) & 209 (1,12) & 186 (1,01) & 170 (1,00)\\
+positive, MPD 1,0 mm & 279 (1,53) & 262 (1,43) & 247 (1,33) & 209 (1,12) & 186 (1,01) & 169 (1,00)\\
+MPD 1,0 ; $E_r$ = 5 MPa & 265 (1,46) & 258 (1,41) & 237 (1,28) & 200 (1,07) & 185 (1,00) & 169 (1,00)\\
+MPD 1,0 ; $E_r$ = 20 MPa & 328 (1,80) & 304 (1,66) & 264 (1,43) & 223 (1,19) & 186 (1,01) & 169 (1,00)\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering\footnotesize
+\caption{Empreinte hétérogène : $|\epsilon_{xz}|$ maximal (µdef), cisaillement longitudinal. Facteur donné seulement si la valeur lisse dépasse 50 µdef.}\label{tab:het_exz}
+\begin{tabular}{lrrrrrr}
+\toprule
+Surface \textbackslash{} profondeur & 1 mm & 2 mm & 5 mm & 10 mm & 20 mm & 40 mm\\
+\midrule
+\textbf{lisse (TFE)} & \textbf{8} & \textbf{13} & \textbf{22} & \textbf{32} & \textbf{46} & \textbf{65}\\ \midrule
+rainures FAA, arêtes vives & 300 & 221 & 105 & 61 & 51 & 66 (1,01)\\
+rainures FAA, arêtes $r$ = 1 mm & 300 & 234 & 127 & 71 & 55 & 66 (1,01)\\
+aléatoire, MPD 0,6 mm & 204 & 164 & 100 & 56 & 48 & 66 (1,01)\\
+aléatoire, MPD 1,0 mm & 306 & 252 & 149 & 75 & 50 & 66 (1,01)\\
+aléatoire, MPD 1,5 mm & 435 & 349 & 200 & 96 & 57 & 66 (1,02)\\
+négative, MPD 1,0 mm & 292 & 241 & 145 & 90 & 56 & 64 (0,99)\\
+positive, MPD 1,0 mm & 534 & 338 & 164 & 79 & 51 & 66 (1,01)\\
+MPD 1,0 ; $E_r$ = 5 MPa & 172 & 140 & 87 & 51 & 48 & 66 (1,01)\\
+MPD 1,0 ; $E_r$ = 20 MPa & 574 & 440 & 244 & 113 & 64 & 66 (1,02)\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering\footnotesize
+\caption{Empreinte hétérogène : $|\epsilon_{yz}|$ maximal (µdef), c'est-à-dire l'$\epsilon_{xz}$ du TFE (cisaillement transversal). Maximum du TFE en profondeur : 164 µdef vers \SI{100}{mm} (\cs), inchangé par la texture.}\label{tab:het_eyz}
+\begin{tabular}{lrrrrrr}
+\toprule
+Surface \textbackslash{} profondeur & 1 mm & 2 mm & 5 mm & 10 mm & 20 mm & 40 mm\\
+\midrule
+\textbf{lisse (TFE)} & \textbf{12} & \textbf{23} & \textbf{51} & \textbf{86} & \textbf{125} & \textbf{153}\\ \midrule
+rainures FAA, arêtes vives & 14 & 25 & 55 (1,08) & 90 (1,05) & 126 (1,01) & 153 (1,00)\\
+rainures FAA, arêtes $r$ = 1 mm & 15 & 26 & 57 (1,10) & 91 (1,06) & 127 (1,02) & 153 (1,00)\\
+aléatoire, MPD 0,6 mm & 200 & 179 & 120 (2,33) & 118 (1,37) & 130 (1,04) & 154 (1,00)\\
+aléatoire, MPD 1,0 mm & 303 & 275 & 159 (3,10) & 140 (1,64) & 136 (1,09) & 154 (1,01)\\
+aléatoire, MPD 1,5 mm & 439 & 376 & 218 (4,25) & 165 (1,92) & 144 (1,15) & 154 (1,01)\\
+négative, MPD 1,0 mm & 348 & 277 & 180 (3,51) & 129 (1,51) & 138 (1,10) & 154 (1,01)\\
+positive, MPD 1,0 mm & 544 & 351 & 178 (3,46) & 133 (1,55) & 134 (1,08) & 155 (1,01)\\
+MPD 1,0 ; $E_r$ = 5 MPa & 172 & 151 & 110 (2,14) & 112 (1,30) & 129 (1,03) & 154 (1,00)\\
+MPD 1,0 ; $E_r$ = 20 MPa & 584 & 470 & 276 (5,37) & 187 (2,18) & 150 (1,21) & 154 (1,01)\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]\centering\includegraphics[width=\linewidth]{figures/r_profils_het.pdf}
+\caption{Empreinte hétérogène : maxima des déformations en fonction de la profondeur (échelle
+logarithmique). Toutes les courbes rejoignent le cas lisse au-delà de 20 à \SI{40}{mm}.}\label{fig:profils}\end{figure}
+\begin{figure}[H]\centering\includegraphics[width=\linewidth]{figures/r_cartes.pdf}
+\caption{$\epsilon_1$ à \SI{2}{mm} de profondeur sous la roue arrière droite (empreinte hétérogène).
+Lisse : la déformation suit les nervures de l'empreinte. Texturé : elle se fragmente à l'échelle
+des sommets de texture et ses pics augmentent.}\end{figure}
+\subsection{Variabilité d'une réalisation de texture à l'autre (T9)}\label{sec:tirages}
+Une texture aléatoire est une réalisation d'un processus. On répète le calcul complet sur
+5 tirages indépendants par MPD : même DSP et même MPD, phases différentes.
+\begin{table}[H]\centering\footnotesize
+\caption{Facteur d'amplification de $\epsilon_1$ max par rapport au lisse (empreinte hétérogène) : moyenne $\pm$ écart type sur les tirages.}\label{tab:tirages}
+\begin{tabular}{lcccccc}
+\toprule
+Texture & tirages & 1 mm & 2 mm & 5 mm & 10 mm & 20 mm\\
+\midrule
+MPD 0,6 mm & 5 & 1,62 $\pm$ 0,01 & 1,53 $\pm$ 0,02 & 1,38 $\pm$ 0,04 & 1,15 $\pm$ 0,04 & 1,02 $\pm$ 0,00\\
+MPD 1,0 mm & 5 & 1,77 $\pm$ 0,03 & 1,64 $\pm$ 0,03 & 1,43 $\pm$ 0,02 & 1,20 $\pm$ 0,03 & 1,02 $\pm$ 0,00\\
+MPD 1,5 mm & 5 & 1,97 $\pm$ 0,02 & 1,75 $\pm$ 0,04 & 1,46 $\pm$ 0,01 & 1,24 $\pm$ 0,03 & 1,02 $\pm$ 0,01\\
+\bottomrule
+\end{tabular}
+\end{table}
+\begin{figure}[H]\centering\includegraphics[width=0.66\linewidth]{figures/r_tirages.pdf}
+\caption{Amplification moyenne $\pm$ un écart type sur les tirages, en fonction de la profondeur.}\end{figure}
+\subsection{Empreintes uniformes}
+\begin{table}[H]\centering\footnotesize
+\caption{Empreinte rectangulaire : $\epsilon_1$ maximal (µdef) et facteur. TFE en surface : 195 µdef (COMSOL), 196 µdef (\cs).}\label{tab:rect_e1}
+\begin{tabular}{lrrrrrr}
+\toprule
+Surface \textbackslash{} profondeur & 1 mm & 2 mm & 5 mm & 10 mm & 20 mm & 40 mm\\
+\midrule
+\textbf{lisse (TFE)} & \textbf{215} & \textbf{215} & \textbf{211} & \textbf{203} & \textbf{188} & \textbf{165}\\ \midrule
+rainures FAA, arêtes vives & 278 (1,30) & 281 (1,31) & 212 (1,01) & 203 (1,00) & 188 (1,00) & 165 (1,00)\\
+rainures FAA, arêtes $r$ = 1 mm & 277 (1,29) & 281 (1,31) & 229 (1,09) & 203 (1,00) & 188 (1,00) & 165 (1,00)\\
+aléatoire, MPD 0,6 mm & 300 (1,40) & 284 (1,32) & 248 (1,18) & 204 (1,00) & 188 (1,00) & 165 (1,00)\\
+aléatoire, MPD 1,0 mm & 314 (1,46) & 293 (1,36) & 266 (1,26) & 204 (1,01) & 188 (1,00) & 165 (1,00)\\
+aléatoire, MPD 1,5 mm & 348 (1,62) & 304 (1,41) & 273 (1,30) & 205 (1,01) & 188 (1,00) & 165 (1,00)\\
+négative, MPD 1,0 mm & 310 (1,44) & 295 (1,37) & 273 (1,29) & 221 (1,09) & 189 (1,00) & 165 (1,00)\\
+positive, MPD 1,0 mm & 348 (1,62) & 293 (1,36) & 241 (1,15) & 204 (1,01) & 188 (1,00) & 165 (1,00)\\
+MPD 1,0 ; $E_r$ = 5 MPa & 292 (1,36) & 279 (1,30) & 237 (1,12) & 203 (1,00) & 188 (1,00) & 165 (1,00)\\
+MPD 1,0 ; $E_r$ = 20 MPa & 406 (1,89) & 316 (1,47) & 276 (1,31) & 215 (1,06) & 188 (1,00) & 165 (1,00)\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]\centering\footnotesize
+\caption{Empreinte circulaire : $\epsilon_1$ maximal (µdef) et facteur. TFE en surface : 182 µdef (COMSOL), 173 µdef (\cs).}\label{tab:circ_e1}
+\begin{tabular}{lrrrrrr}
+\toprule
+Surface \textbackslash{} profondeur & 1 mm & 2 mm & 5 mm & 10 mm & 20 mm & 40 mm\\
+\midrule
+\textbf{lisse (TFE)} & \textbf{185} & \textbf{186} & \textbf{183} & \textbf{178} & \textbf{168} & \textbf{150}\\ \midrule
+rainures FAA, arêtes vives & 277 (1,50) & 280 (1,50) & 213 (1,16) & 178 (1,00) & 168 (1,00) & 150 (1,00)\\
+rainures FAA, arêtes $r$ = 1 mm & 275 (1,49) & 280 (1,50) & 229 (1,25) & 179 (1,00) & 168 (1,00) & 150 (1,00)\\
+aléatoire, MPD 0,6 mm & 298 (1,62) & 282 (1,51) & 246 (1,35) & 178 (1,00) & 168 (1,00) & 150 (1,00)\\
+aléatoire, MPD 1,0 mm & 312 (1,69) & 291 (1,56) & 263 (1,44) & 187 (1,05) & 168 (1,00) & 149 (1,00)\\
+aléatoire, MPD 1,5 mm & 343 (1,86) & 301 (1,62) & 271 (1,48) & 201 (1,13) & 168 (1,00) & 149 (1,00)\\
+négative, MPD 1,0 mm & 308 (1,67) & 293 (1,58) & 272 (1,49) & 220 (1,24) & 168 (1,00) & 150 (1,00)\\
+positive, MPD 1,0 mm & 343 (1,86) & 291 (1,56) & 240 (1,31) & 178 (1,00) & 168 (1,00) & 149 (1,00)\\
+MPD 1,0 ; $E_r$ = 5 MPa & 291 (1,58) & 277 (1,49) & 236 (1,29) & 178 (1,00) & 168 (1,00) & 150 (1,00)\\
+MPD 1,0 ; $E_r$ = 20 MPa & 400 (2,16) & 312 (1,68) & 274 (1,50) & 214 (1,20) & 168 (1,00) & 149 (1,00)\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Synthèse et comparaison avec le TFE}
+\begin{table}[H]\centering\footnotesize
+\caption{Grandeurs clés (µdef). Valeurs du TFE (COMSOL, surface lisse) : $\epsilon_1$ en surface 202 / 195 / 182 et $\epsilon_T$ en base 337 / 331 / 318 µdef (hétérogène / rectangulaire / circulaire). La texture ne modifie pas $\epsilon_T$ en base (effet nul au-delà de \SI{40}{mm}).}\label{tab:synthese}
+\begin{tabular}{llrrrrr}
+\toprule
+Empreinte & Surface & $\epsilon_1$ max & $\epsilon_1$ p99,9 & $\epsilon_1$ max & $|\epsilon_{xz}|$ max & $|\epsilon_{yz}|$ max\\
+ & & 2 mm & 2 mm & 10 mm & 2 mm & 40 mm\\
+\midrule
+hétérogène & lisse (TFE) & 184 & 183 & 188 & 13 & 153\\
+ & rainures FAA, arêtes vives & 305 & 294 & 197 & 221 & 153\\
+ & aléatoire, MPD 1,0 mm & 301 & 281 & 226 & 252 & 154\\
+ & aléatoire, MPD 1,5 mm & 327 & 294 & 231 & 349 & 154\\
+\midrule
+rectangulaire & lisse (TFE) & 215 & 208 & 203 & 29 & 129\\
+ & rainures FAA, arêtes vives & 281 & 278 & 203 & 133 & 129\\
+ & aléatoire, MPD 1,0 mm & 293 & 280 & 204 & 252 & 130\\
+ & aléatoire, MPD 1,5 mm & 304 & 287 & 205 & 348 & 130\\
+\midrule
+circulaire & lisse (TFE) & 186 & 177 & 178 & 31 & 110\\
+ & rainures FAA, arêtes vives & 280 & 276 & 178 & 137 & 110\\
+ & aléatoire, MPD 1,0 mm & 291 & 278 & 187 & 250 & 110\\
+ & aléatoire, MPD 1,5 mm & 301 & 284 & 201 & 345 & 111\\
+\bottomrule
+\end{tabular}
+\end{table}
+\begin{figure}[H]\centering\includegraphics[width=0.85\linewidth]{figures/r_barres.pdf}
+\caption{$\epsilon_1$ maximal à \SI{2}{mm} de profondeur pour les trois empreintes du TFE et les principales surfaces.}\end{figure}
+\subsection{Écart avec le bilan du 24 septembre}
+\begin{table}[H]\centering\footnotesize
+\caption{$\epsilon_1$ max (µdef), empreinte hétérogène : formule multiplicative (bilan du 24/09) / méthode héréditaire (ce rapport).}
+\begin{tabular}{lcccc}
+\toprule
+Surface & 1 mm & 2 mm & 5 mm & 10 mm\\
+\midrule
+rainures FAA, arêtes vives & 317 / 317 & 305 / 305 & 234 / 234 & 197 / 197\\
+aléatoire, MPD 1,0 mm & 333 / 321 & 308 / 301 & 268 / 268 & 226 / 226\\
+aléatoire, MPD 1,5 mm & 371 / 358 & 326 / 327 & 270 / 271 & 231 / 231\\
+négative, MPD 1,0 mm & 330 / 328 & 311 / 311 & 268 / 269 & 217 / 218\\
+\bottomrule
+\end{tabular}
+\end{table}
+Les rainures, où $\delta p$ reste proportionnel à $p_0$, sont quasi inchangées. Pour les
+textures aléatoires, les maxima de $\epsilon_1$ ne changent que de quelques pour cent. Deux
+effets de la formule multiplicative se compensent en partie : elle sous-estime la perturbation
+sous les zones chargées (T5), et elle surestime la souplesse effective dans les zones peu
+chargées, où $C=Q/p_0$ est mal conditionné. Les conclusions du bilan restent valables ; les
+valeurs de ce rapport les remplacent.

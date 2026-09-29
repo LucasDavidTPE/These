@@ -1,0 +1,658 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\IfFileExists{lmodern.sty}{\usepackage{lmodern}}{\usepackage{mathptmx}}
+\usepackage[french]{babel}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage{graphicx,booktabs,array,multirow}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,patterns,decorations.pathreplacing,calc}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+\usepackage{siunitx}
+\sisetup{output-decimal-marker={,},group-separator={\,}}
+
+\definecolor{bleu}{HTML}{2a78d6}
+\definecolor{encre}{HTML}{222222}
+\definecolor{fond}{HTML}{f4f7fb}
+\lstset{basicstyle=\ttfamily\small,backgroundcolor=\color{fond},frame=single,rulecolor=\color{bleu!40},
+  columns=fullflexible,breaklines=true,keepspaces=true,showstringspaces=false,
+  literate={é}{{\'e}}1 {è}{{\`e}}1 {à}{{\`a}}1 {ê}{{\^e}}1 {ç}{{\c{c}}}1 {ô}{{\^o}}1 {É}{{\'E}}1 {â}{{\^a}}1 {î}{{\^i}}1 {ù}{{\`u}}1 {µ}{{$\mu$}}1 {«}{{\guillemotleft}}1 {»}{{\guillemotright}}1}
+\newtcolorbox{encadre}[1][]{colback=fond,colframe=bleu!60,boxrule=0.5pt,arc=2pt,left=6pt,right=6pt,top=4pt,bottom=4pt,#1}
+
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\ii}{\mathrm{i}}
+\newcommand{\hatt}[1]{\widehat{#1}}
+\newcommand{\cs}{\texttt{chausspec}}
+\renewcommand{\epsilon}{\varepsilon}
+
+\title{\textbf{\cs}\\[4pt]\large Calcul semi-analytique spectral des chaussées multicouches\\
+viscoélastiques sous empreintes hétérogènes et charges roulantes\\[8pt]
+\normalsize Notice théorique, validation et mode d'emploi --- code v0.4}
+\author{Lucas \textsc{David}\\ \small LTDS -- ENTPE, thèse en partenariat avec le STAC}
+\date{Septembre 2026}
+
+\begin{document}
+\sloppy
+\maketitle
+
+\begin{abstract}
+\cs{} calcule la réponse mécanique (déplacements, déformations, contraintes) d'une chaussée
+multicouche horizontalement infinie, à couches élastiques ou viscoélastiques linéaires, soumise à
+un chargement de surface de forme quelconque : empreintes uniformes, empreintes hétérogènes
+analytiques, cartes de pression mesurées, atterrisseurs multi-roues, efforts tangentiels. Trois
+régimes sont traités : statique, harmonique (HWD en fréquentiel) et charge roulante à vitesse
+constante en régime permanent. La méthode est semi-analytique : double transformée de Fourier dans
+le plan, solution exacte de l'équation de Navier dans chaque couche, assemblage par matrices de
+rigidité, retour numérique dans l'espace physique. La loi 2S2P1D est utilisée telle quelle, sans
+passer par un modèle rhéologique discret. Le code est validé contre des solutions analytiques
+(Love), un code multicouche indépendant (PyMastic), une intégrale d'hérédité et le modèle
+éléments finis COMSOL du TFE : un calcul COMSOL de \num{7.4} millions de degrés de liberté est
+reproduit en quelques dizaines de secondes sur un ordinateur portable.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%=====================================================================================================
+\section{Objet et positionnement}
+%=====================================================================================================
+\subsection{Pourquoi ce programme}
+Le TFE a montré, par un modèle éléments finis 3D (COMSOL), que la distribution de la pression de
+contact sous un pneumatique d'avion modifie peu la réponse en base de couche liée, mais fortement
+la réponse près de la surface. Le jury a posé deux questions de généralisation :
+\begin{enumerate}[nosep]
+  \item mener la même étude \emph{en domaine fréquentiel}, avec le 2S2P1D directement ;
+  \item construire une solution \emph{(semi-)analytique} par superposition de solutions élémentaires.
+\end{enumerate}
+\cs{} répond aux deux. Une empreinte quelconque est décomposée en ondes planes $e^{\ii(k_1x+k_2y)}$
+(transformée de Fourier) ; la réponse à chaque onde est calculée exactement ; la réponse totale est
+la superposition. Pour une charge roulante, chaque onde plane est vue par le matériau comme une
+sollicitation harmonique de pulsation $\omega=-k_1V$ : le 2S2P1D s'applique donc onde par onde, sans
+approximation par un modèle de Kelvin-Voigt généralisé.
+
+Ce programme sert en thèse à :
+\begin{itemize}[nosep]
+  \item vérifier rapidement des calculs éléments finis (quelques secondes à quelques minutes, contre des heures) ;
+  \item mener des études paramétriques massives : vitesse, température, empreinte, structure ;
+  \item accueillir directement les cartes de pression mesurées par le prototype du STAC
+        (format « carte de pixels », \S\ref{sec:empreintes}) ;
+  \item poser des problèmes inverses (rétrocalcul HWD, identification d'empreinte) grâce au coût réduit.
+\end{itemize}
+
+\subsection{Ce qui existe déjà, et ce qui est propre à ce travail}\label{sec:originalite}
+La méthode (transformée de Fourier 2D, multicouche viscoélastique, charge roulante en régime
+permanent) \textbf{n'est pas nouvelle}. Les travaux antérieurs sont nombreux et devront être cités :
+\begin{itemize}[nosep]
+  \item \textbf{Burmister} (1943--1945) : multicouche élastique, transformée de Hankel ; base
+        d'Alizé-LCPC, de KENLAYER, de PyMastic.
+  \item \textbf{ViscoRoute} (Duhamel et al., 2005 ; Chabot et al., 2010 ; Chupin et al., 2010) :
+        multicouche viscoélastique (loi de Huet-Sayegh) sous charges roulantes, double transformée de
+        Fourier dans le repère mobile, interfaces glissantes. Il a été conçu justement pour les
+        déformations transversales asymétriques mesurées sous avion (planche PEP). Les charges y
+        sont uniformes (rectangulaires ou elliptiques).
+  \item \textbf{3D-Move} (Siddharthan et al., depuis 1998, Université du Nevada) : méthode des couches
+        finies continues en Fourier, charges mobiles, contraintes de contact normales et
+        tangentielles non uniformes de forme quelconque (dont les cartes VRSPTA de De Beer).
+  \item Méthodes éléments finis 2,5D et couches finies de Fourier récentes, appliquées aux
+        empreintes non uniformes de poids lourds.
+\end{itemize}
+À noter : le jeu de paramètres 2S2P1D du TFE a $\beta=\infty$ (pas d'amortisseur linéaire). Le
+2S2P1D se réduit alors à la loi de Huet-Sayegh, celle de ViscoRoute.
+
+\begin{encadre}
+\textbf{Ce qu'on peut revendiquer honnêtement.} Il s'agit d'une implémentation propre et
+validée d'une méthode connue, orientée vers un usage précis. Les apports sont :
+(i) une chaîne ouverte et maîtrisée, qui accepte toute loi en module complexe (2S2P1D, KVG,
+Maxwell, tabulée) ; (ii) des spectres exacts pour les empreintes hétérogènes paramétriques et pour
+les cartes de pression en pixels, prévus pour les mesures du prototype STAC ; (iii) un traitement
+numérique des grandes longueurs d'onde par partition de l'unité (\S\ref{sec:partition}). Il supprime
+la périodisation et rend compte de la très longue mémoire des enrobés derrière une charge lente.
+À ma connaissance, cette partie n'est pas documentée sous cette forme ; c'est à vérifier dans la
+bibliographie. (iv) L'application aux gros porteurs et à la fissuration par le haut. L'originalité
+de la thèse se situera dans (ii) et (iv), et dans ce que l'outil permettra de faire (études
+paramétriques, problèmes inverses), pas dans la méthode elle-même.
+\end{encadre}
+
+\subsection{Hypothèses}
+\begin{itemize}[nosep]
+  \item Couches horizontales, infinies en plan, homogènes et isotropes ; petites perturbations.
+  \item Comportement linéaire : élastique, ou viscoélastique linéaire décrit par un module complexe
+        $E^*(\omega)$ et un coefficient de Poisson $\nu^*(\omega)$, éventuellement complexe.
+  \item Quasi-statique : \textbf{inertie négligée}, comme dans le modèle COMSOL du TFE. C'est
+        légitime tant que $V$ reste petit devant la célérité des ondes de cisaillement du sol
+        (une centaine de m/s). C'est acceptable au roulage lent et discutable au décollage (\S\ref{sec:limites}).
+  \item Température uniforme par couche. Un gradient thermique se traite en découpant l'enrobé en
+        sous-couches à températures différentes.
+  \item Interfaces collées ou parfaitement glissantes ; fond semi-infini ou substratum rigide
+        (collé ou glissant).
+  \item Charge roulante : vitesse constante, régime permanent. La charge est supposée rouler depuis
+        $t=-\infty$ ; c'est l'hypothèse de ViscoRoute.
+\end{itemize}
+
+%=====================================================================================================
+\section{Problème mécanique}
+%=====================================================================================================
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.0,>=Stealth]
+  \fill[blue!6] (0,0) rectangle (10,-0.8); \fill[orange!8] (0,-0.8) rectangle (10,-1.9);
+  \fill[green!6] (0,-1.9) rectangle (10,-3.0);
+  \fill[pattern=north east lines,pattern color=gray!60] (0,-3.0) rectangle (10,-3.3);
+  \draw (0,0)--(10,0); \draw (0,-0.8)--(10,-0.8); \draw (0,-1.9)--(10,-1.9); \draw[thick] (0,-3.0)--(10,-3.0);
+  \node[anchor=west] at (0.2,-0.4) {\small couche 1 : $h_1$, $E_1^*(\omega)$, $\nu_1$};
+  \node[anchor=west] at (0.2,-1.35) {\small couche 2 : $h_2$, $E_2$, $\nu_2$};
+  \node[anchor=west] at (0.2,-2.45) {\small couche $n$ (semi-infinie, ou reposant sur un substratum rigide)};
+  \node[anchor=west] at (10.05,-0.8) {\scriptsize interface collée ou glissante};
+  % charges
+  \foreach \x in {3.2,3.45,...,4.4} \draw[->,thick,bleu] (\x,{0.75+0.25*sin(900*(\x-3.2))})--(\x,0.02);
+  \foreach \x in {6.2,6.45,...,7.4} \draw[->,thick,bleu] (\x,{0.75+0.25*sin(900*(\x-6.2))})--(\x,0.02);
+  \node[bleu] at (5.3,1.1) {\small $p(x,y)$, $q_x$, $q_y$};
+  \draw[->,thick] (7.9,0.6)--(9.2,0.6) node[right] {\small $V$};
+  % axes
+  \draw[->] (-1.9,0)--(-0.8,0) node[right] {\small $x$};
+  \draw[->] (-1.9,0)--(-1.9,-1.1) node[below] {\small $z$};
+  \draw[->] (-1.9,0)--(-1.35,0.45) node[right] {\small $y$};
+  \node[anchor=west] at (7.9,0.25) {\scriptsize sens de roulement};
+\end{tikzpicture}
+\caption{Géométrie et conventions : $x$ longitudinal (sens de roulement), $y$ transversal, $z$
+vers le bas depuis la surface. \textbf{Attention} : le TFE utilise $x$ transversal et $y$
+longitudinal ; $\epsilon_{xx}^{\text{TFE}}=\epsilon_{yy}$ et $\epsilon_{xz}^{\text{TFE}}=\epsilon_{yz}$ ici.}
+\label{fig:geom}
+\end{figure}
+
+Dans chaque couche, l'équilibre quasi-statique et la loi de Hooke (en fréquentiel, voir \S\ref{sec:corresp}) s'écrivent
+\begin{equation}
+\operatorname{div}\bm\sigma=\bm 0,\qquad
+\bm\sigma=\lambda\,\operatorname{tr}(\bm\epsilon)\,\bm 1+2\mu\,\bm\epsilon,\qquad
+\bm\epsilon=\tfrac12(\nabla\bm u+\nabla\bm u^{\mathsf T}),
+\end{equation}
+soit l'équation de Navier $(\lambda+\mu)\nabla(\operatorname{div}\bm u)+\mu\Delta\bm u=\bm 0$.
+Les coefficients de Lamé se déduisent de $(E,\nu)$ par
+$\mu=E/[2(1+\nu)]$ et $\lambda=E\nu/[(1+\nu)(1-2\nu)]$.
+La surface $z=0$ porte une pression $p(x,y)$ (positive vers le bas) et des efforts tangentiels
+$q_x,q_y$ exercés par le pneu sur la chaussée. La normale sortante vaut $-\bm e_z$, d'où
+\begin{equation}
+\sigma_{zz}(x,y,0)=-p,\qquad \sigma_{xz}(x,y,0)=-q_x,\qquad \sigma_{yz}(x,y,0)=-q_y .
+\label{eq:cl_surface}
+\end{equation}
+Les déformations sont tensorielles ($\epsilon_{xz}=\gamma_{xz}/2$), comptées positives en extension.
+
+%=====================================================================================================
+\section{Formulation spectrale}
+%=====================================================================================================
+\subsection{Transformée de Fourier}
+\begin{equation}
+\hatt f(k_1,k_2)=\iint_{\mathbb R^2} f(x,y)\,e^{-\ii(k_1x+k_2y)}\,\dd x\,\dd y,\qquad
+f(x,y)=\frac{1}{4\pi^2}\iint_{\mathbb R^2}\hatt f(k_1,k_2)\,e^{\ii(k_1x+k_2y)}\,\dd k_1\,\dd k_2 .
+\end{equation}
+On note $\xi=\sqrt{k_1^2+k_2^2}$ le nombre d'onde radial et $c_1=k_1/\xi$, $c_2=k_2/\xi$ les
+cosinus directeurs. La dérivation $\partial_x$ devient une multiplication par $\ii k_1$, et
+$\partial_y$ par $\ii k_2$.
+
+\subsection{Viscoélasticité : principe de correspondance et régimes}\label{sec:corresp}
+Pour une sollicitation harmonique $\epsilon(t)=\operatorname{Re}[\epsilon_0e^{\ii\omega t}]$, un
+matériau viscoélastique linéaire répond par $\sigma(t)=\operatorname{Re}[E^*(\omega)\epsilon_0e^{\ii\omega t}]$.
+Le signal temporel étant réel, $E^*(-\omega)=\overline{E^*(\omega)}$.
+Si chaque composante du problème évolue en $e^{\ii\omega t}$, l'équation de Navier est inchangée,
+avec $\lambda^*(\omega)$ et $\mu^*(\omega)$ complexes : c'est le principe de correspondance. Les
+trois régimes de \cs{} ne diffèrent que par la pulsation associée à chaque onde plane :
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Régime & Chargement & Pulsation vue par le matériau\\
+\midrule
+\texttt{Static()} & $p(x,y)$ appliqué depuis toujours & $\omega=0$ (module statique $E_{00}$)\\
+\texttt{Harmonic(f)} & $p(x,y)\,e^{\ii 2\pi f t}$ (HWD) & $\omega=2\pi f$ pour tout $\bm k$\\
+\texttt{Moving(V)} & $p(x-Vt,y)$, régime permanent & $\omega=-k_1V$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\textbf{Charge roulante.} En régime permanent, les champs sont stationnaires dans le repère
+mobile $X=x-Vt$ : $\bm u(x,y,z,t)=\bm U(x-Vt,y,z)$. La composante
+$\hatt{\bm U}(k_1,k_2,z)\,e^{\ii(k_1X+k_2y)}$ vaut, en un point matériel fixe,
+$\hatt{\bm U}\,e^{\ii(k_1x+k_2y)}e^{-\ii k_1Vt}$ : c'est une sollicitation harmonique de pulsation
+$\omega=-k_1V$. Chaque onde plane est donc un problème élastique à modules complexes
+$\lambda^*(-k_1V)$, $\mu^*(-k_1V)$. Le signe fixe le sens du retard : la réponse est décalée
+\emph{derrière} la charge ($X<0$), ce que vérifie la validation V4 (figure~\ref{fig:v4}).
+Les ondes courtes ($|k_1|$ grand) voient le module vitreux ; les ondes longues voient le module
+statique. Une empreinte de \SI{0.5}{m} à \SI{0.66}{m/s} mobilise donc une large bande de
+fréquences, de $10^{-4}$ à quelques dizaines de hertz, et pas « la » fréquence de \SI{1}{Hz} de la
+règle de Perret. C'est exactement la limite du module équivalent discutée au \S3.6 du TFE.
+
+\subsection{Lois de comportement disponibles}
+\paragraph{2S2P1D} (Olard et Di Benedetto, 2003) :
+\begin{equation}
+E^*(\omega)=E_{00}+\frac{E_0-E_{00}}{1+\delta(\ii\omega\tau)^{-k}+(\ii\omega\tau)^{-h}+(\ii\omega\beta\tau)^{-1}},
+\qquad \tau(T)=a_T(T)\,\tau(T_{\text{ref}}),
+\end{equation}
+avec, en option, le décalage WLF $\log_{10}a_T=-C_1(T-T_{\text{ref}})/(C_2+T-T_{\text{ref}})$ et
+un coefficient de Poisson complexe
+$\nu^*=\nu_{00}+(\nu_0-\nu_{00})(E^*-E_{00})/(E_0-E_{00})$. Les puissances complexes
+$(\ii\omega\tau)^{-k}$ sont prises sur la détermination principale.
+
+\paragraph{Kelvin-Voigt généralisé (KVG)} (forme du TFE, Tableau 7) :
+$1/E^*(\omega)=1/E_0+\sum_i 1/[E_i(1+\ii\omega\tau_i)]$.
+\paragraph{Maxwell généralisé (Prony)} : $E^*(\omega)=E_\infty+\sum_iE_i\,\ii\omega\tau_i/(1+\ii\omega\tau_i)$.
+\paragraph{Module figé} : élastique de module $|E^*(f)|$ d'une autre loi (approche « module
+équivalent »).
+
+\begin{figure}[h]
+\centering\includegraphics[width=0.92\linewidth]{figures/courbes_maitresses.pdf}
+\caption{BB-GB du TFE à \SI{9.3}{\celsius} : 2S2P1D du Tableau 6 ($\tau=\SI{1.22}{s}$) et KVG
+à 9 branches du Tableau 7. Le KVG approche le 2S2P1D à mieux que 10\,\% sur la plage utile. À
+\SI{1}{Hz}, $|E^*|$ vaut \SI{14877}{MPa} (2S2P1D) et \SI{14482}{MPa} (KVG), et non
+\SI{11670}{MPa}. Cette dernière valeur correspond à environ \SI{0.3}{Hz}, ou à $\tau\approx\SI{0.35}{s}$
+à \SI{1}{Hz}. Le point est à trancher avant l'article MAIREINFRA.}
+\label{fig:master}
+\end{figure}
+
+\subsection{Découplage P-SV / SH}
+Pour des couches isotropes, on cherche les transformées sous la forme
+\begin{equation}
+\hatt u_x=\frac{\ii}{\xi}\big(k_1U-k_2V\big),\qquad
+\hatt u_y=\frac{\ii}{\xi}\big(k_2U+k_1V\big),\qquad
+\hatt u_z=W,
+\label{eq:ansatz}
+\end{equation}
+où $U(z)$, $W(z)$ et $V(z)$ ne dépendent que de $\xi$, de $z$ et des modules. $U$ porte la partie
+irrotationnelle du déplacement horizontal, $V$ sa partie solénoïdale. Avec $\operatorname{div}\hatt{\bm u}=W'-\xi U$,
+l'équation de Navier se scinde en un système « P-SV » et une équation « SH » :
+\begin{align}
+&(\lambda+\mu)\,\xi\,(W'-\xi U)+\mu\,(U''-\xi^2U)=0, \label{eq:psv1}\\
+&(\lambda+\mu)\,(W''-\xi U')+\mu\,(W''-\xi^2W)=0, \label{eq:psv2}\\
+&\mu\,(V''-\xi^2V)=0 .
+\end{align}
+Les contraintes utiles aux interfaces s'expriment par
+\begin{equation}
+\hatt\sigma_{zz}=S=(\lambda+2\mu)W'-\lambda\xi U,\qquad
+\hatt\sigma_{xz}=\frac{\ii}{\xi}(k_1T-k_2R),\qquad
+\hatt\sigma_{yz}=\frac{\ii}{\xi}(k_2T+k_1R),
+\end{equation}
+avec $T=\mu(U'+\xi W)$ et $R=\mu V'$. Sous chargement purement normal, $V\equiv0$ : seul le
+problème P-SV est sollicité.
+
+\subsection{Solution générale dans une couche}
+On pose $\kappa=(\lambda+3\mu)/(\lambda+\mu)=3-4\nu$ (complexe en viscoélasticité). Dans une couche
+d'épaisseur $h$ et de cote locale $s\in[0,h]$, on note $\tau=\xi s$ et $t=\xi(h-s)$. La solution
+générale de \eqref{eq:psv1}--\eqref{eq:psv2} (obtenue avec SymPy, annexe~\ref{ann:sympy}) s'écrit
+\begin{equation}
+\boxed{\begin{aligned}
+W&=(A+B\tau)\,e^{-\tau}+(C+D\,t)\,e^{-t},\\
+U&=(-A+\kappa B-B\tau)\,e^{-\tau}+(C-\kappa D+D\,t)\,e^{-t},\\
+V&=a\,e^{-\tau}+b\,e^{-t}.
+\end{aligned}}
+\label{eq:solgen}
+\end{equation}
+La famille $(A,B)$ décroît depuis le toit de la couche, la famille $(C,D)$ depuis sa base. Toutes
+les exponentielles sont bornées par 1. Contrairement à la forme classique en $e^{\pm\xi z}$ de
+Burmister, il n'y a donc ni dépassement de capacité ni perte de précision pour les grands $\xi h$.
+Les dérivées s'obtiennent par $\dd/\dd z=\xi\,\dd/\dd\tau=-\xi\,\dd/\dd t$ :
+\begin{align*}
+\tfrac{\dd W}{\dd\tau}&=(B-A-B\tau)e^{-\tau}+(C-D+Dt)e^{-t}, &
+\tfrac{\dd U}{\dd\tau}&=(A-(1+\kappa)B+B\tau)e^{-\tau}+(C-(1+\kappa)D+Dt)e^{-t}.
+\end{align*}
+Pour la dernière couche d'un massif semi-infini, $C=D=b=0$.
+
+\paragraph{Mise à l'échelle.} Les inconnues calculées sont les coefficients physiques multipliés
+par $\mu_{\text{ref}}\,\xi$ (avec $\mu_{\text{ref}}=|\mu_1|$). Les contraintes $T,S$ sont alors en
+Pa et les déplacements valent $(\cdots)/(\mu_{\text{ref}}\xi)$. Toutes les matrices sont sans
+dimension et d'ordre 1.
+
+\subsection{Conditions aux limites et raccordements}
+\paragraph{Surface.} D'après \eqref{eq:cl_surface} et \eqref{eq:ansatz} :
+\begin{equation}
+S(0)=-\hatt p,\qquad T(0)=\ii\,(c_1\hatt q_x+c_2\hatt q_y),\qquad R(0)=\ii\,(-c_2\hatt q_x+c_1\hatt q_y).
+\end{equation}
+Le noyau est résolu pour trois chargements unitaires (pression normale, P-SV tangentiel, SH).
+La réponse à un chargement quelconque est la combinaison linéaire de ces trois cas, pondérés par
+$\hatt p$, $T(0)$ et $R(0)$.
+\paragraph{Interfaces.} \emph{Collée} : continuité de $U,W,V,T,S,R$.
+\emph{Glissante} (glissement parfait) : continuité de $W$ et $S$, et $T=R=0$ de part et d'autre.
+\paragraph{Fond.} \texttt{halfspace} (massif semi-infini), \texttt{rigid\_bonded} ($U=W=V=0$),
+\texttt{rigid\_smooth} ($W=0$, $T=R=0$). La dernière condition est celle du modèle COMSOL du TFE
+(déplacement vertical bloqué sous le substratum).
+
+\subsection{Résolution par matrices de rigidité de couche}
+Pour une couche finie $j$, notons $\bm d=(U_t,W_t,U_b,W_b)$ les déplacements de ses faces
+supérieure et inférieure, et $\bm s=(T_t,S_t,T_b,S_b)$ les contraintes correspondantes. En
+évaluant \eqref{eq:solgen} en $s=0$ et $s=h$, on obtient $\bm d=\bm D_j\bm c$ et $\bm s=\bm Q_j\bm c$,
+avec $\bm c=(A,B,C,D)$, d'où la \emph{matrice de rigidité de couche}
+\begin{equation}
+\bm K_j=\bm Q_j\bm D_j^{-1}\quad(4\times4),\qquad
+\bm D_j^{-1}\ \text{par complément de Schur sur les blocs } 2\times2,
+\end{equation}
+ce qui est licite car les blocs diagonaux ont pour déterminants $-\kappa$ et $\kappa$. Les
+tractions de face sont $\operatorname{diag}(-1,-1,1,1)\,\bm K_j\bm d$. L'équilibre de chaque face
+(somme des tractions des deux couches adjacentes nulle, traction imposée en surface) conduit à un
+système \textbf{tridiagonal par blocs $2\times2$} sur les déplacements des faces. On le résout par
+l'algorithme de Thomas, vectorisé sur tous les nombres d'onde. Une interface glissante est traitée
+par \emph{condensation statique} : le déplacement horizontal de la face est éliminé grâce à $T=0$,
+puis remplacé par une inconnue muette. Le problème SH conduit à un système tridiagonal scalaire.
+Les coefficients $\bm c$ de la couche qui contient la cote demandée se déduisent enfin des
+déplacements de ses faces.
+
+Une résolution « dense » (un seul système de $4n$ inconnues) est conservée comme référence. Les
+deux méthodes coïncident à $10^{-7}$ près sur toutes les combinaisons de fonds et d'interfaces
+testées (\texttt{tests/test\_kernels.py}). La méthode par rigidités est 5 à 10 fois plus rapide.
+
+\subsection{Reconstruction des champs}
+Avec $U,W,V$ et leurs dérivées à la cote $z$ :
+\begin{align}
+\hatt u_x&=\ii\,(c_1U-c_2V), & \hatt u_y&=\ii\,(c_2U+c_1V), & \hatt u_z&=W,\\
+\hatt\epsilon_{xx}&=-\xi\,c_1(c_1U-c_2V), & \hatt\epsilon_{yy}&=-\xi\,c_2(c_2U+c_1V), & \hatt\epsilon_{zz}&=W',\\
+\hatt\epsilon_{xy}&=-\xi\big[c_1c_2U+\tfrac12(c_1^2-c_2^2)V\big], &
+\hatt\epsilon_{xz}&=\tfrac{\ii}{2}\big[c_1(U'+\xi W)-c_2V'\big], &
+\hatt\epsilon_{yz}&=\tfrac{\ii}{2}\big[c_2(U'+\xi W)+c_1V'\big],
+\end{align}
+puis $\hatt{\bm\sigma}=\lambda\operatorname{tr}\hatt{\bm\epsilon}\,\bm1+2\mu\hatt{\bm\epsilon}$,
+le produit étant exact dans le domaine spectral pour la viscoélasticité. Quand $\xi\to0$, les
+déformations et contraintes ont des limites finies, qui dépendent de la direction. Le déplacement
+d'un massif semi-infini diverge en revanche comme $1/\xi$ : la singularité est intégrable en 2D,
+mais pas sur une seule ligne $k_2=0$. Le \S\ref{sec:partition} en tient compte.
+
+\begin{encadre}
+\textbf{Conséquence directe : $\epsilon_{xz}=\epsilon_{yz}=0$ en surface} dès que les efforts
+tangentiels sont nuls, puisque $\sigma_{xz}(z=0)=-q_x=0$ et que $\epsilon_{xz}=\sigma_{xz}/2\mu$.
+Les « cisaillements en surface » non nuls d'un calcul éléments finis sous chargement purement
+vertical sont donc des artefacts d'extrapolation nodale. La grandeur pertinente est le maximum
+atteint \emph{sous} la surface. Le TFE le situe vers 50 à \SI{160}{mm} ; voir \S\ref{sec:v5}.
+\end{encadre}
+
+%=====================================================================================================
+\section{Retour dans l'espace physique}
+%=====================================================================================================
+\subsection{Spectres des empreintes}\label{sec:empreintes}
+Chaque roue est une empreinte centrée en $(x_0,y_0)$ ; son spectre est multiplié par
+$e^{-\ii(k_1x_0+k_2y_0)}$ et les roues se superposent. Les spectres sont \emph{exacts} (aucun
+échantillonnage de la charge) :
+\begin{center}\small
+\begin{tabular}{p{4.3cm}p{9.6cm}}
+\toprule
+Empreinte & Spectre $\hatt p(k_1,k_2)$\\
+\midrule
+Rectangle uniforme $\ell_x\times\ell_y$ & $p\,\ell_x\operatorname{sinc}(k_1\ell_x/2)\,\ell_y\operatorname{sinc}(k_2\ell_y/2)$\\
+Disque uniforme de rayon $R$ & $p\,2\pi R^2\,J_1(\xi R)/(\xi R)$\\
+Séparable $A\,f_x(x)\,f_y(y)$ & $A\,\hatt f_x(k_1)\,\hatt f_y(k_2)$\\
+\quad demi-ellipse $\sqrt{1-(s/c)^2}$ & $\pi c\,J_1(kc)/(kc)$\\
+\quad paires de gaussiennes (Annexe III du TFE) & $\sum_iP_i\,\sigma_i\sqrt{2\pi}\,e^{-k^2\sigma_i^2/2}\,2\cos(k s_i)$\\
+\quad profil tabulé, interpolé linéairement & $d\operatorname{sinc}^2(kd/2)\sum_nf_n e^{-\ii ks_n}$\\
+Carte de pixels $P_{ji}$ (pas $d_x,d_y$) & $d_x\operatorname{sinc}(k_1d_x/2)\,d_y\operatorname{sinc}(k_2d_y/2)\sum_{j,i}P_{ji}e^{-\ii(k_1x_i+k_2y_j)}$\\
+\bottomrule
+\end{tabular}
+\end{center}
+La carte de pixels est l'entrée prévue pour les mesures du prototype STAC : la transformée de la
+fonction constante par pixel est calculée exactement, par produits matriciels séparables.
+La résultante vaut toujours $\hatt p(0,0)$ ; la méthode \texttt{scaled\_to(F)} normalise une
+empreinte à une charge donnée (le $K_{\text{charge}}$ du TFE).
+
+\begin{figure}[h]
+\centering\includegraphics[width=\linewidth]{figures/empreintes.pdf}
+\caption{Les trois empreintes du TFE à \SI{370}{kN}. L'intégrale exacte du profil de l'Annexe III
+vaut \SI{142.1}{kN} avant mise à l'échelle (et non 141,2), d'où $K_{\text{charge}}=2{,}603$ et
+$p_{\max}=\SI{3.44}{MPa}$.}
+\label{fig:empreintes}
+\end{figure}
+
+\subsection{Discrétisation}
+Le champ est calculé sur une grille $N_x\times N_y$ de pas $d_x=L_x/N_x$, $d_y=L_y/N_y$ ; les
+nombres d'onde sont ceux de la FFT ($\Delta k_1=2\pi/L_x$). Deux règles :
+\begin{itemize}[nosep]
+\item \textbf{résolution} : le pas doit résoudre les plus fins détails de la charge (nervures :
+      $\sigma_i\approx\SI{17}{mm}$, d'où $d\lesssim\SI{8}{mm}$) pour les grandeurs proches de la
+      surface. En profondeur, le facteur $e^{-\xi z}$ filtre naturellement les ondes courtes ;
+\item \textbf{domaine} : grâce au \S\ref{sec:partition}, quelques fois l'emprise du chargement
+      suffisent. Pour le bogie d'A340, $\SI{16}{m}\times\SI{8}{m}$ convient.
+\end{itemize}
+Un filtre gaussien optionnel (\texttt{filter\_width}) lisse la charge à l'échelle du maillage,
+comme le fait implicitement un modèle éléments finis. Sous une charge en créneau, les valeurs
+exactement en surface convergent lentement (phénomène de Gibbs) : elles sont d'ailleurs
+singulières en théorie au bord d'un créneau.
+
+\subsection{Traitement des grandes longueurs d'onde : partition de l'unité}\label{sec:partition}
+\paragraph{Le problème.} Une FFT seule calcule la réponse à un réseau \emph{périodique} de
+chargements. C'est gênant dans trois cas :
+(a) en charge roulante viscoélastique, un point matériel garde la mémoire de la charge pendant
+$\tau_{\max}$. Le KVG du TFE a des branches jusqu'à \SI{1.6e4}{s}, soit une traînée de
+$V\tau_{\max}\approx\SI{10}{km}$ derrière la charge. Le noyau varie sur une échelle
+\emph{logarithmique} en $k_1$ (figure~\ref{fig:partition}), très en dessous du pas $\Delta k_1$ ;
+(b) les champs décroissent lentement en profondeur (en $r^{-3}$ pour $\sigma_{zz}$ sur un sol
+mou), et les images périodiques se cumulent ;
+(c) la déflexion d'un massif semi-infini est singulière en $1/\xi$.
+Le premier défaut a été mis en évidence en validation (V4) : écarts de 5 à 20\,\% avec un
+traitement naïf de la colonne $k_1=0$.
+
+\paragraph{La solution.} On scinde le spectre avec deux gaussiennes
+$\varphi(k_1)=e^{-k_1^2/2(b\Delta k_1)^2}$ et $\psi(k_2)=e^{-k_2^2/2(b\Delta k_2)^2}$ ($b=2$ par
+défaut) :
+\begin{equation}
+F=\underbrace{(1-\varphi)F}_{\text{FFT 2D}}
++\underbrace{\varphi(1-\psi)F}_{\substack{\text{intégrale continue en }k_1\\\text{FFT en }y}}
++\underbrace{\varphi\psi F}_{\text{intégrale continue 2D}} .
+\end{equation}
+\begin{itemize}[nosep]
+\item La partie FFT est de moyenne nulle en $x$ ($1-\varphi(0)=0$) et régulière : son image dans
+      l'espace physique est localisée, et la périodisation y est inoffensive.
+\item Les parties basses sont intégrées \emph{continûment}, par une quadrature de Gauss-Legendre sur
+      des panneaux géométriques vers $k=0$ (rapport 4, jusqu'à $10^{-7}$ fois la largeur de bande)
+      puis réguliers. Les phases $e^{\ii k_1X}$ sont calculées exactement aux points de sortie.
+      Ces parties ne sont \emph{pas} périodiques.
+\item La singularité en $1/\xi$ du déplacement est intégrable en 2D : la déflexion absolue d'un
+      massif semi-infini devient calculable (validée au \S\ref{sec:v1}).
+\end{itemize}
+Effet mesuré sur le cas du TFE ($\epsilon_T$ en base, KVG, empreinte rectangulaire) :
+\begin{center}\small
+\begin{tabular}{lcccccc}
+\toprule
+Domaine $L_x\times L_y$ (m) & $16\times8$ & $32\times8$ & $64\times8$ & $32\times16$ & $32\times32$ & $64\times64$\\
+\midrule
+FFT seule + moyenne de cellule (µdef) & 341,1 & 339,7 & 338,0 & 337,1 & 336,2 & 336,0\\
+Partition de l'unité (µdef) & \textbf{335,9} & --- & --- & 336,0 & 336,0 & 336,0\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{figure}[h]
+\centering\includegraphics[width=0.78\linewidth]{figures/partition.pdf}
+\caption{Module vu par une onde plane $e^{\ii k_1X}$ sous charge roulante (KVG, $V=\SI{0.66}{m/s}$).
+Le module tombe à $E_{00}=\SI{65}{MPa}$ pour $k_1\lesssim10^{-4}$, très en dessous du premier point de
+FFT : la zone bleutée est intégrée continûment.}
+\label{fig:partition}
+\end{figure}
+
+\subsection{Solveur axisymétrique (Hankel)}
+Pour une charge circulaire uniforme, en statique ou en harmonique (plaque HWD), le même noyau est
+inversé par transformée de Hankel :
+$f(r)=\frac1{2\pi}\int_0^\infty F(\xi)J_0(\xi r)\xi\,\dd\xi$,
+$u_r=-\frac1{2\pi}\int_0^\infty U(\xi)J_1(\xi r)\xi\,\dd\xi$.
+L'intégrale est calculée par une quadrature de Gauss sur des panneaux adaptés aux oscillations.
+Ce solveur est très rapide (\SI{0.1}{s}) et sert à la validation croisée.
+
+\subsection{Post-traitements}
+Déformations principales (valeurs propres du tenseur $3\times3$ en chaque point), maxima et leur
+position, coupes, interpolation, et \textbf{signal temporel d'une jauge fixe} :
+en charge roulante, une jauge en $(x_g,y_g)$ voit $f(X=x_g-Vt,\,y_g)$.
+Sur une interface, l'option \texttt{side="above"} (défaut) prend la couche supérieure, par exemple
+pour la base de la couche liée, et \texttt{side="below"} la couche inférieure.
+
+\subsection{Coût}
+Le coût est d'environ \SI{15}{\micro s} par nombre d'onde pour une structure à 5 couches (Python
+et NumPy, un c\oe ur). Un calcul du bogie d'A340 à \SI{8}{mm} de résolution
+($2048\times2048$) prend environ une minute sur un portable, contre plusieurs heures pour le
+modèle COMSOL de \num{7.4} millions de ddl. Pour un chargement symétrique en $y$,
+\texttt{sym\_y=True} divise le temps par deux.
+
+%=====================================================================================================
+\section{Validation}
+%=====================================================================================================
+Les scripts sont dans \texttt{validation/}. Chacun produit un fichier CSV de résultats.
+
+\subsection{V1 --- Massif semi-infini élastique, charge circulaire (Love)}\label{sec:v1}
+$E=\SI{100}{MPa}$, $\nu=0{,}3$, $p=\SI{0.7}{MPa}$, $a=\SI{0.15}{m}$. Sur l'axe, les solutions exactes
+sont $\sigma_{zz}=-p[1-z^3/R^3]$,
+$\sigma_{rr}=-\frac p2[(1+2\nu)-2(1+\nu)z/R+z^3/R^3]$ et
+$w=\frac{(1+\nu)pa}{E}[a/R+(1-2\nu)(R-z)/a]$, avec $R=\sqrt{a^2+z^2}$.
+\begin{figure}[h]
+\centering\includegraphics[width=0.9\linewidth]{figures/v1_love.pdf}
+\caption{V1 : accord à $10^{-4}$ près en profondeur, pour les contraintes comme pour la déflexion
+absolue (FFT 2D incluse, grâce au \S\ref{sec:partition}). En $z=0$, sous le créneau, les deux
+méthodes numériques tronquent le spectre : c'est le phénomène de Gibbs.}
+\end{figure}
+
+\input{tableaux_validation.tex}
+
+\subsection{Tests unitaires}
+\texttt{python -m pytest tests} (23 tests, dont 3 pour le contact et 5 pour le niveau 2 du module texture) : équivalence des solveurs dense et par rigidités
+(3 fonds $\times$ 4 jeux d'interfaces, charges normales et tangentielles), symétrie $y$, équilibre
+vertical global, et cohérence FFT/Hankel, déflexion absolue comprise.
+
+%=====================================================================================================
+\section{Mode d'emploi}
+%=====================================================================================================
+\subsection{Installation}
+Python $\ge$ 3.9, NumPy, SciPy et Matplotlib ; pytest pour les tests. Aucune compilation.
+\begin{lstlisting}
+pip install numpy scipy matplotlib pytest
+cd chausspec
+python -m pytest tests          # vérification (environ 1 min)
+python exemples/tfe_a340.py     # premier calcul
+\end{lstlisting}
+
+\subsection{Organisation du code}
+\begin{center}\small
+\begin{tabular}{p{3.6cm}p{11.2cm}}
+\toprule
+\texttt{materials.py} & lois : \texttt{Elastic}, \texttt{TwoS2P1D} (+ WLF, $\nu^*$), \texttt{GeneralizedKelvinVoigt}, \texttt{GeneralizedMaxwell}, \texttt{FrozenModulus}\\
+\texttt{structure.py} & \texttt{Layer}, \texttt{Structure} (fond, interfaces)\\
+\texttt{loads.py} & empreintes et spectres ; \texttt{Wheel}, \texttt{Loading}\\
+\texttt{regimes.py} & \texttt{Static}, \texttt{Harmonic}, \texttt{Moving}\\
+\texttt{kernel.py} & noyau : \texttt{StiffnessKernel} (défaut), \texttt{DenseKernel} (référence)\\
+\texttt{spectral.py} & multiplicateurs spectraux de toutes les composantes\\
+\texttt{grid.py} & \texttt{solve\_grid} (champs sur plans) et \texttt{GridResult}\\
+\texttt{axisym.py} & \texttt{solve\_axisym} (Hankel)\\
+\texttt{io.py}, \texttt{\_\_main\_\_.py} & cas décrits en JSON, écriture CSV/JSON/PNG\\
+\addlinespace
+\texttt{contact.py} & surfaces rainurées et aléatoires, MPD (ISO 13473-1), contact bande de roulement / texture (v0.3)\\
+\texttt{texture.py} & couplage deux échelles, méthode héréditaire, réponse locale du massif homogène aux efforts normaux et tangentiels (v0.3--0.4)\\
+\texttt{fe2d.py} & éléments finis 2D « pixel » en déformation plane généralisée : entaille des rainures, microstructure granulats / mortier (v0.4)\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Utilisation en Python}
+\begin{lstlisting}[language=Python]
+import numpy as np, chausspec as cs
+
+bbgb = cs.TwoS2P1D(E00=65, E0=30000, k=0.25, h=0.787, delta=1.58,
+                   tau_ref=1.22, T_ref=9.3, nu=0.35)          # MPa, s
+st = cs.Structure([cs.Layer(bbgb, 0.32, "BB+GB"),
+                   cs.Layer(cs.Elastic(150, 0.35), 0.60, "GRH"),
+                   cs.Layer(cs.Elastic(75, 0.35), 1.00, "Sol 1"),
+                   cs.Layer(cs.Elastic(150, 0.35), 1.00, "Sol 2"),
+                   cs.Layer(cs.Elastic(30000, 0.35), 2.00, "Substratum")],
+                  bottom="rigid_smooth")
+
+# empreinte hétérogène de l'Annexe III, normalisée à 370 kN
+T = cs.GaussianPairs1D(P=[1.32, 0.80, 0.822], centers=[0.14846, 0.08804, 0.02864],
+                       sig=[0.02824, 0.01695, 0.01741])      # transversal (y)
+fp = cs.Separable(fx=cs.HalfEllipse1D(0.277), fy=T).scaled_to(370e3)
+bogie = cs.Loading([cs.Wheel(fp, x0, y0) for x0 in (0, -1.98) for y0 in (-0.7, 0.7)])
+
+res = cs.solve_grid(st, bogie, cs.Moving(0.66), depths=[0.0, 0.05, 0.32],
+                    comps=("exx", "eyy", "ezz", "exy", "exz", "eyz"),
+                    L=(16, 8), N=(1024, 1024), sym_y=True, window=(-3, 1.2, 0, 1.2))
+
+print(res.argmax("eyy", 0.32))                    # (valeur, x, y) en base de couche liée
+e1 = res.principal_strains(0.0)[..., 2]           # déformation principale majeure en surface
+t, eps = res.time_signal("eyy", 0.32, x_gauge=0.0, y_gauge=0.7, speed=0.66)   # jauge
+\end{lstlisting}
+
+\subsection{Utilisation par fichier JSON}
+\begin{lstlisting}
+python -m chausspec exemples/cas_tfe_rectangulaire.json
+\end{lstlisting}
+Le fichier décrit la structure, les roues (\texttt{rect}, \texttt{circle}, \texttt{separable},
+\texttt{map}), le régime (\texttt{static}, \texttt{moving}, \texttt{harmonic}), la grille et les
+sorties : profondeurs, composantes et jauges. Le programme écrit dans le dossier de sortie un CSV
+par champ (1\textsuperscript{re} ligne : $x$ ; 1\textsuperscript{re} colonne : $y$), un
+\texttt{synthese.json} (extrema et positions, $\epsilon_1$ si les six déformations sont demandées),
+les signaux de jauges et des cartes PNG.
+
+\paragraph{Carte de pression mesurée} (\texttt{"type": "map"}) : fichier CSV séparé par
+\texttt{;}, dont la 1\textsuperscript{re} ligne contient les abscisses $x$ des centres de pixels
+(la 1\textsuperscript{re} case est ignorée) et la 1\textsuperscript{re} colonne les ordonnées $y$.
+Le reste contient les pressions ; \texttt{unit} convertit en Pa (\texttt{1e6} pour des MPa) et
+\texttt{force} renormalise la résultante. Voir \texttt{exemples/cas\_carte\_mesuree.json}.
+
+\subsection{Conseils pratiques}
+\begin{itemize}[nosep]
+\item \textbf{Grandeurs en profondeur} (base de couche liée) : un pas de 3 à \SI{6}{cm} suffit ;
+      calcul en quelques secondes.
+\item \textbf{Grandeurs de surface} sous empreinte hétérogène : un pas $\le\SI{8}{mm}$ en
+      transversal ; vérifier la convergence en doublant $N$.
+\item \textbf{Mémoire} : chaque couple (composante, profondeur) stocke un spectre
+      $N_y\times(N_x/2+1)$ ; \texttt{store="complex64"} divise la mémoire par deux et
+      \texttt{window} réduit les sorties.
+\item \textbf{Signe} : compression négative (contraintes et déformations). La charge roule vers
+      $+x$ et la traînée viscoélastique est en $X<0$.
+\item \textbf{Températures} : \texttt{TwoS2P1D(..., C1=, C2=, T=)} ; pour un gradient,
+      découper l'enrobé en sous-couches.
+\end{itemize}
+
+%=====================================================================================================
+\section{Limites et perspectives}\label{sec:limites}
+%=====================================================================================================
+\begin{itemize}[nosep]
+\item \textbf{Inertie} : négligée. Pour le décollage ou l'atterrissage, il faudra ajouter les termes
+      $-\rho\omega^2$ dans l'équation de Navier ($\omega=-k_1V$). La solution générale fait alors
+      intervenir deux nombres d'onde verticaux (ondes P et S) ; la structure du code est inchangée.
+\item \textbf{Interfaces partiellement collées} (ressorts de Goodman) : il suffit de modifier le
+      raccordement, par une loi $T=k_s\,[U]$ à l'interface.
+\item \textbf{Matériaux non linéaires} (GNT, sols) : hors de portée d'une méthode spectrale ; on
+      peut les approcher par des modules sécants itérés couche par couche.
+\item \textbf{Anisotropie} (transversalement isotrope) : faisable, mais la solution générale change.
+\item \textbf{Perspectives thèse} : (1) brancher les cartes du prototype STAC (\texttt{PressureMap}) ;
+      (2) étudier les critères de fissuration par le haut, avec $\epsilon_{yz}$ maximal en
+      profondeur et les déformations principales près des nervures ; (3) mener des études de
+      sensibilité massives sur la vitesse, la température et le type de pneu ; (4) rétrocalculer
+      le HWD en fréquentiel avec le 2S2P1D (régime \texttt{Harmonic} et solveur axisymétrique) ;
+      (5) ajouter des efforts tangentiels mesurés (freinage, virage), déjà pris en charge par le code.
+\end{itemize}
+
+%=====================================================================================================
+\appendix
+\section{Dérivation symbolique de la solution générale}\label{ann:sympy}
+Le script \texttt{derivation/derive.py} injecte
+$U=(a+b\,\xi z)e^{\mp\xi z}$ et $W=(c+d\,\xi z)e^{\mp\xi z}$ dans \eqref{eq:psv1}--\eqref{eq:psv2},
+puis identifie les coefficients :
+\begin{lstlisting}
+famille e^{-xi z} : a = -c + kappa d ,  b = -d
+famille e^{+xi z} : a =  c + kappa d ,  b =  d       (kappa = (lambda+3 mu)/(lambda+mu))
+\end{lstlisting}
+En réécrivant la seconde famille en fonction de $t=\xi(h-s)$, on obtient \eqref{eq:solgen}.
+
+\section{Références}
+\small
+\begin{itemize}[nosep,leftmargin=*]
+\item Burmister D.M. (1945). The general theory of stresses and displacements in layered systems. \emph{J. Applied Physics} 16, 89--94, 126--127, 296--302.
+\item Chabot A., Chupin O., Deloffre L., Duhamel D. (2010). ViscoRoute 2.0: a tool for the simulation of moving load effects on asphalt pavement. \emph{Road Materials and Pavement Design} 11(2), 227--250.
+\item Chupin O., Chabot A., Piau J.-M., Duhamel D. (2010). Influence of sliding interfaces on the response of a layered viscoelastic medium under a moving load. \emph{Int. J. Solids Struct.} 47, 3435--3446.
+\item De Beer M., Fisher C. (2000, 2002). Stress-In-Motion (SIM) / VRSPTA : mesures tridimensionnelles des contraintes de contact pneu-chaussée. CSIR, Afrique du Sud.
+\item Duhamel D., Chabot A., Tamagny P., Harfouche L. (2005). ViscoRoute : visco-elastic modeling for asphalt pavements. \emph{Bulletin des Laboratoires des Ponts et Chaussées} 258--259, 89--103.
+\item Love A.E.H. (1929). The stress produced in a semi-infinite solid by pressure on part of the boundary. \emph{Phil. Trans. R. Soc. A} 228, 377--420.
+\item Nakhaei M. (2020). PyMastic : multi-layered elastic analysis in Python. \url{https://github.com/Mostafa-Nakhaei/PyMastic}.
+\item Olard F., Di Benedetto H. (2003). General ``2S2P1D'' model and relation between the linear viscoelastic behaviours of bituminous binders and mixes. \emph{Road Materials and Pavement Design} 4(2), 185--224.
+\item Petitjean J. et al. (2001, 2002). Campagne PEP, aéroport de Toulouse-Blagnac (LCPC, Airbus).
+\item Siddharthan R.V., Yao J., Sebaaly P.E. (1998). Pavement strain from moving dynamic 3D load distribution. \emph{J. Transportation Engineering} 124(6), 557--566.
+\item Wang H., Al-Qadi I.L. (2010). Near-surface pavement failure under multiaxial stress state in thick asphalt pavement. \emph{Transportation Research Record} 2154, 91--99.
+\end{itemize}
+\normalsize
+\noindent\emph{Les références bibliographiques sont à vérifier et à compléter dans Zotero avant toute diffusion.}
+
+\end{document}

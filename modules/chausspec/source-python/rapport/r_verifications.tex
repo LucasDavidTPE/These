@@ -1,0 +1,147 @@
+Chaque maillon de la chaîne a été contrôlé par un calcul indépendant. Le
+tableau~\ref{tab:verifs} les résume ; le détail suit.
+
+\begin{table}[H]\centering\small
+\caption{Synthèse des vérifications.}\label{tab:verifs}
+\begin{tabular}{p{0.8cm}p{4.6cm}p{5.2cm}p{3.6cm}}
+\toprule
+Test & Ce qui est vérifié & Référence indépendante & Écart obtenu\\
+\midrule
+V1--V5 & noyau multicouche, charge roulante VE, reproduction du TFE & Love, PyMastic, hérédité, COMSOL & $10^{-4}$ ; < 0,8\,\% ; 0,5--1,5\,\% (voir notice)\\
+T1 & contact BEM sur rainures & poinçons périodiques (forme fermée, Legendre) & $2\cdot10^{-5}$ ; coefficients à $10^{-5}$\\
+T2 & contact BEM sur texture aléatoire & théorie de Persson & écart connu de 20--30\,\% à faible charge, convergence en contact total\\
+T3 & couplage VE complet (hérédité + massif local) & calcul multicouche VE exact, régime \texttt{MovingEnvelope} & 2,3\,\% (empreinte hétérogène, composantes dominantes)\\
+T5/T5b & hérédité avec contact non linéaire & marche en temps sur les réponses, deux codes & identiques à 0,00\,\%\\
+T6 & massif local contre structure complète & multicouche PEP complet (5 couches) & 0,07\,\% (écart quadratique maximal)\\
+T8 & résolution (contact + réponse) & même surface à 0,5 / 0,25 / 0,125 mm & < 1\,\% entre 0,25 et 0,125 mm dès $z\ge\SI{0.5}{mm}$\\
+T9 & variabilité d'une réalisation à l'autre & 5 tirages indépendants par MPD & voir \S\ref{sec:tirages}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Contact : T1 et T2}
+Sur les rainures (T1), le BEM converge vers la forme fermée \eqref{eq:punch} (écart de
+$6\cdot10^{-4}$, $10^{-4}$ puis $2\cdot10^{-5}$ pour 512, 2048 et 8192 points par pas), et ses
+coefficients de Fourier coïncident avec la formule de Legendre à $10^{-5}$ près. Sur les textures
+aléatoires (T2), les trois MPD se regroupent sur une même courbe en variable réduite
+$\bar p/(E^*\sqrt{m_2})$, comme l'impose la théorie. Persson sous-estime l'aire de 20 à 30\,\% aux
+faibles charges, ce qui est l'écart connu de la littérature. \textbf{Le calcul du contact est
+fiable} dans son cadre : élasticité linéaire, frottement nul, surface rigide.
+
+\subsection{Couplage deux échelles : T3, T5, T6}
+\textbf{T6, massif local.} La réponse à $\delta p$ calculée sur un massif homogène coïncide avec
+celle de la structure PEP complète (5 couches, substratum) à mieux que
+0,07\,\% en écart quadratique, de 1 à \SI{40}{mm}
+de profondeur. L'hypothèse de localisation est donc parfaitement justifiée.
+
+\textbf{T3, viscoélasticité avec texture fixe.} Pour l'harmonique fondamentale du rainurage sous
+l'enveloppe hétérogène roulante, la méthode héréditaire \eqref{eq:hered} reproduit le calcul
+multicouche viscoélastique exact. Ce dernier est obtenu par un régime spécial de \cs{} où la
+pulsation vaut $-\kappa V$ et le noyau est évalué en $\kappa+k_n$. L'écart est au plus de
+2,3\,\% sur les composantes dominantes ($\epsilon_{zz}$, $\epsilon_{xz}$, $\epsilon_{xx}$),
+et de quelques pour cent sur les composantes faibles. Pour les empreintes en créneau, l'accord reste
+de 1 à 4\,\% sur les composantes dominantes.
+
+\textbf{T5, contact non linéaire.} Pour une texture aléatoire, la forme de $\delta p$ change
+pendant le passage. On compare deux mises en \oe uvre indépendantes de la même intégrale
+d'hérédité. L'une marche en temps sur les \emph{réponses} (t05, une réponse élastique par pas de
+temps) ; l'autre, celle de la campagne, applique l'hérédité sur la \emph{pression} (t05b).
+\begin{table}[H]\centering\small
+\caption{T5b : même intégrale d'hérédité par deux codes (maximum sur une fenêtre de $\SI{64}{mm}\times\SI{64}{mm}$, µdef, perturbation seule).}
+\begin{tabular}{llcrr}
+\toprule
+Texture & Fenêtre & Grandeur & sur les réponses & sur la pression\\
+\midrule
+gauss MPD1.0 & A & $e_{zz}$ à 2 mm & 390,32 & 390,32 ($-$0,00\,\%)\\
+gauss MPD1.0 & A & $e_{xz}$ à 2 mm & 175,22 & 175,22 ($-$0,00\,\%)\\
+gauss MPD1.0 & A & $e_{zz}$ à 5 mm & 227,50 & 227,50 ($-$0,00\,\%)\\
+gauss MPD1.0 & A & $e_{xz}$ à 5 mm & 105,52 & 105,52 ($-$0,00\,\%)\\
+gauss MPD1.0 & B & $e_{zz}$ à 2 mm & 409,46 & 409,46 ($-$0,00\,\%)\\
+gauss MPD1.0 & B & $e_{xz}$ à 2 mm & 225,36 & 225,36 ($-$0,00\,\%)\\
+gauss MPD1.0 & B & $e_{zz}$ à 5 mm & 236,85 & 236,85 ($-$0,00\,\%)\\
+gauss MPD1.0 & B & $e_{xz}$ à 5 mm & 126,85 & 126,85 ($-$0,00\,\%)\\
+rainures vives & A & $e_{zz}$ à 2 mm & 167,46 & 167,46 ($-$0,00\,\%)\\
+rainures vives & A & $e_{xz}$ à 2 mm & 131,28 & 131,28 ($-$0,00\,\%)\\
+rainures vives & A & $e_{zz}$ à 5 mm & 100,95 & 100,95 ($-$0,00\,\%)\\
+rainures vives & A & $e_{xz}$ à 5 mm & 61,60 & 61,60 ($-$0,00\,\%)\\
+rainures vives & B & $e_{zz}$ à 2 mm & 267,16 & 267,16 ($-$0,00\,\%)\\
+rainures vives & B & $e_{xz}$ à 2 mm & 210,32 & 210,32 ($-$0,00\,\%)\\
+rainures vives & B & $e_{zz}$ à 5 mm & 161,91 & 161,91 ($-$0,00\,\%)\\
+rainures vives & B & $e_{xz}$ à 5 mm & 99,57 & 99,57 ($-$0,00\,\%)\\
+\bottomrule
+\end{tabular}
+\end{table}
+Le même test chiffre l'erreur de la formule multiplicative abandonnée (\S\ref{sec:hered}) :
+\begin{table}[H]\centering\small
+\caption{T5 : méthode héréditaire exacte et formule multiplicative abandonnée (perturbation seule, µdef).}\label{tab:t5}
+\begin{tabular}{llcrr}
+\toprule
+Texture & Fenêtre & Grandeur & héréditaire (exact) & multiplicative\\
+\midrule
+gauss MPD1.0 & A & $e_{zz}$ à 2 mm & 390,3 & 356,6 ($-$8,6\,\%)\\
+gauss MPD1.0 & A & $e_{xz}$ à 2 mm & 175,2 & 160,1 ($-$8,6\,\%)\\
+gauss MPD1.0 & A & $e_{zz}$ à 5 mm & 227,5 & 208,8 ($-$8,2\,\%)\\
+gauss MPD1.0 & B & $e_{zz}$ à 2 mm & 409,5 & 373,0 ($-$8,9\,\%)\\
+gauss MPD1.0 & B & $e_{xz}$ à 2 mm & 225,4 & 208,9 ($-$7,3\,\%)\\
+gauss MPD1.0 & B & $e_{zz}$ à 5 mm & 236,9 & 216,4 ($-$8,7\,\%)\\
+rainures vives & A & $e_{zz}$ à 2 mm & 167,5 & 167,7 (0,2\,\%)\\
+rainures vives & A & $e_{xz}$ à 2 mm & 131,3 & 131,6 (0,2\,\%)\\
+rainures vives & A & $e_{zz}$ à 5 mm & 100,9 & 101,1 (0,2\,\%)\\
+rainures vives & B & $e_{zz}$ à 2 mm & 267,2 & 267,6 (0,2\,\%)\\
+rainures vives & B & $e_{xz}$ à 2 mm & 210,3 & 210,8 (0,2\,\%)\\
+rainures vives & B & $e_{zz}$ à 5 mm & 161,9 & 162,2 (0,2\,\%)\\
+\bottomrule
+\end{tabular}
+\end{table}
+La formule multiplicative est exacte pour les rainures, et elle \textbf{sous-estime} de 9\,\% environ la perturbation des textures aléatoires. En
+effet, sur une texture aléatoire, les sommets sont chargés dès l'arrivée du pneu, avant que
+l'enveloppe n'atteigne son maximum : la perturbation dure plus longtemps que ne le suppose la
+formule, et le fluage l'amplifie davantage.
+
+
+\subsection{Convergence en résolution : T8}\label{sec:resolution}
+La même surface physique est discrétisée à 0,5, 0,25 et \SI{0.125}{mm}, par troncature spectrale
+exacte. Le contact et la réponse sont recalculés sous une pression uniforme de \SI{1.65}{MPa}
+(massif élastique de \SI{11670}{MPa}).
+\begin{table}[H]\centering\small
+\caption{T8 : $\epsilon_1$ maximal (µdef) en fonction du pas de discrétisation.}
+\begin{tabular}{lcccccc}
+\toprule
+Surface & pas (mm) & aire (\%) / $p_{\max}$ & $z$ = 0,5 mm & 1 mm & 2 mm & 5 mm\\
+\midrule
+aléatoire MPD 1,0 & 0,125 & 54,4 & 177 & 148 & 118 & 78\\
+aléatoire MPD 1,0 & 0,250 & 55,4 & 177 & 148 & 118 & 78\\
+aléatoire MPD 1,0 & 0,500 & 57,6 & 170 & 147 & 117 & 78\\
+rainures, arêtes vives & 0,251 & 7,2 MPa & 121 & 88 & 55 & 15\\
+rainures, arêtes vives & 0,125 & 10,2 MPa & 122 & 88 & 56 & 16\\
+rainures, arêtes vives & 0,063 & 14,2 MPa & 122 & 88 & 55 & 15\\
+rainures, r = 1 mm & 0,251 & 4,3 MPa & 101 & 87 & 60 & 20\\
+rainures, r = 1 mm & 0,125 & 4,4 MPa & 103 & 88 & 61 & 20\\
+rainures, r = 1 mm & 0,063 & 4,4 MPa & 104 & 88 & 61 & 20\\
+\bottomrule
+\end{tabular}
+\end{table}
+Au pas de la campagne (\SI{0.25}{mm}), les grandeurs sont convergées à mieux que 1\,\% dès
+\SI{0.5}{mm} de profondeur, y compris pour les arêtes vives. La pression d'arête y est pourtant
+singulière (7, 10 puis \SI{14}{MPa} quand le pas diminue), mais son intégrale, seule vue en
+profondeur, converge.
+
+\subsection{Degré de confiance : ce qu'on peut affirmer}
+\begin{encadre}
+\textbf{Fiable (à quelques pour cent).} Dans le cadre des hypothèses (H1)--(H7), les nombres de ce
+rapport sont des solutions convergées et vérifiées : le contact, la localisation, la
+viscoélasticité avec texture fixe, la résolution et l'accord avec le TFE pour le cas lisse. Les
+\textbf{tendances} sont robustes : amplification près de la surface, profondeur d'influence de
+10 à \SI{20}{mm}, effet nul en base de couche, classement des textures.
+
+\textbf{Incertain (facteur de l'ordre de 1,5).} La valeur absolue des déformations aux premiers
+millimètres dépend fortement de paramètres \emph{mal connus} : le module de la bande de roulement
+(voir la sensibilité à $E_r$), la forme exacte de la texture réelle (tirages et asymétrie) et
+l'arrondi des arêtes des rainures.
+
+\textbf{Hors de portée du niveau 1, traité par le niveau 2.} La valeur locale dans le mortier
+entre granulats (H7), la concentration de contrainte géométrique autour des rainures (H6) et le
+frottement (H3). Le niveau 2 (\S\ref{sec:niveau2}) les quantifie : les trois vont dans le sens
+d'une sévérité plus grande, comme annoncé. Leur degré de confiance est discuté au
+\S\ref{sec:n2_confiance}.
+\end{encadre}

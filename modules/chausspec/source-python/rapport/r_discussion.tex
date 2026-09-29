@@ -1,0 +1,57 @@
+\subsection{Interprétation mécanique}
+Le pneu ne porte que sur une fraction de la surface : 30 à 85\,\% selon la texture. La pression
+réelle est donc concentrée sur les sommets, à 3 à 9 fois la pression nominale. Cette surpression
+se diffuse dans le massif sur une profondeur de l'ordre de la taille des zones de contact, soit
+quelques millimètres, et la longueur d'onde de la texture fixe la profondeur d'influence.
+Au-delà, seule compte la résultante, identique au cas lisse (principe de Saint-Venant). C'est
+pourquoi le TFE, qui a montré une sensibilité croissante à l'empreinte quand on se rapproche de
+la surface, trouve ici un prolongement naturel : à l'échelle du pneu, la forme de l'empreinte
+agit sur les premiers centimètres ; à l'échelle de la texture, les sommets agissent sur les
+premiers millimètres.
+
+La viscoélasticité joue un rôle non trivial. Les sommets de texture sont chargés dès l'arrivée
+du pneu et pendant tout son passage, et la roue avant laisse une déformation différée au même
+endroit de la chaussée avant le passage de la roue arrière. La méthode héréditaire en tient
+compte exactement ; l'ancienne formule multiplicative sous-estimait l'effet des textures aléatoires d'environ 9\,\%.
+
+\subsection{Limites}
+Les trois limites structurelles du niveau 1 (H3, H6, H7) sont levées par le niveau 2 ; celles qui
+restent sont les suivantes.
+\begin{enumerate}[nosep]
+\item \textbf{Caoutchouc.} Le module de la bande de roulement du pneu d'A340 (et sa
+      dépendance à la fréquence et à la température) reste le paramètre le plus influent et le
+      moins connu. Données à obtenir auprès du manufacturier ou dans la littérature (Michelin,
+      Airbus).
+\item \textbf{Textures synthétiques.} Elles sont réalistes dans leurs statistiques mais ne
+      remplacent pas des relevés réels. Le code accepte directement un relevé de hauteurs (laser
+      3D) à la place de la surface générée.
+\item \textbf{Modèles locaux 2D.} L'entaille et la microstructure sont traitées en coupe
+      (déformation plane généralisée), avec des granulats circulaires et un mortier élastique au
+      point de fonctionnement. Une cellule 3D (granulats anguleux, mortier viscoélastique) est
+      l'étape suivante naturelle ; le solveur EF s'étend au 3D sans changement de principe.
+\item \textbf{Frottement} en glissement total (loi d'Amontons locale) : majorant pour la
+      texture, et représentatif d'un freinage appuyé. Le virage (effort transversal) n'a pas été
+      calculé ; \cs{} le traite déjà.
+\item \textbf{Un seul cas de chargement} : vitesse et température du TFE. À vitesse plus élevée
+      ou à température plus basse, l'enrobé est plus raide : la déformation diminue, mais pas
+      nécessairement la contrainte, et le contraste granulat/mortier diminue.
+\item \textbf{Critère d'endommagement.} Le rapport compare des déformations. Relier la
+      déformation locale dans le mortier à l'amorçage (fissuration par le haut, arrachement)
+      demande un critère calé sur essais (mortier bitumineux, essais de fatigue de mortier).
+\end{enumerate}
+
+\subsection{Suite proposée}
+\begin{enumerate}[nosep]
+\item \textbf{Relevés de texture réels} sur piste (STAC, profilomètre laser), calage de la DSP et
+      comparaison avec les surfaces synthétiques.
+\item \textbf{Module de la bande de roulement} : données pneumatiques, ou identification inverse
+      par des mesures de pression de contact sur surface texturée (capteurs en film).
+\item \textbf{Cellule mésoscopique 3D} à partir d'une tomographie d'enrobé réel, mortier
+      viscoélastique ; comparaison avec la cellule 2D pour chiffrer l'effet de coupe.
+\item \textbf{Essais sur mortier bitumineux} (module complexe et fatigue) pour transformer
+      $K_m$ en critère d'amorçage superficiel.
+\item \textbf{Indicateur mécanique de texture} : relier l'amplification à MPD, $m_2$ et $S_{sk}$
+      sur une famille de surfaces, et proposer un indicateur utilisable en ingénierie.
+\item \textbf{Confrontation aux dégradations observées} : fissuration par le haut et arrachement
+      aux bords de rainures (Toulouse-Blagnac).
+\end{enumerate}
