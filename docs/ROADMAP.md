@@ -186,3 +186,4 @@ lancent tous les tests automatiques sous Windows.
 - [x] ViscoCompare retiré de l'application (1.7.0)
 - [x] Cartes éditables (Markdown, citations) : ChaussSpec « Comment ça marche ? », campagnes, études (1.8.0)
 - [x] Installeur Windows 1.7.0 cassé par deux fichiers ne différant que par la casse : corrigé, et un test l'interdit désormais (1.8.0)
+- [x] Journal : note du jour avec tâches reportées, encart « Aujourd'hui » sur l'Accueil (1.9.0)

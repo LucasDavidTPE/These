@@ -95,6 +95,16 @@ racine (identité, page, état pour l'Accueil, problèmes, actions).
   (« ouvrir l'essai X dans le traitement », « enregistrer ce graphe dans Figures »). Si
   le module cible n'est pas compilé dans l'installeur, l'action n'apparaît pas.
 
+### 3.0 quater Journal (1.9.0)
+Module Journal (section Calendrier) : une note par jour, `journal/AAAA-MM-JJ.md`, en Markdown avec
+des tâches `- [ ]` / `- [x]`. La note du jour est créée à l'ouverture du module (ou à la première
+tâche cochée depuis l'Accueil) et reprend les tâches non faites de la note la plus récente ; la
+note précédente n'est pas modifiée. On coche sur place, on ajoute une tâche d'une ligne (fin de
+« ## À faire »), on réécrit la note entière au besoin. Les autres jours se consultent (← →, liste
+des 30 dernières notes avec leurs tâches ouvertes) et ne sont créés qu'à la première modification.
+Accueil : encart « Aujourd'hui » (tâches cochables, action `journal.basculer`). Ctrl+K cherche dans
+les notes (`journal.ouvrir`). Les cases à cocher du Markdown valent aussi dans les cartes (lecture seule).
+
 ### 3.0 ter Cartes éditables (1.8.0)
 Des blocs de texte que l'utilisateur écrit lui-même, dans un petit Markdown (## titre, **gras**,
 *italique*, listes, `code`, liens web, citations `[@BIB-020]`), rendu sans HTML injecté

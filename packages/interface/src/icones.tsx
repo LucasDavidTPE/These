@@ -52,6 +52,15 @@ export const IconeBibliotheque = (p: P) => (
   </Trace>
 );
 
+export const IconeJournal = (p: P) => (
+  <Trace {...p}>
+    <path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6z" />
+    <path d="M6 3v18" />
+    <path d="m10 9 1.5 1.5L14 8" />
+    <path d="M10 14h5" />
+  </Trace>
+);
+
 export const IconePlanning = (p: P) => (
   <Trace {...p}>
     <path d="M4 5h9" />

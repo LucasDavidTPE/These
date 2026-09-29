@@ -32,7 +32,8 @@ function Ligne({ contenu, refs }: { contenu: EnLigne[]; refs: ReadonlyMap<string
   );
 }
 
-export function Markdown({ texte }: { texte: string }) {
+/** `basculer` : rend les cases `- [ ]` cliquables (numéro de ligne dans le texte) ; sans lui, elles sont en lecture seule. */
+export function Markdown({ texte, basculer }: { texte: string; basculer?: (ligne: number) => void }) {
   const ctx = useContexte();
   const blocs = useMemo(() => analyserMarkdown(texte), [texte]);
   const cles = clesCitees(texte).join(",");
@@ -74,10 +75,16 @@ export function Markdown({ texte }: { texte: string }) {
             ))}
           </ol>
         ) : (
-          <ul key={i}>
+          <ul key={i} className={b.taches.some((t) => t !== null) ? "taches" : undefined}>
             {b.elements.map((l, j) => (
-              <li key={j}>
-                <Ligne contenu={l} refs={refs} />
+              <li key={j} className={b.taches[j] ? "fait" : undefined}>
+                {b.taches[j] !== null ? (
+                  <label>
+                    <input type="checkbox" checked={!!b.taches[j]} disabled={!basculer} onChange={() => basculer?.(b.lignes[j]!)} /> <Ligne contenu={l} refs={refs} />
+                  </label>
+                ) : (
+                  <Ligne contenu={l} refs={refs} />
+                )}
               </li>
             ))}
           </ul>

@@ -145,6 +145,9 @@ export function plateformeDemo(scenario: string | null): Plateforme {
       }),
     );
     espace.poser("numeriseur/courbe-tsrst.json", "{}");
+    const hier = new Date(Date.now() - 86_400_000);
+    const j = `${hier.getFullYear()}-${String(hier.getMonth() + 1).padStart(2, "0")}-${String(hier.getDate()).padStart(2, "0")}`;
+    espace.poser(`journal/${j}.md`, "# Hier\n\n## À faire\n- [x] Caler 2S2P1D sur Essai1\n- [ ] Relire le chapitre 2\n- [ ] Répondre au mail de Sergio\n\n## Notes\nRéunion : **valider la structure PEP** avant vendredi.\n");
     espace.poser("campagnes/demo-cm/campagne.json", JSON.stringify({ titre: "Module complexe démo", type: "module-complexe", statut: "en cours", donnees: "recherche:Demo CM" }));
     espace.poser("campagnes/demo-cm/essais/Essai1/essai.json", "{}");
     espace.poser("campagnes/autre/campagne.json", JSON.stringify({ titre: "Autre campagne", type: "module-complexe", statut: "en cours", donnees: "" }));

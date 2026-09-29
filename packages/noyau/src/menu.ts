@@ -11,7 +11,7 @@ export interface Section {
 
 export const SECTIONS: readonly Section[] = [
   { titre: "Accueil", modules: ["accueil"] },
-  { titre: "Calendrier", modules: ["planning"] },
+  { titre: "Calendrier", modules: ["planning", "journal"] },
   { titre: "Bibliographie", modules: ["bibliotheque"] },
   { titre: "Essais", modules: ["campagnes", "traitement", "etudes"] },
   { titre: "Outils", modules: ["figures", "chausspec", "numeriseur"] },

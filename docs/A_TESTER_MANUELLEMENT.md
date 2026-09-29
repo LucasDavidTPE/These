@@ -608,3 +608,13 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] Campagne et étude : section « Cartes », « + Nouvelle carte » ; Markdown (titre, listes, gras,
       `code`, lien web qui s'ouvre dans le navigateur) ; `[@BIB-020]` rendu en auteur-année si les citations
       sont actives, tel quel sinon ; « retirer » demande confirmation et range le fichier dans `.anciennes/`.
+
+## Journal (1.9.0)
+
+- [ ] Calendrier → Journal : la note du jour se crée avec les tâches non faites de la dernière note ;
+      `journal/AAAA-MM-JJ.md` apparaît dans l'espace et sur l'autre PC.
+- [ ] « Nouvelle tâche… » + Entrée ajoute à « À faire » ; cocher / décocher dans la note ; « Modifier la note »
+      pour tout réécrire (Markdown, `- [ ]` pour une tâche).
+- [ ] ← / → et la liste de gauche : les jours passés s'affichent, un jour sans note ne se crée qu'à la première modification.
+- [ ] Accueil : encart « Aujourd'hui », cocher une tâche la barre aussi dans le journal.
+- [ ] Le lendemain : les tâches restées ouvertes sont reprises, celles cochées non.

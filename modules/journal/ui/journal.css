@@ -1,0 +1,47 @@
+.journal {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.journal-jours {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.journal-jours button {
+  display: flex;
+  justify-content: space-between;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+.journal-jours button.actif,
+.journal-jours button:hover {
+  background: var(--surface-2);
+}
+.journal-compte {
+  font-size: 11px;
+  min-width: 18px;
+  text-align: center;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--accent-texte);
+}
+.journal-note {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.journal-ajout input {
+  flex: 1 1 260px;
+}
+@media (max-width: 720px) {
+  .journal {
+    grid-template-columns: 1fr;
+  }
+}

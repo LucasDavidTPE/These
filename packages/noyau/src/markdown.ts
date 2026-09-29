@@ -13,7 +13,15 @@ export type EnLigne =
 export type BlocMd =
   | { type: "titre"; niveau: 2 | 3; contenu: EnLigne[] }
   | { type: "paragraphe"; contenu: EnLigne[] }
-  | { type: "liste"; ordonnee: boolean; elements: EnLigne[][] };
+  | {
+      type: "liste";
+      ordonnee: boolean;
+      elements: EnLigne[][];
+      /** Par élément : case à cocher (`- [ ]` / `- [x]`) ou null. */
+      taches: (boolean | null)[];
+      /** Par élément : numéro de sa ligne dans le texte (pour cocher sur place). */
+      lignes: number[];
+    };
 
 const JETON = /(`[^`\n]+`)|(\[@[^\]\n]+\])|(\[[^\]\n]+\]\((?:https?:\/\/|mailto:)[^)\s]+\))|(\*\*[^*\n]+\*\*)|(\*[^*\n]+\*)/g;
 
@@ -39,14 +47,14 @@ export function enLigne(texte: string): EnLigne[] {
 export function analyserMarkdown(texte: string): BlocMd[] {
   const blocs: BlocMd[] = [];
   let para: string[] = [];
-  let liste: { ordonnee: boolean; elements: string[] } | null = null;
+  let liste: { ordonnee: boolean; elements: string[]; taches: (boolean | null)[]; lignes: number[] } | null = null;
   const fermer = () => {
     if (para.length) blocs.push({ type: "paragraphe", contenu: enLigne(para.join(" ")) });
-    if (liste) blocs.push({ type: "liste", ordonnee: liste.ordonnee, elements: liste.elements.map(enLigne) });
+    if (liste) blocs.push({ type: "liste", ordonnee: liste.ordonnee, elements: liste.elements.map(enLigne), taches: liste.taches, lignes: liste.lignes });
     para = [];
     liste = null;
   };
-  for (const brute of texte.replace(/\r\n?/g, "\n").split("\n")) {
+  for (const [n, brute] of texte.replace(/\r\n?/g, "\n").split("\n").entries()) {
     const l = brute.trim();
     const titre = /^(#{1,3})\s+(.*)$/.exec(l);
     const puce = /^[-*]\s+(.*)$/.exec(l);
@@ -58,8 +66,12 @@ export function analyserMarkdown(texte: string): BlocMd[] {
     } else if (puce || num) {
       const ordonnee = !puce;
       if (para.length || (liste && liste.ordonnee !== ordonnee)) fermer();
-      liste ??= { ordonnee, elements: [] };
-      liste.elements.push((puce ?? num)![1]!);
+      liste ??= { ordonnee, elements: [], taches: [], lignes: [] };
+      const contenu = (puce ?? num)![1]!;
+      const case_ = /^\[( |x|X)\]\s+(.*)$/.exec(contenu);
+      liste.elements.push(case_ ? case_[2]! : contenu);
+      liste.taches.push(case_ ? case_[1] !== " " : null);
+      liste.lignes.push(n);
     } else if (liste && /^\s{2,}/.test(brute)) liste.elements[liste.elements.length - 1] += ` ${l}`;
     else {
       if (liste) fermer();

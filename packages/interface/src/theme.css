@@ -934,3 +934,11 @@ details.carte-texte > .carte-actions {
 .cartes-pied {
   gap: 12px;
 }
+.markdown ul.taches {
+  list-style: none;
+  padding-left: 4px;
+}
+.markdown ul.taches li.fait {
+  color: var(--discret);
+  text-decoration: line-through;
+}

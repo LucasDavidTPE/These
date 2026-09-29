@@ -29,4 +29,9 @@ describe("petit Markdown des cartes", () => {
     expect(b[2]).toMatchObject({ ordonnee: false, elements: [[{ texte: "a" }], [{ texte: "b suite de b" }]] });
     expect(b[3]).toMatchObject({ ordonnee: true });
   });
+
+  it("cases à cocher, avec leur ligne", () => {
+    const b = analyserMarkdown("titre\n\n- [ ] à faire\n- [x] fait\n- normal");
+    expect(b[1]).toMatchObject({ type: "liste", taches: [false, true, null], lignes: [2, 3, 4], elements: [[{ texte: "à faire" }], [{ texte: "fait" }], [{ texte: "normal" }]] });
+  });
 });

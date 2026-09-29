@@ -22,6 +22,7 @@ const TEINTES: Record<string, number> = {
   numeriseur: 52,
   bibliotheque: 128,
   planning: 245,
+  journal: 300,
 };
 const teinte = (id: string) => ({ "--teinte": TEINTES[id] ?? 210 }) as CSSProperties;
 
@@ -208,6 +209,36 @@ function CetteSemaine({ elements }: { elements: ElementSemaine[] }) {
   );
 }
 
+interface TacheDuJour {
+  ligne: number;
+  fait: boolean;
+  texte: string;
+}
+
+function Aujourdhui({ taches }: { taches: TacheDuJour[] }) {
+  const ctx = useContexte();
+  const [ajout, setAjout] = useState(false);
+  const ouvertes = taches.filter((t) => !t.fait);
+  return (
+    <Encart titre="Aujourd'hui" action={{ texte: "Journal", faire: () => ctx.naviguer("journal") }}>
+      {taches.length === 0 ? (
+        <Vide>Aucune tâche pour aujourd'hui.</Vide>
+      ) : (
+        <ul className="acc-taches">
+          {[...ouvertes, ...taches.filter((t) => t.fait)].slice(0, 8).map((t) => (
+            <li key={t.ligne} className={t.fait ? "fait" : undefined}>
+              <label>
+                <input type="checkbox" checked={t.fait} disabled={ajout} onChange={() => (setAjout(true), void ctx.registre.executer("journal.basculer", { ctx, ligne: t.ligne }).finally(() => setAjout(false)))} /> {t.texte}
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
+      {taches.length > 8 ? <p className="discret petit">… et {taches.length - 8} autre(s) dans le journal.</p> : null}
+    </Encart>
+  );
+}
+
 interface EssaiRecent {
   slug: string;
   campagne: string;
@@ -324,16 +355,18 @@ export function AccueilPage() {
   const ctx = useContexte();
   const autres = ctx.registre.manifestes.filter((m) => m.id !== "accueil");
   const semaine = useAction<ElementSemaine[]>("planning.cette-semaine", (c) => c, []);
+  const jour = useAction<{ taches: TacheDuJour[] } | null>("journal.aujourdhui", (c) => c, null);
   const essais = useAction<EssaiRecent[]>("campagnes.recents", (c) => c, []);
   const figures = useAction<FigureRecente[]>("figures.recentes", (c) => c, []);
   const montrerFigures = figures && (figures.length > 0 || !!ctx.dossierFigures);
-  const encarts = [semaine, essais, montrerFigures ? figures : null].filter((x) => x !== null).length;
+  const encarts = [jour, semaine, essais, montrerFigures ? figures : null].filter((x) => x !== null).length;
 
   return (
     <div className="acc">
       <Bandeau semaine={semaine ? semaine.length : null} />
       {encarts ? (
         <div className="acc-grille">
+          {jour ? <Aujourdhui taches={jour.taches} /> : null}
           {semaine ? <CetteSemaine elements={semaine} /> : null}
           {essais ? <DerniersEssais essais={essais} /> : null}
           {montrerFigures && figures ? <DernieresFigures figures={figures} /> : null}
