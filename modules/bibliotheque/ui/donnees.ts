@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { chargerCollection, creerObjet, enregistrerObjet, Introuvable, jsonStable, type Fichiers, type ObjetCharge, type Probleme } from "@noyau/stockage";
 import { useContexte } from "@interface/contexte";
 import { calculer, moisCourant, tableauDeBord, type Calcule, type TableauDeBord } from "../core/calculs";
+import { CITATIONS_PAR_DEFAUT, FICHIER_CITATIONS, lireReglageCitations, type ReglageCitations } from "../core/citations";
 import { doublons, type Doublon } from "../core/doublons";
 import type { ImportClasseur } from "../core/import";
 import {
@@ -150,4 +151,19 @@ export function useBiblio() {
     enregistrerAnalyse: (texte: string) => garde(async (f) => (await f.ensureDir(`${DOSSIER}/analyse`), f.writeTextAtomic(FICHIER_ANALYSE, texte))),
     importer: (imp: ImportClasseur) => garde((f) => ecrireImport(f, imp)),
   };
+}
+
+/** Réglage partagé des citations `[@…]` dans les autres modules (actives par défaut). */
+export async function lireCitations(fs: Fichiers): Promise<ReglageCitations> {
+  const t = await lireTexte(fs, FICHIER_CITATIONS).catch(() => null);
+  try {
+    return t ? lireReglageCitations(JSON.parse(t)) : CITATIONS_PAR_DEFAUT;
+  } catch {
+    return CITATIONS_PAR_DEFAUT;
+  }
+}
+
+export async function ecrireCitations(fs: Fichiers, r: ReglageCitations): Promise<void> {
+  await fs.ensureDir(DOSSIER);
+  await fs.writeTextAtomic(FICHIER_CITATIONS, JSON.stringify(r, null, 2) + "\n");
 }

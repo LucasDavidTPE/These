@@ -480,3 +480,111 @@ nombres doivent être identiques, dans les deux modes.
       tout l'espace (sans `.tmp` ni `.lock`) ; refus propre si on l'enregistre dans l'espace.
 - [ ] Taille de l'espace dans OneDrive après quelques semaines : raisonnable (seuls les
       fichiers ouverts sont copiés).
+
+## Figures → Graphes : autres régressions et plage (1.2.1)
+
+- [ ] Régression → Polynôme, degré 2 puis 3 : courbe lisse, équation sans termes parasites
+      (pas de « 10⁻¹⁶ ») ; comparer avec la courbe de tendance polynomiale d'Excel.
+- [ ] Exponentielle sur une décroissance (y > 0), Logarithmique (x > 0) : mêmes coefficients
+      que la courbe de tendance d'Excel ; avec des points hors domaine, ils sont écartés et le
+      nombre de points retenus est affiché.
+- [ ] « Choisir sur l'aperçu », tirer un rectangle sur une partie de la courbe : les bornes
+      « de / à » se remplissent, la régression n'utilise que ces points, la courbe s'arrête aux
+      bornes ; « Prolonger » l'étend à toute la série ; « Toute la série » annule la plage ;
+      Échap annule la sélection en cours.
+- [ ] Polynôme de degré 3 dans un graphe étroit : R² passe sous l'équation, en SVG comme en
+      pgfplots compilé.
+- [ ] Enregistrer, rouvrir le graphe : type, degré, plage et prolongement sont gardés.
+
+## Figures → Graphes : lire sur la courbe (1.2.2)
+
+- [ ] Avec une régression choisie, « Lire sur la courbe » : saisir un x donne le y de la
+      courbe, saisir un y donne le x. Vérifier avec l'équation affichée (et Excel).
+- [ ] Un x hors de la plage de la série : le y est une extrapolation (aucun blocage).
+- [ ] Polynôme : un y atteint deux fois donne les deux x, séparés par « ; » ; un y jamais
+      atteint dans la plage affiche « aucun dans la plage ».
+- [ ] Exponentielle avec y négatif, logarithmique / puissance : « aucun » plutôt qu'une erreur.
+
+## ChaussSpec : « Comment ça marche ? » (1.2.3)
+
+- [ ] Bouton « Comment ça marche ? » en haut de ChaussSpec : le panneau s'ouvre et se referme ;
+      schéma en quatre étapes lisible (même fenêtre étroite), cinq rubriques dépliables.
+- [ ] Le texte est compréhensible sans lire le code ; noter ce qui reste obscur (à
+      compléter). Notice complète : `docs/CHAUSSSPEC_EXPLIQUE.md`.
+
+## Recherche globale Ctrl+K (1.3.0)
+
+- [ ] Ctrl+K (et le champ « Rechercher » de la barre) ouvre la palette ; Échap la ferme ;
+      ↑ ↓ Entrée naviguent. Vide : la liste des pages.
+- [ ] Taper un bout de titre de référence, d'essai, de figure, de cas ChaussSpec, de tâche du
+      planning : les résultats apparaissent, avec leur module. Sans accents, mots en désordre.
+- [ ] Entrée sur un cas ChaussSpec : le cas s'ouvre directement ; sur les autres, la page du module.
+- [ ] Sur un gros espace (plusieurs centaines de références), l'ouverture de la palette reste fluide.
+
+## Manuscrits → Présentations (1.3.0)
+
+- [ ] Nouvelle (exemple), Enregistrer : `presentations/<nom>.md` apparaît dans l'espace, l'autre PC le voit.
+- [ ] Exporter en .pptx, ouvrir dans **PowerPoint** : 5 diapos, aucun message de réparation, textes
+      modifiables, titre reconnu (mode Plan), numéros de diapo, pied de page.
+- [ ] `![…](figure:FIG-xxxx)` avec une vraie figure de la bibliothèque : l'image est bien
+      dans la diapo, proportions respectées, légende dessous ; un identifiant faux : message
+      « image introuvable » à l'export, texte de remplacement dans la diapo.
+- [ ] Nouveau modèle depuis celui-ci : changer l'accent, la police, le pied de page ; le
+      modèle est gardé (`presentations/modeles/`), appliqué, et se retrouve sur l'autre PC.
+- [ ] Les quatre modèles de base (clair, sombre, bleu, chaud) : lisibles en projection.
+- [ ] Deux colonnes avec une image à droite et des puces à gauche ; une diapo de section.
+
+## ChaussSpec : champs dérivés et combinaisons (1.4.0)
+
+- [ ] Après un calcul, le menu « Champ » propose, en plus des composantes : ε1, ε2, ε3, εv (si les six
+      déformations sont calculées) et σ1, σ2, σ3, τmax, σ von Mises (si les six contraintes le sont),
+      pour chaque profondeur. Vérifier ε1 contre l'ancien affichage (identique) et τmax = (σ1 − σ3) / 2.
+- [ ] « Combinaison linéaire… » : saisir `exx - eyy`, `0,5 exx + 0,5 eyy`, `sxx + syy + szz` ; la carte,
+      les extrêmes et les coupes suivent. Une composante non calculée, ou une faute de frappe,
+      affiche un message clair (pas d'écran blanc). L'unité est celle de la grandeur (µdef, MPa, mm).
+- [ ] En régime harmonique (champs complexes), les champs dérivés ne sont pas proposés.
+
+## Recherche globale : ouverture directe et Accueil (1.4.0)
+
+- [ ] Ctrl+K sur une référence, une étude, une campagne, une figure : Entrée ouvre directement
+      sa fiche / sa vue, pas seulement la page du module.
+- [ ] Accueil → Dernières figures : un titre très long (par exemple avec des soulignés) tient sur
+      deux lignes au plus, sans sortir de sa vignette ; l'infobulle donne le titre complet.
+
+## Régression : qualité de l'ajustement (1.5.0)
+
+- [ ] Sous l'équation : nombre de points, écart quadratique moyen, erreur type. « Voir les résidus » :
+      une droite sur des points courbes donne une forme en U ; un bon modèle, un nuage sans forme.
+- [ ] Erreur type = « trop peu de points » quand n ≤ nombre de paramètres.
+
+## Numériseur : échelles connues et détection des axes (1.5.0)
+
+- [ ] Ouvrir une image de graphique avec deux axes noirs : « Détecter les axes » pose X1, X2, Y1, Y2
+      aux extrémités des axes ; saisir les valeurs (ou déplacer les points sur des graduations) suffit.
+      Image sans axes nets : message, rien n'est posé.
+- [ ] Carte de couleurs, « Échelle » : choisir celle du logiciel qui a tracé la carte (jet, viridis…),
+      saisir les valeurs de début et de fin (case « inversée » si la barre va de haut en bas) :
+      « Lire la carte » marche sans pointer la légende. Comparer avec la lecture de la barre de l'image.
+- [ ] Sur une vraie carte COMSOL / Matlab : les valeurs lues collent à la barre (à la tolérance près).
+
+## Traitement → campagne, et Ctrl+K (1.5.1)
+
+- [ ] Ouvrir un fichier de mesure par « Ouvrir » dans Traitement, écarter des cycles, caler ; « Rattacher
+      à une campagne… » : choisir la campagne, un essai existant ou « Nouvel essai… ». Message de confirmation.
+- [ ] Dans la campagne : l'essai a « 2S2P1D ✓ », ses paramètres apparaissent dans « Résultats du
+      traitement 2S2P1D » ; le bouton rouvre le dépouillement avec les mêmes cycles écartés, sur l'autre PC aussi.
+- [ ] Rattacher sur un essai déjà dépouillé : demande de confirmation « Remplacer » ; l'ancien est dans
+      `campagnes/<c>/essais/<e>/.anciens/`. Le dépouillement ne figure plus dans « Dépouillements enregistrés ».
+- [ ] Fichier déposé par glisser-déposer (pas par « Ouvrir ») : bouton grisé, l'infobulle explique pourquoi.
+- [ ] Ctrl+K depuis la page Bibliothèque elle-même : Entrée sur une référence ouvre bien sa fiche.
+
+## Citations de la Bibliothèque (1.6.0)
+
+- [ ] Présentation avec `[@BIB-020]` et `[@BIB-065, p. 12; @BIB-020]` : le panneau compte les références
+      citées ; l'export .pptx montre « (Olard & Di Benedetto, 2003) » et une diapo Références à la fin
+      (vérifier auteurs, année, revue, DOI contre ta fiche).
+- [ ] Une clé fausse (`[@BIB-999]`) reste telle quelle et est signalée à l'export.
+- [ ] `références: non` dans l'en-tête : citations rendues, pas de diapo Références.
+- [ ] ChaussSpec → « Comment ça marche ? » : lignes « Sources : » sous les rubriques ; clic → la fiche.
+- [ ] Bibliothèque : décocher « Citations [@…] dans l'application » → plus de « Sources », et `[@…]`
+      reste tel qu'écrit dans les présentations ; l'autre PC voit le même réglage.

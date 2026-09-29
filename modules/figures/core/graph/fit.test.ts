@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { exportGraphSvg, exportPgfplots } from "./export";
-import { fitCorner, fitLabel, fitPoints, fitSeries, texNumber } from "./fit";
+import { fitCorner, fitInverse, fitLabel, fitResidus, fitPoints, fitSample, fitSeries, fitValue, parseFit, texNumber, type FitKind, type SeriesFit } from "./fit";
+import { fitRows, graphFits, scales } from "./layout";
+import { graphTheme } from "./style";
 import { emptyGraph, validateGraph } from "./model";
 
 describe("régressions", () => {
@@ -63,5 +65,112 @@ describe("régressions", () => {
     expect(tex).toContain("\\node[anchor=south east");
     expect(tex).toContain("R^2 = 0{,}9998");
     expect(tex).toContain("\\tikz[baseline=-0.5ex]\\draw[");
+  });
+
+  it("polynôme : retrouve un polynôme exact, même loin de l'origine", () => {
+    const x = Array.from({ length: 12 }, (_, i) => 1000 + i);
+    const p = (v: number) => 2 - 0.5 * (v - 1000) + 0.25 * (v - 1000) ** 2 - 0.01 * (v - 1000) ** 3;
+    const f = fitSeries(x, x.map(p), "polynome", 3)!;
+    expect(f.r2).toBeCloseTo(1, 10);
+    for (const v of [1000, 1003.5, 1011]) expect(fitValue(f, v)).toBeCloseTo(p(v), 6);
+    expect(f.coefs).toHaveLength(4);
+    // Pas assez de x distincts pour le degré demandé.
+    expect(fitSeries([1, 1, 2, 2], [1, 2, 3, 4], "polynome", 2)).toBeNull();
+    const q = fitSeries([-1, 0, 1, 2], [1, 0, 1, 4], "polynome", 2)!;
+    expect(q.coefs!.map((c) => Number(c.toFixed(10)))).toEqual([0, 0, 1]);
+    expect(fitLabel(q)).toBe("$y = 1\\,x^{2} \\quad R^2 = 1$");
+  });
+
+  it("exponentielle et logarithme", () => {
+    const x = [0, 1, 2, 3, 4];
+    const e = fitSeries(x, x.map((v) => 2 * Math.exp(-0.3 * v)), "exponentielle")!;
+    expect(e.a).toBeCloseTo(2);
+    expect(e.b).toBeCloseTo(-0.3);
+    expect(fitLabel(e)).toBe("$y = 2\\,e^{-0{,}3\\,x} \\quad R^2 = 1$");
+    const xl = [1, 2, 5, 10, 20];
+    const l = fitSeries([-1, ...xl], [7, ...xl.map((v) => 3 * Math.log(v) - 1)], "logarithmique")!;
+    expect(l.n).toBe(5); // x ≤ 0 écarté
+    expect(l.a).toBeCloseTo(3);
+    expect(l.b).toBeCloseTo(-1);
+    expect(fitLabel(l)).toBe("$y = 3\\,\\ln x - 1 \\quad R^2 = 1$");
+  });
+
+  it("plage : seuls les points retenus comptent, la courbe s'y limite sauf si prolongée", () => {
+    const x = [0, 1, 2, 3, 4, 5, 6];
+    const y = [0, 1, 2, 3, 10, 20, 30]; // droite y = x jusqu'à 3, puis rupture
+    expect(fitSample(x, y, { xmin: 3, xmax: 0 })).toEqual({ x: [0, 1, 2, 3], y: [0, 1, 2, 3] });
+    const doc = { ...emptyGraph(), series: [{ name: "a", type: "points" as const, x, y, legend: true, fit: { kind: "lineaire", label: true, xmax: 3 } as SeriesFit }] };
+    const { xs, ys } = scales(doc);
+    const [f] = graphFits(doc, xs, ys);
+    expect(f!.result.a).toBeCloseTo(1);
+    expect(f!.result.b).toBeCloseTo(0);
+    expect(f!.points.map((p) => p[0])).toEqual([0, 3]);
+    doc.series[0]!.fit = { ...doc.series[0]!.fit, prolonger: true };
+    expect(graphFits(doc, xs, ys)[0]!.points.map((p) => p[0])).toEqual([0, 6]);
+  });
+
+  it("lecture : degré borné, plage et prolongement gardés", () => {
+    expect(parseFit({ kind: "polynome", degre: 9, xmin: 1, xmax: "x", prolonger: true })).toEqual({ kind: "polynome", label: true, degre: 6, xmin: 1, prolonger: true });
+    expect(parseFit({ kind: "exponentielle", label: false })).toEqual({ kind: "exponentielle", label: false });
+    expect(parseFit({ kind: "polynome" })).toEqual({ kind: "polynome", label: true, degre: 2 });
+  });
+
+  it("équation trop large pour le graphe : R² passe à la ligne", () => {
+    const f = { i: 0, result: { kind: "lineaire" as const, a: 1, b: 0, r2: 1, n: 2 }, points: [], label: "$y = 1\\,x \\quad R^2 = 1$" };
+    const theme = graphTheme(emptyGraph());
+    expect(fitRows([f], theme, 200)).toEqual([{ i: 0, text: f.label, trait: true }]);
+    expect(fitRows([f], theme, 12)).toEqual([
+      { i: 0, text: "$y = 1\\,x$", trait: true },
+      { i: 0, text: "$R^2 = 1$", trait: false },
+    ]);
+  });
+
+  it("inverse : retrouve x pour un y, sur chaque forme", () => {
+    const x = [1, 2, 3, 4, 5, 6];
+    const cas: [FitKind, (v: number) => number][] = [
+      ["lineaire", (v) => 3 * v + 2],
+      ["puissance", (v) => 2 * v ** 1.5],
+      ["exponentielle", (v) => 0.5 * Math.exp(0.4 * v)],
+      ["logarithmique", (v) => 2 * Math.log(v) + 1],
+    ];
+    for (const [kind, g] of cas) {
+      const f = fitSeries(x, x.map(g), kind)!;
+      const r = fitInverse(f, g(3.7), [1, 6]);
+      expect(r).toHaveLength(1);
+      expect(r[0]).toBeCloseTo(3.7, 6);
+    }
+    // Extrapolation : au-delà de la plage de la série.
+    const d = fitSeries(x, x.map((v) => 3 * v + 2), "lineaire")!;
+    expect(fitInverse(d, 62, [1, 6])[0]).toBeCloseTo(20, 8);
+    // Sans solution : y négatif pour une exponentielle.
+    expect(fitInverse(fitSeries(x, x.map((v) => Math.exp(v)), "exponentielle")!, -1, [1, 6])).toEqual([]);
+    // Polynôme : deux racines pour y = 1 sur x² (−1 et 1).
+    const q = fitSeries([-2, -1, 0, 1, 2], [4, 1, 0, 1, 4], "polynome", 2)!;
+    const rs = fitInverse(q, 1, [-2, 2]);
+    expect(rs).toHaveLength(2);
+    expect(rs[0]).toBeCloseTo(-1, 6);
+    expect(rs[1]).toBeCloseTo(1, 6);
+    expect(fitInverse(q, 10, [-2, 2])).toEqual([]);
+  });
+
+  it("résidus : erreur type et nombre de paramètres", () => {
+    const x = [0, 1, 2, 3, 4, 5];
+    const y = x.map((v, i) => 2 * v + 1 + (i % 2 ? 0.5 : -0.5));
+    const f = fitSeries(x, y, "lineaire")!;
+    const r = fitResidus(x, y, f);
+    expect(r.n).toBe(6);
+    expect(r.p).toBe(2);
+    expect(r.r.reduce((a, b) => a + b, 0)).toBeCloseTo(0, 9);
+    expect(r.rmse).toBeGreaterThan(0.4);
+    expect(r.sigma!).toBeCloseTo(Math.sqrt((r.rmse ** 2 * 6) / 4), 12);
+    // Exact : résidus nuls.
+    const e = fitResidus(x, x.map((v) => 3 * v), fitSeries(x, x.map((v) => 3 * v), "origine")!);
+    expect(e.p).toBe(1);
+    expect(e.maxAbs).toBeLessThan(1e-9);
+    // Polynôme : p = degré + 1 ; points hors domaine (log) écartés.
+    expect(fitResidus(x, y, fitSeries(x, y, "polynome", 3)!).p).toBe(4);
+    const lx = [0, 1, 2, 3, 4];
+    const l = fitResidus(lx, lx.map((v) => 2 * Math.log(Math.max(v, 1)) + 1), fitSeries(lx, lx.map((v) => 2 * Math.log(Math.max(v, 1)) + 1), "logarithmique")!);
+    expect(l.n).toBe(4);
   });
 });

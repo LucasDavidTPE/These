@@ -1,0 +1,6 @@
+écart relatif max (w, sr) entre glissement et intercalaire mou d'épaisseur e :
+  e =   4.00 mm : w 3.27e-02   sigma_r 3.18e-02
+  e =   1.00 mm : w 5.44e-03   sigma_r 6.94e-03
+  e =   0.25 mm : w 6.92e-04   sigma_r 5.78e-04
+  e =   0.06 mm : w 7.04e-05   sigma_r 1.39e-04
+sigma_r(r=0) glissant  [MPa] : [-1.6525 -0.0372  1.4222 -0.0047  0.046  -0.0078]

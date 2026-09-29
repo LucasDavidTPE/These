@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import { isoAvecDecalage } from "@noyau/dates";
 import { parent } from "@noyau/stockage";
 import type { Contexte } from "@interface/contexte";
+import { DOSSIER_DEPOUILLEMENTS } from "../core/depouillement";
 import { contenuEnregistre, projetJSON, type Essai } from "../core/essai";
 import { useTraitement } from "./etat";
 
@@ -53,4 +54,21 @@ export function useSauvegardeAuto(ctx: Contexte): void {
     }, 1200);
     return () => clearTimeout(minuterie);
   }, [tour, ctx]);
+}
+
+/**
+ * Change l'emplacement d'enregistrement d'un essai (rattachement à un essai de campagne) et l'y
+ * écrit. L'ancien enregistrement autonome (`traitement/…`) est rangé dans `.supprimes`, jamais effacé.
+ */
+export async function deplacerEnregistrement(ctx: Pick<Contexte, "espace" | "poste">, essaiId: string, chemin: string): Promise<void> {
+  const e = useTraitement.getState().essais.find((x) => x.id === essaiId);
+  if (!e) throw new Error("Essai introuvable (fermé entre-temps ?).");
+  const ancien = e.enregistrement;
+  e.enregistrement = { chemin, format: "depouillement" };
+  await enregistrer(ctx, e, true);
+  const fs = ctx.espace?.fichiers;
+  if (fs && ancien && ancien.chemin !== chemin && ancien.chemin.startsWith(`${DOSSIER_DEPOUILLEMENTS}/`) && (await fs.exists(ancien.chemin))) {
+    await fs.ensureDir(`${DOSSIER_DEPOUILLEMENTS}/.supprimes`);
+    await fs.rename(ancien.chemin, `${DOSSIER_DEPOUILLEMENTS}/.supprimes/${Date.now()}-${ancien.chemin.split("/").pop()}`);
+  }
 }

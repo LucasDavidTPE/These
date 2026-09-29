@@ -1,0 +1,15 @@
+{
+  "_commentaire": "Exemple d'entrée par carte de pression (format du futur prototype STAC) : fichier CSV ; 1re ligne = x des pixels (m), 1re colonne = y des pixels (m), valeurs en MPa (unit = 1e6). Roue isolée, statique, structure semi-infinie simple.",
+  "structure": {
+    "bottom": "halfspace",
+    "layers": [
+      {"name": "BB", "h": 0.10, "material": {"type": "elastic", "E": 7000, "nu": 0.35}},
+      {"name": "GNT", "h": 0.30, "material": {"type": "elastic", "E": 300, "nu": 0.35}},
+      {"name": "Sol", "material": {"type": "elastic", "E": 50, "nu": 0.35}}
+    ]
+  },
+  "loading": {"wheels": [{"x0": 0.0, "y0": 0.0, "footprint": {"type": "map", "file": "carte_exemple.csv", "unit": 1e6, "force": 100000}}]},
+  "regime": {"type": "static"},
+  "grid": {"L": [16, 16], "N": [512, 512], "window": [-1, 1, -1, 1]},
+  "outputs": {"dir": "resultats_carte", "depths": [0.0, 0.10], "components": ["uz", "exx", "eyy", "ezz", "exy", "exz", "eyz"]}
+}

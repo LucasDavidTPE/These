@@ -166,3 +166,18 @@ lancent tous les tests automatiques sous Windows.
 - [x] Données brutes ouvertes pour une analyse copiées dans `donnees/` (Traitement, Campagnes, ViscoCompare), relues depuis la copie sur l'autre PC
 - [x] PDF de la bibliographie (`bibliotheque/pdf`) et bibliothèque de figures (`figures`) dans l'espace, rapatriement vérifié sans rien écraser
 - [x] Export de tout l'espace en `.zip` (Réglages du poste)
+- [x] Figures → Graphes : régressions polynôme (degré 2 à 6), exponentielle, logarithmique ; plage de x choisie (saisie ou sur l'aperçu), prolongement (1.2.1)
+- [x] Figures → Graphes : « Lire sur la courbe » (y pour un x, x pour un y, extrapolation) (1.2.2)
+- [x] ChaussSpec : panneau « Comment ça marche ? » (modèle semi-analytique, méthode spectrale) (1.2.3)
+- [x] Recherche globale Ctrl+K dans tout l'espace (références, essais, figures, cas, planning…) (1.3.0)
+- [x] Manuscrits → Présentations : Markdown vers .pptx, figures de la bibliothèque, modèles créables (1.3.0)
+- [x] ChaussSpec : champs dérivés (ε1, ε2, ε3, dilatation, σ1, σ2, σ3, τmax, von Mises) et combinaisons linéaires libres de composantes (1.4.0)
+- [x] Recherche globale : ouverture directe de la référence, de l'étude, de la campagne, de la figure (1.4.0)
+- [x] Accueil : les titres de « Dernières figures » ne débordent plus (1.4.0)
+- [x] Figures → Graphes : erreur type et graphe des résidus d'une régression (1.5.0)
+- [x] Numériseur : échelles de couleurs connues (jet, turbo, viridis, plasma, inferno, coolwarm, RdBu, hot, gris), inversables, sans pointer la légende (1.5.0)
+- [x] Numériseur : détection automatique des axes (extrémités des deux traits les plus longs) (1.5.0)
+- [x] Traitement : rattacher un dépouillement (cycles écartés, calages) à un essai de campagne (1.5.1)
+- [x] Ctrl+K : la référence (ou l'étude, la campagne) s'ouvre aussi quand sa page est déjà affichée (1.5.1)
+- [x] Code Python d'origine de ChaussSpec (dont la texture) gardé dans `modules/chausspec/source-python/`, non livré
+- [x] Citations `[@BIB-020]` dans les présentations (diapo Références) et sources du panneau ChaussSpec, coupables dans la Bibliothèque (1.6.0)

@@ -1,0 +1,168 @@
+\subsection{V2 --- Multicouche élastique : comparaison à PyMastic}
+Structure à 3 couches ($E$ = 5000 / 200 / \SI{50}{MPa}, $h$ = 0,20 / \SI{0.30}{m} / semi-infini,
+$\nu$ = 0,35 / 0,35 / 0,40), charge circulaire $p=\SI{0.7}{MPa}$, $a=\SI{0.15}{m}$, interfaces collées.
+PyMastic (Nakhaei, 2020) est un code Burmister indépendant, validé contre KENPAVE.
+\begin{center}\small
+\begin{tabular}{rr|rr|rr|rr}
+\toprule
+$z$ (m) & $r$ (m) & \multicolumn{2}{c|}{$w$ (mm)} & \multicolumn{2}{c|}{$\sigma_{z}$ (MPa, compr. $>0$)} & \multicolumn{2}{c}{$\epsilon_r$ (µdef)}\\
+ & & PyMastic & \cs & PyMastic & \cs & PyMastic & \cs\\
+\midrule
+0,1000 & 0,0 & 0,5249 & 0,5250 & 0,4229 & 0,4229 & 17,17 & 17,18\\
+0,1000 & 0,3 & 0,4524 & 0,4525 & 0,0114 & 0,0114 & -10,27 & -10,27\\
+0,1999 & 0,0 & 0,5140 & 0,5141 & 0,0732 & 0,0732 & 149,86 & 149,86\\
+0,1999 & 0,3 & 0,4498 & 0,4499 & 0,0288 & 0,0288 & 11,61 & 11,61\\
+0,2001 & 0,0 & 0,5140 & 0,5140 & 0,0731 & 0,0731 & 150,01 & 150,01\\
+0,2001 & 0,3 & 0,4498 & 0,4499 & 0,0288 & 0,0288 & 11,64 & 11,65\\
+0,3500 & 0,0 & 0,4693 & 0,4693 & 0,0350 & 0,0350 & 117,35 & 117,36\\
+0,3500 & 0,3 & 0,4284 & 0,4285 & 0,0210 & 0,0210 & 54,22 & 54,23\\
+0,4999 & 0,0 & 0,4366 & 0,4367 & 0,0194 & 0,0194 & 151,48 & 151,48\\
+0,4999 & 0,3 & 0,4057 & 0,4058 & 0,0153 & 0,0153 & 88,93 & 88,93\\
+0,5001 & 0,0 & 0,4365 & 0,4366 & 0,0194 & 0,0194 & 151,50 & 151,50\\
+0,5001 & 0,3 & 0,4057 & 0,4058 & 0,0153 & 0,0153 & 88,95 & 88,95\\
+0,8000 & 0,0 & 0,3476 & 0,3477 & 0,0118 & 0,0118 & 91,72 & 91,73\\
+0,8000 & 0,3 & 0,3334 & 0,3334 & 0,0104 & 0,0104 & 71,30 & 71,31\\
+\bottomrule
+\end{tabular}
+\end{center}
+Accord à 4 chiffres significatifs partout, de part et d'autre des interfaces. En surface
+($z=0$, non montré), les deux codes tronquent le spectre du créneau différemment. En interfaces
+glissantes, PyMastic diverge numériquement dans les couches supérieures ; seule la couche de fond,
+qui coïncide, est exploitable. D'où V3.
+
+\subsection{V3 --- Interfaces glissantes}
+Référence : la même structure, où chaque interface glissante est remplacée par une couche
+intercalaire collée d'épaisseur $e$, quasi incompressible ($\nu=0{,}5-5\cdot10^{-11}$) et de
+module $E=0{,}05\,e$ (MPa, $e$ en m). Sa raideur en cisaillement s'annule donc quand $e\to0$.
+\begin{center}\small
+\begin{tabular}{lcccc}
+\toprule
+$e$ (mm) & 4 & 1 & 0,25 & 0,0625\\
+\midrule
+écart max. sur $w$ & 3,3e-02 & 5,4e-03 & 6,9e-04 & 7,0e-05\\
+écart max. sur $\sigma_r$ & 3,2e-02 & 6,9e-03 & 5,8e-04 & 1,4e-04\\
+\bottomrule
+\end{tabular}
+\end{center}
+La convergence vers la solution à glissement parfait est d'ordre 1,5 à 2 en $e$.
+
+\subsection{V4 --- Charge roulante viscoélastique : intégrale d'hérédité}
+Pour un corps homogène à coefficient de Poisson constant chargé en effort, le champ de contraintes
+ne dépend pas du module. La déformation viscoélastique s'obtient donc à partir de la déformation
+élastique de module unité par l'intégrale de Boltzmann
+$\epsilon(t)=\int_{-\infty}^tJ(t-s)\,\dd\epsilon_{\text{él}}^{E=1}(s)$, avec la complaisance de
+fluage du KVG $J(t)=1/E_0+\sum_i(1-e^{-t/\tau_i})/E_i$. Cette référence est calculée de façon
+totalement indépendante du passage en fréquentiel ($\omega=-k_1V$). Cas : massif semi-infini en
+KVG du TFE, disque de \SI{0.267}{m} à \SI{1.65}{MPa}, $V=\SI{0.66}{m/s}$, historique de \SI{128}{m}.
+\begin{center}\small
+\begin{tabular}{ll|rr|rr|r}
+\toprule
+$z$ (m) & comp. & max réf. (µdef) & $X$ (m) & max \cs{} (µdef) & $X$ (m) & écart max (\% du max)\\
+\midrule
+0,05 & $e_{xx}$ & 18,9 & 0,297 & 18,9 & 0,297 & 0,75\\
+0,05 & $e_{yy}$ & 9,2 & -0,062 & 9,1 & -0,062 & 0,39\\
+0,05 & $e_{zz}$ & 113,9 & -0,203 & 113,9 & -0,219 & 0,17\\
+0,15 & $e_{xx}$ & 21,0 & -0,125 & 21,0 & -0,125 & 0,20\\
+0,15 & $e_{yy}$ & 28,0 & -0,188 & 28,0 & -0,188 & 0,08\\
+0,15 & $e_{zz}$ & 120,1 & -0,125 & 120,1 & -0,125 & 0,04\\
+\bottomrule
+\end{tabular}
+\end{center}
+Les écarts résiduels (< 0,8\,\%) viennent de la référence : son historique est tronqué et elle
+converge vers \cs{} quand on l'allonge (écarts maximaux de 5\,\% avec \SI{64}{m} d'historique, 1\,\% avec \SI{128}{m},
+0,2\,\% avec \SI{256}{m}). Les pics se situent derrière la charge ($X<0$) : le signe de $\omega=-k_1V$
+est validé.
+\begin{figure}[h]
+\centering\includegraphics[width=0.8\linewidth]{figures/v4_heredite.pdf}
+\caption{V4 : signal $\epsilon_{xx}(X)$ à $z=\SI{0.15}{m}$. La réponse viscoélastique est plus
+grande et asymétrique ; les deux calculs se superposent.}
+\label{fig:v4}
+\end{figure}
+
+\subsection{V5 --- Reproduction du modèle COMSOL du TFE}\label{sec:v5}
+Structure PEP, bogie d'A340 (4 $\times$ \SI{370}{kN}, entraxes \SI{1.98}{m} $\times$ \SI{1.40}{m}),
+$V=\SI{0.66}{m/s}$, \SI{9.3}{\celsius}, fond « déplacement vertical bloqué ». Le modèle COMSOL
+compte \num{7.4} millions de ddl et 200 pas de temps. \cs{} calcule chaque cas en environ
+\SI{2}{min} (base : $\SI{16}{m}\times\SI{8}{m}$, $512\times256$ ; surface et profils :
+$2048\times2048$, pas de \SI{8}{mm} $\times$ \SI{4}{mm}). Les lois « KVG » et « élastique » sont
+exactement celles du TFE ; la ligne « 2S2P1D » utilise le Tableau 6 directement.
+\begin{center}\small
+\begin{tabular}{ll|rr|rr}
+\toprule
+& & \multicolumn{2}{c|}{$\epsilon_T$ max en base (µdef)} & \multicolumn{2}{c}{$\epsilon_1$ max en surface (µdef)}\\
+Loi & Empreinte & COMSOL (TFE) & \cs & COMSOL (TFE) & \cs\\
+\midrule
+élastique & rectangulaire & 210,0 & 211,1 (+0,5\,\%) & 155,0 & 157,7 (+1,7\,\%)\\
+ & circulaire & 202,2 & 203,4 (+0,6\,\%) & 156,8 & 149,7 (-4,5\,\%)\\
+ & hétérogène & 212,8 & 209,5 (-1,5\,\%) & 163,4 & 149,9 (-8,3\,\%)\\
+\midrule
+KVG & rectangulaire & 331,1 & 336,0 (+1,5\,\%) & 195,3 & 196,3 (+0,5\,\%)\\
+ & circulaire & 318,0 & 321,5 (+1,1\,\%) & 181,5 & 172,9 (-4,7\,\%)\\
+ & hétérogène & 336,6 & 329,7 (-2,1\,\%) & 202,1 & 181,1 (-10,4\,\%)\\
+\midrule
+2S2P1D & rectangulaire & --- & 316,1 & --- & 188,4\\
+ & circulaire & --- & 302,8 & --- & 167,8\\
+ & hétérogène & --- & 310,5 & --- & 174,6\\
+\midrule
+\multicolumn{2}{l|}{Mesure PEP (Petitjean et al.)} & \multicolumn{2}{c|}{340,1} & & \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{figure}[h]
+\centering\includegraphics[width=0.85\linewidth]{figures/v5_signaux.pdf}
+\caption{V5 : déformation transversale en base de couche liée vue par une jauge sur l'axe des
+roues (équivalent de la figure 3-11 du TFE). On retrouve l'asymétrie et la roue arrière plus
+sollicitée en viscoélasticité, ainsi que la longue traînée après le passage.}
+\end{figure}
+
+\paragraph{Lecture.}
+\begin{itemize}[nosep]
+\item \textbf{En base de couche liée}, l'accord est de 0,5 à 1,5\,\% pour les empreintes uniformes,
+      en élastique comme en viscoélastique. Le calcul spectral est en régime permanent (charge
+      venue de $-\infty$), le calcul COMSOL part du repos 20 s plus tôt dans un domaine borné ;
+      l'écart restant est de cet ordre.
+\item \textbf{En surface}, l'empreinte rectangulaire, alignée sur le maillage COMSOL, est
+      retrouvée à 1\,\% près. Pour le disque ($-5$\,\%) et l'empreinte hétérogène ($-8$ à
+      $-10$\,\%), le calcul spectral est convergé en résolution : ses valeurs ne bougent pas quand on
+      divise le pas par deux. Les écarts viennent vraisemblablement du maillage COMSOL. Des éléments
+      de \SI{17}{mm} environ représentent un bord circulaire en escalier et des nervures de largeur
+      $\sigma\approx\SI{17}{mm}$ avec seulement un ou deux éléments.
+\item \textbf{Empreinte hétérogène en base} : $-2$\,\% (élastique) et $-2$\,\% (KVG) par rapport à
+      COMSOL, alors que les empreintes uniformes sont à $+0{,}5$ à $+1{,}5$\,\%. L'empreinte simulée
+      par COMSOL n'était sans doute pas exactement celle de l'Annexe III : le TFE mentionne aussi
+      $p_{\max}$ = 3,51 puis \SI{3.31}{MPa}, et un facteur $370/372{,}8$, alors que l'intégrale
+      exacte de l'Annexe III donne \SI{142.1}{kN}. \emph{À vérifier dans le fichier COMSOL.}
+\item \textbf{2S2P1D contre KVG} : le 2S2P1D donne des déformations plus faibles d'environ 6\,\%,
+      car le KVG est un peu plus souple entre \SI{0.01}{Hz} et \SI{3}{Hz} (figure~\ref{fig:master}).
+      L'approximation par spectre discret n'est donc pas neutre au niveau de précision recherché.
+\end{itemize}
+
+\paragraph{Cisaillement $\epsilon_{xz}^{\text{TFE}}=\epsilon_{yz}$.} Il est rigoureusement nul en
+surface (\S3.8). Son maximum est atteint en profondeur, près de l'épaulement extérieur du
+pneumatique :
+\begin{center}\small
+\begin{tabular}{l|rr|rr}
+\toprule
+& \multicolumn{2}{c|}{COMSOL (TFE, Tab. 13)} & \multicolumn{2}{c}{\cs{} (KVG)}\\
+Empreinte & « surface » (µdef) & $z$ du max & max (µdef) & $z$ du max\\
+\midrule
+rectangulaire & 143,2 & $\approx$ 160 mm & 152,4 & 120 mm\\
+circulaire & 120,9 & $\approx$ 160 mm & 146,8 & 140 mm\\
+hétérogène & 177,3 & $\approx$ 50 mm & 164,2 & 100 mm\\
+\bottomrule
+\end{tabular}
+\end{center}
+Le classement est conservé (hétérogène > rectangulaire > circulaire) et les ordres de grandeur sont
+comparables. Mais l'écart hétérogène/rectangulaire tombe de +24\,\% à +8\,\% une fois les maxima
+pris là où ils se trouvent vraiment, et non en surface. \textbf{Pour l'article, il faut retenir les
+maxima en profondeur ; les valeurs « en surface » du Tableau 13 sont des artefacts.}
+\begin{figure}[h]
+\centering\includegraphics[width=0.8\linewidth]{figures/v5_eyz_profils.pdf}
+\caption{Profil vertical de $|\epsilon_{yz}|$ à l'aplomb de son maximum : nul en surface, maximal
+entre 80 et \SI{140}{mm}.}
+\end{figure}
+\begin{figure}[h]
+\centering\includegraphics[width=\linewidth]{figures/v5_e1_cartes.pdf}
+\caption{Déformation principale majeure en surface (demi-bogie $y>0$), équivalent de la figure 3-12
+du TFE ; même échelle pour les six cartes.}
+\end{figure}

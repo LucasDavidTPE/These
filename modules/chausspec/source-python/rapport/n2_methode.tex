@@ -1,0 +1,119 @@
+Le niveau 1 repose sur trois simplifications que le rapport précédent désignait comme ses limites
+principales : la chaussée est à surface plane (H6), l'enrobé est homogène à l'échelle du
+millimètre (H7) et le contact est sans frottement (H3). Cette section les lève une par une. Le
+principe reste le même : chaque modèle ajouté est vérifié contre une solution indépendante, puis
+chargé \emph{exactement} par les grandeurs du calcul 3D au point critique, de sorte que son
+résultat se raccorde au niveau 1 sans paramètre libre.
+
+\subsection{Frottement pneu--chaussée (levée de H3)}\label{sec:n2_frott}
+\paragraph{Modèle.} Au freinage, le pneu exerce sur la chaussée un effort tangentiel dirigé dans
+le sens du roulement. On le représente par une loi d'Amontons locale en glissement total :
+$q_x(x,y,t)=\mu\,p(x,y,t)$, à l'échelle du pneu \emph{et} à l'échelle de la texture. C'est une
+hypothèse majorante pour la texture (en adhérence partielle, le cisaillement local est plus
+réparti), et elle est cohérente avec le freinage appuyé, où l'essentiel de l'empreinte glisse. Trois
+niveaux : $\mu=0$ (roulement libre, niveau 1), $\mu=0{,}3$ (freinage courant) et $\mu=0{,}6$
+(freinage d'urgence sur piste sèche). Par linéarité, la perturbation tangentielle équivalente vaut
+$\delta q_{\text{eq}}=\mu\,\delta p_{\text{eq}}$ : la méthode héréditaire (\S\ref{sec:hered}) s'applique
+sans modification.
+
+\paragraph{Mise en œuvre.} La réponse nominale avec frottement est calculée par \cs, qui traite
+déjà les efforts tangentiels (découplage P-SV / SH). La réponse locale du massif homogène à
+$\delta q$ a été ajoutée à \texttt{texture.local\_response}. Pour un massif semi-infini, chaque
+amplitude du noyau (normale, tangentielle P-SV, SH) est de la forme $(a+b\,\xi z)\,e^{-\xi z}$
+par invariance d'échelle. Les coefficients $(a,b)$ sont identifiés sur le noyau multicouche
+général, puis la forme est contrôlée en un troisième point. \textbf{Contrôle T9} : sur un
+chargement de texture aléatoire avec $\mu=0{,}5$ et un effort transversal, l'écart à l'évaluation
+directe du noyau général vaut \NtNeufHomo{} (massif homogène) et \NtNeufTFE{} (structure complète
+du TFE, 5 couches), sur les six composantes et de 1 à \SI{10}{mm}.
+
+\subsection{Modèle local par éléments finis « pixel »}\label{sec:n2_ef}
+L'entaille des rainures et la microstructure granulats--mortier sortent du cadre spectral, qui
+suppose une couche plane et homogène. Elles sont traitées par un modèle local éléments finis
+(\texttt{chausspec/fe2d.py}, écrit pour ce rapport) :
+\begin{itemize}[nosep]
+\item cellule rectangulaire de largeur $W$, périodique en $x$, de hauteur $H$, encastrée au fond ;
+\item maillage régulier de pixels carrés de côté $h$, chacun étant un élément Q4 bilinéaire
+      (intégration $2\times2$) portant son propre matériau $(E,\nu)$, $E=0$ désignant un vide ;
+\item \emph{déformation plane généralisée} : le déplacement cherché est
+      $\bm u=\bm\epsilon^\ast\cdot\bm x+\bm u_c$, où $\bm\epsilon^\ast$ est la déformation nominale
+      uniforme ($\epsilon_{xx0}$ dans le plan, $\epsilon_{yy0}$ hors plan) et $\bm u_c$ un champ
+      périodique nul au fond. La déformation nominale entre par la précontrainte
+      $-\int\bm B^T\bm C:\bm\epsilon^\ast$. Cette formulation « totale » laisse libres les faces
+      des vides, ce qu'exige une rainure ;
+\item efforts de surface réels (pression et frottement) appliqués sur la face supérieure du
+      premier élément solide de chaque colonne ; les fonds de rainure ne sont pas chargés ;
+\item $\epsilon_{xy}$ et $\epsilon_{yz}$ nominaux, qui ne sont pas perturbés au premier ordre par
+      une géométrie invariante en $y$, sont ajoutés au tenseur avant le calcul de
+      $\epsilon_1$ ;
+\item résolution directe creuse (factorisation LU unique pour tous les seconds membres).
+\end{itemize}
+
+\paragraph{Chargement au point critique.} Pour chaque texture, le calcul 3D (T10) enregistre au
+point où $\epsilon_1$ est maximal à \SI{1}{mm} le tenseur nominal complet, la pression
+nominale instantanée $p_0$ et la pression nominale héréditaire équivalente
+$p_{0,\text{eq}}=E_s\int J(-s)\,\dd_s p_0$. C'est cette dernière qui charge la cellule, modulée par
+le contact : $p(x)=p_{0,\text{eq}}\,m(x)$. Dans le cadre (H1)--(H7), cette réduction est exacte
+pour la partie texture (\S\ref{sec:hered}). Les déformations nominales $\epsilon_{xx0}$,
+$\epsilon_{yy0}$, $\epsilon_{xy0}$ et $\epsilon_{yz0}$ sont prises telles quelles (valeurs
+viscoélastiques). \textbf{Conséquence} : la cellule \emph{sans} vide et homogène reproduit le niveau
+1. Pour les rainures, qui ne dépendent que de $x$, elle le reproduit exactement : on retrouve
+\NplanUn{}~µdef à \SI{1}{mm} contre \NtroisDUn{}~µdef dans le calcul 3D.
+
+\paragraph{Contrôle T11a.} Cellule homogène plane sous la pression de contact des rainures, avec
+un frottement $\mu=0{,}5$ et des déformations nominales, comparée à la solution fermée (partie
+uniforme analytique, partie périodique par \texttt{local\_response}) : l'écart maximal sur
+$\epsilon_{xx}$, $\epsilon_{zz}$ et $\epsilon_{xz}$ vaut \NonzeAgros{} pour $h=\SI{0.2}{mm}$ et
+\NonzeAfin{} pour $h=\SI{0.1}{mm}$ à \SI{1}{mm} de profondeur, et moins de
+\SI{0.05}{\percent} à \SI{5}{mm}. La convergence est d'ordre 2 environ, comme attendu pour des
+éléments Q4. On retient $h=\SI{0.1}{mm}$ (6,35/64).
+
+\paragraph{Distance critique.} Au coin d'une rainure à arêtes vives, la déformation élastique est
+singulière : sa valeur au pixel près dépend du maillage et n'a pas de sens physique. On applique
+la théorie des distances critiques (Taylor, 2007) : la grandeur pertinente est la déformation
+moyennée sur une longueur $L_c$ liée à la microstructure. Pour un enrobé, $L_c$ est de l'ordre de
+l'épaisseur des films de mortier et de la taille des plus petits granulats porteurs, soit
+\SIrange{0.5}{1}{mm}. Les résultats sont donnés pour $L_c=0$ (pixel), 0,5 et \SI{1}{mm} ; seuls
+les deux derniers doivent être interprétés.
+
+\subsection{Entaille des rainures (levée de H6)}\label{sec:n2_rain}
+\paragraph{Géométrie.} Un pas de rainurage FAA ($\Lambda=\SI{38.1}{mm}$) avec une rainure
+transversale vide de $6{,}35\times\SI{6.35}{mm}$, sur \SI{60}{mm} de profondeur ($W\times H =
+384\times605$ pixels de \SI{0.099}{mm}). Deux variantes : arêtes vives, ou arêtes \emph{et} fonds
+arrondis de rayon \SI{1}{mm} (arêtes supérieures telles que dans le contact T1, congés de fond
+obtenus en remplissant les coins par un quart de cercle). La coupe est dans le plan $(x,z)$ du
+roulement, perpendiculaire aux rainures : c'est le plan où la rainure interrompt la couche.
+\paragraph{Chargement.} Pression de contact des plateaux (T1, $\bar p=\SI{1.65}{MPa}$) mise à
+l'échelle de $p_{0,\text{eq}}$ au point critique « rainures » de T10, frottement éventuel
+$\mu p$, déformations nominales du même point. La référence est la même cellule sans vide
+(niveau 1). On note $K_{H6}(z)$ le rapport des maxima de $\epsilon_1$ à la profondeur $z$ sous le
+plateau.
+
+\subsection{Granulats et mortier (levée de H7)}\label{sec:n2_mortier}
+\paragraph{Microstructure.} Coupe 2D de la couche de roulement (\SI{40}{mm} $\times$ \SI{40}{mm},
+pixels de \SI{0.1}{mm}) : granulats circulaires de 2 à \SI{10}{mm}, tirés classe par classe du plus
+gros au plus petit selon une courbe de Fuller (passant $\propto(d/D)^{0{,}45}$), placés par
+tirage séquentiel aléatoire avec un jeu minimal de \SI{0.2}{mm} entre granulats et une
+périodicité en $x$. La fraction surfacique obtenue est de 0,53 à 0,56, ce qui est typique des
+coupes d'enrobés 0/10 pour la fraction supérieure à \SI{2}{mm}. Le reste est le \emph{mortier
+bitumineux} (liant, fines et sables de moins de \SI{2}{mm}), traité comme un milieu homogène. La
+surface est sciée : les granulats y sont tronqués. Trois tirages indépendants par cas.
+\paragraph{Homogénéisation et mise à l'échelle.} Une cellule biperiodique de même granulométrie,
+soumise à trois déformations uniformes, donne le tenseur effectif $\bm C_{\text{hom}}$ dont on
+extrait $(E_{\text{hom}},\nu_{\text{hom}})$ isotropes. Les modules des phases sont ensuite mis à
+l'échelle pour que $E_{\text{hom}}$ soit le module de l'enrobé équivalent du niveau 1. Seul compte
+alors le \emph{contraste} $c=E_{\text{granulat}}/E_{\text{mortier}}$. Avec $\nu_g=0{,}25$ et
+$\nu_m=0{,}41$, on obtient $\nu_{\text{hom}}\approx0{,}35$ comme au niveau 1. Le contraste dépend
+de la température et du temps de charge : de l'ordre de 10 pour un mortier froid et rapide,
+supérieur à 100 pour un mortier chaud sous charge lente (granulats de 50 à \SI{70}{GPa} contre un
+mortier de 0,5 à \SI{5}{GPa}). On étudie $c=10$, 30 et 100.
+\paragraph{Chargement et indicateurs.} Point critique de la texture aléatoire MPD \SI{1.0}{mm}
+(T10) : ligne de pression de contact extraite de la carte 3D à $\bar p=\SI{1.65}{MPa}$ et mise à
+l'échelle de $p_{0,\text{eq}}$, plus les déformations nominales. Une ligne de taches de contact
+prolongée indéfiniment en $y$ charge plus qu'en 3D : l'amplitude de la modulation est étalonnée
+pour que la cellule homogène reproduise $\epsilon_1$ du calcul 3D à \SI{1}{mm} (voir les
+résultats ; la ligne brute sert d'étude de sensibilité). On calcule aussi la même cellule
+sous une pression \emph{uniforme} $p_{0,\text{eq}}$ (surface lisse, TFE) et sous les seules
+déformations nominales. La référence est la cellule homogène $(E_{\text{hom}},\nu_{\text{hom}})$
+sous le même chargement. Indicateur : facteur de concentration dans le mortier
+$K_m(z)=\max\epsilon_1^{\text{mortier}}/\max\epsilon_1^{\text{homogène}}$ dans une bande de
+$\pm\SI{0.25}{mm}$ autour de $z$ (maximum et quantile à 99\,\%).

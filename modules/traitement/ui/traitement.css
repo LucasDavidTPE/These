@@ -455,3 +455,25 @@
   align-items: center;
   font-size: 13px;
 }
+
+.tr-rattacher {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface);
+}
+.tr-rattacher p {
+  margin: 0;
+}
+.tr-champ-lie {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.tr-rattacher .tr-alerte {
+  color: var(--attention);
+}

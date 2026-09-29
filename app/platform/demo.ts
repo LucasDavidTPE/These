@@ -101,6 +101,37 @@ export function plateformeDemo(scenario: string | null): Plateforme {
     for (const [chemin, contenu] of Object.entries(essaiDemo())) recherche.poser(chemin, contenu);
   }
 
+  // `?scenario=complet&contenu=1` : un espace déjà garni (pour essayer la recherche globale).
+  if (scenario === "complet" && new URLSearchParams(globalThis.location?.search).get("contenu")) {
+    const espace = dossier(ESPACE);
+    const ref = (n: number, titre: string, auteurs: string, annee: number) => espace.poser(`bibliotheque/references/BIB-${String(n).padStart(3, "0")}.json`, JSON.stringify({ titre, auteurs, annee, cle: `ref${n}` }));
+    ref(1, "Viscoelastic response of asphalt pavements under moving loads", "Lee, S.; Kim, J.", 2019);
+    ref(2, "Spectral method for layered media", "David, L.", 2024);
+    ref(20, "General 2S2P1D model and relation between the linear viscoelastic behaviours of bituminous binders and mixes", "Olard, F.; Di Benedetto, H.", 2003);
+    ref(65, "The general theory of stresses and displacements in layered systems", "Burmister, D. M.", 1945);
+    espace.poser("planning/PH-0001.json", JSON.stringify({ titre: "Rédiger le chapitre ChaussSpec", categorie: "", debut: "2026-10-05", fin: "2026-10-30" }));
+    espace.poser(
+      "chausspec/structure-a340.json",
+      JSON.stringify({
+        structure: { bottom: "rigid_smooth", layers: [{ name: "BB", h: 0.3, material: { type: "elastic", E: 5000, nu: 0.35 } }, { name: "Sol", h: 2, material: { type: "elastic", E: 100, nu: 0.35 } }] },
+        loading: { wheels: [{ x0: 0, y0: 0, footprint: { type: "rect", lx: 0.5, ly: 0.4, force: 100000 } }] },
+        regime: { type: "static" },
+        grid: { L: [16, 16], N: [256, 256], window: [-2, 2, -2, 2] },
+        outputs: { depths: [0], components: ["uz"] },
+      }),
+    );
+    espace.poser("numeriseur/courbe-tsrst.json", "{}");
+    espace.poser("campagnes/demo-cm/campagne.json", JSON.stringify({ titre: "Module complexe démo", type: "module-complexe", statut: "en cours", donnees: "recherche:Demo CM" }));
+    espace.poser("campagnes/demo-cm/essais/Essai1/essai.json", "{}");
+    espace.poser("campagnes/autre/campagne.json", JSON.stringify({ titre: "Autre campagne", type: "module-complexe", statut: "en cours", donnees: "" }));
+    const figures = dossier(`${ESPACE}\\figures`);
+    figures.poser("FIG-0001_courbe/meta.json", JSON.stringify({ id: "FIG-0001", title: "Courbe maîtresse", kind: "graph", created: "2026-09-20T10:00:00Z", modified: "2026-09-20T10:00:00Z", tags: ["2s2p1d"], used_in: [] }));
+    const png = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg=="), (c) => c.charCodeAt(0));
+    void figures.writeBytesAtomic("FIG-0001_courbe/export.png", png);
+    figures.poser("FIG-0002_long/meta.json", JSON.stringify({ id: "FIG-0002", title: "Comparaison_des_modules_complexes_2S2P1D_COMSOL_Viscoroute_vitesse_0.66_ms_essai_TSRST_final", kind: "graph", created: "2026-09-21T10:00:00Z", modified: "2026-09-21T10:00:00Z", tags: [], used_in: [] }));
+    figures.poser("FIG-0003_long/meta.json", JSON.stringify({ id: "FIG-0003", title: "Schéma du modèle de Huet-Sayegh généralisé avec amortisseurs paraboliques", kind: "schema", created: "2026-09-22T10:00:00Z", modified: "2026-09-22T10:00:00Z", tags: [], used_in: [] }));
+  }
+
   return {
     genre: "demo",
     nomDuPoste: async () => "PC-DEMO",

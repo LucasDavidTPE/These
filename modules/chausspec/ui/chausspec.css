@@ -148,3 +148,42 @@
 .cs-jauges-graphe {
   max-width: 640px;
 }
+
+.cs-explication details {
+  margin-top: 8px;
+}
+.cs-explication summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.cs-explication p,
+.cs-explication ul {
+  margin: 6px 0 6px 4px;
+  line-height: 1.5;
+}
+.cs-schema {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+.cs-schema-etape {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 180px;
+}
+.cs-schema-boite {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: var(--fond-carte, transparent);
+}
+.cs-schema-fleche {
+  font-size: 20px;
+  opacity: 0.6;
+}

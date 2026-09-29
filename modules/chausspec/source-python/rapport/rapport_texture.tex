@@ -1,0 +1,536 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\IfFileExists{lmodern.sty}{\usepackage{lmodern}}{\usepackage{mathptmx}}
+\usepackage[french]{babel}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage{graphicx,booktabs,array,multirow,longtable}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit,calc}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{float}
+\usepackage[hidelinks]{hyperref}
+\captionsetup{font=small,labelfont=bf}
+\usepackage{siunitx}
+\sisetup{output-decimal-marker={,},group-separator={\,}}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\floatname{algorithm}{Algorithme}
+\definecolor{bleu}{HTML}{2a78d6}
+\definecolor{orange}{HTML}{eb6834}
+\definecolor{vert}{HTML}{1baf7a}
+\definecolor{fond}{HTML}{f4f7fb}
+\newtcolorbox{encadre}[1][]{colback=fond,colframe=bleu!60,boxrule=0.5pt,arc=2pt,left=6pt,right=6pt,top=4pt,bottom=4pt,#1}
+\newtcolorbox{alerte}[1][]{colback=orange!6,colframe=orange!70,boxrule=0.5pt,arc=2pt,left=6pt,right=6pt,top=4pt,bottom=4pt,#1}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\ii}{\mathrm{i}}
+\newcommand{\hatt}[1]{\widehat{#1}}
+\newcommand{\cs}{\texttt{chausspec}}
+\renewcommand{\epsilon}{\varepsilon}
+
+\title{\textbf{Influence de la texture de surface sur la réponse\\ des chaussées aéronautiques}\\[6pt]
+\large Cadre mécaniste à deux échelles (contact pneumatique--texture et calcul multicouche
+viscoélastique sous charge roulante)\\ et comparaison avec les résultats du TFE}
+\author{Lucas \textsc{David}\\ \small LTDS -- ENTPE, thèse en partenariat avec le STAC}
+\date{25 septembre 2026 --- rapport de travail, version 2.0}
+
+\begin{document}
+\sloppy
+\maketitle
+
+\begin{abstract}
+Le TFE a modélisé la chaussée de la plateforme PEP sous un bogie d'A340 avec une surface
+\emph{lisse} : la pression de contact y varie seulement à l'échelle du pneumatique. Une piste
+réelle est texturée (macrotexture de 1 à \SI{50}{mm}) et souvent rainurée. Le pneumatique n'y
+touche que les sommets de la texture, et la pression locale dépasse largement la pression
+nominale. Ce rapport construit, vérifie et exploite un cadre mécaniste qui propage cet effet
+jusqu'aux déformations de la chaussée. Il comprend trois étapes. (1) La génération de surfaces
+contrôlées : rainurage normalisé FAA, et macrotextures aléatoires de profondeur moyenne de profil
+(MPD) imposée selon l'ISO 13473-1. (2) Le calcul du contact entre la bande de roulement et la
+texture, par une méthode d'éléments de frontière spectrale vérifiée contre deux solutions de
+référence. (3) Un couplage deux échelles avec le calcul semi-analytique multicouche
+viscoélastique de \cs, qui respecte le fait que la texture est fixe dans la chaussée alors que
+l'enveloppe de pression roule. Chaque hypothèse de la chaîne est contrôlée par un calcul
+indépendant, et le rapport précise pour chaque résultat le degré de confiance qu'on peut lui
+accorder.
+La version 2 ajoute un second niveau de modélisation : le frottement au freinage (calcul 3D
+complet), l'entaille géométrique des rainures et la microstructure granulats--mortier, ces deux
+derniers par un modèle local éléments finis chargé par les grandeurs du calcul 3D au point
+critique.
+Conclusion principale : la texture amplifie fortement les déformations des premiers millimètres
+de la couche de roulement ; le frottement, l'entaille des rainures et la microstructure
+accentuent encore cet effet. Cet effet est confiné aux 10 à \SI{20}{mm} supérieurs. Les résultats du
+TFE en profondeur (base de couche liée, cisaillement maximal vers \SI{100}{mm}) ne sont pas
+modifiés.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%=============================================================================================
+\section{Question posée et réponse courte}
+%=============================================================================================
+\textbf{Question.} La texture de la surface (rugosité, rainurage) rend-elle la sollicitation de
+la chaussée plus sévère que le cas lisse étudié dans le TFE, et à quelle profondeur ?
+
+\noindent\textbf{Niveau 1} (enrobé homogène, surface plane, sans frottement ; \S\ref{sec:cadre} à \S\ref{sec:resultats}) :
+\input{r_reponse_courte.tex}
+\input{n2_reponse_courte.tex}
+
+\paragraph{Organisation du rapport.} La section~\ref{sec:cadre} fixe les échelles et les
+hypothèses. La section~\ref{sec:surfaces} explique en détail la construction des surfaces, et la
+section~\ref{sec:contact} le calcul du contact. La section~\ref{sec:couplage} décrit le passage du
+contact à la chaussée, étape par étape. La section~\ref{sec:verif} rassemble toutes les
+vérifications et en tire un degré de confiance. La section~\ref{sec:resultats} présente les
+résultats et la comparaison avec le TFE. La section~\ref{sec:niveau2} (nouvelle dans cette
+version) lève les hypothèses de frottement nul, de surface plane et d'enrobé homogène, et corrige
+les résultats en conséquence. La section~\ref{sec:discussion} discute les limites et la
+suite. Les annexes donnent les paramètres numériques et la procédure de reproduction.
+
+%=============================================================================================
+\section{Cadre, échelles et hypothèses}\label{sec:cadre}
+%=============================================================================================
+\subsection{Trois échelles}
+\begin{center}\small
+\begin{tabular}{p{2.6cm}p{2.3cm}p{4.3cm}p{5.2cm}}
+\toprule
+Échelle & Longueur & Objets & Traitement dans ce rapport\\
+\midrule
+Structure / pneu & 0,3--\SI{5}{m} & bogie, empreintes, couches & calcul multicouche VE sous charge roulante (\cs), identique au TFE\\
+Macrotexture & 1--\SI{50}{mm} & granulats, rainures & surfaces générées, contact caoutchouc / surface rigide, réponse locale\\
+Microtexture & $<\SI{0.5}{mm}$ & aspérités des granulats & ignorée (rôle dans l'adhérence, pas dans la réponse structurelle)\\
+\bottomrule
+\end{tabular}
+\end{center}
+Le rapport d'échelle entre la longueur de contact ($L\approx\SI{0.56}{m}$) et la période de la
+texture ($\Lambda\lesssim\SI{50}{mm}$) vaut au moins 10. C'est ce qui justifie une approche à deux
+échelles.
+
+\subsection{Chaîne de calcul}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=0.55cm and 0.6cm, >=Stealth,
+  box/.style={draw=bleu!70, fill=fond, rounded corners=2pt, align=center, font=\small, minimum height=1.0cm, text width=3.6cm},
+  res/.style={draw=orange!80, fill=orange!6, rounded corners=2pt, align=center, font=\small, minimum height=1.0cm, text width=3.6cm}]
+\node[box] (surf) {\textbf{1. Surface} $h(x,y)$\\rainures FAA ou texture aléatoire (MPD cible)};
+\node[box, right=of surf] (cont) {\textbf{2. Contact} bande de roulement / surface rigide, pour 8 pressions nominales};
+\node[box, right=of cont] (lib) {\textbf{3. Bibliothèque}\\$m(x,y;\bar p)=p/\bar p$};
+\node[box, below=of surf] (nom) {\textbf{4. Réponse nominale}\\bogie A340, KVG, $V$ = 0,66 m/s (TFE, \cs)};
+\node[box, right=of nom] (hist) {\textbf{5. Histoire de} $\delta p(x,s)$\\en chaque point fixe de la chaussée};
+\node[box, right=of hist] (her) {\textbf{6. Transformation héréditaire}\\$\delta p_{\mathrm{eq}}=E_s\!\int J\,\dd_s\delta p$};
+\node[box, below=of her] (loc) {\textbf{7. Réponse locale}\\massif homogène, grille 0,25 mm};
+\node[res, left=of loc] (sum) {\textbf{8. Somme}\\$\bm\epsilon=\bm\epsilon_0+\delta\bm\epsilon$\\$\epsilon_1$, $\epsilon_{xz}$, $\epsilon_{yz}$};
+\node[res, left=of sum] (cmp) {\textbf{9. Comparaison}\\lisse (TFE) / texturé, en fonction de $z$};
+\draw[->] (surf) -- (cont); \draw[->] (cont) -- (lib); \draw[->] (lib) -- (hist);
+\draw[->] (nom) -- (hist); \draw[->] (hist) -- (her); \draw[->] (her) -- (loc); \draw[->] (loc) -- (sum);
+\draw[->] (nom.south) -- ++(0,-0.27) -| (sum.north); \draw[->] (sum) -- (cmp);
+\end{tikzpicture}
+\caption{Chaîne de calcul. Les étapes 1 à 3 sont à l'échelle de la texture, l'étape 4 à l'échelle
+du pneu ; les étapes 5 à 7 couplent les deux échelles.}\label{fig:chaine}
+\end{figure}
+
+\subsection{Hypothèses}
+\begin{enumerate}[label=(H\arabic*),leftmargin=*,nosep]
+\item \textbf{Chaussée rigide pour le contact.} $E_{\text{enrobé}}\approx\SI{15000}{MPa}$ contre
+      $E_{\text{caoutchouc}}\approx\SI{10}{MPa}$. La géométrie du contact ne dépend donc pas de la
+      déformation de la chaussée ; l'erreur relative est de l'ordre de $10^{-3}$.
+\item \textbf{Bande de roulement} élastique linéaire, de module $E_r=\SI{10}{MPa}$,
+      $\nu_r=0{,}49$ et épaisseur $t_r=\SI{10}{mm}$, collée à une ceinture indéformable. Valeurs
+      \emph{supposées}, à confirmer pour un pneu 1400$\times$530R23 ; sensibilité étudiée à 5 et
+      \SI{20}{MPa}.
+\item \textbf{Contact normal sans frottement}\,\textsuperscript{$\dagger$}, quasi-statique (le temps de passage vaut
+      \SI{0.8}{s} et le caoutchouc est supposé répondre instantanément).
+\item \textbf{Séparation d'échelles.} Sur une cellule de texture, la pression nominale $p_0$ est
+      localement uniforme ; le contact s'y établit comme sous $\bar p=p_0$.
+\item \textbf{Texture fixe dans la chaussée.} Seule l'enveloppe $p_0(x-Vt,y)$ roule ; la
+      modulation de contact suit la position fixe de la texture.
+\item \textbf{Chaussée à surface plane}\,\textsuperscript{$\dagger$}. La texture n'intervient que par la modulation de la
+      pression. La géométrie (entaille des rainures, creux) n'est pas représentée.
+\item \textbf{Couche de roulement homogène}\,\textsuperscript{$\dagger$} (enrobé équivalent), viscoélastique linéaire (KVG du
+      TFE), à coefficient de Poisson constant (0,35).
+\end{enumerate}
+(H6) et (H7) sont les deux limites structurelles du niveau 1. \textsuperscript{$\dagger$}\,Les
+hypothèses (H3), (H6) et (H7) sont levées par le niveau 2 (\S\ref{sec:niveau2}), qui corrige les
+résultats du niveau 1.
+
+%=============================================================================================
+\section{Construction des surfaces}\label{sec:surfaces}
+%=============================================================================================
+\subsection{Rainurage transversal normalisé}
+\paragraph{Géométrie.} La FAA (AC 150/5320-12C) prescrit des rainures sciées de
+\SI{6}{mm} de largeur ($w=\SI{6.35}{mm}$, soit 1/4") et \SI{6}{mm} de profondeur, au pas de
+\SI{38}{mm} ($\lambda=\SI{38.1}{mm}$, soit 1,5"). Elles sont perpendiculaires à l'axe de piste,
+donc orientées selon $y$ dans nos axes ($x$ = sens de roulement). Le profil ne dépend que de $x$ :
+\begin{equation}
+h(x)=\begin{cases}-d_g & \text{si } |u|<w/2\\ 0 & \text{sinon}\end{cases},\qquad
+u=\operatorname{mod}\!\left(x-\phi+\tfrac\lambda2,\lambda\right)-\tfrac\lambda2 ,
+\end{equation}
+où $\phi$ fixe la position des rainures dans la chaussée. On prend $\phi=0$ : comme on balaie
+toute la zone de contact, tous les décalages entre rainures et empreinte sont représentés.
+\paragraph{Arrondi des arêtes.} Une arête vive crée une pression singulière au bord des plats
+(\S\ref{sec:contact_ref}). Pour mesurer la sensibilité à cette idéalisation, on remplace l'arête
+par un quart de cercle de rayon $r$ : pour une distance $s\in[0,r]$ à la paroi, côté plat,
+$h=-\bigl(r-\sqrt{r^2-(r-s)^2}\bigr)$. On étudie $r=0$ (arête vive) et $r=\SI{1}{mm}$ (arête
+usée ou épaufrée).
+\paragraph{Discrétisation.} Un pas est discrétisé en 152 points (\SI{0.25}{mm}). La résolution
+est étudiée jusqu'à \SI{0.0625}{mm} (\S\ref{sec:resolution}).
+
+\begin{figure}[H]\centering\includegraphics[width=0.78\linewidth]{figures/m_rainures.pdf}
+\caption{Haut : profil d'un pas de rainurage. Bas : pression de contact correspondante sous
+\SI{1.65}{MPa} nominal (bande de roulement de \SI{10}{mm}). Avec arête vive, la surpression au
+bord est singulière : son maximum n'est fixé que par la résolution (figure calculée au pas de \SI{0.0625}{mm} ; \SI{7.2}{MPa} au pas de \SI{0.25}{mm} de la campagne).}\label{fig:rainures}
+\end{figure}
+
+\subsection{Macrotexture aléatoire : principe}
+Une macrotexture de chaussée est un champ aléatoire de hauteurs. Sa description minimale, standard
+en mécanique du contact, est sa \emph{densité spectrale de puissance} (DSP) $C(\bm q)$ : la part
+de la variance des hauteurs portée par chaque nombre d'onde $\bm q$. On construit donc des
+surfaces à DSP imposée, puis on règle leur amplitude pour obtenir une MPD cible. Ce procédé a
+trois avantages :
+\begin{itemize}[nosep]
+\item la surface est \textbf{contrôlée} : on sait exactement quelles longueurs d'onde elle
+      contient ;
+\item elle est \textbf{périodique}, ce qui convient à la FFT et permet de la répéter sous tout le
+      pneu ;
+\item elle est \textbf{reproductible} : une graine de tirage fixe la surface, et l'étude de
+      plusieurs graines mesure la dispersion d'une réalisation à l'autre.
+\end{itemize}
+
+\subsection{Macrotexture aléatoire : algorithme de génération}
+\begin{algorithm}[H]
+\caption{Génération d'une macrotexture de MPD cible (\texttt{contact.random\_texture})}
+\begin{algorithmic}[1]
+\State Grille périodique $N\times N$ de côté $\Lambda_c$ ; ici $\Lambda_c=\SI{128}{mm}$ et
+       $N=512$, soit un pas $\Delta=\SI{0.25}{mm}$.
+\State Nombres d'onde de la FFT : $q_x,q_y=2\pi\,\texttt{fftfreq}(N,\Delta)$ ; $q=\sqrt{q_x^2+q_y^2}$.
+\State DSP isotrope auto-affine avec plateau :
+       $C(q)=1$ pour $q<q_r$ et $C(q)=(q/q_r)^{-2(1+H)}$ sinon, avec $q_r=2\pi/\SI{20}{mm}$ et
+       $H=0{,}8$ ; $C=0$ hors de $[q_0,q_1]=[2\pi/\SI{50}{mm},\,2\pi/\SI{1}{mm}]$ et $C(0)=0$.
+\State Phases aléatoires indépendantes, uniformes : $\theta(\bm q)\sim\mathcal U[0,2\pi)$ (graine fixée).
+\State $g=\operatorname{Re}\,\mathrm{FFT}^{-1}\!\left[\sqrt{C(q)}\,e^{\ii\theta}\right]$, puis
+       centrage et réduction : $g\leftarrow(g-\bar g)/\sigma_g$.
+\State Asymétrie : $h=g$ (gaussienne) ; $h=e^{\beta g}$ (positive) ; $h=-e^{\beta g}$ (négative),
+       avec $\beta=0{,}4$ ; puis centrage.
+\State Calcul de la MPD de $h$ (algorithme~\ref{alg:mpd}), selon $x$ et selon $y$ ; moyenne des deux.
+\State Mise à l'échelle : $h\leftarrow h\times\text{MPD}_{\text{cible}}/\text{MPD}(h)$ (la MPD est
+       homogène de degré 1).
+\end{algorithmic}
+\end{algorithm}
+\paragraph{Justification des choix.}
+\begin{itemize}[nosep]
+\item \textbf{Bornes 1--\SI{50}{mm}} : c'est la définition normalisée de la macrotexture
+      (ISO 13473-1 : 0,5--\SI{50}{mm}). La borne basse est portée à \SI{1}{mm} pour être résolue
+      par au moins 4 points à \SI{0.25}{mm} ; la part de variance perdue est négligeable, car la
+      DSP décroît en $q^{-3,6}$.
+\item \textbf{Plateau au-delà de \SI{20}{mm}} : les longueurs d'onde supérieures à la taille des
+      plus gros granulats ne portent pas plus d'énergie. Le plateau évite qu'elles dominent
+      artificiellement.
+\item \textbf{$H=0{,}8$} : valeur typique des surfaces de chaussée rapportée dans la littérature
+      du contact pneu/chaussée (Persson) ; c'est un paramètre à caler sur des relevés réels.
+\item \textbf{Asymétrie} : les enrobés présentent plutôt une texture « négative » (plateaux et
+      creux, $S_{sk}<0$), les enduits et gravillonnages une texture « positive » (pics,
+      $S_{sk}>0$). La transformation exponentielle, monotone, conserve la corrélation spatiale et
+      règle $S_{sk}\approx\pm1{,}3$.
+\end{itemize}
+
+\begin{figure}[H]\centering\includegraphics[width=0.75\linewidth]{figures/m_psd.pdf}
+\caption{DSP imposée (trait) et DSP de la surface générée (moyenne radiale, cercles). Les pointillés
+marquent les bornes de 50, 20 et \SI{1}{mm}.}\label{fig:psd}
+\end{figure}
+
+\subsection{Calcul de la MPD (ISO 13473-1)}
+\begin{algorithm}[H]
+\caption{Profondeur moyenne de profil (\texttt{contact.mpd\_iso13473})}\label{alg:mpd}
+\begin{algorithmic}[1]
+\For{chaque ligne de la surface (profil selon $x$ ; puis de même selon $y$)}
+  \For{chaque segment de base de \SI{100}{mm}}
+    \State retirer la droite de régression (redressement du segment) ;
+    \State couper le segment en deux moitiés et relever le pic de chaque moitié ;
+    \State profondeur du segment $=\tfrac12(\text{pic}_1+\text{pic}_2)-$ niveau moyen du segment.
+  \EndFor
+\EndFor
+\State MPD = moyenne de toutes les profondeurs de segment.
+\end{algorithmic}
+\end{algorithm}
+La profondeur de texture équivalente, comparable à l'essai volumétrique à la tache de sable,
+vaut $\text{ETD}=0{,}2+0{,}8\,\text{MPD}$ (mm). Les MPD étudiées (0,6, 1,0 et \SI{1.5}{mm})
+correspondent à des ETD de 0,68, 1,0 et \SI{1.4}{mm}. Pour mémoire, l'OACI recommande une
+profondeur de texture d'au moins \SI{1.0}{mm} pour une piste neuve, et la FAA \SI{1.14}{mm}.
+
+\begin{figure}[H]\centering\includegraphics[width=0.8\linewidth]{figures/m_mpd.pdf}
+\caption{Calcul de la MPD sur un segment de \SI{100}{mm} de la surface gaussienne (MPD cible
+\SI{1.0}{mm} ; ce segment vaut \SI{0.87}{mm}, la moyenne sur tous les segments vaut exactement 1,0).}
+\end{figure}
+\begin{figure}[H]\centering\includegraphics[width=0.9\linewidth]{figures/m_textures.pdf}
+\caption{Les trois familles de texture à MPD égale (\SI{1.0}{mm}) : cartes des hauteurs et
+histogrammes. À MPD identique, la répartition des sommets est très différente.}\label{fig:textures}
+\end{figure}
+
+\paragraph{Pourquoi la MPD ne suffit pas.} La MPD ne mesure que la hauteur des pics par rapport au
+niveau moyen. Pour le contact, ce qui compte est la \emph{pente} des aspérités, mesurée par
+$m_2=\langle|\nabla h|^2\rangle$ : à charge donnée, l'aire de contact est inversement
+proportionnelle à $\sqrt{m_2}$ (\S\ref{sec:persson}). Or, à MPD égale, $m_2$ varie du simple au
+triple entre nos textures (tableau~\ref{tab:surfaces}). Un indicateur mécanique de texture devra
+donc combiner hauteur et pente, par exemple MPD et $m_2$, ou exploiter la DSP complète.
+
+\input{r_tab_surfaces.tex}
+
+%=============================================================================================
+\section{Contact bande de roulement / texture}\label{sec:contact}
+%=============================================================================================
+\subsection{Formulation}
+Soit $h(x,y)$ la hauteur de la surface rigide, positive vers le haut, et $u(x,y)\ge0$ le
+déplacement normal de la surface du caoutchouc, positif en compression. La surface du caoutchouc
+se trouve en $d+u$, où $d$ est le rapprochement rigide. L'écartement vaut $g=u-h+d$ et le problème
+s'écrit
+\begin{equation}
+p\ge0,\qquad g\ge0,\qquad p\,g=0\quad\text{(conditions de Signorini)},\qquad
+\langle p\rangle=\bar p\quad\text{(équilibre)} ,
+\end{equation}
+avec $u=\mathcal C*p$ (élasticité linéaire du caoutchouc). C'est la condition d'optimalité de la
+minimisation de l'énergie complémentaire
+$\Pi(p)=\tfrac12\int p\,(\mathcal C*p)-\int p\,h$ sur le cône $p\ge0$ sous la contrainte
+$\langle p\rangle=\bar p$. $\Pi$ est strictement convexe : la solution existe et elle est unique.
+
+\subsection{Souplesse de la bande de roulement}
+Dans l'espace de Fourier, $\hatt u(\bm q)=C(q)\,\hatt p(\bm q)$. $C(q)$ est calculée par le
+\emph{même noyau multicouche} que \cs : une couche de caoutchouc d'épaisseur $t_r$ collée sur un
+substratum rigide, soumise à une pression unitaire. On a les deux limites
+\begin{equation}
+C(q)\xrightarrow[qt_r\gg1]{}\frac{2(1-\nu_r^2)}{E_rq}\ \ \text{(massif semi-infini)},\qquad
+C(q)\xrightarrow[qt_r\ll1]{}\frac{t_r(1+\nu_r)(1-2\nu_r)}{E_r(1-\nu_r)}\ \ \text{(compression confinée)} .
+\end{equation}
+Les longueurs d'onde courtes de la texture ($\lambda\ll2\pi t_r\approx\SI{60}{mm}$) voient un
+massif semi-infini ; les plus longues voient une couche mince quasi incompressible, donc raide.
+Le caoutchouc « enveloppe » alors moins les ondulations longues.
+
+\subsection{Résolution numérique}
+\begin{algorithm}[H]
+\caption{Contact par gradient conjugué projeté (Polonsky \& Keer, 1999 ; \texttt{contact.solve\_contact})}
+\begin{algorithmic}[1]
+\State $p\leftarrow\bar p$ partout ; $\delta\leftarrow0$ ; $G_{\text{old}}\leftarrow1$
+\Repeat
+  \State $u=\mathrm{FFT}^{-1}[C\,\mathrm{FFT}(p)]$ ; $g=u-h$ ; $I_c=\{p>0\}$ ; $g\leftarrow g-\operatorname{moy}_{I_c}(g)$
+  \State $G=\sum_{I_c}g^2$ ; direction $t=g+\delta\,(G/G_{\text{old}})\,t$ sur $I_c$, $t=0$ ailleurs ; $G_{\text{old}}\leftarrow G$
+  \State $r=\mathcal C*t$ ; $r\leftarrow r-\operatorname{moy}_{I_c}(r)$ ; pas $\tau=\sum_{I_c}g\,t/\sum_{I_c}r\,t$
+  \State $p\leftarrow\max(p-\tau t,0)$ \Comment{projection sur $p\ge0$}
+  \State points hors contact en interpénétration ($p=0$, $g<0$) : $p\leftarrow p-\tau g$, $\delta\leftarrow0$ ; sinon $\delta\leftarrow1$
+  \State $p\leftarrow p\,\bar p/\langle p\rangle$ \Comment{équilibre}
+\Until{$\sum|p-p_{\text{old}}|/\sum p<10^{-7}$}
+\end{algorithmic}
+\end{algorithm}
+Pour une cellule de $512^2$ points, le calcul demande 100 à 700 itérations, soit 5 à
+\SI{20}{s}.
+
+\subsection{Solutions de référence}\label{sec:contact_ref}
+\paragraph{Poinçons plans périodiques (rainures).} Tant que le caoutchouc ne touche pas le fond
+des rainures, les plats (largeur $2a=\lambda-w$) sont en contact total. Pour un massif
+semi-infini, c'est le problème classique des poinçons plans rigides périodiques :
+\begin{equation}
+\frac{p(x)}{\bar p}=\frac{\cos(\pi x/\lambda)}{\sqrt{\sin^2(\pi a/\lambda)-\sin^2(\pi x/\lambda)}}\quad(|x|<a),\qquad
+a_n=\tfrac12\bigl[P_n(c)+P_{n-1}(c)\bigr],\ c=\cos(2\pi a/\lambda),
+\label{eq:punch}
+\end{equation}
+où les $a_n$ sont les coefficients de Fourier ($p/\bar p=a_0+2\sum a_n\cos(2\pi nx/\lambda)$) et
+$P_n$ les polynômes de Legendre. Cette distribution est indépendante du module et singulière en
+$1/\sqrt{\cdot}$ aux arêtes. Le caoutchouc s'enfonce d'environ \SI{0.8}{mm} dans les rainures,
+profondes de \SI{6.35}{mm} : l'hypothèse de contact limité aux plats est vérifiée.
+\paragraph{Théorie de Persson (surfaces aléatoires).}\label{sec:persson} Pour un massif
+semi-infini, $A/A_0=\operatorname{erf}\!\bigl(\sqrt2\,\bar p/(E_r^*\sqrt{m_2})\bigr)$. On sait
+qu'elle sous-estime de 20 à 30\,\% l'aire aux faibles charges.
+
+\subsection{Bibliothèque de contact}
+La pression nominale varie sous le pneu, de 0 à \SI{3.4}{MPa} pour l'empreinte hétérogène, et le
+contact sur texture aléatoire est \emph{non linéaire} : l'aire augmente avec $\bar p$. On résout
+donc le contact d'une même cellule pour 8 pressions nominales (0,15 ; 0,3 ; 0,6 ; 1,0 ; 1,65 ;
+2,3 ; 3,0 ; \SI{4.0}{MPa}) et on stocke les modulations $m(x,y;\bar p)=p/\bar p$. En un point de
+pression nominale $p_0$, la modulation est interpolée linéairement en $\log p_0$ entre deux
+niveaux. Pour les rainures, le contact est total sur les plats et linéaire : $m(x)$ ne dépend pas
+de $\bar p$.
+\begin{figure}[H]\centering\includegraphics[width=\linewidth]{figures/m_bibliotheque.pdf}
+\caption{Bibliothèque de contact de la texture gaussienne (MPD \SI{1.0}{mm}) : l'aire de contact
+passe de 13\,\% à 90\,\% entre 0,3 et \SI{4.0}{MPa}.}\label{fig:biblio}
+\end{figure}
+
+%=============================================================================================
+\section{Du contact à la chaussée : couplage deux échelles}\label{sec:couplage}
+%=============================================================================================
+\subsection{Décomposition}
+La pression réelle à l'instant $s$, au point fixe $\bm x=(x,y)$ de la chaussée, vaut
+\begin{equation}
+p(\bm x,s)=\underbrace{p_0(x-Vs,y)}_{\text{enveloppe roulante (TFE)}}\;m\bigl(\bm x;p_0(x-Vs,y)\bigr)
+= p_0+\delta p,\qquad \delta p=p_0\,(m-1) .
+\end{equation}
+La modulation $m$ est prise dans la bibliothèque à la position \emph{fixe} $\bm x$, la cellule de
+texture étant répétée périodiquement sur toute la chaussée. Par linéarité de la chaussée,
+$\bm\epsilon=\bm\epsilon_0+\delta\bm\epsilon$ : la réponse nominale $\bm\epsilon_0$ est celle du
+TFE, calculée par \cs, et $\delta\bm\epsilon$ est la contribution de la texture.
+
+\subsection{Réponse nominale}
+Bogie d'A340 complet (4 roues de \SI{370}{kN}), structure PEP, KVG du Tableau 7 du TFE,
+$V=\SI{0.66}{m/s}$, régime permanent, domaine de $\SI{6}{m}\times\SI{3}{m}$ et grille de
+$2048\times1024$ (pas de \SI{2.9}{mm}), aux profondeurs 1, 2, 5, 10, 20, 40 et \SI{80}{mm}.
+Les champs sont interpolés sur la grille fine. Ce calcul est celui de la validation V5 de la
+notice \cs, qui reproduit le modèle COMSOL du TFE.
+
+\subsection{Localisation : la texture ne « voit » que la couche de surface}
+Une composante de $\delta p$ de longueur d'onde $\lambda$ s'amortit en profondeur comme
+$(1+qz)e^{-qz}$, avec $q=2\pi/\lambda$ ; sa \emph{profondeur d'influence} vaut
+$\lambda/2\pi\le\SI{8}{mm}$. C'est très petit devant l'épaisseur de la couche de roulement
+(\SI{320}{mm}) : $\delta p$ charge localement un \textbf{massif homogène semi-infini}. Sa réponse
+se calcule sur une grille fine, de pas \SI{0.25}{mm}, couvrant l'empreinte de la roue arrière
+droite plus une marge de \SI{2}{cm} ($2720\times2480$ points), par la solution fermée du massif
+homogène dans l'espace de Fourier (\texttt{texture.local\_response}). Ce point est vérifié contre
+la structure multicouche complète (T6, \S\ref{sec:verif}).
+
+\subsection{Viscoélasticité : méthode héréditaire}\label{sec:hered}
+\paragraph{Pourquoi un traitement particulier.} $\delta p$ n'est pas une charge roulante : la
+texture est fixe, seule l'enveloppe se déplace. De plus, pour une texture aléatoire, la
+\emph{forme} de $\delta p$ change pendant le passage, puisque l'aire de contact suit $p_0$.
+\paragraph{Principe.} Pour un massif homogène à coefficient de Poisson constant chargé en effort,
+le principe de correspondance donne
+\begin{equation}
+\delta\bm\epsilon(\bm x,t)=\int_{-\infty}^{t}J(t-s)\,\frac{\partial}{\partial s}\,\delta\bm\epsilon^{E=1}(\bm x,s)\,\dd s,
+\qquad \delta\bm\epsilon^{E=1}(\cdot,s)=\mathcal G_1[\delta p(\cdot,s)],
+\end{equation}
+où $J$ est la complaisance de fluage et $\mathcal G_1$ l'opérateur élastique de module unité.
+$\mathcal G_1$ est linéaire en espace et ne dépend pas du temps : il \textbf{commute} avec
+l'intégrale d'hérédité. D'où
+\begin{equation}
+\boxed{\;\delta\bm\epsilon(\bm x,0)=\mathcal G_{E_s}\bigl[\delta p_{\text{eq}}\bigr],\qquad
+\delta p_{\text{eq}}(\bm x)=E_s\int_{-\infty}^{0}J(-s)\,\frac{\partial\,\delta p(\bm x,s)}{\partial s}\,\dd s\;}
+\label{eq:hered}
+\end{equation}
+L'intégrale d'hérédité s'applique donc \emph{point par point à la pression}, puis on fait un seul
+calcul élastique. Cette réduction est exacte dans le cadre (H1)--(H7), y compris pour le contact
+non linéaire et pour la mémoire laissée par la roue avant du bogie au même endroit de la chaussée.
+\paragraph{Intégration.} Pour le KVG,
+$J(t)=1/E_0+\sum_i(1-e^{-t/\tau_i})/E_i$. On suit l'histoire de $\delta p$ en chaque point depuis
+l'arrivée de la roue avant (environ \SI{4}{s} avant l'instant d'observation), par pas de 5 à
+\SI{10}{mm} de déplacement de l'enveloppe. On utilise des variables internes récurrentes
+$h_i$, avec une intégration exacte pour une variation linéaire de $\delta p$ sur chaque pas. Les
+cellules de temps caractéristique très court ($\tau<0{,}02\,\Delta s$) sont traitées comme
+instantanées. L'erreur de pas est inférieure à $2\cdot10^{-4}$ pour l'empreinte hétérogène et à
+1\,\% pour les empreintes en créneau.
+
+\begin{alerte}
+\textbf{Méthode abandonnée en cours de travail.} La première version (bilan du 24/09) utilisait
+une formule multiplicative : $\delta\bm\epsilon=\mathcal G_{E_s}[\delta p(t=0)]\cdot E_s\,C(X,y)$,
+avec une souplesse effective $C=Q/p_0$. Elle suppose $\delta p(\bm x,s)$ proportionnel à
+$p_0(x-Vs)$ en chaque point. C'est exact pour le rainurage (contact total, modulation
+fixe) : les deux méthodes y coïncident à 0,2\,\% (T5). Pour une texture aléatoire en revanche,
+l'aire de contact suit $p_0$ : les sommets sont chargés dès l'arrivée du pneu, la perturbation dure
+plus longtemps et flue davantage. La formule multiplicative sous-estime alors la perturbation
+d'environ 9\,\%. En outre, $C=Q/p_0$ est mal conditionné là où $p_0$ est faible. Les résultats du
+24/09 sur les textures aléatoires sont donc \textbf{remplacés} par ceux de ce rapport. L'écart entre les deux méthodes est quantifié au \S\ref{sec:verif}.
+\end{alerte}
+
+\subsection{Post-traitement}
+En chaque point de la grille fine et à chaque profondeur, on assemble le tenseur des
+déformations $\bm\epsilon_0+\delta\bm\epsilon$ ; la déformation principale majeure $\epsilon_1$
+est sa plus grande valeur propre. On retient deux statistiques sur la zone de la roue arrière
+droite :
+\begin{itemize}[nosep]
+\item le \textbf{maximum}, directement comparable au TFE, mais porté par un seul point de grille ;
+\item le \textbf{centile 99,9\,\%}, plus robuste : il est dépassé sur \SI{0.1}{\%} de la surface,
+      soit environ \SI{4}{cm^2} sous la roue.
+\end{itemize}
+Les profondeurs retenues sont 1, 2, 5, 10, 20, 40 et \SI{80}{mm}. Exactement en surface
+($z=0$), le modèle de surface plane n'a plus de sens sous une texture, où les pressions sont
+quasi ponctuelles : la comparaison avec le TFE se fait donc à partir de \SI{1}{mm}.
+
+%=============================================================================================
+\section{Vérifications et degré de confiance}\label{sec:verif}
+%=============================================================================================
+\input{r_verifications.tex}
+
+%=============================================================================================
+\section{Résultats et comparaison avec le TFE}\label{sec:resultats}
+%=============================================================================================
+\input{r_resultats.tex}
+
+%=============================================================================================
+\section{Niveau 2 : frottement, entaille des rainures, granulats et mortier}\label{sec:niveau2}
+%=============================================================================================
+\input{n2_valeurs_macros.tex}
+\input{n2_methode.tex}
+\input{n2_resultats.tex}
+
+%=============================================================================================
+\section{Discussion, limites et suite}\label{sec:discussion}
+%=============================================================================================
+\input{r_discussion.tex}
+
+\appendix
+\section{Paramètres numériques et temps de calcul}\label{ann:param}
+\begin{center}\small
+\begin{tabular}{p{6.2cm}p{8.3cm}}
+\toprule
+Cellule de texture & $\SI{128}{mm}\times\SI{128}{mm}$, $512^2$ points, pas \SI{0.25}{mm}, périodique\\
+DSP & $H=0{,}8$ ; $\lambda\in[1,50]$ mm ; plateau au-delà de \SI{20}{mm}\\
+Bande de roulement & $E_r=10$ (5 ; 20) MPa, $\nu_r=0{,}49$, $t_r=\SI{10}{mm}$ sur ceinture rigide\\
+Contact & gradient conjugué projeté, tolérance $10^{-7}$, 8 niveaux de $\bar p$ de 0,15 à \SI{4}{MPa}\\
+Réponse nominale & \cs, domaine $6\times3$ m, $2048\times1024$ (2,9 mm), KVG, $V=\SI{0.66}{m/s}$\\
+Fenêtre fine & roue arrière droite, $x\in[-2{,}30;-1{,}66]$ m, $y\in[0{,}40;1{,}00]$ m, marge \SI{2}{cm}, pas \SI{0.25}{mm}\\
+Histoire & depuis l'arrivée de la roue avant, pas de 10 mm (hétérogène) ou 5 mm (créneaux)\\
+Temps par cas & bibliothèque de contact 40 s ; nominal 100 s ; texture 3 à 6 min\\
+\addlinespace
+\multicolumn{2}{l}{\emph{Niveau 2}}\\
+Frottement (T10) & $\mu$ = 0 ; 0,3 ; 0,6, glissement total, pneu et texture ; 4 surfaces\\
+Cellule rainure (T11) & $38{,}1\times\SI{60}{mm}$, pixels de \SI{0.099}{mm} ($384\times605$), Q4, fond encastré ; 20 à 40 s par cas\\
+Cellule granulats (T12) & $40\times\SI{40}{mm}$, pixels de \SI{0.1}{mm}, granulats 2--\SI{10}{mm} (Fuller 0,45), jeu \SI{0.2}{mm}, 3 tirages, $c$ = 10 ; 30 ; 100\\
+Distance critique & $L_c$ = 0 ; 0,5 ; \SI{1}{mm} (moyenne glissante sur les seuls pixels solides)\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Reproduction}\label{ann:repro}
+Depuis le dossier \texttt{chausspec} (Python 3, NumPy, SciPy, Matplotlib) :
+\begin{verbatim}
+python validation/t01_t02_contact.py          # T1-T2 : contact
+python validation/t03_deux_echelles.py        # T3 : couplage / multicouche exact
+python validation/t05_integration_temporelle.py
+python validation/t05b_controle_hereditaire.py  # T5 : hérédité, deux codes
+python validation/t06_demi_espace_local.py    # T6 : massif local
+python validation/t08_resolution.py           # T8 : résolution
+ONLY=heterogene OUT=_het \
+    python validation/t07_campagne_definitive.py
+ONLY=rectangulaire,circulaire OUT=_rc \
+    python validation/t07_campagne_definitive.py
+SEEDS=2,3,4,5 ONLY=heterogene OUT=_seeds \
+    python validation/t07_campagne_definitive.py
+python validation/t09_tangentiel_local.py      # T9 : frottement, réponse locale
+for mu in 0 0.3 0.6; do ONLY=heterogene \
+  TEX=rainures_vives,gauss_MPD1.0,gauss_MPD1.5 MU=$mu OUT=_mu$mu \
+  python validation/t10_frottement.py; done     # T10 : frottement 3D
+python validation/t11a_ef_validation.py       # T11a : solveur EF
+python validation/t11_entaille_rainures.py    # T11 : entaille des rainures
+python validation/t12_granulats_mortier.py    # T12 : granulats / mortier
+python rapport/figures_methodo.py
+python rapport/figures_resultats.py
+python rapport/figures_niveau2.py
+python rapport/texte_niveau2.py
+pdflatex rapport/rapport_texture.tex
+\end{verbatim}
+
+\section*{Références}
+\small
+\begin{itemize}[nosep,leftmargin=*]
+\item FAA (2016). AC 150/5320-12C, \emph{Measurement, construction and maintenance of skid-resistant airport pavement surfaces}.
+\item OACI. Annexe 14, Vol.~I --- texture de surface des pistes.
+\item ISO 13473-1. Caractérisation de la texture d'un revêtement à partir de relevés de profils --- Partie 1 : profondeur moyenne de profil.
+\item Johnson K.L. (1985). \emph{Contact Mechanics}. Cambridge University Press.
+\item Persson B.N.J. (2001). Theory of rubber friction and contact mechanics. \emph{J. Chem. Phys.} 115, 3840--3861.
+\item Polonsky I.A., Keer L.M. (1999). A numerical method for solving rough contact problems based on the multi-level multi-summation and conjugate gradient techniques. \emph{Wear} 231, 206--219.
+\item Taylor D. (2007). \emph{The Theory of Critical Distances: A New Perspective in Fracture Mechanics}. Elsevier.
+\item Fuller W.B., Thompson S.E. (1907). The laws of proportioning concrete. \emph{Trans. ASCE} 59, 67--143.
+\item Kim Y.-R., Little D.N., Lytton R.L. (2003). Fatigue and healing characterization of asphalt mixtures. \emph{J. Mater. Civ. Eng.} 15(1), 75--83 (mortier bitumineux, FAM).
+\item Westergaard H.M. (1939). Bearing pressures and cracks. \emph{J. Applied Mechanics} 6, A49--A53.
+\item David L. (2026). Rapport de TFE, LTDS--ENTPE ; notice \cs{} (v0.2).
+\end{itemize}
+\normalsize\noindent\emph{Références à vérifier dans Zotero.}
+\end{document}

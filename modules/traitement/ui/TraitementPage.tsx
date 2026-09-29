@@ -20,6 +20,7 @@ import { EtapeSynthese } from "./EtapeSynthese";
 import { EtapeComparaison, EtapeExport, EtapeFidelite } from "./EtapesFin";
 import { essaiActif, souffler, useTraitement } from "./etat";
 import { AnciennePage } from "./AnciennePage";
+import { RattacherCampagne } from "./Rattacher";
 import { enregistrer, marquerEnregistre, useSauvegardeAuto } from "./sauvegarde";
 
 const ETAPES = ["Essai", "Cycles", "Synthèse", "Calage", "Comparaison", "Fidélité Excel", "Export"];
@@ -29,6 +30,7 @@ export function TraitementPage() {
   const s = useTraitement();
   const e = essaiActif(s);
   const [ancienne, setAncienne] = useState(false);
+  const [rattacher, setRattacher] = useState(false);
   useSauvegardeAuto(ctx);
 
   // Premier affichage : l'essai de démonstration, calculé et calé.
@@ -61,6 +63,8 @@ export function TraitementPage() {
         if (projet) await appliquerProjet([essai], JSON.parse(projet) as Parameters<typeof appliquerProjet>[1]);
         else await traiter(essai, progres, souffler);
         essai.enregistrement = { chemin: d.projet, format: "projet" };
+        // Sa source, pour pouvoir le rattacher ailleurs (« Rattacher à une campagne »).
+        if (d.donnees) essai.source = `${d.donnees.replace(/\/+$/, "")}/${d.fichier}`;
         // État d'ouverture : il ne s'écrit qu'après une première modification.
         marquerEnregistre(essai);
         st.maj((x) => {
@@ -156,6 +160,18 @@ export function TraitementPage() {
               </button>
             </span>
           ) : null}
+          {e && !e.demo && ctx.espace && ctx.registre.aAction("campagnes.preparer-essai") ? (
+            <button
+              type="button"
+              className="tr-mini"
+              disabled={!e.source}
+              aria-pressed={rattacher}
+              title={e.source ? "Enregistrer ce dépouillement (cycles écartés, calages…) avec un essai de campagne" : "Ouvrez le fichier de mesure par « Ouvrir » (il est alors copié dans l'espace) pour pouvoir le rattacher"}
+              onClick={() => setRattacher((v) => !v)}
+            >
+              Rattacher à une campagne…
+            </button>
+          ) : null}
           <span className="tr-segmente a-droite" role="group" aria-label="Langue des axes" title="Langue des titres d'axes et des légendes, à l'écran et dans Figures">
             {(["fr", "en"] as const).map((l) => (
               <button key={l} type="button" aria-pressed={s.langue === l} className={s.langue === l ? "actif" : undefined} onClick={() => s.maj((x) => (x.langue = l))}>
@@ -167,6 +183,7 @@ export function TraitementPage() {
             Ancienne page
           </button>
         </div>
+        {rattacher && e ? <RattacherCampagne key={e.id} e={e} fermer={() => setRattacher(false)} /> : null}
         {e ? (
           <p className="tr-etat discret">
             {resumeEssai(e, s.essais.length).map((t, i) => (

@@ -5,6 +5,7 @@
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { exportGraphSvg, graphLayout, unproject, validateGraph, type GraphDoc } from "../../core/graph";
+import { usePlageRegression } from "./plageRegression";
 import { useGraph } from "./useGraph";
 
 /** Pixels par millimètre à 100 % (96 dpi). */
@@ -21,10 +22,14 @@ export function Apercu() {
   const [zoom, setZoom] = useState<number | null>(null); // null : ajusté à la place
   const [mode, setMode] = useState<"normal" | "zone" | "gomme">("normal");
   const [cible, setCible] = useState<number | null>(null);
+  // Plage de régression demandée depuis le panneau : un rectangle en fixe les bornes en x.
+  const plage = usePlageRegression((p) => p.serie);
+  const actif = plage !== null ? "plage" : mode;
 
   // Ctrl+Z / Ctrl+Y (ou Ctrl+Maj+Z) : historique du graphe, sauf dans un champ de saisie.
   useEffect(() => {
     const clavier = (e: KeyboardEvent) => {
+      if (e.key === "Escape") usePlageRegression.setState({ serie: null });
       const t = e.target as HTMLElement | null;
       if (!(e.ctrlKey || e.metaKey) || (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable))) return;
       const k = e.key.toLowerCase();
@@ -93,10 +98,18 @@ export function Apercu() {
   function relacher() {
     const t = trace;
     setTrace(null);
-    if (!t || Math.abs(t.x1 - t.x0) < 6 || Math.abs(t.y1 - t.y0) < 6) return;
+    const plat = actif === "plage"; // pour une plage en x, un trait horizontal suffit
+    if (!t || Math.abs(t.x1 - t.x0) < 6 || (!plat && Math.abs(t.y1 - t.y0) < 6)) return;
     const a = donnees(t.x0, t.y0),
       b = donnees(t.x1, t.y1);
     if (!a || !b) return;
+    if (plat && plage !== null) {
+      const sr = s.doc.series[plage];
+      usePlageRegression.setState({ serie: null });
+      if (!sr?.fit) return;
+      const [lo, hi] = a.x < b.x ? [a.x, b.x] : [b.x, a.x];
+      return s.setSeries(plage, { fit: { ...sr.fit, xmin: Number(lo.toPrecision(5)), xmax: Number(hi.toPrecision(5)) } });
+    }
     if (mode === "gomme") return s.eraseBox({ x0: a.x, x1: b.x, y0: a.y, y1: b.y }, cible);
     const doc: GraphDoc = s.doc;
     const borne = (u: number, v: number, log: boolean) => {
@@ -161,14 +174,14 @@ export function Apercu() {
         </div>
       ) : null}
       <div
-        className={`graph-preview checker${mode !== "normal" ? " mode-zone" : ""}`}
+        className={`graph-preview checker${actif !== "normal" ? " mode-zone" : ""}`}
         ref={zone}
         onWheel={(e) => {
           if (!e.ctrlKey || !rendu.svg) return;
           e.preventDefault();
           changer(e.deltaY < 0 ? PAS : 1 / PAS);
         }}
-        onMouseDown={(e) => mode !== "normal" && e.button === 0 && (e.preventDefault(), setTrace({ x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY }))}
+        onMouseDown={(e) => actif !== "normal" && e.button === 0 && (e.preventDefault(), setTrace({ x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY }))}
         onMouseMove={(e) => {
           if (trace) setTrace({ ...trace, x1: e.clientX, y1: e.clientY });
           const d = donnees(e.clientX, e.clientY);
@@ -186,7 +199,7 @@ export function Apercu() {
           />
         ) : null}
       </div>
-      <div className="apercu-pied muted small">{curseur || (mode === "zone" ? "Tirez un rectangle sur la zone à agrandir ; double-clic : axes auto." : mode === "gomme" ? "Tirez un rectangle autour des points à retirer (Ctrl+Z pour annuler)." : " ")}</div>
+      <div className="apercu-pied muted small">{actif === "plage" ? `Tirez un rectangle (ou un trait) sur la plage de x de la régression de la série ${plage! + 1}${curseur ? ` — ${curseur}` : ""} ; Échap pour annuler.` : curseur || (mode === "zone" ? "Tirez un rectangle sur la zone à agrandir ; double-clic : axes auto." : mode === "gomme" ? "Tirez un rectangle autour des points à retirer (Ctrl+Z pour annuler)." : " ")}</div>
     </div>
   );
 }

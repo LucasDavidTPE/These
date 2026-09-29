@@ -20,7 +20,27 @@ const chausspec: Manifeste = {
       return "Aucun cas enregistré";
     }
   },
+  indexer: async (ctx) => {
+    if (!ctx.espace) return [];
+    try {
+      return (await ctx.espace.fichiers.listDir("chausspec"))
+        .filter((e) => e.name.endsWith(".json"))
+        .map((e) => {
+          const nom = e.name.replace(/\.json$/, "");
+          return { id: nom, module: "chausspec", genre: "Cas ChaussSpec", titre: nom, ouvrir: { action: "chausspec.ouvrir-cas", charge: { nom } } };
+        });
+    } catch {
+      return [];
+    }
+  },
   actions: {
+    /** Ouvre un cas enregistré dans ChaussSpec ; charge : { ctx, nom }. */
+    "chausspec.ouvrir-cas": async (charge) => {
+      const { ctx, nom } = charge as { ctx: Contexte; nom: string };
+      const texte = await ctx.espace!.fichiers.readText(`chausspec/${nom}.json`);
+      useChaussspec.getState().ouvrir(JSON.parse(texte), nom);
+      ctx.naviguer("chausspec");
+    },
     /**
      * Remplace le chargement du cas ouvert (la structure est gardée) et ouvre ChaussSpec.
      * Charge : { ctx, wheels (format JSON de chausspec), source }.

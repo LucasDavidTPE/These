@@ -95,6 +95,16 @@ racine (identité, page, état pour l'Accueil, problèmes, actions).
   (« ouvrir l'essai X dans le traitement », « enregistrer ce graphe dans Figures »). Si
   le module cible n'est pas compilé dans l'installeur, l'action n'apparaît pas.
 
+### 3.0 Recherche globale (Ctrl+K)
+Ctrl+K (ou le champ « Rechercher » de la barre) ouvre une palette qui cherche dans tout
+l'espace, sans accents ni casse, tous les mots dans n'importe quel ordre, le titre comptant
+plus que le détail. Chaque module déclare son contenu par `indexer(ctx)` dans son manifeste
+(références, campagnes et essais, études, figures, éléments du planning, cas ChaussSpec,
+projets du Numériseur, présentations) ; la coquille les réunit à l'ouverture de la palette et
+les classe (`noyau/recherche.ts`). Un résultat ouvre son élément par une action du registre
+quand le module en offre une (`chausspec.ouvrir-cas`, `bibliotheque.ouvrir`, `etudes.ouvrir`, `campagnes.ouvrir`, `figures.ouvrir`), sinon la page du module. La palette
+propose aussi les pages (Réglages, Diagnostic…). Rien n'est lu tant qu'elle n'est pas ouverte.
+
 ### 3.1 Installeurs
 
 Le même code produit plusieurs installeurs. Le produit est choisi à la compilation par
@@ -253,6 +263,19 @@ Ajouts permis par l'intégration :
   `label`, équation et R² (4 chiffres significatifs, virgule décimale) dans un encadré au coin
   `fit_pos` du graphe (par défaut, en haut du côté opposé à la légende). Même rendu en SVG et
   en pgfplots (`\addplot coordinates` + `\node` à `rel axis cs`) ; ignorée pour les barres.
+  **1.2.1** : types `polynome` (champ `degre`, 2 à 6 ; moindres carrés en x centré-réduit,
+  réécrits en puissances de x, termes de bruit d'arrondi omis dans l'équation),
+  `exponentielle` y = a·e^(b·x) (en semi-log) et `logarithmique` y = a·ln x + b ; plage
+  `xmin` / `xmax` des points pris en compte (saisie, ou rectangle tiré sur l'aperçu), courbe
+  sur cette plage ou, avec `prolonger`, sur toute la série ; R² passe à la ligne quand
+  l'équation est trop large pour le graphe. R² de la puissance et de l'exponentielle dans
+  les variables transformées, comme les courbes de tendance d'Excel.
+  **1.5.0** : sous l'équation, « Qualité de l'ajustement » : nombre de points, écart quadratique
+  moyen, erreur type √(Σr² / (n − p)) et graphe des résidus (mesure − courbe, en unités de y).
+  Pas de bande de confiance (non faite).
+  **1.2.2** : « Lire sur la courbe » (panneau, pas dans la figure) : y pour un x saisi, y compris
+  hors plage (extrapolation), et le ou les x pour un y (`fitInverse` : formule directe pour les
+  formes monotones, recherche de racines sur la plage pour le polynôme).
 
 ## 7. Module Traitement 2S2P1D
 
@@ -291,6 +314,13 @@ Ce qui change à l'étape 2 :
   sinon sa copie `donnees/importes/…`) et se rouvre depuis « Dépouillements enregistrés »,
   sur l'un ou l'autre PC (1.2 : le fichier de mesure est copié dans l'espace ; un ancien
   enregistrement à chemin absolu est rapatrié à sa réouverture).
+- **Rattacher à une campagne** (1.5.1) : le dépouillement affiché (voies, cycles écartés ou
+  tronqués, calages, référence du fichier de mesure) s'enregistre dans le `traitement.json` d'un
+  essai de campagne, existant ou créé (action `campagnes.preparer-essai`) ; un dépouillement déjà
+  présent n'est remplacé qu'après confirmation et part dans `.anciens/`, l'enregistrement
+  autonome dans `traitement/.supprimes/`. Rien n'est effacé. Le fichier garde le format
+  « dépouillement » (avec sa source) : la campagne le rouvre par `traitement.rouvrir-depouillement`,
+  même si l'essai n'est pas dans son dossier de données.
 - **Calage étendu** (0.2.7) : modèles élémentaires Maxwell, Kelvin-Voigt, Zener, Burgers
   (constantes propres, « Caler tout » ne touche pas aux a_T) ; **séries de Prony** (Maxwell
   ou Kelvin-Voigt généralisé, τ sur une grille, modules par moindres carrés positifs) calées
@@ -334,6 +364,30 @@ glisser, double-clic pour revenir, réticule, légende cliquable. Décimation po
 fichiers (lecture en Rust). Actions : **exporter en Excel** (`.xlsx`), **copier ou
 exporter les données brutes** d'un essai vers un dossier choisi, **enregistrer le
 graphe dans Figures**, **ouvrir dans le traitement 2S2P1D**.
+
+### Présentations (Manuscrits → Présentations)
+Une présentation est un fichier Markdown de l'espace (`presentations/<nom>.md`), une diapo
+par section séparée par `---` : en-tête (titre, auteur, date, modèle), titres, puces à
+niveaux, **gras** et *italique*, `|||` pour deux colonnes, `Source: …`, images
+`![légende](figure:FIG-0001)` (bibliothèque de Figures, par l'action `figures.image`) ou
+chemin relatif dans l'espace. La mise en page (titre, section, contenu, figure, deux colonnes)
+est déduite du contenu ou imposée par `mise-en-page:`. Un **modèle** est un petit JSON
+(`presentations/modeles/<nom>.json` : couleurs, polices, tailles, pied de page, numéros) ; quatre
+modèles de base sont fournis, on en crée d'autres depuis l'application. L'export écrit un
+.pptx 16:9 (Office Open XML, sans bibliothèque de présentation) : textes modifiables dans
+PowerPoint, titres reconnus comme titres, figures en images. Les équations `$$…$$` sont posées
+en texte (LaTeX brut) ; les notes d'orateur ne sont pas gérées.
+
+### Citations de la Bibliothèque (1.6.0)
+Dans le texte d'une présentation, `[@BIB-020]` (identifiant ou clé BibTeX ; plusieurs clés séparées
+par « ; », précision après une virgule : `[@BIB-065, p. 12]`) devient « (Olard & Di Benedetto,
+2003) », et des diapos « Références » (7 par diapo, ordre alphabétique) sont ajoutées à la fin,
+sauf `références: non` dans l'en-tête. Une clé inconnue reste telle qu'écrite et est signalée.
+Le panneau « Comment ça marche ? » de ChaussSpec affiche « Sources : … » (seulement les
+références citées par la notice chausspec v0.4), chaque nom ouvrant sa fiche. Le tout se coupe
+dans la Bibliothèque (« Citations [@…] dans l'application »), réglage partagé dans
+`bibliotheque/citations.json` : coupé, rien n'est interprété ni ajouté. Analyse dans
+`noyau/citations.ts`, résolution par l'action `bibliotheque.citations`.
 
 ### 8.4 Reprise de l'existant
 Import unique des fiches `projects/*.toml`, des aperçus et des notes de these-lgcb.
@@ -497,7 +551,7 @@ grille (FFT + partition de l'unité) et solveur axisymétrique. Conformité : r�
 par le Python d'origine (noyau à 1e-9, grilles à 1e-9, 1e-7 là où interviennent Bessel et le
 régime harmonique). Un cas = `chausspec/<nom>.json` dans l'espace, au **format JSON du Python**
 (`python -m chausspec cas.json` le calcule aussi) ; une carte de pression peut y être incluse.
-Calcul dans un Worker, cartes des champs, extrêmes et ε1, coupes, jauges (charge roulante),
+Calcul dans un Worker, cartes des champs, extrêmes, champs dérivés (ε1 à ε3, σ1 à σ3, τmax, von Mises, dilatation) et combinaisons linéaires, coupes, jauges (charge roulante),
 export du dossier de résultats au format du Python, cartes et courbes vers Figures, constantes
 2S2P1D reprises du Traitement (action `traitement.calages`).
 
@@ -519,7 +573,10 @@ photo d'un écran). Image ouverte (PNG, JPEG, WebP, BMP, GIF), collée (Ctrl+V) 
 - **Étalonnage** : deux points connus sur l'axe des x (X1, X2) et deux sur l'axe des y
   (Y1, Y2), placés à la loupe et déplaçables, avec leurs valeurs ; échelles linéaires ou
   logarithmiques ; image tournée ou axes non perpendiculaires admis (repère oblique défini
-  par les deux axes).
+  par les deux axes). **1.5.0** : « Détecter les axes » pose les quatre points aux extrémités des
+  deux traits sombres les plus longs (axe des x : le plus bas ; axe des y : le plus à gauche ;
+  seuils de plus en plus tolérants pour les traits lissés, fond transparent traité comme du blanc) ;
+  les valeurs restent à saisir (pas de reconnaissance des graduations).
 - **Courbes XY** : séries de points ; relevé automatique par la couleur (pipette ou couleurs
   dominantes proposées, anticrénelage écarté ; tolérance ΔE CIELAB ; zone de recherche) :
   en « ligne », un point tous les n pixels le long de l'axe des x, en suivant la courbe à
@@ -527,7 +584,8 @@ photo d'un écran). Image ouverte (PNG, JPEG, WebP, BMP, GIF), collée (Ctrl+V) 
   modifiables (glisser, ajouter, Suppr, tableau). Exports : CSV, copie pour Excel,
   graphe modifiable dans Figures (`figures.enregistrer-graphe`).
 - **Carte de couleurs** : légende étalonnée par deux points (début, fin) et leurs valeurs
-  (lin ou log) ; chaque pixel de la zone de la carte prend la valeur de la couleur de légende
+  (lin ou log), **ou échelle connue** (1.5.0 : jet, turbo, viridis, plasma, inferno, coolwarm,
+  RdBu, hot, gris, éventuellement inversée) dont on donne seulement les deux valeurs extrêmes ; chaque pixel de la zone de la carte prend la valeur de la couleur de légende
   la plus proche (interpolée entre deux couleurs voisines, CIELAB), rien au-delà de la
   tolérance (fond, texte, traits). Coupes le long de lignes (graphe, CSV, Figures). Moyennes
   sur un maillage : rectangulaire (matrice au format des cartes de pression de ChaussSpec),

@@ -272,7 +272,7 @@ function DernieresFigures({ figures }: { figures: FigureRecente[] }) {
         <ul className="acc-figures">
           {figures.map((f, i) => (
             <li key={f.dossier}>
-              <button type="button" onClick={() => void ctx.registre.executer("figures.ouvrir", { ctx, dossier: f.dossier })} title={`${f.id} · modifiée le ${jour(f.date)}`}>
+              <button type="button" onClick={() => void ctx.registre.executer("figures.ouvrir", { ctx, dossier: f.dossier })} title={`${f.titre}\n${f.id} · modifiée le ${jour(f.date)}`}>
                 <span className="acc-vignette">{urls[i] ? <img src={urls[i]!} alt="" /> : <span className="discret petit">Pas d'aperçu</span>}</span>
                 <span className="acc-figure-titre">{f.titre}</span>
               </button>

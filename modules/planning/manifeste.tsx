@@ -31,6 +31,10 @@ const planning: Manifeste = {
     return s.length ? `Cette semaine : ${s.map((b) => b.titre).slice(0, 2).join(", ")}${s.length > 2 ? "…" : ""}` : "Rien d'inscrit cette semaine";
   },
   problemes: async (ctx) => (await chargerPlanning(ctx))?.problemes ?? [],
+  indexer: async (ctx) =>
+    ((await chargerPlanning(ctx))?.elements ?? [])
+      .filter((e) => e.valeur.actif)
+      .map((e) => ({ id: e.id, module: "planning", genre: e.valeur.fin ? "Tâche" : "Jalon", titre: e.valeur.titre, detail: [e.valeur.debut, e.valeur.fin].filter(Boolean).join(" → "), mots: e.valeur.notes })),
   actions: {
     /** Pour l'Accueil : ce qui est en cours ou arrive dans les 7 jours. */
     "planning.cette-semaine": (ctx) => semaine(ctx as Contexte),

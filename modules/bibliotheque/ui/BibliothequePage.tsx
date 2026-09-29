@@ -2,17 +2,18 @@
  * Module Bibliothèque (SPEC §9) : le classeur de bibliographie, avec une interface faite
  * pour ça. Onglets comme les feuilles, fiche d'une référence sur une page.
  */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Message, Page } from "@interface/composants";
 import { BandeauHorsEspace } from "@interface/BandeauHorsEspace";
 import { useContexte } from "@interface/contexte";
+import { useOuverture } from "@interface/ouverture";
 import { versBibtex, versRis } from "../core/exports";
 import { importerClasseur, type ImportClasseur } from "../core/import";
 import { libelleLien, lienARevoir, liensAVerifier } from "../core/liens";
 import { nomNote, noteReference, pointMensuel } from "../core/markdown";
 import { nouvelleReference } from "../core/modele";
 import { Fiche } from "./Fiche";
-import { aujourdhui, useBiblio } from "./donnees";
+import { aujourdhui, ecrireCitations, lireCitations, useBiblio } from "./donnees";
 import { AnalyseVue, CorrectionsVue, DemandesVue, PistesVue } from "./suivi";
 import { FILTRES_VIDES, type Filtres } from "./format";
 import { PlanVue, ReferencesVue, TableauDeBordVue } from "./vues";
@@ -36,13 +37,29 @@ export function BibliothequePage() {
   const d = useBiblio();
   const b = d.biblio;
   const [onglet, setOnglet] = useState<Onglet>("tableau");
-  const [fiche, setFiche] = useState<string | null>(null);
+  const [fiche, setFiche] = useOuverture("bibliotheque");
   const [filtres, setFiltres] = useState<Filtres>(FILTRES_VIDES);
   const [aImporter, setAImporter] = useState<{ nom: string; imp: ImportClasseur } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [verification, setVerification] = useState<{ fait: number; total: number; aRevoir: number } | null>(null);
   const arret = useRef(false);
+  const [citations, setCitations] = useState<boolean | null>(null);
+  const fsEspace = ctx.espace?.fichiers;
+  useEffect(() => {
+    if (!fsEspace) return;
+    let annule = false;
+    void lireCitations(fsEspace).then((r) => !annule && setCitations(r.actives));
+    return () => {
+      annule = true;
+    };
+  }, [fsEspace, ctx.revision]);
+
+  async function basculerCitations(actives: boolean) {
+    if (!fsEspace) return;
+    setCitations(actives);
+    await ecrireCitations(fsEspace, { actives });
+  }
 
   async function choisirClasseur() {
     setErreur(null);
@@ -149,6 +166,11 @@ export function BibliothequePage() {
               <button type="button" disabled={verification !== null} onClick={() => void verifierLiens()} title="Teste chaque lien et note le résultat dans « État du lien »">
                 Vérifier les liens
               </button>
+              {citations !== null ? (
+                <label className="rangee" title="Dans les présentations et les panneaux d'explication, [@BIB-020] devient « (Olard & Di Benedetto, 2003) » avec une diapo Références. Décoché : [@…] reste tel qu'écrit. Réglage partagé entre les deux PC.">
+                  <input type="checkbox" checked={citations} onChange={(e) => void basculerCitations(e.target.checked)} /> Citations [@…] dans l'application
+                </label>
+              ) : null}
             </>
           ) : null}
         </>

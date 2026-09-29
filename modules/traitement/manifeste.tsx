@@ -1,10 +1,11 @@
 import type { Contexte } from "@interface/contexte";
 import { IconeTraitement } from "@interface/icones";
 import type { Manifeste } from "@interface/manifeste";
-import { demander, type DemandeEssai } from "./ui/demande";
+import { demander, oublier, type DemandeEssai } from "./ui/demande";
 import { regenererFigure, type OrigineTraitement } from "./ui/figure";
 import { TraitementPage } from "./ui/TraitementPage";
 import { useTraitement } from "./ui/etat";
+import { rouvrirDepouillement } from "./ui/chargement";
 import "./ui/traitement.css";
 
 const traitement: Manifeste = {
@@ -19,6 +20,14 @@ const traitement: Manifeste = {
       const { ctx, ...d } = charge as DemandeEssai & { ctx: Contexte };
       demander(d);
       ctx.naviguer("traitement");
+    },
+    /** Rouvre un dépouillement enregistré (par exemple rattaché à un essai de campagne) ; charge : { ctx, chemin }. */
+    "traitement.rouvrir-depouillement": async (charge) => {
+      const { ctx, chemin } = charge as { ctx: Contexte; chemin: string };
+      oublier();
+      useTraitement.setState({ campagne: null });
+      ctx.naviguer("traitement");
+      await rouvrirDepouillement(ctx, chemin);
     },
     /** Refait un graphique (courbe maîtresse…) depuis le fichier de l'essai et son dépouillement enregistré. */
     "traitement.regenerer-figure": async (charge) => {
