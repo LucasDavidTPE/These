@@ -21,7 +21,7 @@ import { depuisLgcb } from "../core/toml";
 import { valeur } from "../core/traitement";
 import { ajouterImage, ajouterNote, chargerCampagnes, cheminTraitement, creerCampagne, enregistrerApercu, enregistrerCampagne, enregistrerEssai, type CampagneChargee } from "./donnees";
 import { renduCourbes, titreFigure, type OrigineCourbes } from "./figure";
-import { prendreOuverture } from "./ouverture";
+import { useOuverture } from "@interface/ouverture";
 import "./campagnes.css";
 
 function heures(c: CampagneChargee): number {
@@ -219,8 +219,17 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
   }
 
   async function depouiller(nom: string) {
-    if (!k.donnees) return;
     try {
+      // Dépouillement rattaché depuis le Traitement : il connaît son fichier de mesure.
+      const chemin = cheminTraitement(c.slug, nom);
+      if (c.depouilles.includes(nom) && ctx.registre.aAction("traitement.rouvrir-depouillement")) {
+        const brut = JSON.parse(await fs.readText(chemin)) as { source?: unknown };
+        if (typeof brut.source === "string" && brut.source) {
+          await ctx.registre.executer("traitement.rouvrir-depouillement", { ctx, chemin });
+          return;
+        }
+      }
+      if (!k.donnees) throw new Error("Choisissez d'abord le dossier de données de la campagne.");
       const fichier = (await fichiersDonnees(ctx, k.donnees).listDir(nom)).find((f) => f.name.endsWith(SUFFIXE_SUIVI));
       if (!fichier) throw new Error(`Pas d'export ${SUFFIXE_SUIVI} dans ${nom} (ni dans l'espace, ni sur ce poste).`);
       await ctx.registre.executer("traitement.ouvrir-essai", {
@@ -361,8 +370,8 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
                       <button type="button" disabled={!donnees?.ok} title="Copier les données brutes de cet essai vers un dossier choisi" onClick={() => void copier(nom)}>
                         Copier…
                       </button>{" "}
-                      {k.type === "module-complexe" && ctx.registre.aAction("traitement.ouvrir-essai") ? (
-                        <button type="button" disabled={!k.donnees} title="Ouvrir cet essai dans le traitement 2S2P1D" onClick={() => void depouiller(nom)}>
+                      {(k.type === "module-complexe" || c.depouilles.includes(nom)) && ctx.registre.aAction("traitement.ouvrir-essai") ? (
+                        <button type="button" disabled={!k.donnees && !c.depouilles.includes(nom)} title="Ouvrir cet essai dans le traitement 2S2P1D" onClick={() => void depouiller(nom)}>
                           {c.depouilles.includes(nom) ? "2S2P1D ✓" : "2S2P1D"}
                         </button>
                       ) : null}
@@ -483,7 +492,7 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
 export function CampagnesPage() {
   const ctx = useContexte();
   const [etat, setEtat] = useState<CampagneChargee[] | null>(null);
-  const [ouverte, setOuverte] = useState<string | null>(prendreOuverture);
+  const [ouverte, setOuverte] = useOuverture("campagnes");
   const [erreur, setErreur] = useState<string | null>(null);
   const [tour, setTour] = useState(0);
   const fs = ctx.espace?.fichiers;

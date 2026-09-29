@@ -177,3 +177,6 @@ lancent tous les tests automatiques sous Windows.
 - [x] Figures → Graphes : erreur type et graphe des résidus d'une régression (1.5.0)
 - [x] Numériseur : échelles de couleurs connues (jet, turbo, viridis, plasma, inferno, coolwarm, RdBu, hot, gris), inversables, sans pointer la légende (1.5.0)
 - [x] Numériseur : détection automatique des axes (extrémités des deux traits les plus longs) (1.5.0)
+- [x] Traitement : rattacher un dépouillement (cycles écartés, calages) à un essai de campagne (1.5.1)
+- [x] Ctrl+K : la référence (ou l'étude, la campagne) s'ouvre aussi quand sa page est déjà affichée (1.5.1)
+- [x] Code Python d'origine de ChaussSpec (dont la texture) gardé dans `modules/chausspec/source-python/`, non livré

@@ -18,7 +18,9 @@ const nombre = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v 
 
 /** Premier essai du projet ; null si le fichier n'a pas la forme attendue. */
 export function resumeTraitement(brut: unknown): ResumeTraitement | null {
-  const e = (brut as { essais?: unknown[] } | null)?.essais?.[0] as Record<string, unknown> | undefined;
+  // Un dépouillement rattaché depuis le Traitement garde sa source et imbrique le projet.
+  const projet = brut && typeof brut === "object" && "projet" in brut ? (brut as { projet: unknown }).projet : brut;
+  const e = (projet as { essais?: unknown[] } | null)?.essais?.[0] as Record<string, unknown> | undefined;
   if (!e || typeof e !== "object") return null;
   const p = e.p && typeof e.p === "object" ? (e.p as Record<string, unknown>) : {};
   const id = typeof e.modeleId === "string" ? e.modeleId : "";

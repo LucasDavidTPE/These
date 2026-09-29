@@ -148,3 +148,25 @@ export async function enregistrerApercu(fs: Fichiers, slug: string, nom: string,
 
 /** Chemin (relatif à l'espace) du dépouillement 2S2P1D d'un essai. */
 export const cheminTraitement = (slug: string, nom: string) => joindre(DOSSIER, slug, "essais", nom.replace(/[\\/:*?"<>|]/g, "_"), "traitement.json");
+
+/**
+ * Prépare un essai pour y ranger un dépouillement 2S2P1D fait ailleurs : crée l'essai s'il n'existe
+ * pas, et renvoie le chemin de son `traitement.json`. S'il en a déjà un, il n'est remplacé que sur
+ * demande, et l'ancien est rangé dans `.anciens/` à côté (jamais effacé).
+ */
+export async function preparerEssaiTraitement(fs: Fichiers, slug: string, nom: string, remplacer: boolean): Promise<{ chemin: string; existe: boolean }> {
+  const base = joindre(DOSSIER, slug);
+  if (!(await fs.exists(joindre(base, "campagne.json")))) throw new Error(`Campagne introuvable : ${slug}.`);
+  const propre = nom.trim().replace(/[\\/:*?"<>|]/g, "_");
+  if (!propre) throw new Error("Donnez un nom à l'essai.");
+  const dossier = joindre(base, "essais", propre);
+  const chemin = joindre(dossier, "traitement.json");
+  const existe = await fs.exists(chemin);
+  if (existe && !remplacer) return { chemin, existe };
+  if (!(await fs.exists(joindre(dossier, "essai.json")))) await enregistrerEssai(fs, slug, propre, lireEssai({}));
+  if (existe) {
+    await fs.ensureDir(joindre(dossier, ".anciens"));
+    await fs.rename(chemin, joindre(dossier, ".anciens", `${Date.now()}-traitement.json`));
+  }
+  return { chemin, existe };
+}

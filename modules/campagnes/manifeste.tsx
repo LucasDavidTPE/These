@@ -3,9 +3,9 @@ import type { Contexte } from "@interface/contexte";
 import type { Manifeste } from "@interface/manifeste";
 import { essaisRecents, periode, typeDe } from "./core/modele";
 import { CampagnesPage } from "./ui/CampagnesPage";
-import { chargerCampagnes } from "./ui/donnees";
+import { chargerCampagnes, preparerEssaiTraitement } from "./ui/donnees";
 import { regenererCourbes, type OrigineCourbes } from "./ui/figure";
-import { demanderOuverture } from "./ui/ouverture";
+import { demanderOuverture } from "@interface/ouverture";
 
 const charger = (ctx: Contexte) => (ctx.espace ? chargerCampagnes(ctx.espace.fichiers) : Promise.resolve(null));
 
@@ -30,7 +30,17 @@ const campagnes: Manifeste = {
     ]),
   actions: {
     /** Pour les Études : les campagnes auxquelles une étude peut se rattacher. */
-    "campagnes.liste": async (ctx) => ((await charger(ctx as Contexte))?.campagnes ?? []).map((c) => ({ slug: c.slug, titre: c.campagne.titre })),
+    "campagnes.liste": async (ctx) =>
+      ((await charger(ctx as Contexte))?.campagnes ?? []).map((c) => ({ slug: c.slug, titre: c.campagne.titre, essais: Object.keys(c.essais).sort((a, b) => a.localeCompare(b, "fr", { numeric: true })), depouilles: c.depouilles })),
+    /**
+     * Pour le Traitement : prépare l'essai qui recevra un dépouillement 2S2P1D fait ailleurs et
+     * renvoie { chemin, existe } ; charge : { ctx, slug, essai, remplacer }.
+     */
+    "campagnes.preparer-essai": async (charge) => {
+      const { ctx, slug, essai, remplacer } = charge as { ctx: Contexte; slug: string; essai: string; remplacer?: boolean };
+      if (!ctx.espace) throw new Error("Aucun espace Thèse ouvert.");
+      return preparerEssaiTraitement(ctx.espace.fichiers, slug, essai, !!remplacer);
+    },
     /** Pour l'Accueil : les derniers essais, toutes campagnes confondues. */
     "campagnes.recents": async (ctx) => {
       const r = await charger(ctx as Contexte);
@@ -39,7 +49,7 @@ const campagnes: Manifeste = {
     /** Ouvre une campagne ; charge : { ctx, slug }. */
     "campagnes.ouvrir": async (charge) => {
       const { ctx, slug } = charge as { ctx: Contexte; slug: string };
-      demanderOuverture(slug);
+      demanderOuverture("campagnes", slug);
       ctx.naviguer("campagnes");
     },
     /** Refait une figure « courbes d'un essai » depuis les données brutes ; charge : { ctx, origine }. */

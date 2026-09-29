@@ -119,6 +119,9 @@ export function plateformeDemo(scenario: string | null): Plateforme {
       }),
     );
     espace.poser("numeriseur/courbe-tsrst.json", "{}");
+    espace.poser("campagnes/demo-cm/campagne.json", JSON.stringify({ titre: "Module complexe démo", type: "module-complexe", statut: "en cours", donnees: "recherche:Demo CM" }));
+    espace.poser("campagnes/demo-cm/essais/Essai1/essai.json", "{}");
+    espace.poser("campagnes/autre/campagne.json", JSON.stringify({ titre: "Autre campagne", type: "module-complexe", statut: "en cours", donnees: "" }));
     const figures = dossier(`${ESPACE}\\figures`);
     figures.poser("FIG-0001_courbe/meta.json", JSON.stringify({ id: "FIG-0001", title: "Courbe maîtresse", kind: "graph", created: "2026-09-20T10:00:00Z", modified: "2026-09-20T10:00:00Z", tags: ["2s2p1d"], used_in: [] }));
     const png = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg=="), (c) => c.charCodeAt(0));

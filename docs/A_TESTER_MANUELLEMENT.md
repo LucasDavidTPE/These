@@ -566,3 +566,14 @@ nombres doivent être identiques, dans les deux modes.
       saisir les valeurs de début et de fin (case « inversée » si la barre va de haut en bas) :
       « Lire la carte » marche sans pointer la légende. Comparer avec la lecture de la barre de l'image.
 - [ ] Sur une vraie carte COMSOL / Matlab : les valeurs lues collent à la barre (à la tolérance près).
+
+## Traitement → campagne, et Ctrl+K (1.5.1)
+
+- [ ] Ouvrir un fichier de mesure par « Ouvrir » dans Traitement, écarter des cycles, caler ; « Rattacher
+      à une campagne… » : choisir la campagne, un essai existant ou « Nouvel essai… ». Message de confirmation.
+- [ ] Dans la campagne : l'essai a « 2S2P1D ✓ », ses paramètres apparaissent dans « Résultats du
+      traitement 2S2P1D » ; le bouton rouvre le dépouillement avec les mêmes cycles écartés, sur l'autre PC aussi.
+- [ ] Rattacher sur un essai déjà dépouillé : demande de confirmation « Remplacer » ; l'ancien est dans
+      `campagnes/<c>/essais/<e>/.anciens/`. Le dépouillement ne figure plus dans « Dépouillements enregistrés ».
+- [ ] Fichier déposé par glisser-déposer (pas par « Ouvrir ») : bouton grisé, l'infobulle explique pourquoi.
+- [ ] Ctrl+K depuis la page Bibliothèque elle-même : Entrée sur une référence ouvre bien sa fiche.

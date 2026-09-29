@@ -28,6 +28,11 @@ export function demander(d: DemandeEssai): void {
   for (const f of abonnes) f(d);
 }
 
+/** La demande en cours ne vaut plus (dépouillement rattaché ailleurs, autre dépouillement rouvert). */
+export function oublier(): void {
+  courante = null;
+}
+
 export function prendre(): DemandeEssai | null {
   return courante;
 }

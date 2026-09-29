@@ -314,6 +314,13 @@ Ce qui change à l'étape 2 :
   sinon sa copie `donnees/importes/…`) et se rouvre depuis « Dépouillements enregistrés »,
   sur l'un ou l'autre PC (1.2 : le fichier de mesure est copié dans l'espace ; un ancien
   enregistrement à chemin absolu est rapatrié à sa réouverture).
+- **Rattacher à une campagne** (1.5.1) : le dépouillement affiché (voies, cycles écartés ou
+  tronqués, calages, référence du fichier de mesure) s'enregistre dans le `traitement.json` d'un
+  essai de campagne, existant ou créé (action `campagnes.preparer-essai`) ; un dépouillement déjà
+  présent n'est remplacé qu'après confirmation et part dans `.anciens/`, l'enregistrement
+  autonome dans `traitement/.supprimes/`. Rien n'est effacé. Le fichier garde le format
+  « dépouillement » (avec sa source) : la campagne le rouvre par `traitement.rouvrir-depouillement`,
+  même si l'essai n'est pas dans son dossier de données.
 - **Calage étendu** (0.2.7) : modèles élémentaires Maxwell, Kelvin-Voigt, Zener, Burgers
   (constantes propres, « Caler tout » ne touche pas aux a_T) ; **séries de Prony** (Maxwell
   ou Kelvin-Voigt généralisé, τ sur une grille, modules par moindres carrés positifs) calées
