@@ -598,3 +598,13 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] Barre de gauche : sections Essais et Outils dépliables, la section de la page ouverte reste
       dépliée, le repli est gardé au relancement.
 - [ ] ViscoCompare n'apparaît plus (menu, Accueil, Ctrl+K, Réglages → racines suggérées).
+
+## Cartes éditables (1.8.0 ; comprend aussi les points 1.7.0 ci-dessus, jamais publiée)
+
+- [ ] ChaussSpec → « Comment ça marche ? » : les cinq rubriques sont des cartes ; « modifier » une
+      carte, enregistrer : « (modifiée) », le texte est dans `cartes/chausspec/comment-ca-marche/` et se
+      retrouve sur l'autre PC ; « texte d'origine » reprend le texte de l'application.
+- [ ] Monter / descendre une carte, masquer une carte puis la réafficher (bas de la liste).
+- [ ] Campagne et étude : section « Cartes », « + Nouvelle carte » ; Markdown (titre, listes, gras,
+      `code`, lien web qui s'ouvre dans le navigateur) ; `[@BIB-020]` rendu en auteur-année si les citations
+      sont actives, tel quel sinon ; « retirer » demande confirmation et range le fichier dans `.anciennes/`.

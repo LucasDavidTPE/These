@@ -184,3 +184,5 @@ lancent tous les tests automatiques sous Windows.
 - [x] Bibliothèque : aperçu de la première page du PDF dans la fiche, gardé dans l'espace (1.7.0)
 - [x] Menu des modules en sections dépliables (Essais, Outils…) (1.7.0)
 - [x] ViscoCompare retiré de l'application (1.7.0)
+- [x] Cartes éditables (Markdown, citations) : ChaussSpec « Comment ça marche ? », campagnes, études (1.8.0)
+- [x] Installeur Windows 1.7.0 cassé par deux fichiers ne différant que par la casse : corrigé, et un test l'interdit désormais (1.8.0)

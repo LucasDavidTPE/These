@@ -875,3 +875,62 @@ table.tableau th {
 .barre li.menu-section > ul {
   padding-left: 6px;
 }
+
+/* Cartes éditables */
+.cartes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.carte-texte {
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface);
+  padding: 10px 14px;
+}
+.carte-texte > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.carte-texte header {
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.carte-actions {
+  display: inline-flex;
+  gap: 10px;
+  margin-left: auto;
+  font-size: 12px;
+}
+details.carte-texte > .carte-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 4px 0;
+}
+.carte-edition {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.carte-edition textarea {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+.markdown p,
+.markdown ul,
+.markdown ol {
+  margin: 6px 0;
+  line-height: 1.5;
+}
+.markdown h4,
+.markdown h5 {
+  margin: 10px 0 4px;
+}
+.markdown .citation {
+  border-bottom: 1px dotted var(--discret);
+}
+.cartes-pied {
+  gap: 12px;
+}

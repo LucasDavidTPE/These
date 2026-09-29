@@ -95,6 +95,17 @@ racine (identité, page, état pour l'Accueil, problèmes, actions).
   (« ouvrir l'essai X dans le traitement », « enregistrer ce graphe dans Figures »). Si
   le module cible n'est pas compilé dans l'installeur, l'action n'apparaît pas.
 
+### 3.0 ter Cartes éditables (1.8.0)
+Des blocs de texte que l'utilisateur écrit lui-même, dans un petit Markdown (## titre, **gras**,
+*italique*, listes, `code`, liens web, citations `[@BIB-020]`), rendu sans HTML injecté
+(`noyau/markdown.ts`). Une zone = `cartes/<zone>/` dans l'espace : une carte par fichier `<id>.md`
+(« # Titre » puis le texte), `_cartes.json` pour l'ordre et les cartes masquées (`noyau/cartes.ts`).
+Un module peut fournir des cartes (texte de l'application) : modifiée, la carte garde son id et
+remplace la version fournie ; « texte d'origine » range le fichier de l'utilisateur dans
+`.anciennes/` ; une carte fournie se masque (et se réaffiche), une carte créée se retire (rangée
+aussi, jamais effacée). Zones : ChaussSpec « Comment ça marche ? » (les cinq rubriques, fournies),
+chaque campagne (`campagnes/<slug>`), chaque étude (`etudes/<dossier>`).
+
 ### 3.0 bis Menu en sections (1.7.0)
 La barre des modules est rangée en sections dépliables (`noyau/menu.ts`) : Accueil, Calendrier
 (Planning), Bibliographie (Bibliothèque), Essais (Campagnes, Traitement 2S2P1D, Études), Outils

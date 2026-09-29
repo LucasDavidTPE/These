@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { absolu } from "@noyau/stockage";
 import { useContexte } from "@interface/contexte";
 import { DOSSIER_APERCUS, empreintePdf, lireInfoApercu, type InfoApercu } from "../core/pdf";
-import { premierePagePng } from "./apercuPdf";
+import { premierePagePng } from "./rendrePdf";
 
 function versUrl(octets: Uint8Array): string {
   let b = "";
