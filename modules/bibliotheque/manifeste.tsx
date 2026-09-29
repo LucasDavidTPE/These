@@ -4,7 +4,8 @@ import type { Contexte } from "@interface/contexte";
 import type { Manifeste } from "@interface/manifeste";
 import { dateLimite, premierJourDuMois, ajouterJours } from "./core/calculs";
 import { BibliothequePage } from "./ui/BibliothequePage";
-import { chargerBiblio } from "./ui/donnees";
+import { resoudre } from "./core/citations";
+import { chargerBiblio, lireCitations } from "./ui/donnees";
 
 async function charger(ctx: Contexte) {
   return ctx.espace ? chargerBiblio(ctx.espace.fichiers) : null;
@@ -33,6 +34,19 @@ const bibliotheque: Manifeste = {
       ouvrir: { action: "bibliotheque.ouvrir", charge: { id: r.id } },
     })),
   actions: {
+    /**
+     * Pour citer `[@BIB-020]` ailleurs (présentations, panneaux d'explication) : { actives, refs } où
+     * refs associe chaque clé trouvée (identifiant ou clé BibTeX) à ses auteurs, son année et sa
+     * référence complète. Charge : { ctx, cles }. actives = false : l'utilisateur a coupé les citations.
+     */
+    "bibliotheque.citations": async (charge) => {
+      const { ctx, cles } = charge as { ctx: Contexte; cles: string[] };
+      if (!ctx.espace) return { actives: false, refs: {} };
+      const reglage = await lireCitations(ctx.espace.fichiers);
+      if (!reglage.actives) return { actives: false, refs: {} };
+      const b = await charger(ctx);
+      return { actives: true, refs: b ? resoudre(b.references, cles) : {} };
+    },
     /** Ouvre la fiche d'une référence ; charge : { ctx, id }. */
     "bibliotheque.ouvrir": async (charge) => {
       const { ctx, id } = charge as { ctx: Contexte; id: string };

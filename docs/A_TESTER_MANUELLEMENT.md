@@ -577,3 +577,14 @@ nombres doivent être identiques, dans les deux modes.
       `campagnes/<c>/essais/<e>/.anciens/`. Le dépouillement ne figure plus dans « Dépouillements enregistrés ».
 - [ ] Fichier déposé par glisser-déposer (pas par « Ouvrir ») : bouton grisé, l'infobulle explique pourquoi.
 - [ ] Ctrl+K depuis la page Bibliothèque elle-même : Entrée sur une référence ouvre bien sa fiche.
+
+## Citations de la Bibliothèque (1.6.0)
+
+- [ ] Présentation avec `[@BIB-020]` et `[@BIB-065, p. 12; @BIB-020]` : le panneau compte les références
+      citées ; l'export .pptx montre « (Olard & Di Benedetto, 2003) » et une diapo Références à la fin
+      (vérifier auteurs, année, revue, DOI contre ta fiche).
+- [ ] Une clé fausse (`[@BIB-999]`) reste telle quelle et est signalée à l'export.
+- [ ] `références: non` dans l'en-tête : citations rendues, pas de diapo Références.
+- [ ] ChaussSpec → « Comment ça marche ? » : lignes « Sources : » sous les rubriques ; clic → la fiche.
+- [ ] Bibliothèque : décocher « Citations [@…] dans l'application » → plus de « Sources », et `[@…]`
+      reste tel qu'écrit dans les présentations ; l'autre PC voit le même réglage.

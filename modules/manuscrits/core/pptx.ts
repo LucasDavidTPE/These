@@ -182,7 +182,12 @@ function formesDiapo(c: Contexte, d: Diapo, numero: number): string[] {
     if (d.sousTitre) f.push(zoneTexte("Sous-titre", { x: 1.2, y: 4.45, w: LARGEUR - 2.4, h: 1.0 }, [paragraphe(d.sousTitre, { taille: m.tailles.texte, couleur: m.couleurs.discret, police: m.polices.texte })]));
     return f;
   }
-  if (d.mise === "section") {
+  if (d.mise === "references") {
+    f.push(zoneTexte("Titre", { x: MARGE, y: 0.4, w: pleine, h: 1.0 }, [paragraphe(d.titre, titre)], { ancre: "ctr", titre: true }));
+    f.push(rectangle("Filet", { x: MARGE + 0.1, y: 1.42, w: 1.6, h: 0.05 }, m.couleurs.accent));
+    const petit: Style = { taille: 14, couleur: m.couleurs.texte, police: m.polices.texte };
+    f.push(zoneTexte("Références", { x: MARGE, y: 1.7, w: pleine, h: HAUTEUR - 2.7 }, d.gauche.map((b) => paragraphe((b as { texte: string }).texte, petit, { espace: 8 }))));
+  } else if (d.mise === "section") {
     f.push(rectangle("Fond de section", { x: 0, y: 2.4, w: LARGEUR, h: 2.7 }, m.couleurs.accent));
     f.push(zoneTexte("Titre", { x: 1.2, y: 2.55, w: LARGEUR - 2.4, h: 1.5 }, [paragraphe(d.titre, { ...titre, taille: m.tailles.titre + 6, couleur: "FFFFFF" })], { ancre: "b", titre: true }));
     if (d.sousTitre) f.push(zoneTexte("Sous-titre", { x: 1.2, y: 4.05, w: LARGEUR - 2.4, h: 0.9 }, [paragraphe(d.sousTitre, { taille: m.tailles.texte, couleur: "FFFFFF", police: m.polices.texte })]));

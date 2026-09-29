@@ -180,3 +180,4 @@ lancent tous les tests automatiques sous Windows.
 - [x] Traitement : rattacher un dépouillement (cycles écartés, calages) à un essai de campagne (1.5.1)
 - [x] Ctrl+K : la référence (ou l'étude, la campagne) s'ouvre aussi quand sa page est déjà affichée (1.5.1)
 - [x] Code Python d'origine de ChaussSpec (dont la texture) gardé dans `modules/chausspec/source-python/`, non livré
+- [x] Citations `[@BIB-020]` dans les présentations (diapo Références) et sources du panneau ChaussSpec, coupables dans la Bibliothèque (1.6.0)

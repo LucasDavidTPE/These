@@ -378,6 +378,17 @@ modèles de base sont fournis, on en crée d'autres depuis l'application. L'expo
 PowerPoint, titres reconnus comme titres, figures en images. Les équations `$$…$$` sont posées
 en texte (LaTeX brut) ; les notes d'orateur ne sont pas gérées.
 
+### Citations de la Bibliothèque (1.6.0)
+Dans le texte d'une présentation, `[@BIB-020]` (identifiant ou clé BibTeX ; plusieurs clés séparées
+par « ; », précision après une virgule : `[@BIB-065, p. 12]`) devient « (Olard & Di Benedetto,
+2003) », et des diapos « Références » (7 par diapo, ordre alphabétique) sont ajoutées à la fin,
+sauf `références: non` dans l'en-tête. Une clé inconnue reste telle qu'écrite et est signalée.
+Le panneau « Comment ça marche ? » de ChaussSpec affiche « Sources : … » (seulement les
+références citées par la notice chausspec v0.4), chaque nom ouvrant sa fiche. Le tout se coupe
+dans la Bibliothèque (« Citations [@…] dans l'application »), réglage partagé dans
+`bibliotheque/citations.json` : coupé, rien n'est interprété ni ajouté. Analyse dans
+`noyau/citations.ts`, résolution par l'action `bibliotheque.citations`.
+
 ### 8.4 Reprise de l'existant
 Import unique des fiches `projects/*.toml`, des aperçus et des notes de these-lgcb.
 Les **études** sont reprises par le module Études (P7). L'**index LaTeX** est repris dans

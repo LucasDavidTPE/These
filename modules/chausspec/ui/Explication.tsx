@@ -1,4 +1,9 @@
-/** « Comment ça marche ? » : le modèle semi-analytique et la méthode spectrale, sans le code. */
+/**
+ * « Comment ça marche ? » : le modèle semi-analytique et la méthode spectrale, sans le code.
+ * Sources : uniquement les références citées par la notice de chausspec v0.4, affichées si elles
+ * sont dans la Bibliothèque et si les citations n'y sont pas coupées.
+ */
+import { Sources } from "@interface/Sources";
 
 const ETAPES = [
   { n: 1, titre: "Charge → ondes", sous: "transformée de Fourier 2D" },
@@ -41,6 +46,7 @@ export function Explication() {
           exp(i(k₁x + k₂y)) faut-il pour la refaire ». Le nombre d'onde ξ = √(k₁² + k₂²) est l'inverse d'une longueur : grand ξ = détails fins près de la surface, petit ξ =
           grandes longueurs d'onde qui vont chercher loin.
         </p>
+        <Sources cles={["BIB-008", "BIB-096"]} />
       </details>
       <details>
         <summary>2. Résoudre en profondeur, une onde à la fois</summary>
@@ -50,6 +56,7 @@ export function Explication() {
           semi-infini n'a que les exponentielles qui décroissent. On écrit ensuite les conditions : charge en surface, continuité aux interfaces collées (cisaillement nul
           si glissantes). Cela donne un petit système linéaire par ξ : c'est le « noyau », qui ne dépend que de la structure et des modules, pas de la charge.
         </p>
+        <Sources cles={["BIB-065", "BIB-098"]} />
       </details>
       <details>
         <summary>3. Le matériau et le régime : statique, harmonique, roulant</summary>
@@ -69,6 +76,7 @@ export function Explication() {
           </li>
         </ul>
         <p>Le calcul est quasi-stationnaire : l'inertie est négligée, aux vitesses de circulation c'est très raisonnable.</p>
+        <Sources cles={["BIB-020", "BIB-099", "BIB-087"]} />
       </details>
       <details>
         <summary>4. Revenir dans l'espace : FFT et partition de l'unité</summary>
@@ -90,6 +98,7 @@ export function Explication() {
         <p>
           Fiabilité : le calcul est comparé au code Python d'origine à 1e-9 près (noyau, lois, grilles, cas de révolution). Notice complète : <code>docs/CHAUSSSPEC_EXPLIQUE.md</code>.
         </p>
+        <Sources cles={["BIB-093"]} />
       </details>
     </div>
   );

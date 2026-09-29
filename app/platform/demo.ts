@@ -107,6 +107,8 @@ export function plateformeDemo(scenario: string | null): Plateforme {
     const ref = (n: number, titre: string, auteurs: string, annee: number) => espace.poser(`bibliotheque/references/BIB-${String(n).padStart(3, "0")}.json`, JSON.stringify({ titre, auteurs, annee, cle: `ref${n}` }));
     ref(1, "Viscoelastic response of asphalt pavements under moving loads", "Lee, S.; Kim, J.", 2019);
     ref(2, "Spectral method for layered media", "David, L.", 2024);
+    ref(20, "General 2S2P1D model and relation between the linear viscoelastic behaviours of bituminous binders and mixes", "Olard, F.; Di Benedetto, H.", 2003);
+    ref(65, "The general theory of stresses and displacements in layered systems", "Burmister, D. M.", 1945);
     espace.poser("planning/PH-0001.json", JSON.stringify({ titre: "Rédiger le chapitre ChaussSpec", categorie: "", debut: "2026-10-05", fin: "2026-10-30" }));
     espace.poser(
       "chausspec/structure-a340.json",

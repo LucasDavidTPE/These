@@ -11,7 +11,7 @@
  *   mise-en-page: titre | section | contenu | figure | deux-colonnes   (sinon : déduite)
  */
 
-export type MiseEnPage = "titre" | "section" | "contenu" | "figure" | "deux-colonnes";
+export type MiseEnPage = "titre" | "section" | "contenu" | "figure" | "deux-colonnes" | "references";
 
 export type Bloc =
   | { type: "puce"; niveau: number; texte: string }
@@ -35,12 +35,14 @@ export interface Presentation {
   date: string;
   /** Nom (slug) du modèle demandé, « » pour celui par défaut. */
   modele: string;
+  /** Diapos « Références » à la fin quand le texte cite la Bibliothèque (`références: non` pour s'en passer). */
+  references: boolean;
   diapos: Diapo[];
 }
 
 const CLE = /^([a-zà-ÿ][a-zà-ÿ -]*):\s*(.*)$/i;
 const MISES: MiseEnPage[] = ["titre", "section", "contenu", "figure", "deux-colonnes"];
-const IMAGE = /^!\[([^\]]*)\]\(([^)]+)\)\s*$/;
+const IMAGE = /^!\[(.*)\]\(([^)\s]+)\)\s*$/;
 
 function sectionsDe(md: string): string[][] {
   const out: string[][] = [[]];
@@ -73,7 +75,7 @@ function blocsDe(lignes: string[]): Bloc[] {
 
 export function analyserPresentation(md: string): Presentation {
   const sections = sectionsDe(md).filter((s) => s.length > 0);
-  const p: Presentation = { titre: "", auteur: "", date: "", modele: "", diapos: [] };
+  const p: Presentation = { titre: "", auteur: "", date: "", modele: "", references: true, diapos: [] };
   if (sections[0]?.length && sections[0].every((l) => !l.trim() || CLE.test(l))) {
     for (const l of sections.shift()!) {
       const m = CLE.exec(l);
@@ -83,6 +85,7 @@ export function analyserPresentation(md: string): Presentation {
       else if (k === "auteur") p.auteur = m[2]!.trim();
       else if (k === "date") p.date = m[2]!.trim();
       else if (k === "modèle" || k === "modele") p.modele = m[2]!.trim();
+      else if (k === "références" || k === "references") p.references = !/^(non|no|false|0)$/i.test(m[2]!.trim());
     }
     if (p.titre) p.diapos.push({ mise: "titre", titre: p.titre, sousTitre: [p.auteur, p.date].filter(Boolean).join(" · "), gauche: [], droite: [], source: "" });
   }
