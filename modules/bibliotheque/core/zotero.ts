@@ -19,6 +19,7 @@
  * Pur : le transport est injecté (Rust dans l'application, serveur factice en test).
  */
 import { jsonStable } from "@noyau/stockage";
+import { nomPdf } from "./pdf";
 import { DOSSIER, type FicheLecture, type NotesLecture, type Parametres, type Reference } from "./modele";
 
 export const FICHIER_ZOTERO = `${DOSSIER}/zotero.json`;
@@ -636,7 +637,7 @@ export async function envoyer(e: Envoi): Promise<Rapport> {
       const notre = lien.pdf ? z.pieces.find((p) => p.key === lien.pdf) : undefined;
       if (notre) {
         if (notre.path !== chemin) enfants.push({ id: a.id, genre: "pdf", objet: { ...sansDates(notre), version: z.versions[notre.key] ?? notre.version, path: chemin, title: titre } });
-      } else if (a.genre === "associer" && pdfsDe(r.key).length) rapport.pdfDejaLa.push(a.id);
+      } else if (pdfsDe(r.key).length) rapport.pdfDejaLa.push(a.id);
       else enfants.push({ id: a.id, genre: "pdf", objet: { itemType: "attachment", parentItem: r.key, linkMode: "linked_file", title: titre, contentType: "application/pdf", charset: "", path: chemin, tags: [], relations: {} } });
     }
     const note = noteZotero(a.id, ref);
@@ -686,4 +687,75 @@ export async function envoyer(e: Envoi): Promise<Rapport> {
   await e.sauver(etat);
   e.progression?.(1, 1, "Terminé");
   return rapport;
+}
+
+// ---- PDF manquants dans Thèse ----
+
+/** Une fiche sans PDF dans l'espace, dont l'entrée Zotero en a un. */
+export interface PdfManquant {
+  id: string;
+  /** Pièce jointe Zotero. */
+  piece: string;
+  /** « stocke » : téléchargeable ; « lie » : fichier lié ailleurs sur un PC, à copier à la main. */
+  mode: "stocke" | "lie";
+  /** Nom ou chemin du fichier côté Zotero. */
+  source: string;
+  /** Nom donné dans `bibliotheque/pdf` (celui de la fiche, sinon la convention BIB-xxx_Auteur_année_titre). */
+  nom: string;
+}
+
+const estPdf = (p: ItemZotero) => p.contentType === "application/pdf" || /\.pdf$/i.test(String(p.path ?? p.filename ?? ""));
+
+/** Après « Préparer » : fiches rattachées à une entrée Zotero qui a un PDF, alors que Thèse n'en a pas. */
+export function pdfsManquants(plan: Plan, fiches: readonly FicheAEnvoyer[], z: Instantane, pdfPresents: ReadonlySet<string>, etat: EtatZotero): PdfManquant[] {
+  const ref = new Map(fiches.map((f) => [f.id, f.ref]));
+  const out: PdfManquant[] = [];
+  for (const a of plan.actions) {
+    if (a.genre !== "associer" && a.genre !== "maj" && a.genre !== "inchangee") continue;
+    const r = ref.get(a.id)!;
+    const actuel = r.fichierPdf.trim();
+    if (actuel && pdfPresents.has(actuel)) continue;
+    const notre = plan.autreCompte ? null : etat.liens[a.id]?.pdf;
+    const pieces = z.pieces.filter((p) => p.parentItem === a.item && p.key !== notre && estPdf(p));
+    const piece = pieces.find((p) => p.linkMode === "imported_file" || p.linkMode === "imported_url") ?? pieces.find((p) => p.linkMode === "linked_file");
+    if (!piece) continue;
+    out.push({
+      id: a.id,
+      piece: piece.key,
+      mode: piece.linkMode === "linked_file" ? "lie" : "stocke",
+      source: String(piece.filename ?? piece.path ?? piece.title ?? ""),
+      nom: actuel || nomPdf(a.id, r),
+    });
+  }
+  return out;
+}
+
+export interface Recuperation {
+  recuperes: { id: string; nom: string }[];
+  echecs: { id: string; message: string }[];
+}
+
+/** Télécharge les PDF stockés chez Zotero et les écrit dans le dossier des PDF de l'espace. */
+export async function recupererPdfs(
+  manquants: readonly PdfManquant[],
+  prefixe: string,
+  telecharger: (chemin: string) => Promise<Uint8Array>,
+  ecrire: (nom: string, octets: Uint8Array) => Promise<void>,
+  progression?: (fait: number, total: number) => void,
+): Promise<Recuperation> {
+  const r: Recuperation = { recuperes: [], echecs: [] };
+  const aFaire = manquants.filter((m) => m.mode === "stocke");
+  for (const [i, m] of aFaire.entries()) {
+    progression?.(i, aFaire.length);
+    try {
+      const octets = await telecharger(`${prefixe}/items/${m.piece}/file`);
+      if (String.fromCharCode(...octets.slice(0, 5)) !== "%PDF-") throw new Error("le fichier reçu n'est pas un PDF");
+      await ecrire(m.nom, octets);
+      r.recuperes.push({ id: m.id, nom: m.nom });
+    } catch (e) {
+      r.echecs.push({ id: m.id, message: e instanceof Error ? e.message : String(e) });
+    }
+  }
+  progression?.(aFaire.length, aFaire.length);
+  return r;
 }

@@ -163,7 +163,8 @@ export function plateformeDemo(scenario: string | null): Plateforme {
 
   // Zotero de démonstration : toute clé est acceptée ; Burmister (1945) y est déjà.
   const zotero = new ZoteroFactice("*");
-  zotero.ajouter({ itemType: "journalArticle", title: "The general theory of stresses and displacements in layered systems", date: "1945", creators: [{ creatorType: "author", lastName: "Burmister", firstName: "D. M." }], tags: [{ tag: "multicouche" }] });
+  const burmister = zotero.ajouter({ itemType: "journalArticle", title: "The general theory of stresses and displacements in layered systems", date: "1945", creators: [{ creatorType: "author", lastName: "Burmister", firstName: "D. M." }], tags: [{ tag: "multicouche" }] });
+  zotero.ajouterPdf(burmister, "burmister1945.pdf", pdfDemo("The general theory of stresses", "D. M. Burmister (1945)"));
 
   return {
     genre: "demo",
@@ -281,6 +282,10 @@ export function plateformeDemo(scenario: string | null): Plateforme {
     zotero: async (requete) => {
       await new Promise((ok) => setTimeout(ok, 40));
       return zotero.traiter(requete);
+    },
+    zoteroFichier: async (chemin, cle) => {
+      await new Promise((ok) => setTimeout(ok, 40));
+      return zotero.fichier(chemin, cle);
     },
     surveiller: async (racine, rappel) => {
       const cle = normaliser(racine);

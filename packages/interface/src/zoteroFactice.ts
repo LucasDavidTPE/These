@@ -31,6 +31,8 @@ export class ZoteroFactice {
   items = new Map<string, Objet>();
   collections = new Map<string, Objet>();
   requetes: RequeteZotero[] = [];
+  /** Fichiers des pièces jointes stockées. */
+  fichiers = new Map<string, Uint8Array>();
   private suivant = 0;
   /** `cleValide` : « * » accepte toute clé (démonstration). */
   constructor(
@@ -54,6 +56,23 @@ export class ZoteroFactice {
     const key = this.cle();
     this.items.set(key, { tags: [], collections: [], relations: {}, ...o, key, version: ++this.version });
     return key;
+  }
+
+  /** Ajoute un PDF stocké chez Zotero (téléchargeable) à une entrée. */
+  ajouterPdf(parent: string, nom: string, octets: Uint8Array | string): string {
+    const key = this.ajouter({ itemType: "attachment", parentItem: parent, linkMode: "imported_file", contentType: "application/pdf", filename: nom, title: nom });
+    this.fichiers.set(key, typeof octets === "string" ? new TextEncoder().encode(octets) : octets);
+    return key;
+  }
+
+  /** `GET /users/<id>/items/<key>/file` : le fichier stocké, ou une erreur comme l'application la reçoit. */
+  fichier(chemin: string, cle: string): Uint8Array {
+    this.requetes.push({ methode: "GET", chemin, cle });
+    if (this.cleValide !== "*" && cle !== this.cleValide) throw new Error("accès refusé par Zotero (clé)");
+    const m = new RegExp(`^/users/${this.utilisateur}/items/([A-Z0-9]{8})/file$`).exec(chemin);
+    const octets = m ? this.fichiers.get(m[1]!) : undefined;
+    if (!octets) throw new Error("fichier absent du stockage Zotero");
+    return octets;
   }
 
   async traiter(r: RequeteZotero): Promise<ReponseZotero> {

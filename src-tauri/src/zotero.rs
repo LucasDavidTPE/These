@@ -143,9 +143,77 @@ pub async fn zotero_requete(requete: RequeteZotero) -> ReponseZotero {
         .unwrap_or_else(|e| echec(e.to_string()))
 }
 
+/// Chemin du fichier d'une pièce jointe stockée chez Zotero : « /users/123/items/ABCD2345/file ».
+pub fn chemin_fichier_valide(chemin: &str) -> bool {
+    let Some(reste) = chemin.strip_prefix("/users/") else {
+        return false;
+    };
+    let parts: Vec<&str> = reste.split('/').collect();
+    parts.len() == 4
+        && !parts[0].is_empty()
+        && parts[0].chars().all(|c| c.is_ascii_digit())
+        && parts[1] == "items"
+        && parts[2].len() == 8
+        && parts[2].chars().all(|c| c.is_ascii_alphanumeric())
+        && parts[3] == "file"
+}
+
+/// Télécharge le fichier d'une pièce jointe (« PDF manquants dans Thèse ») : Zotero redirige
+/// vers son stockage ; 404 si le fichier n'y est pas (stockage WebDAV, fichier lié).
+pub fn telecharger(chemin: &str, cle: &str, delai: Duration) -> Result<Vec<u8>, String> {
+    if !chemin_fichier_valide(chemin) {
+        return Err("chemin refusé".into());
+    }
+    if cle.trim().is_empty() || !cle.chars().all(|c| c.is_ascii_alphanumeric()) {
+        return Err("clé d'API invalide".into());
+    }
+    let agent: Agent = Agent::config_builder()
+        .timeout_global(Some(delai))
+        .http_status_as_error(false)
+        .max_redirects(5)
+        .user_agent(concat!("These/", env!("CARGO_PKG_VERSION")))
+        .build()
+        .into();
+    let mut rep = agent
+        .get(&format!("{HOTE}{chemin}"))
+        .header("Zotero-API-Version", "3")
+        .header("Zotero-API-Key", cle.trim())
+        .call()
+        .map_err(|e| e.to_string())?;
+    match rep.status().as_u16() {
+        200 => rep
+            .body_mut()
+            .with_config()
+            .limit(300 * 1024 * 1024)
+            .read_to_vec()
+            .map_err(|e| e.to_string()),
+        404 => Err("fichier absent du stockage Zotero".into()),
+        403 => Err("accès refusé par Zotero (clé)".into()),
+        c => Err(format!("Zotero a répondu {c}")),
+    }
+}
+
+#[tauri::command]
+pub async fn zotero_fichier(chemin: String, cle: String) -> Result<tauri::ipc::Response, String> {
+    tauri::async_runtime::spawn_blocking(move || telecharger(&chemin, &cle, Duration::from_secs(300)))
+        .await
+        .map_err(|e| e.to_string())?
+        .map(tauri::ipc::Response::new)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn seuls_les_fichiers_de_pieces_jointes_passent() {
+        assert!(chemin_fichier_valide("/users/123/items/ABCD2345/file"));
+        assert!(!chemin_fichier_valide("/users/123/items/ABCD2345"));
+        assert!(!chemin_fichier_valide("/users/abc/items/ABCD2345/file"));
+        assert!(!chemin_fichier_valide("/users/123/items/../file"));
+        assert!(!chemin_fichier_valide("/groups/1/items/ABCD2345/file"));
+        assert_eq!(telecharger("/keys/current", "abc", Duration::from_secs(1)).unwrap_err(), "chemin refusé");
+    }
 
     #[test]
     fn seuls_les_chemins_de_l_api_passent() {

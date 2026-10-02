@@ -10,7 +10,9 @@ import {
   lireEtatZotero,
   lireZotero,
   noteZotero,
+  pdfsManquants,
   planifier,
+  recupererPdfs,
   verifierCle,
   versZotero,
   type EtatZotero,
@@ -205,6 +207,42 @@ describe("Zotero : envoi", () => {
     const plan = planifier(FICHES, P, ancien, inst, "users/4242", PDF);
     expect(plan.autreCompte).toBe(true);
     expect(plan.actions.find((a) => a.id === "BIB-020")).toMatchObject({ genre: "creer" });
+  });
+});
+
+describe("PDF manquants dans Thèse", () => {
+  it("repère les PDF de Zotero absents de Thèse, les télécharge et ne double pas la pièce jointe ensuite", async () => {
+    const m = monde();
+    const kStocke = [...m.z.items.values()].find((i) => i.key === "PDFBURMI")!.key;
+    m.z.fichiers.set(kStocke, new TextEncoder().encode("%PDF-1.4 burmister"));
+    // Tielking : un fichier lié ailleurs dans Zotero (pas téléchargeable).
+    m.z.items.set("PDFTIELK", { key: "PDFTIELK", version: 3, itemType: "attachment", parentItem: m.kTielking, linkMode: "linked_file", contentType: "application/pdf", path: "D:/vieux/tielking.pdf" });
+    const inst = await lireZotero(m.client, PREFIXE);
+    const plan = planifier(FICHES, P, etatVide(), inst, "users/4242", PDF);
+    const manquants = pdfsManquants(plan, FICHES, inst, PDF, etatVide());
+    expect(manquants).toEqual([
+      { id: "BIB-065", piece: "PDFBURMI", mode: "stocke", source: "burmister.pdf", nom: "BIB-065_Burmister_1945_General-theory-stresses-displacements-layered-systems.pdf" },
+      { id: "BIB-003", piece: "PDFTIELK", mode: "lie", source: "D:/vieux/tielking.pdf", nom: "absent.pdf" },
+    ]);
+    const ecrits = new Map<string, Uint8Array>();
+    const r = await recupererPdfs(manquants, PREFIXE, async (c) => m.z.fichier(c, m.z.cleValide), async (n, o) => void ecrits.set(n, o));
+    expect(r).toEqual({ recuperes: [{ id: "BIB-065", nom: manquants[0]!.nom }], echecs: [] });
+    expect(new TextDecoder().decode(ecrits.get(manquants[0]!.nom))).toBe("%PDF-1.4 burmister");
+    // Ce qui n'est pas un PDF est refusé.
+    m.z.fichiers.set(kStocke, new TextEncoder().encode("<html>"));
+    const r2 = await recupererPdfs(manquants, PREFIXE, async (c) => m.z.fichier(c, m.z.cleValide), async () => {});
+    expect(r2.echecs[0]!.message).toContain("pas un PDF");
+    // Une fois le PDF dans Thèse, l'envoi ne lie pas un second PDF à Burmister (il en a un chez Zotero).
+    burmister.fichierPdf = manquants[0]!.nom;
+    PDF.add(burmister.fichierPdf);
+    try {
+      const { rapport } = await m.passe();
+      expect(rapport.pdfDejaLa).toEqual(["BIB-065"]);
+      expect([...m.z.items.values()].filter((i) => i.parentItem === m.kBurmister && i.itemType === "attachment")).toHaveLength(1);
+    } finally {
+      PDF.delete(burmister.fichierPdf);
+      burmister.fichierPdf = "";
+    }
   });
 });
 

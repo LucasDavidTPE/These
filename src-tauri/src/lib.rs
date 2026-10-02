@@ -20,7 +20,7 @@ pub fn run() {
     use liens::lien_verifier;
     use poste::*;
     use surveillance::*;
-    use zotero::zotero_requete;
+    use zotero::{zotero_fichier, zotero_requete};
     let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
@@ -43,7 +43,7 @@ pub fn run() {
             poste_lire_reglages, poste_ecrire_reglages, poste_dossiers_onedrive,
             poste_dossier_existe, poste_creer_dossier, poste_ecrire_fichier, poste_lire_fichier, poste_ouvrir_vscode,
             surveillance_demarrer, surveillance_arreter, copie_dossier, archive_dossier, lien_verifier,
-            zotero_requete
+            zotero_requete, zotero_fichier
             $(, $module)*
             ]
         };

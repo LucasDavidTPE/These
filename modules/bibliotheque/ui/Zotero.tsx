@@ -19,6 +19,10 @@ import {
   type Instantane,
   type Plan,
   type Rapport,
+  pdfsManquants,
+  recupererPdfs,
+  type PdfManquant,
+  type Recuperation,
 } from "../core/zotero";
 import { ecrireEtatZotero, lireEtatZotero, lirePdfsPresents, type Biblio } from "./donnees";
 
@@ -36,6 +40,8 @@ export function PanneauZotero({ b, enregistrer, onFermer }: { b: Biblio; enregis
   const [prepare, setPrepare] = useState<{ plan: Plan; instantane: Instantane; pdfs: Set<string> } | null>(null);
   const [progression, setProgression] = useState<{ fait: number; total: number; etape: string } | null>(null);
   const [rapport, setRapport] = useState<Rapport | null>(null);
+  const [manquants, setManquants] = useState<PdfManquant[]>([]);
+  const [recuperation, setRecuperation] = useState<Recuperation | null>(null);
   const [copie, setCopie] = useState(false);
   /** Dossier des PDF : `Espace\bibliotheque\pdf`, le répertoire de base à donner à Zotero. */
   const dossierPdf = ctx.racines["biblio-pdf"] ?? "";
@@ -72,7 +78,10 @@ export function PanneauZotero({ b, enregistrer, onFermer }: { b: Biblio; enregis
       if (!compte || !fs) return;
       setRapport(null);
       const [instantane, etat, pdfs] = await Promise.all([lireZotero(client(compte.cle), prefixe), lireEtatZotero(fs), dossierPdf ? lirePdfsPresents(ctx.plateforme.fichiers(dossierPdf), fiches) : new Set<string>()]);
-      setPrepare({ plan: planifier(fiches, b.parametres, etat, instantane, `users/${compte.utilisateur}`, pdfs), instantane, pdfs });
+      const plan = planifier(fiches, b.parametres, etat, instantane, `users/${compte.utilisateur}`, pdfs);
+      setPrepare({ plan, instantane, pdfs });
+      setManquants(pdfsManquants(plan, fiches, instantane, pdfs, etat));
+      setRecuperation(null);
     });
 
   const lancer = () =>
@@ -96,6 +105,27 @@ export function PanneauZotero({ b, enregistrer, onFermer }: { b: Biblio; enregis
         if (o && !o.valeur.dansZotero) await enregistrer(id, { ...o.valeur, dansZotero: true });
       }
       setRapport(r);
+      setPrepare(null);
+    });
+
+  /** « PDF manquants dans Thèse » : les PDF stockés chez Zotero, copiés dans `bibliotheque/pdf` et notés dans la fiche. */
+  const recuperer = () =>
+    tache("Téléchargement des PDF depuis Zotero…", async () => {
+      if (!compte || !dossierPdf) return;
+      const pdfs = ctx.plateforme.fichiers(dossierPdf);
+      const r = await recupererPdfs(
+        manquants,
+        prefixe,
+        (chemin) => ctx.plateforme.zoteroFichier(chemin, compte.cle),
+        (nom, octets) => pdfs.writeBytesAtomic(nom, octets),
+        (fait, total) => setProgression({ fait, total, etape: "PDF" }),
+      );
+      for (const { id, nom } of r.recuperes) {
+        const o = b.references.find((x) => x.id === id);
+        if (o && o.valeur.fichierPdf !== nom) await enregistrer(id, { ...o.valeur, fichierPdf: nom });
+      }
+      setRecuperation(r);
+      setManquants([]);
       setPrepare(null);
     });
 
@@ -241,6 +271,48 @@ export function PanneauZotero({ b, enregistrer, onFermer }: { b: Biblio; enregis
         </div>
       ) : null}
 
+      {manquants.length ? (
+        <div className="zotero-plan">
+          <h4>PDF manquants dans Thèse</h4>
+          {manquants.some((m) => m.mode === "stocke") ? (
+            <p className="rangee">
+              <span>
+                {pluriel(manquants.filter((m) => m.mode === "stocke").length, "fiche n'a pas de PDF dans Thèse alors que Zotero en a un", "fiches n'ont pas de PDF dans Thèse alors que Zotero en a un")}{" "}
+                : copiés dans <code>bibliotheque\pdf</code> sous le nom BIB-xxx_Auteur_année_titre.
+              </span>
+              <button type="button" className="principal" disabled={occupe !== null} onClick={() => void recuperer()}>
+                Récupérer dans Thèse
+              </button>
+            </p>
+          ) : null}
+          <details>
+            <summary>Détail</summary>
+            <ul>
+              {manquants.map((m) => (
+                <li key={m.id}>
+                  <strong>{m.id}</strong> {titreDe(m.id)} —{" "}
+                  {m.mode === "stocke" ? `« ${m.source} » → ${m.nom}` : `fichier lié dans Zotero (${m.source}) : à copier à la main dans bibliotheque\\pdf`}
+                </li>
+              ))}
+            </ul>
+          </details>
+        </div>
+      ) : null}
+      {recuperation ? (
+        <Message niveau={recuperation.echecs.length ? "attention" : "info"}>
+          {pluriel(recuperation.recuperes.length, "PDF récupéré", "PDF récupérés")} dans Thèse et noté(s) dans les fiches. Préparez à nouveau pour les lier dans Zotero
+          (une entrée qui a déjà son PDF chez Zotero n'en reçoit pas un second).
+          {recuperation.echecs.length ? (
+            <ul>
+              {recuperation.echecs.map((e) => (
+                <li key={e.id}>
+                  {e.id} : {e.message}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </Message>
+      ) : null}
       {rapport ? (
         <Message niveau={rapport.echecs.length ? "attention" : "info"}>
           Zotero à jour : {pluriel(rapport.crees, "entrée créée", "entrées créées")}, {rapport.associees} reconnue(s), {rapport.misesAJour} mise(s) à jour,{" "}

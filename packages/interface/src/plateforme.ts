@@ -104,6 +104,8 @@ export interface Plateforme {
   verifierLien(url: string): Promise<ReponseLien>;
   /** Interroge l'API web de Zotero ; seulement sur un geste de l'utilisateur. */
   zotero(requete: RequeteZotero): Promise<ReponseZotero>;
+  /** Télécharge le fichier d'une pièce jointe stockée chez Zotero (« /users/1/items/KEY/file »). */
+  zoteroFichier(chemin: string, cle: string): Promise<Uint8Array>;
   /**
    * Surveille une racine : `rappel` reçoit les chemins relatifs modifiés (par cette
    * application ou par OneDrive). Renvoie la fonction d'arrêt.

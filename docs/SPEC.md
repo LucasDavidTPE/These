@@ -518,6 +518,10 @@ seulement sur un clic) :
   de quota Zotero ; pas de PDF sur zotero.org ni l'iPad) ; une entrée qui a déjà un PDF
   dans Zotero n'en reçoit pas un second ;
 - notes de lecture : une note enfant, réécrite à chaque envoi ;
+- **PDF manquants dans Thèse (1.11)** : après « Préparer », les fiches sans PDF dans l'espace
+  dont l'entrée Zotero en a un stocké chez Zotero sont listées ; « Récupérer dans Thèse » le
+  télécharge (`/items/<clé>/file`) dans `bibliotheque/pdf` sous le nom conventionnel et le note
+  dans la fiche ; un PDF lié ailleurs dans Zotero est seulement signalé ;
 - « Préparer » montre le plan (à créer, reconnues, à mettre à jour, modifiées aussi dans
   Zotero, laissées de côté) avant tout envoi ; « Dans Zotero » est coché sur les fiches envoyées.
 

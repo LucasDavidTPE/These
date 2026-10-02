@@ -104,6 +104,7 @@ export function plateformeTauri(): Plateforme {
     ouvrirLien: (url) => openUrl(url),
     verifierLien: (url) => appel<ReponseLien>("lien_verifier", { url }),
     zotero: (requete) => appel<ReponseZotero>("zotero_requete", { requete }),
+    zoteroFichier: async (chemin, cle) => new Uint8Array(await appel<ArrayBuffer>("zotero_fichier", { chemin, cle })),
     surveiller: async (racine, rappel) => {
       const id = await appel<number>("surveillance_demarrer", { racine });
       const arret = await listen<EvenementModifies>("fichiers-modifies", (e) => {

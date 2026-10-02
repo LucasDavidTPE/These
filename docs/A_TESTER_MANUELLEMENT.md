@@ -638,3 +638,12 @@ nombres doivent être identiques, dans les deux modes.
       le PDF s'ouvre aussi ; enregistrer la clé sur ce PC puis « Préparer » : rien à recréer.
 - [ ] Couper le réseau pendant un envoi : message d'erreur ; relancer, aucun doublon.
 - [ ] Exporter RIS → importer dans Zotero avec « Lier les fichiers à leur emplacement d'origine » : les PDF sont attachés.
+
+## PDF manquants dans Thèse (1.11.0)
+
+- [ ] « Préparer » : la rubrique « PDF manquants dans Thèse » liste les fiches sans PDF dont l'entrée Zotero a un PDF ;
+      « Détail » distingue les PDF stockés chez Zotero et les fichiers liés ailleurs.
+- [ ] « Récupérer dans Thèse » : les PDF arrivent dans `Espace\bibliotheque\pdf` (nom BIB-xxx_Auteur_année_titre),
+      la fiche affiche le PDF et son aperçu.
+- [ ] Re-« Préparer » puis envoyer : pas de second PDF dans Zotero pour ces entrées.
+- [ ] Si le stockage Zotero est en WebDAV : message « fichier absent du stockage Zotero », rien d'écrit.
