@@ -12,6 +12,7 @@ import { lireCsv, tableauEssai, versCsvExcel, type Serie } from "@noyau/formats/
 import { ecrireXlsx } from "@noyau/formats/xlsx-ecriture";
 import { apercu, panneaux, type PanneauEssai } from "../core/courbes";
 import { SUFFIXE_SUIVI } from "../core/decouverte";
+import { Cartes } from "@interface/Cartes";
 import { useContexte } from "@interface/contexte";
 import { fichiersDonnees, sousReference } from "@interface/donnees";
 import { IconeDossier } from "@interface/icones";
@@ -450,6 +451,9 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
         </Section>
       ) : null}
 
+      <Section titre="Cartes">
+        <Cartes zone={`campagnes/${c.slug}`} vide="Des cartes pour ce que tu veux garder sous la main : protocole, points d'attention, conclusions provisoires…" />
+      </Section>
       <Section titre="Carnet">
         <div className="carnet" onPaste={(e) => void collerImage(e)}>
           <div className="carte">

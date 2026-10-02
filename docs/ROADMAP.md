@@ -181,3 +181,11 @@ lancent tous les tests automatiques sous Windows.
 - [x] Ctrl+K : la référence (ou l'étude, la campagne) s'ouvre aussi quand sa page est déjà affichée (1.5.1)
 - [x] Code Python d'origine de ChaussSpec (dont la texture) gardé dans `modules/chausspec/source-python/`, non livré
 - [x] Citations `[@BIB-020]` dans les présentations (diapo Références) et sources du panneau ChaussSpec, coupables dans la Bibliothèque (1.6.0)
+- [x] Bibliothèque : aperçu de la première page du PDF dans la fiche, gardé dans l'espace (1.7.0)
+- [x] Menu des modules en sections dépliables (Essais, Outils…) (1.7.0)
+- [x] ViscoCompare retiré de l'application (1.7.0)
+- [x] Cartes éditables (Markdown, citations) : ChaussSpec « Comment ça marche ? », campagnes, études (1.8.0)
+- [x] Installeur Windows 1.7.0 cassé par deux fichiers ne différant que par la casse : corrigé, et un test l'interdit désormais (1.8.0)
+- [x] Journal : note du jour avec tâches reportées, encart « Aujourd'hui » sur l'Accueil (1.9.0)
+- [x] Bibliothèque : « Mettre à jour Zotero » (sens unique, PDF liés, notes de lecture) et PDF dans l'export RIS (1.10.0)
+- [x] Zotero : « PDF manquants dans Thèse », récupérés depuis Zotero (1.11.0)

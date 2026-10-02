@@ -4,6 +4,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { Message, Page } from "@interface/composants";
+import { absolu } from "@noyau/stockage";
 import { BandeauHorsEspace } from "@interface/BandeauHorsEspace";
 import { useContexte } from "@interface/contexte";
 import { useOuverture } from "@interface/ouverture";
@@ -13,6 +14,7 @@ import { libelleLien, lienARevoir, liensAVerifier } from "../core/liens";
 import { nomNote, noteReference, pointMensuel } from "../core/markdown";
 import { nouvelleReference } from "../core/modele";
 import { Fiche } from "./Fiche";
+import { PanneauZotero } from "./Zotero";
 import { aujourdhui, ecrireCitations, lireCitations, useBiblio } from "./donnees";
 import { AnalyseVue, CorrectionsVue, DemandesVue, PistesVue } from "./suivi";
 import { FILTRES_VIDES, type Filtres } from "./format";
@@ -45,6 +47,7 @@ export function BibliothequePage() {
   const [verification, setVerification] = useState<{ fait: number; total: number; aRevoir: number } | null>(null);
   const arret = useRef(false);
   const [citations, setCitations] = useState<boolean | null>(null);
+  const [zotero, setZotero] = useState(false);
   const fsEspace = ctx.espace?.fichiers;
   useEffect(() => {
     if (!fsEspace) return;
@@ -83,9 +86,12 @@ export function BibliothequePage() {
   async function exporter(format: "ris" | "bib") {
     if (!b) return;
     const refs = b.references.map((r) => r.valeur);
+    // RIS : chaque PDF de l'espace en ligne L1, que Zotero attache à l'import.
+    const dossierPdf = ctx.racines["biblio-pdf"];
+    const pdf = (r: (typeof refs)[number]) => (dossierPdf && r.fichierPdf.trim() ? absolu(dossierPdf, r.fichierPdf.trim()) : null);
     const ok = await ctx.plateforme.enregistrerSous(
       format === "ris" ? "biblio_these_lucas.ris" : "biblio_these_lucas.bib",
-      octetsTexte(format === "ris" ? versRis(refs, b.parametres) : versBibtex(refs)),
+      octetsTexte(format === "ris" ? versRis(refs, b.parametres, pdf) : versBibtex(refs)),
     );
     if (ok) setMessage(`${refs.length} références exportées en ${format === "ris" ? "RIS" : "BibTeX"}.`);
   }
@@ -154,7 +160,10 @@ export function BibliothequePage() {
               <button type="button" onClick={() => void nouvelle()}>
                 Nouvelle référence
               </button>
-              <button type="button" onClick={() => void exporter("ris")}>
+              <button type="button" className={zotero ? "actif" : undefined} onClick={() => setZotero((z) => !z)} title="Envoie la bibliothèque dans Zotero (création, mise à jour, PDF liés, notes de lecture)">
+                Mettre à jour Zotero…
+              </button>
+              <button type="button" onClick={() => void exporter("ris")} title="Avec le chemin de chaque PDF : à l'import dans Zotero, choisir « Lier les fichiers à leur emplacement d'origine »">
                 Exporter RIS
               </button>
               <button type="button" onClick={() => void exporter("bib")}>
@@ -179,6 +188,7 @@ export function BibliothequePage() {
       {erreur || d.erreur ? <Message niveau="erreur">{erreur ?? d.erreur}</Message> : null}
       {message ? <Message niveau="info">{message}</Message> : null}
       <BandeauHorsEspace quoi="biblio-pdf" />
+      {zotero && b ? <PanneauZotero b={b} enregistrer={d.enregistrerReference} onFermer={() => setZotero(false)} /> : null}
       {verification ? (
         <div className="message message-info rangee">
           <span>

@@ -74,3 +74,34 @@ export function dansRacine(chemin: string, racine: string): string | null {
   if (c.toLowerCase().startsWith(r.toLowerCase() + "/")) return c.slice(r.length + 1);
   return null;
 }
+
+/**
+ * Aperçus (première page) des PDF : `bibliotheque/apercus/<id>.png`, avec à côté `<id>.json`
+ * ({ pdf, empreinte }) pour savoir si le PDF a changé depuis (renommé, remplacé).
+ */
+export const DOSSIER_APERCUS = "bibliotheque/apercus";
+
+export interface InfoApercu {
+  pdf: string;
+  empreinte: string;
+}
+
+/** Empreinte rapide d'un PDF : sa taille et un FNV-1a de ses 64 premiers et 64 derniers ko. */
+export function empreintePdf(octets: Uint8Array): string {
+  const B = 65536;
+  let h = 0x811c9dc5;
+  const passer = (de: number, a: number) => {
+    for (let i = de; i < a; i++) {
+      h ^= octets[i]!;
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+  };
+  passer(0, Math.min(B, octets.length));
+  passer(Math.max(B, octets.length - B), octets.length);
+  return `${octets.length}-${h.toString(16).padStart(8, "0")}`;
+}
+
+export function lireInfoApercu(brut: unknown): InfoApercu | null {
+  const b = (typeof brut === "object" && brut !== null ? brut : {}) as Record<string, unknown>;
+  return typeof b.pdf === "string" && typeof b.empreinte === "string" ? { pdf: b.pdf, empreinte: b.empreinte } : null;
+}

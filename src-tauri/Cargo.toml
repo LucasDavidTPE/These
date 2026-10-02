@@ -1,6 +1,6 @@
 [package]
 name = "these"
-version = "1.6.0"
+version = "1.11.0"
 description = "Application de bureau de la thèse"
 authors = ["Lucas David"]
 edition = "2021"

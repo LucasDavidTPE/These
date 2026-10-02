@@ -18,6 +18,7 @@ HEIC (LGPL-3.0, voir plus bas).
 | `serde`, `serde_json`, `chrono` | sérialisation, dates | MIT / Apache-2.0 |
 | `ureq` | vérification des liens de la bibliothèque (sur demande) | MIT / Apache-2.0 |
 | `heic-to` (libheif compilé en JavaScript) (Figures) | ouvrir les photos HEIC / HEIF | LGPL-3.0 |
+| `pdfjs-dist` (pdf.js, Mozilla ; version « legacy ») (Bibliothèque) | aperçu de la première page des PDF | Apache-2.0 |
 | Vite, Vitest, ESLint, TypeScript | outils de développement (non embarqués) | MIT / Apache-2.0 |
 
 Le code repris de Figurine est du même auteur. Le détail de ses dépendances, avec versions

@@ -52,6 +52,15 @@ export const IconeBibliotheque = (p: P) => (
   </Trace>
 );
 
+export const IconeJournal = (p: P) => (
+  <Trace {...p}>
+    <path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6z" />
+    <path d="M6 3v18" />
+    <path d="m10 9 1.5 1.5L14 8" />
+    <path d="M10 14h5" />
+  </Trace>
+);
+
 export const IconePlanning = (p: P) => (
   <Trace {...p}>
     <path d="M4 5h9" />
@@ -93,14 +102,6 @@ export const IconeEtudes = (p: P) => (
     <path d="M8 5 3 12l5 7" />
     <path d="m16 5 5 7-5 7" />
     <path d="m13.5 4-3 16" />
-  </Trace>
-);
-
-export const IconeViscoCompare = (p: P) => (
-  <Trace {...p}>
-    <path d="M3 20h18" />
-    <path d="M3 8c3 0 4 8 9 8s6-8 9-8" />
-    <path d="M3 11c3 0 4 6 9 6s6-6 9-6" strokeDasharray="2 2.5" />
   </Trace>
 );
 

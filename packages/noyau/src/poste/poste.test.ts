@@ -11,11 +11,11 @@ describe("réglages du poste", () => {
     const r = lireReglages(
       JSON.stringify({ espace: " C:\\OneDrive\\Thèse\\Espace ", figures: "", racines: { essais: "E:\\", "Mauvais nom": "D:\\", vide: "  ", "biblio-pdf": "C:\\BIBLIO" } }),
     );
-    expect(r).toEqual({ version: 1, espace: "C:\\OneDrive\\Thèse\\Espace", figures: null, racines: { essais: "E:\\", "biblio-pdf": "C:\\BIBLIO" } });
+    expect(r).toEqual({ version: 1, espace: "C:\\OneDrive\\Thèse\\Espace", figures: null, racines: { essais: "E:\\", "biblio-pdf": "C:\\BIBLIO" }, zotero: null });
   });
 
   it("écrit un fichier stable, racines triées", () => {
-    const texte = ecrireReglages({ version: 1, espace: "C:\\E", figures: null, racines: { recherche: "C:\\R", essais: "E:\\" } });
+    const texte = ecrireReglages({ version: 1, espace: "C:\\E", figures: null, racines: { recherche: "C:\\R", essais: "E:\\" }, zotero: null });
     expect(texte).toBe('{\n  "version": 1,\n  "espace": "C:\\\\E",\n  "figures": null,\n  "racines": {\n    "essais": "E:\\\\",\n    "recherche": "C:\\\\R"\n  }\n}\n');
     expect(lireReglages(texte).racines).toEqual({ essais: "E:\\", recherche: "C:\\R" });
   });

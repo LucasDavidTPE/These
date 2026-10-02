@@ -16,7 +16,12 @@ function pages(r: Reference): [string, string] {
   return [debut, fin];
 }
 
-export function versRis(refs: Reference[], p: Parametres): string {
+/**
+ * `pdf` (facultatif) donne le chemin absolu du PDF d'une référence : une ligne `L1` que
+ * Zotero attache à l'import (« Lier les fichiers à leur emplacement d'origine »). Sans lui,
+ * l'export est exactement celui de la macro ExporterRIS.
+ */
+export function versRis(refs: Reference[], p: Parametres, pdf?: (r: Reference) => string | null): string {
   const out: string[] = [];
   for (const r of refs) {
     const l = (tag: string, v: string | number | null | undefined) => {
@@ -42,6 +47,7 @@ export function versRis(refs: Reference[], p: Parametres): string {
     l("KW", r.priorite ? `Priorite: ${r.priorite}` : "");
     l("KW", r.mois ? `Mois ${r.mois}` : "");
     l("N1", r.contribution);
+    if (pdf) l("L1", pdf(r));
     out.push("ER  - ", "");
   }
   return out.join("\r\n");

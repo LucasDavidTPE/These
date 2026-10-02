@@ -7,6 +7,7 @@ import { FiguresLiees } from "@interface/FiguresLiees";
 import { useEffect, useState } from "react";
 import { absolu, joindre } from "@noyau/stockage";
 import { Message, Page, Pastille, Section } from "@interface/composants";
+import { Cartes } from "@interface/Cartes";
 import { useContexte } from "@interface/contexte";
 import { useOuverture } from "@interface/ouverture";
 import { IconeDossier } from "@interface/icones";
@@ -205,6 +206,9 @@ function VueEtude({ e, campagnes, fermer }: { e: EtudeChargee; campagnes: { slug
           <FiguresLiees cible={{ type: "etude", id: e.dossier, titre: k.titre }} />
         </Section>
       ) : null}
+      <Section titre="Cartes">
+        <Cartes zone={`etudes/${e.dossier}`} vide="Des cartes pour la démarche, les hypothèses, ce qu'il reste à vérifier…" />
+      </Section>
       <Section titre={`Exécutions (${e.executions.length})`}>
         {e.executions.length === 0 ? (
           <p className="discret">

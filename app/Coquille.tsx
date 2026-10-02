@@ -16,6 +16,7 @@ import type { Plateforme } from "@interface/plateforme";
 import { BandeauMiseAJour } from "./BandeauMiseAJour";
 import { DiagnosticPage } from "./DiagnosticPage";
 import { Palette } from "./Palette";
+import { MenuModules } from "./MenuModules";
 import { ReglagesPage } from "./ReglagesPage";
 
 interface Props {
@@ -156,17 +157,7 @@ export function Coquille({ produit, manifestes, plateforme, poste, reglages, enr
               <span>Rechercher…</span>
               <kbd>Ctrl K</kbd>
             </button>
-            <ul>
-              {manifestes.map((m) => (
-                <li key={m.id}>
-                  <button type="button" className={m.id === page ? "actif" : undefined} aria-current={m.id === page ? "page" : undefined} onClick={() => setPage(m.id)}>
-                    <m.Icone />
-                    {m.titre}
-                    {m.aVenir ? <span className="a-venir">{m.aVenir}</span> : null}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <MenuModules manifestes={manifestes} page={page} ouvrir={setPage} />
             {produit.espace ? (
               <ul className="barre-bas">
                 <li>

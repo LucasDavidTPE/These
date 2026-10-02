@@ -33,6 +33,30 @@ export interface ReponseLien {
   erreur: string;
 }
 
+/** Requête vers l'API web de Zotero (https://api.zotero.org), faite par Rust. */
+export interface RequeteZotero {
+  methode: "GET" | "POST" | "PATCH" | "DELETE";
+  /** Chemin sous l'hôte, avec sa requête : « /users/123/items?limit=100 ». */
+  chemin: string;
+  cle: string;
+  corps?: string;
+  /** If-Unmodified-Since-Version. */
+  version?: number;
+}
+
+export interface ReponseZotero {
+  /** Code HTTP, ou null si le serveur n'a pas répondu (voir `erreur`). */
+  code: number | null;
+  corps: string;
+  /** Last-Modified-Version. */
+  version: number | null;
+  /** Total-Results (listes paginées). */
+  total: number | null;
+  /** Secondes à attendre quand Zotero demande de ralentir. */
+  attente: number | null;
+  erreur: string;
+}
+
 export interface Plateforme {
   genre: "tauri" | "demo";
   nomDuPoste(): Promise<string>;
@@ -78,6 +102,10 @@ export interface Plateforme {
   ouvrirLien(url: string): Promise<void>;
   /** Interroge une adresse web (HEAD, sinon GET) ; seulement sur un geste de l'utilisateur. */
   verifierLien(url: string): Promise<ReponseLien>;
+  /** Interroge l'API web de Zotero ; seulement sur un geste de l'utilisateur. */
+  zotero(requete: RequeteZotero): Promise<ReponseZotero>;
+  /** Télécharge le fichier d'une pièce jointe stockée chez Zotero (« /users/1/items/KEY/file »). */
+  zoteroFichier(chemin: string, cle: string): Promise<Uint8Array>;
   /**
    * Surveille une racine : `rappel` reçoit les chemins relatifs modifiés (par cette
    * application ou par OneDrive). Renvoie la fonction d'arrêt.
