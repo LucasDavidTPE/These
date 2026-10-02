@@ -9,7 +9,7 @@ import { openPath, openUrl } from "@tauri-apps/plugin-opener";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
 import { erreurDepuisIpc, type Entree } from "@noyau/stockage";
-import type { Plateforme, RapportArchive, RapportCopie, ReponseLien } from "@interface/plateforme";
+import type { Plateforme, RapportArchive, RapportCopie, ReponseLien, ReponseZotero } from "@interface/plateforme";
 
 async function appel<T>(cmd: string, args: Record<string, unknown> = {}, chemin = ""): Promise<T> {
   try {
@@ -103,6 +103,7 @@ export function plateformeTauri(): Plateforme {
     ouvrirDossier: (chemin) => openPath(chemin),
     ouvrirLien: (url) => openUrl(url),
     verifierLien: (url) => appel<ReponseLien>("lien_verifier", { url }),
+    zotero: (requete) => appel<ReponseZotero>("zotero_requete", { requete }),
     surveiller: async (racine, rappel) => {
       const id = await appel<number>("surveillance_demarrer", { racine });
       const arret = await listen<EvenementModifies>("fichiers-modifies", (e) => {

@@ -9,6 +9,7 @@ import { ecrireReglages } from "@noyau/poste/reglages";
 import { FichiersMemoire, type Fichiers } from "@noyau/stockage";
 import type { Plateforme } from "@interface/plateforme";
 import { zipSync } from "fflate";
+import { ZoteroFactice } from "@interface/zoteroFactice";
 
 const ONEDRIVE = "C:\\Users\\DAVID\\OneDrive - entpe.fr";
 const ESPACE = `${ONEDRIVE}\\Thèse\\Espace`;
@@ -112,6 +113,7 @@ export function plateformeDemo(scenario: string | null): Plateforme {
       espace: ESPACE,
       figures: `${ONEDRIVE}\\Figurine`,
       racines: { essais: "E:\\", "biblio-pdf": BIBLIO, recherche: RECHERCHE, manuscrits: `${ONEDRIVE}\\Thèse\\Rédaction` },
+      zotero: null,
     });
     const espace = dossier(ESPACE);
     espace.poser("espace.json", '{\n  "format": 1,\n  "cree": "2026-09-26T10:00:00+02:00",\n  "creePar": "LGCB-AA03956"\n}\n');
@@ -158,6 +160,10 @@ export function plateformeDemo(scenario: string | null): Plateforme {
     figures.poser("FIG-0002_long/meta.json", JSON.stringify({ id: "FIG-0002", title: "Comparaison_des_modules_complexes_2S2P1D_COMSOL_Viscoroute_vitesse_0.66_ms_essai_TSRST_final", kind: "graph", created: "2026-09-21T10:00:00Z", modified: "2026-09-21T10:00:00Z", tags: [], used_in: [] }));
     figures.poser("FIG-0003_long/meta.json", JSON.stringify({ id: "FIG-0003", title: "Schéma du modèle de Huet-Sayegh généralisé avec amortisseurs paraboliques", kind: "schema", created: "2026-09-22T10:00:00Z", modified: "2026-09-22T10:00:00Z", tags: [], used_in: [] }));
   }
+
+  // Zotero de démonstration : toute clé est acceptée ; Burmister (1945) y est déjà.
+  const zotero = new ZoteroFactice("*");
+  zotero.ajouter({ itemType: "journalArticle", title: "The general theory of stresses and displacements in layered systems", date: "1945", creators: [{ creatorType: "author", lastName: "Burmister", firstName: "D. M." }], tags: [{ tag: "multicouche" }] });
 
   return {
     genre: "demo",
@@ -271,6 +277,10 @@ export function plateformeDemo(scenario: string | null): Plateforme {
       const h = [...url].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
       const code = h % 11 === 0 ? 404 : h % 7 === 0 ? 403 : 200;
       return { code, urlFinale: url, erreur: "" };
+    },
+    zotero: async (requete) => {
+      await new Promise((ok) => setTimeout(ok, 40));
+      return zotero.traiter(requete);
     },
     surveiller: async (racine, rappel) => {
       const cle = normaliser(racine);

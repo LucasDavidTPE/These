@@ -8,6 +8,7 @@ import { useContexte } from "@interface/contexte";
 import { calculer, moisCourant, tableauDeBord, type Calcule, type TableauDeBord } from "../core/calculs";
 import { CITATIONS_PAR_DEFAUT, FICHIER_CITATIONS, lireReglageCitations, type ReglageCitations } from "../core/citations";
 import { doublons, type Doublon } from "../core/doublons";
+import { ecrireEtatZotero as texteEtatZotero, FICHIER_ZOTERO, lireEtatZotero as etatZotero, type EtatZotero } from "../core/zotero";
 import type { ImportClasseur } from "../core/import";
 import {
   CORRECTIONS,
@@ -166,4 +167,21 @@ export async function lireCitations(fs: Fichiers): Promise<ReglageCitations> {
 export async function ecrireCitations(fs: Fichiers, r: ReglageCitations): Promise<void> {
   await fs.ensureDir(DOSSIER);
   await fs.writeTextAtomic(FICHIER_CITATIONS, JSON.stringify(r, null, 2) + "\n");
+}
+
+/** Suivi de la synchro Zotero (`bibliotheque/zotero.json`). */
+export async function lireEtatZotero(fs: Fichiers): Promise<EtatZotero> {
+  return etatZotero(await lireTexte(fs, FICHIER_ZOTERO));
+}
+
+export async function ecrireEtatZotero(fs: Fichiers, e: EtatZotero): Promise<void> {
+  await fs.ensureDir(DOSSIER);
+  await fs.writeTextAtomic(FICHIER_ZOTERO, texteEtatZotero(e));
+}
+
+/** Noms des PDF nommés dans les fiches et présents dans le dossier des PDF (racine « biblio-pdf »). */
+export async function lirePdfsPresents(pdfs: Fichiers, fiches: readonly { ref: Reference }[]): Promise<Set<string>> {
+  const noms = [...new Set(fiches.map((f) => f.ref.fichierPdf.trim()).filter(Boolean))];
+  const la = await Promise.all(noms.map((n) => pdfs.exists(n.replace(/\\/g, "/")).catch(() => false)));
+  return new Set(noms.filter((_, i) => la[i]));
 }

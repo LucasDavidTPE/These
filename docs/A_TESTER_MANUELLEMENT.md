@@ -618,3 +618,23 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] ← / → et la liste de gauche : les jours passés s'affichent, un jour sans note ne se crée qu'à la première modification.
 - [ ] Accueil : encart « Aujourd'hui », cocher une tâche la barre aussi dans le journal.
 - [ ] Le lendemain : les tâches restées ouvertes sont reprises, celles cochées non.
+
+## Mettre à jour Zotero (1.10.0)
+
+- [ ] Bibliothèque → « Mettre à jour Zotero… » → « Créer une clé sur zotero.org » ouvre le navigateur ; clé créée avec
+      accès bibliothèque, notes et écriture ; « Vérifier et enregistrer » affiche le nom du compte. Une clé sans
+      l'écriture ou sans les notes est refusée avec un message clair.
+- [ ] Dans Zotero (PC de travail) : Paramètres → Avancé → Fichiers et dossiers → répertoire de base des pièces
+      jointes liées = le chemin affiché (« Copier »).
+- [ ] « Préparer » : les références déjà dans Zotero sont « reconnues » (pas « à créer ») ; les doublons possibles
+      sont listés à part.
+- [ ] « Envoyer vers Zotero » : collection « Thèse » créée ; entrées complètes (auteurs, revue, DOI, étiquettes
+      « Thèse · … ») ; vos étiquettes Zotero d'avant toujours là ; note « Notes de lecture — BIB-xxx » ;
+      **le PDF s'ouvre depuis Zotero** (double-clic) ; « Dans Zotero » coché sur les fiches.
+- [ ] Plugin Word : une référence envoyée se cite normalement.
+- [ ] Re-« Préparer » tout de suite : tout « inchangé », bouton d'envoi grisé. Modifier une fiche dans Thèse →
+      « 1 entrée à mettre à jour », sans doublon dans Zotero.
+- [ ] PC perso : régler aussi le répertoire de base dans Zotero (même chemin OneDrive) ; après la synchro Zotero,
+      le PDF s'ouvre aussi ; enregistrer la clé sur ce PC puis « Préparer » : rien à recréer.
+- [ ] Couper le réseau pendant un envoi : message d'erreur ; relancer, aucun doublon.
+- [ ] Exporter RIS → importer dans Zotero avec « Lier les fichiers à leur emplacement d'origine » : les PDF sont attachés.

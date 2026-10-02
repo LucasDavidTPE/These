@@ -236,3 +236,21 @@ textarea.champ {
   border: 1px dashed var(--bordure);
   border-radius: 4px;
 }
+
+/* Mettre à jour Zotero */
+.zotero {
+  margin-bottom: 16px;
+}
+.zotero h3 {
+  margin: 0;
+}
+.zotero h4 {
+  margin: 14px 0 4px;
+}
+.zotero-chemin {
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.zotero-plan ul {
+  margin: 8px 0;
+}

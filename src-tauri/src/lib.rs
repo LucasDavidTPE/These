@@ -10,6 +10,7 @@ pub mod figures;
 pub mod liens;
 pub mod poste;
 pub mod surveillance;
+pub mod zotero;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -19,6 +20,7 @@ pub fn run() {
     use liens::lien_verifier;
     use poste::*;
     use surveillance::*;
+    use zotero::zotero_requete;
     let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
@@ -40,7 +42,8 @@ pub fn run() {
             fichiers_supprimer_temporaire, verrou_lire, verrou_poser, verrou_lever, poste_nom,
             poste_lire_reglages, poste_ecrire_reglages, poste_dossiers_onedrive,
             poste_dossier_existe, poste_creer_dossier, poste_ecrire_fichier, poste_lire_fichier, poste_ouvrir_vscode,
-            surveillance_demarrer, surveillance_arreter, copie_dossier, archive_dossier, lien_verifier
+            surveillance_demarrer, surveillance_arreter, copie_dossier, archive_dossier, lien_verifier,
+            zotero_requete
             $(, $module)*
             ]
         };

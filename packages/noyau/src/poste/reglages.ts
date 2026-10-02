@@ -11,9 +11,28 @@ export interface ReglagesPoste {
   figures: string | null;
   /** Racines de données de ce poste : nom → chemin absolu (« essais » → « E:/ »). */
   racines: Record<string, string>;
+  /**
+   * Clé d'API Zotero de ce poste (« Mettre à jour Zotero ») : sur le poste, pas dans
+   * l'espace, pour qu'elle ne parte pas avec un zip de l'espace.
+   */
+  zotero: CompteZoteroPoste | null;
 }
 
-export const REGLAGES_PAR_DEFAUT: ReglagesPoste = { version: 1, espace: null, figures: null, racines: {} };
+export interface CompteZoteroPoste {
+  cle: string;
+  /** Identifiant numérique du compte (userID). */
+  utilisateur: number;
+  nom: string;
+}
+
+export const REGLAGES_PAR_DEFAUT: ReglagesPoste = { version: 1, espace: null, figures: null, racines: {}, zotero: null };
+
+function compteZotero(v: unknown): CompteZoteroPoste | null {
+  if (typeof v !== "object" || v === null) return null;
+  const z = v as Record<string, unknown>;
+  if (typeof z.cle !== "string" || !/^[A-Za-z0-9]+$/.test(z.cle) || typeof z.utilisateur !== "number") return null;
+  return { cle: z.cle, utilisateur: z.utilisateur, nom: typeof z.nom === "string" ? z.nom : "" };
+}
 
 /** Nom de racine : minuscules, chiffres, tirets ; commence par une lettre. */
 export const NOM_RACINE_RE = /^[a-z][a-z0-9-]*$/;
@@ -44,12 +63,12 @@ export function lireReglages(texte: string | null): ReglagesPoste {
       if (estNomRacine(nom) && c) racines[nom] = c;
     }
   }
-  return { version: 1, espace: cheminOuNull(r.espace), figures: cheminOuNull(r.figures), racines };
+  return { version: 1, espace: cheminOuNull(r.espace), figures: cheminOuNull(r.figures), racines, zotero: compteZotero(r.zotero) };
 }
 
 export function ecrireReglages(r: ReglagesPoste): string {
   const racines = Object.fromEntries(Object.entries(r.racines).sort(([a], [b]) => (a < b ? -1 : 1)));
-  return JSON.stringify({ version: 1, espace: r.espace, figures: r.figures, racines }, null, 2) + "\n";
+  return JSON.stringify({ version: 1, espace: r.espace, figures: r.figures, racines, ...(r.zotero ? { zotero: r.zotero } : {}) }, null, 2) + "\n";
 }
 
 function sous(base: string, ...parts: string[]): string {

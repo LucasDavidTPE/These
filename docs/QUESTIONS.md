@@ -13,6 +13,8 @@ reportée dans `SPEC.md` et la question est supprimée d'ici.
    Obsidian ; reste à savoir s'il faut le relancer automatiquement.)*
 3. **Zotero (P3).** Zotero reste-t-il l'outil de citation (import RIS, plugin Word) ? Si
    la rédaction se fait en LaTeX, l'export BibTeX de l'application pourrait suffire.
+   *(Réglé en 1.10 : oui, Zotero avec le plugin Word. « Mettre à jour Zotero » envoie la
+   bibliothèque à sens unique, PDF en fichiers liés ; voir SPEC §9.3.)*
 4. **Site 2S2P1D en ligne (P2).** Le laisser en ligne, figé, avec un lien vers
    l'installeur, ou le retirer ?
 5. **Emplacement de l'espace (P0).** `OneDrive - entpe.fr\Thèse\Espace` convient-il ?

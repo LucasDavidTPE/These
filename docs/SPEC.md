@@ -495,11 +495,31 @@ ENTPE.
 | AjouterReference | formulaire ; si un DOI est saisi, proposition de remplir les métadonnées (requête OpenAlex / Crossref **à la demande**, jamais automatique) |
 | VerifierDoublons | contrôle permanent (clé, DOI, titre), signalé dans « À régler » |
 | VerifierLiens | bouton : teste chaque lien et note l'état et la date |
-| ExporterRIS | export RIS (toute la base ou la sélection) pour Zotero |
+| ExporterRIS | export RIS (toute la base ou la sélection) pour Zotero ; chaque PDF de l'espace en ligne `L1` (1.10) |
+| *(nouveau, 1.10)* | **Mettre à jour Zotero** : voir ci-dessous |
 | *(nouveau)* | **export BibTeX** (`.bib`) pour LaTeX, clés identiques |
 | GenererNotesObsidian, GenererPointMensuel | export Markdown (si Obsidian reste utilisé, voir `QUESTIONS.md`) |
 | ExporterCalendrierICS | remplacé par le Planning |
 | SuiviRelances, MajTableauDeBord | inutiles : tout est recalculé en direct |
+
+**Mettre à jour Zotero (1.10).** Zotero reste l'outil de citation (plugin Word). Sens
+unique, Thèse → Zotero, par l'API web (`api.zotero.org`, requêtes faites par Rust,
+seulement sur un clic) :
+- clé d'API du compte, enregistrée **sur le poste** (`poste.json`), jamais dans l'espace ;
+- chaque fiche crée ou met à jour son entrée, rangée dans la collection « Thèse » ; la clé
+  Zotero de chaque fiche est notée dans `bibliotheque/zotero.json`, écrit après chaque lot
+  (un envoi interrompu ne duplique rien) ;
+- premier envoi : une entrée déjà dans Zotero est reconnue (« Thèse: BIB-xxx » dans Extra,
+  puis DOI, puis titre et année) ; plusieurs candidates → fiche laissée de côté, à trancher ;
+- sur une entrée existante, seuls les champs remplis dans Thèse sont écrits ; étiquettes et
+  collections Zotero gardées (les nôtres commencent par « Thèse ») ; rien n'est supprimé ;
+- PDF : pièce jointe **liée** `attachments:<nom>`, relative au répertoire de base des
+  pièces jointes liées de Zotero, réglé sur `Espace\bibliotheque\pdf` sur chaque PC (pas
+  de quota Zotero ; pas de PDF sur zotero.org ni l'iPad) ; une entrée qui a déjà un PDF
+  dans Zotero n'en reçoit pas un second ;
+- notes de lecture : une note enfant, réécrite à chaque envoi ;
+- « Préparer » montre le plan (à créer, reconnues, à mettre à jour, modifiées aussi dans
+  Zotero, laissées de côté) avant tout envoi ; « Dans Zotero » est coché sur les fiches envoyées.
 
 ### 9.4 Migration
 **Import du classeur** (`.xlsx`) relançable : tant que la bascule n'est pas faite, on
@@ -644,7 +664,7 @@ photo d'un écran). Image ouverte (PNG, JPEG, WebP, BMP, GIF), collée (Ctrl+V) 
 - Interface et messages **en français** ; code, identifiants et commits en anglais
   (convention de Figurine).
 - **Aucune requête réseau** sans geste explicite (vérifier les liens, remplir depuis un
-  DOI, ouvrir une page).
+  DOI, ouvrir une page, mettre à jour Zotero).
 - Démarrage en moins de 3 s ; la galerie et la bibliothèque (quelques centaines
   d'objets) s'affichent sans attente perceptible.
 - Exports **déterministes** (même entrée → mêmes octets), pour les tests golden.
