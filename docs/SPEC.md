@@ -463,6 +463,9 @@ intitulés, objectifs de fin de mois (feuille Planning), listes de choix, préfi
 ENTPE.
 
 ### 9.2 Vues
+- **Références** : colonne « PDF » (✓ dans l'espace ; « manque » avec l'accès au document ;
+  « introuvable » si le nom noté n'est pas dans `bibliotheque/pdf`), filtre « PDF manquant
+  (hors écartés) » et raccourci « N sans PDF » (1.12).
 - **Tableau de bord** : vue d'ensemble (vérification, accès, lecture), avancement par
   axe et par mois (heures prévues, restantes, charge / capacité, état), prochaines
   lectures conseillées (meilleur score), prochaine action.

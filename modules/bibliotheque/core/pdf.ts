@@ -105,3 +105,16 @@ export function lireInfoApercu(brut: unknown): InfoApercu | null {
   const b = (typeof brut === "object" && brut !== null ? brut : {}) as Record<string, unknown>;
   return typeof b.pdf === "string" && typeof b.empreinte === "string" ? { pdf: b.pdf, empreinte: b.empreinte } : null;
 }
+
+/**
+ * PDF d'une fiche vu depuis la liste des références : dans l'espace, nommé mais introuvable
+ * dans `bibliotheque/pdf`, ou pas de PDF du tout. `presents` : noms trouvés sur le disque
+ * (null tant qu'on ne sait pas encore : un PDF nommé passe pour présent).
+ */
+export type EtatPdf = "present" | "introuvable" | "aucun";
+
+export function etatPdf(fichierPdf: string, presents: ReadonlySet<string> | null): EtatPdf {
+  const nom = fichierPdf.trim();
+  if (!nom) return "aucun";
+  return !presents || presents.has(nom) ? "present" : "introuvable";
+}

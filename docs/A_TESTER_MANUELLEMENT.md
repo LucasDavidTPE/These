@@ -647,3 +647,10 @@ nombres doivent être identiques, dans les deux modes.
       la fiche affiche le PDF et son aperçu.
 - [ ] Re-« Préparer » puis envoyer : pas de second PDF dans Zotero pour ces entrées.
 - [ ] Si le stockage Zotero est en WebDAV : message « fichier absent du stockage Zotero », rien d'écrit.
+
+## PDF manquants dans la liste des références (1.12.0)
+
+- [ ] Bibliothèque → Références : colonne « PDF » ; ✓ pour les fiches dont le PDF est dans `Espace\bibliotheque\pdf`,
+      « manque » (avec « PDF libre », « Éditeur (abonnement) »…) sinon, « introuvable » si le fichier noté a disparu.
+- [ ] « N sans PDF » filtre la liste (écartées exclues) ; le filtre « PDF : tous » la rétablit.
+- [ ] Après un PDF ajouté depuis la fiche ou récupéré depuis Zotero, la ligne passe à ✓ sans relancer.

@@ -10,7 +10,9 @@ export interface Filtres {
   statut: string;
   priorite: string;
   etat: string;
+  /** « manquant » : pas de PDF dans l'espace (aucun, ou nommé mais introuvable) ; « present ». */
+  pdf: string;
   tri: "score" | "id";
 }
 
-export const FILTRES_VIDES: Filtres = { texte: "", axe: "", mois: "", statut: "", priorite: "", etat: "", tri: "id" };
+export const FILTRES_VIDES: Filtres = { texte: "", axe: "", mois: "", statut: "", priorite: "", etat: "", pdf: "", tri: "id" };

@@ -189,3 +189,4 @@ lancent tous les tests automatiques sous Windows.
 - [x] Journal : note du jour avec tâches reportées, encart « Aujourd'hui » sur l'Accueil (1.9.0)
 - [x] Bibliothèque : « Mettre à jour Zotero » (sens unique, PDF liés, notes de lecture) et PDF dans l'export RIS (1.10.0)
 - [x] Zotero : « PDF manquants dans Thèse », récupérés depuis Zotero (1.11.0)
+- [x] Références : colonne PDF et filtre « PDF manquant », compteur « N sans PDF » (1.12.0)

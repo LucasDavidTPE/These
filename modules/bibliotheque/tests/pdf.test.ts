@@ -5,7 +5,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { importerClasseur } from "../core/import";
-import { auteursPourNom, dansRacine, nomPdf, titreCourt } from "../core/pdf";
+import { auteursPourNom, dansRacine, etatPdf, nomPdf, titreCourt } from "../core/pdf";
 
 const imp = importerClasseur(new Uint8Array(readFileSync(new URL("./fixtures/Biblio_These_Lucas_MAITRE.xlsx", import.meta.url))));
 
@@ -41,5 +41,15 @@ describe("nom du PDF d'une référence", () => {
   it("chemin dans la racine des PDF (Windows, casse ignorée)", () => {
     expect(dansRacine("C:\\Users\\DAVID\\OneDrive\\Biblio\\PDF\\a.pdf", "c:\\users\\david\\onedrive\\biblio\\pdf")).toBe("a.pdf");
     expect(dansRacine("C:\\Users\\DAVID\\Downloads\\a.pdf", "C:\\Users\\DAVID\\OneDrive\\Biblio\\PDF")).toBeNull();
+  });
+});
+
+describe("état du PDF d'une fiche", () => {
+  it("présent, introuvable, aucun ; présent tant que le disque n'a pas répondu", () => {
+    const presents = new Set(["BIB-001_A_2020_x.pdf"]);
+    expect(etatPdf("BIB-001_A_2020_x.pdf", presents)).toBe("present");
+    expect(etatPdf(" BIB-002_B_2021_y.pdf ", presents)).toBe("introuvable");
+    expect(etatPdf("", presents)).toBe("aucun");
+    expect(etatPdf("BIB-002_B_2021_y.pdf", null)).toBe("present");
   });
 });

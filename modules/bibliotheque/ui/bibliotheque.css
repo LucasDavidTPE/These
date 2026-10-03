@@ -254,3 +254,12 @@ textarea.champ {
 .zotero-plan ul {
   margin: 8px 0;
 }
+
+/* Colonne PDF de la liste des références */
+.pdf-ok {
+  color: var(--ok, #2e7d32);
+  font-weight: 600;
+}
+.pdf-manque {
+  color: var(--attention, #b26a00);
+}
