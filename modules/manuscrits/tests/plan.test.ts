@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ajouterParties, deplacerPartie, dossierSorties, ecrireManuscrit, FUSION_PAR_DEFAUT, genreProbable, idPartie, idProjet, lireManuscrit, manuscritVide, modifierPartie, nomLisible, nomSortie, ordreFusion, ordreNaturel, retirerPartie } from "../core/plan";
+import { ajouterParties, deplacerPartie, libelleGenre, libelleType, dossierSorties, ecrireManuscrit, FUSION_PAR_DEFAUT, genreProbable, idPartie, idProjet, lireManuscrit, manuscritVide, modifierPartie, nomLisible, nomSortie, ordreFusion, ordreNaturel, retirerPartie } from "../core/plan";
 import { RACINE_ESPACE, rattacher, racineProposee, resoudreSource, scinder, versSource } from "../core/sources";
 import { dossierVersions } from "../core/versions";
 
@@ -47,9 +47,22 @@ describe("plan d'un manuscrit", () => {
     ]);
     expect(ordreFusion(m).map((p) => p.id)).toEqual(["document-maitre", "chapitre1", "annexes"]);
     expect(ordreFusion({ ...m, parties: m.parties.slice(0, 1) }).map((p) => p.id)).toEqual(["chapitre1"]);
-    expect(nomSortie(m, "propre")).toBe("these-l-david-propre.docx");
-    expect(nomSortie({ ...m, titre: "…" }, "relecture")).toBe("manuscrit-relecture.docx");
+    expect(nomSortie(m)).toBe("these-l-david.docx");
+    expect(nomSortie({ ...m, titre: "…" })).toBe("document.docx");
     expect(dossierSorties("these")).toBe("manuscrits/these/sorties");
+  });
+
+  it("types de document : thèse par défaut, article et rapport nommés autrement", () => {
+    expect(lireManuscrit({ titre: "Ancien plan" }).type).toBe("these");
+    expect(lireManuscrit({ type: "bateau" }).type).toBe("these");
+    const a = lireManuscrit(JSON.parse(ecrireManuscrit(manuscritVide("Article Prony", "article"))));
+    expect(a.type).toBe("article");
+    expect(libelleType(a.type)).toBe("Article");
+    expect(libelleGenre("these", "chapitre")).toBe("Chapitre");
+    expect(libelleGenre("article", "chapitre")).toBe("Section");
+    expect(libelleGenre("rapport", "liminaire")).toBe("Titre et résumé");
+    // les anciens plans portaient « propre » dans le nettoyage : ignoré
+    expect(lireManuscrit({ fusion: { nettoyage: { propre: ["X"] } } }).fusion.nettoyage).not.toHaveProperty("propre");
   });
 
   it("lecture tolérante et écriture stable", () => {

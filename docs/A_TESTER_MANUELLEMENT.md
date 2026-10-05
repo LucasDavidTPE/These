@@ -679,7 +679,7 @@ nombres doivent être identiques, dans les deux modes.
 À faire sur le vrai manuscrit (ce que les tests automatiques ne peuvent pas vérifier : le rendu dans Word).
 
 - [ ] Plan avec le document maître (pages liminaires + repères « ◆ Insérer ici ») en premier et les chapitres : « Générer »
-      (relecture) crée `Espace\manuscrits\<manuscrit>\sorties\<titre>-relecture.docx` ; « Ouvrir dans Word » l'ouvre ;
+      crée `Espace\manuscrits\<manuscrit>\sorties\<titre>.docx` ; « Ouvrir dans Word » l'ouvre ;
       répondre **Oui** à la mise à jour des champs.
 - [ ] Le document s'ouvre sans message d'erreur ni « réparation » ; les chapitres sont dans l'ordre des repères, chacun
       commence sur une nouvelle page avec son en-tête (« Chapitre n – … ») et sa pagination continue ; les pages liminaires
@@ -691,10 +691,20 @@ nombres doivent être identiques, dans les deux modes.
       titres numérotés par Word se suivent d'un chapitre à l'autre.
 - [ ] Citations Zotero : *Zotero → Refresh* fonctionne, la bibliographie se construit une seule fois à l'endroit prévu (partie
       « Références bibliographiques » ou repère du maître) ; le style de citation est bien celui des chapitres.
-- [ ] « Version propre » : plus de consignes bleues ni de mini-sommaires ; « chapitres sur page impaire » : chaque chapitre commence
-      sur une page de droite.
+- [ ] « chapitres sur page impaire » : chaque chapitre commence sur une page de droite.
 - [ ] Une partie introuvable sur ce PC (dossier non réglé) : la fusion utilise sa dernière version enregistrée et le dit ; sans version,
       elle est refusée avec le nom de la partie.
 - [ ] Rapport « À voir » : un style qui diffère du maître, un repère sans partie, un signet en double sont signalés.
 - [ ] Générer deux fois sans rien modifier : même fichier ; le document généré ouvert dans Word → message clair à l'enregistrement
       (fermer Word avant de régénérer).
+
+## Manuscrits : thèse, articles, rapports (1.16.0)
+
+- [ ] Manuscrits → Plan → « Nouveau document… » : type **Article**, titre « Article Prony » → il apparaît dans le sélecteur
+      « Document » (groupé sous « Article »), avec un plan vide ; sa partie « chapitre » s'appelle « Section ».
+- [ ] « Ajouter une partie… » avec le `.docx` de l'article : une seule partie, pas de panneau « Générer » (rien à fusionner) ;
+      avec un article en plusieurs fichiers (texte, annexes), « Générer » apparaît et produit `sorties\<titre>.docx`.
+- [ ] Un **rapport / compte rendu** de même ; changer de document dans le sélecteur change le plan, les versions et les retours
+      (onglet Retours : le même sélecteur, les corrections reçues d'un article restent avec l'article).
+- [ ] La thèse existante est inchangée (type « Thèse » par défaut), son plan et ses versions sont intacts.
+- [ ] « Générer » ne propose plus de choix « version propre » : un seul fichier, consignes gardées.

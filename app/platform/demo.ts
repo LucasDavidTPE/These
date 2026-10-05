@@ -182,7 +182,18 @@ export function plateformeDemo(scenario: string | null): Plateforme {
         ],
       }),
     );
+    espace.poser(
+      "manuscrits/article-prony/manuscrit.json",
+      JSON.stringify({
+        version: 1,
+        type: "article",
+        titre: "Article Prony",
+        parties: [{ id: "article", nom: "Article", source: "espace:manuscrits/article-prony/parties/Article_Prony.docx", genre: "chapitre", statut: "redaction", objectifMots: 6000 }],
+      }),
+    );
     void (async () => {
+      await espace.ensureDir("manuscrits/article-prony/parties");
+      await espace.writeBytesAtomic("manuscrits/article-prony/parties/Article_Prony.docx", docxDemo("Calage de séries de Prony", ["Introduction", "Méthode", "Résultats"], 2));
       await espace.ensureDir("manuscrits/these/parties");
       await espace.writeBytesAtomic("manuscrits/these/parties/00_Introduction_generale.docx", docxDemo("Introduction générale", ["Contexte", "Problématique", "Plan du manuscrit"], 2));
       await espace.writeBytesAtomic("manuscrits/these/parties/01_Chapitre1_Etat_de_l_art.docx", docxDemo("Chapitre 1 – État de l'art", ["1.1 Chaussées aéronautiques", "1.2 Matériaux bitumineux", "1.3 Contact pneumatique-chaussée", "1.4 Modélisation multicouche"], 3, true));

@@ -1,6 +1,6 @@
 /**
- * Plan du manuscrit : une carte par partie (pages liminaires, chapitres, bibliographie,
- * annexes) dans l'ordre du plan, avec ce que l'appli lit dans son `.docx` (mots, consignes
+ * Plan d'un document (thèse, article, rapport…) : une carte par partie (pages liminaires,
+ * chapitres ou sections, bibliographie, annexes) dans l'ordre du plan, avec ce que l'appli lit dans son `.docx` (mots, consignes
  * restantes, commentaires, modifications suivies…) et ses versions. Les `.docx` restent où ils
  * sont ; versions et retours sont gardés ensemble dans l'espace (manuscrits/<projet>/).
  */
@@ -14,12 +14,15 @@ import {
   ajouterParties,
   deplacerPartie,
   GENRES,
+  libelleGenre,
   modifierPartie,
   ordreNaturel,
   retirerPartie,
   STATUTS,
+  TYPES_DOCUMENT,
   type Manuscrit,
   type Partie,
+  type TypeDocument,
 } from "../core/plan";
 import { rattacher, resoudreSource, scinder } from "../core/sources";
 import { empreinte, type Etat } from "../core/versions";
@@ -90,10 +93,10 @@ function useLectures(ctx: Contexte, projet: string | null, m: Manuscrit | null, 
 export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; retours: Retour[]; voirRetours(partie: string): void }) {
   const ctx = useContexte();
   const espace = ctx.espace!;
-  const { projets, projet, setProjet, m, sauver } = ms;
-  const [message, setMessage] = useState<{ niveau: "info" | "erreur"; texte: string } | null>(ms.erreur ? { niveau: "erreur", texte: ms.erreur } : null);
+  const { projets, projet, m, sauver } = ms;
+  const [message, setMessage] = useState<{ niveau: "info" | "erreur"; texte: string } | null>(null);
   const [tour, setTour] = useState(0);
-  const [titreNouveau, setTitreNouveau] = useState("Thèse");
+  const [nouveau, setNouveau] = useState(false);
   const [choix, setChoix] = useState<{ dossier: string; fichiers: { chemin: string; coche: boolean }[] } | null>(null);
   const lectures = useLectures(ctx, projet, m, tour);
   const enCours = useRef(false);
@@ -106,8 +109,8 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
     return () => window.removeEventListener("focus", retour);
   }, []);
 
-  async function creer() {
-    await ms.creer(titreNouveau);
+  async function creer(titre: string, type: TypeDocument) {
+    if (await ms.creer(titre, type)) setNouveau(false);
   }
 
   /** Ajoute des fichiers (chemins absolus) : leurs dossiers deviennent des racines de ce PC si besoin. */
@@ -132,14 +135,14 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
   }
 
   async function ajouterFichier() {
-    const f = await ctx.plateforme.ouvrirFichier("Une partie du manuscrit (.docx)", ["docx"]);
+    const f = await ctx.plateforme.ouvrirFichier("Une partie du document (.docx)", ["docx"]);
     if (!f) return;
     if (!f.chemin) return setMessage({ niveau: "erreur", texte: "Le chemin du fichier n'est connu que dans l'application installée." });
     await ajouter([f.chemin]);
   }
 
   async function ouvrirDossier() {
-    const dossier = await ctx.plateforme.choisirDossier("Dossier contenant des parties du manuscrit (.docx)");
+    const dossier = await ctx.plateforme.choisirDossier("Dossier contenant des parties du document (.docx)");
     if (!dossier) return;
     const trouves = (await listerDocx(ctx.plateforme.fichiers(dossier))).sort(ordreNaturel);
     if (!trouves.length) return setMessage({ niveau: "info", texte: "Aucun fichier .docx dans ce dossier (ni dans ses sous-dossiers)." });
@@ -203,17 +206,13 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
     return (
       <div className="carte">
         {message ? <Message niveau={message.niveau}>{message.texte}</Message> : null}
+        {ms.erreur ? <Message niveau="erreur">{ms.erreur}</Message> : null}
         <p>
-          Un <strong>manuscrit</strong> est la liste ordonnée de ses parties (pages liminaires, chapitres, bibliographie, annexes), chacune étant un
-          fichier Word qui reste <strong>où vous voulez</strong>. L'appli en garde le plan, l'état d'avancement et, au même endroit dans l'espace,
-          toutes les versions (<code>manuscrits/&lt;manuscrit&gt;/versions</code>).
+          Un <strong>document</strong> (la thèse, un article, un rapport ou compte rendu…) est la liste ordonnée de ses parties (pages liminaires,
+          chapitres ou sections, bibliographie, annexes), chacune étant un fichier Word qui reste <strong>où vous voulez</strong>. L'appli en garde le
+          plan, l'état d'avancement et, au même endroit dans l'espace, toutes les versions et les corrections reçues (<code>manuscrits/&lt;document&gt;/</code>).
         </p>
-        <div className="rangee">
-          <input type="text" value={titreNouveau} onChange={(e) => setTitreNouveau(e.target.value)} aria-label="Titre du manuscrit" style={{ width: 280 }} />
-          <button type="button" className="principal" disabled={!titreNouveau.trim()} onClick={() => void creer()}>
-            Créer le manuscrit
-          </button>
-        </div>
+        <NouveauDocument creer={creer} />
       </div>
     );
   }
@@ -221,17 +220,9 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
   return (
     <>
       <div className="rangee ms-barre">
-        {projets.length > 1 ? (
-          <select className="champ" value={projet} onChange={(e) => setProjet(e.target.value)} aria-label="Manuscrit">
-            {projets.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.titre}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <strong>{m.titre}</strong>
-        )}
+        <button type="button" onClick={() => setNouveau((n) => !n)} aria-expanded={nouveau} title="Thèse, article, rapport, compte rendu : chacun a son plan, ses versions et ses retours">
+          Nouveau document…
+        </button>
         <button type="button" onClick={() => void ajouterFichier()}>
           Ajouter une partie…
         </button>
@@ -243,11 +234,17 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
         </button>
       </div>
       {message ? <Message niveau={message.niveau}>{message.texte}</Message> : null}
+      {ms.erreur ? <Message niveau="erreur">{ms.erreur}</Message> : null}
+      {nouveau ? (
+        <div className="carte">
+          <NouveauDocument creer={creer} annuler={() => setNouveau(false)} />
+        </div>
+      ) : null}
 
       {choix ? (
         <div className="carte">
           <p>
-            <strong>{choix.fichiers.length}</strong> fichiers .docx dans <code>{choix.dossier}</code> : cochez les parties du manuscrit, dans l'ordre du nom.
+            <strong>{choix.fichiers.length}</strong> fichiers .docx dans <code>{choix.dossier}</code> : cochez les parties du document, dans l'ordre du nom.
           </p>
           <ul className="ms-choix">
             {choix.fichiers.map((f, i) => (
@@ -275,7 +272,7 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
         </div>
       ) : (
         <>
-          <GenererPanel projet={projet!} m={m} sauver={sauver} />
+          {m.parties.length > 1 ? <GenererPanel projet={projet!} m={m} sauver={sauver} /> : null}
           <div className="ms-totaux">
             <Tuile valeur={nombre(totaux.mots)} titre="mots (consignes exclues)" />
             <Tuile valeur={nombre(totaux.aRediger)} titre="consignes « À rédiger »" niveau={totaux.aRediger ? "attention" : undefined} />
@@ -286,6 +283,7 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
             <CartePartie
               key={p.id}
               p={p}
+              type={m.type}
               l={lectures[p.id] ?? { etat: "lecture" }}
               aTraiter={aTraiter.get(p.id) ?? 0}
               nbRetours={retours.filter((r) => r.partie === p.id).length}
@@ -317,8 +315,41 @@ function Tuile({ valeur, titre, niveau }: { valeur: string; titre: string; nivea
   );
 }
 
+const TITRE_DEFAUT: Record<TypeDocument, string> = { these: "Thèse", article: "Article", rapport: "Rapport", autre: "Document" };
+
+function NouveauDocument({ creer, annuler }: { creer(titre: string, type: TypeDocument): Promise<void>; annuler?(): void }) {
+  const [type, setType] = useState<TypeDocument>("these");
+  const [titre, setTitre] = useState(TITRE_DEFAUT.these);
+  const changerType = (t: TypeDocument) => {
+    // le titre proposé suit le type tant qu'on ne l'a pas écrit soi-même
+    if (titre === TITRE_DEFAUT[type]) setTitre(TITRE_DEFAUT[t]);
+    setType(t);
+  };
+  return (
+    <div className="rangee">
+      <select className="champ" value={type} onChange={(e) => changerType(e.target.value as TypeDocument)} aria-label="Type de document">
+        {TYPES_DOCUMENT.map(([id, nom]) => (
+          <option key={id} value={id}>
+            {nom}
+          </option>
+        ))}
+      </select>
+      <input type="text" value={titre} onChange={(e) => setTitre(e.target.value)} aria-label="Titre du document" placeholder="Titre (sert de nom de dossier)" style={{ width: 280 }} />
+      <button type="button" className="principal" disabled={!titre.trim()} onClick={() => void creer(titre, type)}>
+        Créer le document
+      </button>
+      {annuler ? (
+        <button type="button" onClick={annuler}>
+          Annuler
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function CartePartie({
   p,
+  type,
   l,
   aTraiter,
   nbRetours,
@@ -335,6 +366,7 @@ function CartePartie({
   copieSous,
 }: {
   p: Partie;
+  type: TypeDocument;
   l: Lecture;
   aTraiter: number;
   nbRetours: number;
@@ -373,9 +405,9 @@ function CartePartie({
           <div className="discret petit chemin">{p.source}</div>
         </div>
         <select className="champ" value={p.genre} onChange={(e) => maj({ genre: e.target.value as Partie["genre"] })} aria-label="Genre">
-          {GENRES.map(([id, nom]) => (
+          {GENRES.map(([id]) => (
             <option key={id} value={id}>
-              {nom}
+              {libelleGenre(type, id)}
             </option>
           ))}
         </select>

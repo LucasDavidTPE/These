@@ -394,7 +394,12 @@ exporter les données brutes** d'un essai vers un dossier choisi, **enregistrer 
 graphe dans Figures**, **ouvrir dans le traitement 2S2P1D**.
 
 ### Manuscrits → Plan (1.13.0)
-Un **manuscrit** est le plan de la thèse : `manuscrits/<manuscrit>/manuscrit.json` (dans l'espace), liste
+Un **document** (1.16.0) est la thèse, un article, un rapport ou compte rendu, ou tout autre texte long :
+chacun a son dossier `manuscrits/<document>/` et son `manuscrit.json` (champ `type` : `these` par défaut,
+`article`, `rapport`, `autre`), donc son plan, ses versions, ses retours et sa sortie. Le type ne change que les
+libellés (un « chapitre » de thèse est une « section » d'article ou de rapport) ; le sélecteur de document
+regroupe par type, « Nouveau document… » en crée un autre à tout moment. Ce qui suit vaut pour tous.
+Le plan, `manuscrits/<document>/manuscrit.json` (dans l'espace), est la liste
 ordonnée de **parties** (pages liminaires, chapitres, bibliographie, annexes). Chaque partie pointe
 vers un `.docx` qui reste **où l'on veut** : une source `racine:chemin` (comme les données brutes,
 §4.1) dont chaque PC règle le dossier ; `espace:` désigne l'espace lui-même. Un fichier choisi hors des
@@ -418,15 +423,15 @@ date de réception, la partie concernée, la version sur laquelle il porte (facu
 remarque garde son état (à traiter, traitée, refusée) et une note, partagés entre les deux PC. Le plan
 affiche les remarques à traiter par partie. Un retour retiré est rangé dans `retours/.supprimes/`.
 
-**Générer le manuscrit** (1.15.0) : fusion des parties en un seul `.docx`, rangé dans
-`manuscrits/<manuscrit>/sorties/<titre>-relecture.docx` ou `-propre.docx` (jamais édité à la main : on le
-régénère). Le moteur (`core/fusion.ts`, sans Word) :
+**Générer le document** (1.15.0) : fusion des parties en un seul `.docx`, rangé dans
+`manuscrits/<document>/sorties/<titre>.docx` (une seule sortie, sans choix de « version propre » ; jamais édité
+à la main : on le régénère ; le panneau n'apparaît qu'à partir de deux parties). Le moteur (`core/fusion.ts`, sans Word) :
 - **assemblage** : si le document maître (la première partie « pages liminaires ») contient des repères
   `◆ Insérer ici : <fichier>.docx`, chaque partie est insérée à la place de son repère (un repère sans partie
   est signalé et retiré, une partie sans repère est ajoutée à la fin) ; sinon les parties sont mises à la suite ;
-- **nettoyage** : sont retirés dans tous les modes les blocs d'assemblage « Procédure de fusion »,
+- **nettoyage** : sont retirés les blocs d'assemblage « Procédure de fusion »,
   « Instructions d'assemblage » et « Références du chapitre » (un titre et les consignes qui le suivent) ;
-  en version propre aussi les consignes et les mini-sommaires de chapitre. Les listes de titres et de styles sont
+  les autres consignes et mini-sommaires sont gardés tels quels. Les listes de titres et de styles sont
   des réglages du manuscrit (`fusion` dans `manuscrit.json`) ;
 - **sections** : chaque partie garde ses sections (en-têtes, pieds, pagination) ; les sections vides et les
   paragraphes vides après le dernier saut d'une partie sont écartés ; le dernier saut devient la section du

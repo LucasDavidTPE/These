@@ -1,7 +1,7 @@
-/** Le manuscrit courant (liste des manuscrits de l'espace, choix, plan), partagé par les onglets Plan et Retours. */
+/** Le document courant (liste des documents de l'espace, choix, plan), partagé par les onglets Plan et Retours. */
 import { useCallback, useEffect, useState } from "react";
 import type { Contexte } from "@interface/contexte";
-import { idProjet, manuscritVide, type Manuscrit } from "../core/plan";
+import { idProjet, manuscritVide, type Manuscrit, type TypeDocument } from "../core/plan";
 import { chargerPlan, ecrirePlan, listerProjets, type Projet } from "./donnees";
 
 export interface ManuscritCourant {
@@ -11,7 +11,7 @@ export interface ManuscritCourant {
   m: Manuscrit | null;
   /** Remplace le plan et l'écrit dans l'espace. */
   sauver(suivant: Manuscrit): Promise<void>;
-  creer(titre: string): Promise<string | null>;
+  creer(titre: string, type: TypeDocument): Promise<string | null>;
   erreur: string | null;
 }
 
@@ -62,15 +62,15 @@ export function useManuscrit(ctx: Contexte): ManuscritCourant {
   );
 
   const creer = useCallback(
-    async (titre: string) => {
+    async (titre: string, type: TypeDocument) => {
       const id = idProjet(titre);
       if (projets?.some((p) => p.id === id)) {
-        setErreur(`Un manuscrit « ${id} » existe déjà.`);
+        setErreur(`Un document « ${id} » existe déjà : choisissez un autre titre.`);
         return null;
       }
-      const neuf = manuscritVide(titre.trim() || "Manuscrit");
+      const neuf = manuscritVide(titre.trim() || "Document", type);
       await ecrirePlan(espace.fichiers, id, neuf);
-      setProjets([...(projets ?? []), { id, titre: neuf.titre }]);
+      setProjets([...(projets ?? []), { id, titre: neuf.titre, type }]);
       setProjet(id);
       setM(neuf);
       return id;

@@ -63,8 +63,8 @@ export function RetoursPage({ ms, retours, setRetours, partieInitiale }: { ms: M
 
   const visibles = useMemo(() => retours.filter((r) => !partie || (partie === "-" ? r.partie === null : r.partie === partie)), [retours, partie]);
 
-  if (!projet || !m) return <Message niveau="attention">Créez d'abord le manuscrit (onglet Plan) : les retours sont rangés avec lui.</Message>;
-  const nomPartie = (id: string | null) => (id ? (m.parties.find((p) => p.id === id)?.nom ?? id) : "Manuscrit entier / non précisé");
+  if (!projet || !m) return <Message niveau="attention">Créez d'abord le document (onglet Plan) : les retours sont rangés avec lui.</Message>;
+  const nomPartie = (id: string | null) => (id ? (m.parties.find((p) => p.id === id)?.nom ?? id) : "Document entier / non précisé");
 
   async function choisir() {
     setMessage(null);
@@ -201,7 +201,7 @@ export function RetoursPage({ ms, retours, setRetours, partieInitiale }: { ms: M
             <label>
               Partie
               <select className="champ" value={brouillon.partie} onChange={(e) => setBrouillon({ ...brouillon, partie: e.target.value, base: "" })}>
-                <option value="">Manuscrit entier / non précisé</option>
+                <option value="">Document entier / non précisé</option>
                 {m.parties.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.nom}

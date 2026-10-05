@@ -1,24 +1,26 @@
 /** Plan, versions et lecture des .docx : tout ce que la page Manuscrits lit et écrit. */
 import { joindre, Introuvable, type Fichiers } from "@noyau/stockage";
 import { dossierManuscrit, dossierVersions, empreinte, lireVersion, nomVersion, type Version } from "../core/versions";
-import { DOSSIER_MANUSCRITS, ecrireManuscrit, FICHIER_PLAN, fichierPlan, dossierProjet, lireManuscrit, type Manuscrit } from "../core/plan";
+import { DOSSIER_MANUSCRITS, ecrireManuscrit, FICHIER_PLAN, fichierPlan, dossierProjet, lireManuscrit, TYPES_DOCUMENT, type Manuscrit, type TypeDocument } from "../core/plan";
 import { dossierRetour, dossierRetours, ecrireRetour, FICHIER_RETOUR, lireRetour, type Retour } from "../core/retours";
 
 export interface Projet {
   id: string;
   titre: string;
+  type: TypeDocument;
 }
 
-/** Les manuscrits de l'espace : les dossiers de `manuscrits/` qui contiennent un `manuscrit.json`. */
+/** Les documents de l'espace (thèse, articles, rapports) : les dossiers de `manuscrits/` qui contiennent un `manuscrit.json`, thèse d'abord. */
 export async function listerProjets(espace: Fichiers): Promise<Projet[]> {
   if (!(await espace.exists(DOSSIER_MANUSCRITS))) return [];
   const projets: Projet[] = [];
   for (const e of await espace.listDir(DOSSIER_MANUSCRITS)) {
     if (e.kind !== "dir" || e.name.startsWith(".")) continue;
     const m = await chargerPlan(espace, e.name);
-    if (m) projets.push({ id: e.name, titre: m.titre });
+    if (m) projets.push({ id: e.name, titre: m.titre, type: m.type });
   }
-  return projets.sort((a, b) => a.titre.localeCompare(b.titre, "fr"));
+  const rang = (t: TypeDocument) => TYPES_DOCUMENT.findIndex((x) => x[0] === t);
+  return projets.sort((a, b) => rang(a.type) - rang(b.type) || a.titre.localeCompare(b.titre, "fr"));
 }
 
 export async function chargerPlan(espace: Fichiers, projet: string): Promise<Manuscrit | null> {

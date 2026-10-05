@@ -1,4 +1,8 @@
 /* Plan du manuscrit */
+.ms-document {
+  margin-bottom: 10px;
+  align-items: center;
+}
 .ms-barre {
   margin-bottom: 12px;
 }

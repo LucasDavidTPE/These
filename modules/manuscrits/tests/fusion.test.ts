@@ -98,7 +98,7 @@ function parties(): PartieFusion[] {
     })),
   ];
 }
-const OPT = { mode: "relecture" as const, titre: "Thèse L. David", saut: "nextPage" as const, nettoyage: NETTOYAGE_PAR_DEFAUT };
+const OPT = { titre: "Thèse L. David", saut: "nextPage" as const, nettoyage: NETTOYAGE_PAR_DEFAUT };
 
 // ---- Briques ----
 
@@ -147,16 +147,10 @@ describe("nettoyage", () => {
     p("◆ Insérer ici : x.docx", "Consigne"),
   ];
 
-  it("relecture : seuls les blocs d'assemblage partent ; consignes, mini-sommaires et repères restent", () => {
-    const r = nettoyer(blocs, "relecture", NETTOYAGE_PAR_DEFAUT);
+  it("seuls les blocs d'assemblage partent ; consignes, mini-sommaires et repères restent", () => {
+    const r = nettoyer(blocs, NETTOYAGE_PAR_DEFAUT);
     expect(r.retires).toBe(4);
     expect(r.blocs).toEqual([blocs[0], blocs[1], blocs[2], blocs[3], blocs[4], blocs[5], sect, blocs[11]]);
-  });
-
-  it("propre : en plus les consignes et le mini-sommaire ; le saut de section et les repères restent", () => {
-    const r = nettoyer(blocs, "propre", NETTOYAGE_PAR_DEFAUT);
-    expect(r.blocs).toEqual([blocs[0], blocs[4], sect, blocs[11]]);
-    expect(r.retires).toBe(8);
   });
 });
 
@@ -196,16 +190,6 @@ describe("fusion de la trame fournie (maître à repères + dix parties)", () =>
     const p = paquet(res.octets);
     const titres = [...p.entries()].filter(([n]) => /^word\/header\d+(_f\d+)?\.xml$/.test(n)).map(([, x]) => [...x.matchAll(/<w:t[^>]*>([^<]*)<\/w:t>/g)].map((m) => m[1]).join(""));
     for (const t of ["Chapitre 1 – État de l&apos;art", "Chapitre 2 – Cadre théorique"]) expect(titres.some((x) => x.includes(t.slice(0, 12)))).toBe(true);
-  });
-
-  it("version propre : plus de consignes ni de mini-sommaires, mêmes titres", () => {
-    const propre = fusionner(parties(), { ...OPT, mode: "propre" });
-    const inv = inventorier(propre.octets);
-    expect(inv.consignes).toBe(0);
-    expect(inv.aRediger).toBe(0);
-    expect(inv.plan.filter((t) => t.niveau <= 3).map((t) => t.texte).filter((t) => !/^Sommaire/.test(t))).toEqual(trame.plan.map((t) => t.texte).filter((t) => !/^Sommaire/.test(t)));
-    expect(verifier(propre.octets)).toEqual([]);
-    expect(propre.rapport.sections).toBeLessThanOrEqual(12);
   });
 
   it("déterministe : mêmes parties, mêmes octets", () => {

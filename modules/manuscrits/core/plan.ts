@@ -1,5 +1,5 @@
 /**
- * Le plan d'un manuscrit : `manuscrits/<projet>/manuscrit.json`, dans l'espace. Il liste les
+ * Le plan d'un document (thèse, article, rapport…) : `manuscrits/<projet>/manuscrit.json`, dans l'espace. Il liste les
  * parties dans l'ordre (pages liminaires, chapitres, bibliographie, annexes) ; chaque partie
  * pointe vers son `.docx` (source, voir sources.ts) et porte son statut et son objectif.
  * Les `.docx` restent des fichiers Word ordinaires, édités dans Word.
@@ -20,6 +20,16 @@ export const STATUTS = [
 ] as const;
 export type Statut = (typeof STATUTS)[number][0];
 
+/** Ce qu'on écrit : la thèse, mais aussi des articles, des comptes rendus ou rapports. Chacun a son plan, ses versions et ses retours. */
+export const TYPES_DOCUMENT = [
+  ["these", "Thèse"],
+  ["article", "Article"],
+  ["rapport", "Rapport / compte rendu"],
+  ["autre", "Autre document"],
+] as const;
+export type TypeDocument = (typeof TYPES_DOCUMENT)[number][0];
+export const libelleType = (t: TypeDocument) => TYPES_DOCUMENT.find((x) => x[0] === t)![1];
+
 export const GENRES = [
   ["liminaire", "Pages liminaires"],
   ["chapitre", "Chapitre"],
@@ -27,6 +37,12 @@ export const GENRES = [
   ["annexe", "Annexes"],
 ] as const;
 export type Genre = (typeof GENRES)[number][0];
+
+/** Nom d'un genre de partie selon le document : un « chapitre » de thèse est une « section » d'article. */
+export function libelleGenre(type: TypeDocument, genre: Genre): string {
+  if (type === "these") return GENRES.find((g) => g[0] === genre)![1];
+  return { liminaire: "Titre et résumé", chapitre: "Section", bibliographie: "Bibliographie", annexe: "Annexes" }[genre];
+}
 
 export interface Partie {
   /** Identifiant stable (sert de nom de dossier pour les versions et les retours). */
@@ -48,6 +64,7 @@ export interface ReglagesFusion {
 
 export interface Manuscrit {
   version: 1;
+  type: TypeDocument;
   titre: string;
   parties: Partie[];
   lecture: ReglagesLecture;
@@ -56,15 +73,16 @@ export interface Manuscrit {
 
 export const FUSION_PAR_DEFAUT: ReglagesFusion = { saut: "nextPage", nettoyage: NETTOYAGE_PAR_DEFAUT };
 
-export const manuscritVide = (titre: string): Manuscrit => ({
+export const manuscritVide = (titre: string, type: TypeDocument = "these"): Manuscrit => ({
   version: 1,
+  type,
   titre,
   parties: [],
   lecture: structuredClone(LECTURE_PAR_DEFAUT),
   fusion: structuredClone(FUSION_PAR_DEFAUT),
 });
 
-/** Identifiant d'un projet de manuscrit (nom de dossier) d'après son titre. */
+/** Identifiant d'un document (nom de dossier) d'après son titre. */
 export const idProjet = (titre: string) => slugifier(titre) || "manuscrit";
 export const dossierProjet = (projet: string) => `${DOSSIER_MANUSCRITS}/${projet}`;
 export const fichierPlan = (projet: string) => `${dossierProjet(projet)}/${FICHIER_PLAN}`;
@@ -80,6 +98,7 @@ export function lireManuscrit(brut: unknown): Manuscrit {
   const nt = (typeof fu.nettoyage === "object" && fu.nettoyage !== null ? fu.nettoyage : {}) as Record<string, unknown>;
   const statuts = STATUTS.map((s) => s[0]) as string[];
   const genres = GENRES.map((g) => g[0]) as string[];
+  const types = TYPES_DOCUMENT.map((t) => t[0]) as string[];
   const vus = new Set<string>();
   const parties: Partie[] = [];
   for (const p of Array.isArray(b.parties) ? b.parties : []) {
@@ -99,6 +118,7 @@ export function lireManuscrit(brut: unknown): Manuscrit {
   }
   return {
     version: 1,
+    type: types.includes(txt(b.type)) ? (txt(b.type) as TypeDocument) : "these",
     titre: txt(b.titre) || "Manuscrit",
     parties,
     lecture: {
@@ -110,7 +130,6 @@ export function lireManuscrit(brut: unknown): Manuscrit {
       saut: fu.saut === "oddPage" ? "oddPage" : "nextPage",
       nettoyage: {
         toujours: listeTxt(nt.toujours, NETTOYAGE_PAR_DEFAUT.toujours),
-        propre: listeTxt(nt.propre, NETTOYAGE_PAR_DEFAUT.propre),
         consignes: listeTxt(nt.consignes, NETTOYAGE_PAR_DEFAUT.consignes),
         miniSommaires: listeTxt(nt.miniSommaires, NETTOYAGE_PAR_DEFAUT.miniSommaires),
       },
@@ -191,6 +210,6 @@ export function ordreFusion(m: Manuscrit): Partie[] {
   return i <= 0 ? m.parties : [m.parties[i]!, ...m.parties.filter((_, j) => j !== i)];
 }
 
-/** Nom du fichier produit : « these-relecture.docx » ou « these-propre.docx » (d'après le titre du manuscrit). */
-export const nomSortie = (m: Manuscrit, mode: "relecture" | "propre") => `${slugifier(m.titre) || "manuscrit"}-${mode}.docx`;
+/** Nom du fichier produit : « these-l-david.docx » (d'après le titre du document). */
+export const nomSortie = (m: Manuscrit) => `${slugifier(m.titre) || "document"}.docx`;
 export const dossierSorties = (projet: string) => `${dossierProjet(projet)}/sorties`;

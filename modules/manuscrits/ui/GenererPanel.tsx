@@ -1,7 +1,7 @@
 /**
- * « Générer le manuscrit » : fusionne les parties du plan en un seul .docx, rangé dans
- * `manuscrits/<manuscrit>/sorties/`, avec un rapport (parties, sections, avertissements).
- * Le document produit n'est jamais édité à la main : on le régénère.
+ * « Générer le document » : fusionne les parties du plan en un seul .docx, rangé dans
+ * `manuscrits/<document>/sorties/`, avec un rapport (parties, sections, avertissements).
+ * Le fichier produit n'est jamais édité à la main : on le régénère.
  */
 import { useState } from "react";
 import { Message } from "@interface/composants";
@@ -25,7 +25,6 @@ const mo = (n: number) => (n < 1e6 ? `${Math.max(1, Math.round(n / 1e3))} ko` : 
 export function GenererPanel({ projet, m, sauver }: { projet: string; m: Manuscrit; sauver(m: Manuscrit): Promise<void> }) {
   const ctx = useContexte();
   const espace = ctx.espace!;
-  const [mode, setMode] = useState<"relecture" | "propre">("relecture");
   const [occupe, setOccupe] = useState(false);
   const [erreur, setErreur] = useState<string[] | null>(null);
   const [sortie, setSortie] = useState<Sortie | null>(null);
@@ -40,8 +39,8 @@ export function GenererPanel({ projet, m, sauver }: { projet: string; m: Manuscr
       // laisse l'interface afficher « Fusion en cours… » avant le calcul
       await new Promise((ok) => setTimeout(ok, 30));
       const debut = performance.now();
-      const { octets, rapport } = fusionner(lues.parties, { mode, titre: m.titre, saut: m.fusion.saut, nettoyage: m.fusion.nettoyage });
-      const nom = nomSortie(m, mode);
+      const { octets, rapport } = fusionner(lues.parties, { titre: m.titre, saut: m.fusion.saut, nettoyage: m.fusion.nettoyage });
+      const nom = nomSortie(m);
       const chemin = await ecrireSortie(espace.fichiers, projet, nom, octets);
       setSortie({ nom, chemin, octets: octets.length, rapport, repli: lues.repli, duree: Math.round(performance.now() - debut) });
     } catch (e) {
@@ -56,21 +55,18 @@ export function GenererPanel({ projet, m, sauver }: { projet: string; m: Manuscr
   return (
     <div className="carte ms-generer">
       <div className="rangee">
-        <strong>Générer le manuscrit</strong>
-        <select className="champ" value={mode} onChange={(e) => setMode(e.target.value as typeof mode)} aria-label="Version à générer">
-          <option value="relecture">Relecture complète (consignes gardées)</option>
-          <option value="propre">Version propre (sans consignes)</option>
-        </select>
+        <strong>Générer le document</strong>
         <label className="rangee petit" title="Chaque chapitre, la bibliographie et les annexes commencent sur une page de droite : pour l'impression recto-verso">
-          <input type="checkbox" checked={m.fusion.saut === "oddPage"} onChange={(e) => void sauver({ ...m, fusion: { ...m.fusion, saut: e.target.checked ? "oddPage" : "nextPage" } })} /> chapitres sur page impaire
+          <input type="checkbox" checked={m.fusion.saut === "oddPage"} onChange={(e) => void sauver({ ...m, fusion: { ...m.fusion, saut: e.target.checked ? "oddPage" : "nextPage" } })} />{" "}
+          {m.type === "these" ? "chapitres" : "parties"} sur page impaire
         </label>
         <button type="button" className="principal" disabled={occupe} onClick={() => void generer()}>
           {occupe ? "Fusion en cours…" : "Générer"}
         </button>
       </div>
       <p className="discret petit">
-        Met les parties bout à bout dans l'ordre du plan (ou aux repères « ◆ Insérer ici : fichier.docx » du document maître), garde les en-têtes et la pagination de chaque
-        chapitre, et range le résultat dans <code>manuscrits/{projet}/sorties/</code>. Les fichiers Word ne sont pas modifiés.
+        Met les parties bout à bout dans l'ordre du plan (ou aux repères « ◆ Insérer ici : fichier.docx » du premier fichier, le document maître), garde les en-têtes et la pagination de chaque
+        partie, et range le résultat dans <code>manuscrits/{projet}/sorties/</code>. Les fichiers Word ne sont pas modifiés.
       </p>
       {erreur ? (
         <Message niveau="erreur">

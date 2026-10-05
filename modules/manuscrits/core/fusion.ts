@@ -5,7 +5,7 @@
  *  - si le premier document (le maître) contient des repères « ◆ Insérer ici : <fichier>.docx », chaque
  *    partie est insérée à la place de son repère ; sinon les parties sont mises à la suite, dans l'ordre ;
  *  - le nettoyage retire ce qui n'est que consigne d'assemblage (blocs « Instructions d'assemblage »,
- *    « Références du chapitre »…) et, en version propre, les consignes et mini-sommaires ;
+ *    « Références du chapitre »…) ; le reste (consignes, mini-sommaires) est gardé tel quel ;
  *  - chaque partie garde ses sections (en-têtes, pieds, pagination) ; les sections vides sont écartées ;
  *  - tout ce qui doit rester unique est renuméroté : relations (en-têtes, images, liens), signets, révisions,
  *    commentaires, notes de bas de page et de fin, dessins, listes ; les styles du maître l'emportent et
@@ -44,26 +44,21 @@ export interface PartieFusion {
 }
 
 export interface NettoyageFusion {
-  /** Blocs retirés dans tous les modes : un titre (début de texte) et les consignes qui le suivent. */
+  /** Blocs d'assemblage retirés : un titre (début de texte) et les consignes qui le suivent. */
   toujours: string[];
-  /** Blocs retirés seulement en version propre. */
-  propre: string[];
-  /** Styles des consignes (retirées en version propre). */
+  /** Styles des consignes qui suivent un titre retiré (elles partent avec lui). */
   consignes: string[];
-  /** Styles des mini-sommaires de chapitre (retirés en version propre). */
+  /** Styles des mini-sommaires qui suivent un titre retiré (ils partent avec lui). */
   miniSommaires: string[];
 }
 
 export const NETTOYAGE_PAR_DEFAUT: NettoyageFusion = {
   toujours: ["Procédure de fusion", "Instructions d'assemblage", "Références du chapitre"],
-  propre: ["Sommaire du chapitre"],
   consignes: ["Consigne"],
   miniSommaires: ["SommaireChapitre"],
 };
 
 export interface OptionsFusion {
-  /** « relecture » : consignes et mini-sommaires gardés ; « propre » : retirés. */
-  mode: "relecture" | "propre";
   titre: string;
   /** Début des chapitres, annexes et bibliographie : page suivante ou page impaire (recto-verso). */
   saut: "nextPage" | "oddPage";
@@ -85,7 +80,6 @@ export interface RapportPartie {
 }
 
 export interface Rapport {
-  mode: OptionsFusion["mode"];
   assemblage: "reperes" | "a-la-suite";
   parties: RapportPartie[];
   avertissements: Avertissement[];
@@ -164,9 +158,9 @@ const normaliser = (xml: string) => xml.replace(/>\s+</g, "><").trim();
 
 // ---- Nettoyage ----
 
-/** Retire les blocs d'assemblage (toujours) et les consignes / mini-sommaires (version propre). */
-export function nettoyer(blocs: readonly string[], mode: OptionsFusion["mode"], n: NettoyageFusion): { blocs: string[]; retires: number } {
-  const titres = (mode === "propre" ? [...n.toujours, ...n.propre] : n.toujours).map(sansAccent);
+/** Retire les blocs d'assemblage : un titre de `toujours` et les consignes ou mini-sommaires qui le suivent. */
+export function nettoyer(blocs: readonly string[], n: NettoyageFusion): { blocs: string[]; retires: number } {
+  const titres = n.toujours.map(sansAccent);
   const consignes = new Set(n.consignes);
   const mini = new Set(n.miniSommaires);
   const textuel = (b: string) => estParagraphe(b) && !porteSection(b) && repere(b) === null;
@@ -182,10 +176,6 @@ export function nettoyer(blocs: readonly string[], mode: OptionsFusion["mode"], 
           i++;
           retires++;
         }
-        continue;
-      }
-      if (mode === "propre" && (consignes.has(styleBloc(b)) || mini.has(styleBloc(b)))) {
-        retires++;
         continue;
       }
     }
@@ -574,7 +564,7 @@ export function fusionner(parties: readonly PartieFusion[], options: OptionsFusi
   // 1. Chaque partie : nettoyage, puis réécriture des identifiants pour qu'ils restent uniques.
   const preparees = new Map<string, Preparee>();
   for (const src of sources) {
-    const { blocs: propres, retires } = nettoyer(src.doc.blocs, options.mode, options.nettoyage);
+    const { blocs: propres, retires } = nettoyer(src.doc.blocs, options.nettoyage);
     let blocs = propres;
     let sect = src.doc.sectFinal;
     if (src.k > 0) {
@@ -716,7 +706,6 @@ export function fusionner(parties: readonly PartieFusion[], options: OptionsFusi
   return {
     octets,
     rapport: {
-      mode: options.mode,
       assemblage,
       parties: sources.map((s) => ({ id: s.p.id, nom: s.p.nom, blocs: preparees.get(s.p.id)!.blocs.length, retires: preparees.get(s.p.id)!.retires })),
       avertissements: ctx.avert,

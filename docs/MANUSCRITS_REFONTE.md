@@ -124,8 +124,8 @@ Entrée : `manuscrit.json` + les `.docx`. Sortie : un `.docx` + un **rapport** (
   corrigée en silence).
 - **Champs** : TDM / listes / renvois sont marqués « à mettre à jour » (`updateFields`), Word le propose à
   l'ouverture ; les champs Zotero passent tels quels.
-- **Modes** : *relecture* (consignes et références de chapitre gardées) ou *propre* ; chaque mode produit son
-  fichier. Option de saut de section « page impaire » pour l'impression recto-verso.
+- **Une seule sortie** (1.16.0) : plus de mode « propre » ; les consignes sont gardées, seuls les blocs
+  d'assemblage partent. Option de saut de section « page impaire » pour l'impression recto-verso.
 - **Déterministe** : mêmes parties, mêmes octets (tests golden), comme les autres exports de l'appli.
 
 **Test de conformité immédiat** : les fichiers fournis servent de fixture. La fusion de `parties/` doit
@@ -137,7 +137,7 @@ On valide aussi la sortie avec `python-docx` (outil de développement seulement,
 1. **Plan** (écran principal) : une carte par partie, dans l'ordre du plan — titre, statut (squelette, rédaction,
    relecture, figé), mots / objectif, consignes restantes, retours non traités, date, état par rapport à la dernière
    version. Glisser pour réordonner. Clic = ouvrir dans Word.
-2. **Générer** : choix du mode (relecture / propre / chapitre seul), bouton, **rapport** d'avertissements
+2. **Générer** : bouton, **rapport** d'avertissements
    (style divergent, en-tête lié au précédent, signet dupliqué, renvoi provisoire non résolu, citation absente
    de la Bibliothèque), ouvrir le résultat dans Word.
 3. **Retours** : boîte de réception des commentaires et modifications suivies de toutes les parties, filtrables
@@ -180,3 +180,10 @@ module : tout passe par le registre.
 - **M3** — progression (consignes, mots), diff du texte entre versions, rapprochement d'un retour avec la version sur laquelle il porte.
 - **M4** — Sources (Zotero ↔ Bibliothèque) et résolution des renvois `[→ §…]`.
 - **M5** — (optionnel) pilotage de Word : mise à jour des champs et export PDF.
+
+## 8. Plusieurs documents (1.16.0)
+
+Le même schéma sert la thèse, les articles et les rapports ou comptes rendus : un dossier
+`manuscrits/<document>/` par document, `type` dans `manuscrit.json` (libellés des parties seulement).
+Rien n'est partagé entre documents : un article réutilisant un chapitre le déclare comme sa propre partie
+(le même `.docx`), et ses versions et retours restent avec lui.
