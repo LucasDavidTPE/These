@@ -671,3 +671,5 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] Changer l'état d'une remarque, écrire une note, « Tout marquer traité » ; le compteur de l'onglet Retours et la
       mention « N remarques à traiter » du Plan suivent. « Retirer » range le dossier dans `retours\.supprimes`.
 - [ ] Un retour sur une partie : « Porte sur la version » propose les versions enregistrées de cette partie.
+- [ ] Windows en thème sombre (Paramètres → Personnalisation → Couleurs) : Manuscrits → Plan et Retours ont des cartes,
+      tuiles, listes et tableaux sombres (plus de fond blanc), texte lisible, bordures visibles. (1.14.1)

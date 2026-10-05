@@ -191,5 +191,6 @@ lancent tous les tests automatiques sous Windows.
 - [x] Manuscrits M1 (1.13.0) : plan de la thèse (`manuscrit.json`), parties `.docx` n'importe où (sources par racine),
       lecture des fichiers Word (mots, consignes, commentaires, modifications suivies), versions par partie,
       Sources LaTeX retiré. Suite (`docs/MANUSCRITS_REFONTE.md`) : M2 fusion, M3 progression, M4 sources Zotero
+- [x] Manuscrits : thème sombre (cartes, tuiles et bordures du Plan et des Retours lisaient des variables de couleur inexistantes) (1.14.1)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),
       remarques extraites avec état (à traiter / traitée / refusée), compteur par partie, rangés avec les versions
