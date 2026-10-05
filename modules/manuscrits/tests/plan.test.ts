@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ajouterParties, deplacerPartie, ecrireManuscrit, genreProbable, idPartie, idProjet, lireManuscrit, manuscritVide, modifierPartie, nomLisible, ordreNaturel, retirerPartie } from "../core/plan";
+import { ajouterParties, deplacerPartie, dossierSorties, ecrireManuscrit, FUSION_PAR_DEFAUT, genreProbable, idPartie, idProjet, lireManuscrit, manuscritVide, modifierPartie, nomLisible, nomSortie, ordreFusion, ordreNaturel, retirerPartie } from "../core/plan";
 import { RACINE_ESPACE, rattacher, racineProposee, resoudreSource, scinder, versSource } from "../core/sources";
 import { dossierVersions } from "../core/versions";
 
@@ -38,6 +38,20 @@ describe("plan d'un manuscrit", () => {
     expect(retirerPartie(m, "chapitre1").parties.map((p) => p.id)).toEqual(["introduction-generale"]);
   });
 
+  it("ordre de la fusion : le document maître d'abord, sorties nommées d'après le titre", () => {
+    let m = manuscritVide("Thèse L. David");
+    m = ajouterParties(m, [
+      { fichier: "01_Chapitre1.docx", source: "x:01.docx" },
+      { fichier: "00_Document_maitre.docx", source: "x:00.docx" },
+      { fichier: "09_Annexes.docx", source: "x:09.docx" },
+    ]);
+    expect(ordreFusion(m).map((p) => p.id)).toEqual(["document-maitre", "chapitre1", "annexes"]);
+    expect(ordreFusion({ ...m, parties: m.parties.slice(0, 1) }).map((p) => p.id)).toEqual(["chapitre1"]);
+    expect(nomSortie(m, "propre")).toBe("these-l-david-propre.docx");
+    expect(nomSortie({ ...m, titre: "…" }, "relecture")).toBe("manuscrit-relecture.docx");
+    expect(dossierSorties("these")).toBe("manuscrits/these/sorties");
+  });
+
   it("lecture tolérante et écriture stable", () => {
     expect(lireManuscrit(null)).toEqual(manuscritVide("Manuscrit"));
     const m = lireManuscrit({
@@ -47,6 +61,11 @@ describe("plan d'un manuscrit", () => {
     });
     expect(m.parties).toEqual([{ id: "a", nom: "a", source: "x:a.docx", genre: "chapitre", statut: "fige", objectifMots: 5000 }]);
     expect(m.lecture).toEqual({ consignes: ["Note"], miniSommaires: ["SommaireChapitre"], debutARediger: "À rédiger" });
+    expect(m.fusion).toEqual(FUSION_PAR_DEFAUT);
+    expect(lireManuscrit({ fusion: { saut: "oddPage", nettoyage: { toujours: ["X"] } } }).fusion).toEqual({
+      saut: "oddPage",
+      nettoyage: { ...FUSION_PAR_DEFAUT.nettoyage, toujours: ["X"] },
+    });
     expect(lireManuscrit(JSON.parse(ecrireManuscrit(m)))).toEqual(m);
   });
 });

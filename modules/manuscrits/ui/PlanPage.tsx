@@ -26,6 +26,7 @@ import { empreinte, type Etat } from "../core/versions";
 import { aTraiterParPartie, type Retour } from "../core/retours";
 import { chargerVersions, enregistrerVersion, listerDocx, type VersionLue } from "./donnees";
 import type { ManuscritCourant } from "./useManuscrit";
+import { GenererPanel } from "./GenererPanel";
 import "./manuscrits.css";
 
 type Lecture =
@@ -274,6 +275,7 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
         </div>
       ) : (
         <>
+          <GenererPanel projet={projet!} m={m} sauver={sauver} />
           <div className="ms-totaux">
             <Tuile valeur={nombre(totaux.mots)} titre="mots (consignes exclues)" />
             <Tuile valeur={nombre(totaux.aRediger)} titre="consignes « À rédiger »" niveau={totaux.aRediger ? "attention" : undefined} />

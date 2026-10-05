@@ -417,7 +417,28 @@ surlignages / soulignés / barrés avec le texte marqué, lus par pdf.js). Chaqu
 date de réception, la partie concernée, la version sur laquelle il porte (facultative) et une note ; chaque
 remarque garde son état (à traiter, traitée, refusée) et une note, partagés entre les deux PC. Le plan
 affiche les remarques à traiter par partie. Un retour retiré est rangé dans `retours/.supprimes/`.
-Les documents fusionnés iront dans `sorties/` : voir `MANUSCRITS_REFONTE.md` (phases suivantes).
+
+**Générer le manuscrit** (1.15.0) : fusion des parties en un seul `.docx`, rangé dans
+`manuscrits/<manuscrit>/sorties/<titre>-relecture.docx` ou `-propre.docx` (jamais édité à la main : on le
+régénère). Le moteur (`core/fusion.ts`, sans Word) :
+- **assemblage** : si le document maître (la première partie « pages liminaires ») contient des repères
+  `◆ Insérer ici : <fichier>.docx`, chaque partie est insérée à la place de son repère (un repère sans partie
+  est signalé et retiré, une partie sans repère est ajoutée à la fin) ; sinon les parties sont mises à la suite ;
+- **nettoyage** : sont retirés dans tous les modes les blocs d'assemblage « Procédure de fusion »,
+  « Instructions d'assemblage » et « Références du chapitre » (un titre et les consignes qui le suivent) ;
+  en version propre aussi les consignes et les mini-sommaires de chapitre. Les listes de titres et de styles sont
+  des réglages du manuscrit (`fusion` dans `manuscrit.json`) ;
+- **sections** : chaque partie garde ses sections (en-têtes, pieds, pagination) ; les sections vides et les
+  paragraphes vides après le dernier saut d'une partie sont écartés ; le dernier saut devient la section du
+  document ; option « chapitres sur page impaire » (recto-verso) ;
+- **identifiants** : relations (en-têtes, pieds, images, liens), signets, révisions, dessins, commentaires, notes
+  de bas de page et de fin, listes (chaque partie repart de 1 ; les titres numérotés par un style partagent la liste
+  du maître) sont renumérotés ; les espaces de noms et les préférences Zotero manquants sont repris ;
+- **styles** : ceux du maître l'emportent ; un style absent du maître est repris de la partie, un style défini
+  autrement est signalé ; un fichier d'une partie introuvable sur ce PC est remplacé par sa dernière version enregistrée ;
+- **champs** : le document demande la mise à jour des champs à l'ouverture ; la bibliographie Zotero (*Refresh*) reste à
+  faire dans Word. Limite : l'état « résolu » des commentaires n'est pas repris. Sortie déterministe.
+Un rapport indique les parties, les sections et les points à voir.
 
 ### Présentations (Manuscrits → Présentations)
 Une présentation est un fichier Markdown de l'espace (`presentations/<nom>.md`), une diapo

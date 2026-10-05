@@ -57,7 +57,20 @@ function docxDemo(titre: string, sections: string[], consignes: number, avecReto
     "word/styles.xml": strToU8(`<w:styles ${ns}><w:style w:styleId="Heading1"><w:name w:val="heading 1"/></w:style><w:style w:styleId="Heading2"><w:name w:val="heading 2"/></w:style><w:style w:styleId="Consigne"><w:name w:val="Consigne"/></w:style></w:styles>`),
     "docProps/core.xml": strToU8(`<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/"><dc:title>${titre}</dc:title><dcterms:modified>2026-10-01T09:30:00Z</dcterms:modified></cp:coreProperties>`),
   };
-  if (avecRetours) f["word/comments.xml"] = strToU8(`<w:comments ${ns}><w:comment w:id="0" w:author="Sergio" w:date="2026-09-30T09:00:00Z"><w:p w14:paraId="A1"><w:r><w:t>Préciser la source de cette valeur.</w:t></w:r></w:p></w:comment></w:comments>`);
+  const REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+  const rels = [`<Relationship Id="rId1" Type="${REL}/styles" Target="styles.xml"/>`];
+  let ct =
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>' +
+    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+    '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>';
+  if (avecRetours) {
+    f["word/comments.xml"] = strToU8(`<w:comments ${ns}><w:comment w:id="0" w:author="Sergio" w:date="2026-09-30T09:00:00Z"><w:p w14:paraId="A1"><w:r><w:t>Préciser la source de cette valeur.</w:t></w:r></w:p></w:comment></w:comments>`);
+    rels.push(`<Relationship Id="rId2" Type="${REL}/comments" Target="comments.xml"/>`);
+    ct += '<Override PartName="/word/comments.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml"/>';
+  }
+  f["word/_rels/document.xml.rels"] = strToU8(`<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${rels.join("")}</Relationships>`);
+  f["_rels/.rels"] = strToU8(`<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${REL}/officeDocument" Target="word/document.xml"/></Relationships>`);
+  f["[Content_Types].xml"] = strToU8(`<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">${ct}</Types>`);
   return zipSync(f);
 }
 

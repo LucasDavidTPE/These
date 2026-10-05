@@ -6,6 +6,7 @@
  */
 import { jsonStable } from "@noyau/stockage";
 import { slugifier } from "@noyau/texte";
+import { NETTOYAGE_PAR_DEFAUT, type NettoyageFusion } from "./fusion";
 import { LECTURE_PAR_DEFAUT, type ReglagesLecture } from "./inventaire";
 
 export const DOSSIER_MANUSCRITS = "manuscrits";
@@ -39,14 +40,29 @@ export interface Partie {
   objectifMots: number | null;
 }
 
+export interface ReglagesFusion {
+  /** Début des chapitres, annexes et bibliographie : page suivante, ou page impaire (recto-verso). */
+  saut: "nextPage" | "oddPage";
+  nettoyage: NettoyageFusion;
+}
+
 export interface Manuscrit {
   version: 1;
   titre: string;
   parties: Partie[];
   lecture: ReglagesLecture;
+  fusion: ReglagesFusion;
 }
 
-export const manuscritVide = (titre: string): Manuscrit => ({ version: 1, titre, parties: [], lecture: structuredClone(LECTURE_PAR_DEFAUT) });
+export const FUSION_PAR_DEFAUT: ReglagesFusion = { saut: "nextPage", nettoyage: NETTOYAGE_PAR_DEFAUT };
+
+export const manuscritVide = (titre: string): Manuscrit => ({
+  version: 1,
+  titre,
+  parties: [],
+  lecture: structuredClone(LECTURE_PAR_DEFAUT),
+  fusion: structuredClone(FUSION_PAR_DEFAUT),
+});
 
 /** Identifiant d'un projet de manuscrit (nom de dossier) d'après son titre. */
 export const idProjet = (titre: string) => slugifier(titre) || "manuscrit";
@@ -60,6 +76,8 @@ const listeTxt = (v: unknown, defaut: string[]) => (Array.isArray(v) && v.every(
 export function lireManuscrit(brut: unknown): Manuscrit {
   const b = (typeof brut === "object" && brut !== null ? brut : {}) as Record<string, unknown>;
   const l = (typeof b.lecture === "object" && b.lecture !== null ? b.lecture : {}) as Record<string, unknown>;
+  const fu = (typeof b.fusion === "object" && b.fusion !== null ? b.fusion : {}) as Record<string, unknown>;
+  const nt = (typeof fu.nettoyage === "object" && fu.nettoyage !== null ? fu.nettoyage : {}) as Record<string, unknown>;
   const statuts = STATUTS.map((s) => s[0]) as string[];
   const genres = GENRES.map((g) => g[0]) as string[];
   const vus = new Set<string>();
@@ -87,6 +105,15 @@ export function lireManuscrit(brut: unknown): Manuscrit {
       consignes: listeTxt(l.consignes, LECTURE_PAR_DEFAUT.consignes),
       miniSommaires: listeTxt(l.miniSommaires, LECTURE_PAR_DEFAUT.miniSommaires),
       debutARediger: txt(l.debutARediger) || LECTURE_PAR_DEFAUT.debutARediger,
+    },
+    fusion: {
+      saut: fu.saut === "oddPage" ? "oddPage" : "nextPage",
+      nettoyage: {
+        toujours: listeTxt(nt.toujours, NETTOYAGE_PAR_DEFAUT.toujours),
+        propre: listeTxt(nt.propre, NETTOYAGE_PAR_DEFAUT.propre),
+        consignes: listeTxt(nt.consignes, NETTOYAGE_PAR_DEFAUT.consignes),
+        miniSommaires: listeTxt(nt.miniSommaires, NETTOYAGE_PAR_DEFAUT.miniSommaires),
+      },
     },
   };
 }
@@ -154,3 +181,16 @@ export function deplacerPartie(m: Manuscrit, id: string, delta: number): Manuscr
   [parties[i], parties[j]] = [parties[j]!, parties[i]!];
   return { ...m, parties };
 }
+
+/**
+ * Ordre de la fusion : le document maître (la première partie « pages liminaires ») vient d'abord, car
+ * c'est lui qui porte les repères « ◆ Insérer ici » et les styles du document ; les autres suivent l'ordre du plan.
+ */
+export function ordreFusion(m: Manuscrit): Partie[] {
+  const i = m.parties.findIndex((p) => p.genre === "liminaire");
+  return i <= 0 ? m.parties : [m.parties[i]!, ...m.parties.filter((_, j) => j !== i)];
+}
+
+/** Nom du fichier produit : « these-relecture.docx » ou « these-propre.docx » (d'après le titre du manuscrit). */
+export const nomSortie = (m: Manuscrit, mode: "relecture" | "propre") => `${slugifier(m.titre) || "manuscrit"}-${mode}.docx`;
+export const dossierSorties = (projet: string) => `${dossierProjet(projet)}/sorties`;

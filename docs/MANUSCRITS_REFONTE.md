@@ -175,7 +175,8 @@ module : tout passe par le registre.
 - **M1 bis** — *faite en 1.14.0* : « Ajouter un retour reçu » (`.docx` ou PDF annoté) : copie dans `retours/`,
   extraction des commentaires, modifications suivies et annotations, boîte Retours avec états (partagés entre PC) ;
   numérotation automatique des titres lue dans le plan.
-- **M2** — moteur de fusion + nettoyage + rapport, test de conformité sur la fixture, bouton Générer.
+- **M2** — *faite en 1.15.0* : moteur de fusion + nettoyage + rapport, test de conformité sur la fixture, bouton Générer. Le moteur sait
+  insérer les parties aux repères « ◆ Insérer ici » du document maître actuel (pas besoin de le découper) ou à la suite.
 - **M3** — progression (consignes, mots), diff du texte entre versions, rapprochement d'un retour avec la version sur laquelle il porte.
 - **M4** — Sources (Zotero ↔ Bibliothèque) et résolution des renvois `[→ §…]`.
 - **M5** — (optionnel) pilotage de Word : mise à jour des champs et export PDF.

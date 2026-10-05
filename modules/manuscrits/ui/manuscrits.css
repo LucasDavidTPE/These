@@ -111,3 +111,16 @@
   width: 100%;
   min-width: 130px;
 }
+
+/* Génération du manuscrit */
+.ms-generer {
+  margin-bottom: 14px;
+}
+.ms-generer details {
+  margin-top: 8px;
+}
+.ms-avertissements {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 0.9rem;
+}
