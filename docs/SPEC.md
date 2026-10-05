@@ -404,9 +404,20 @@ L'appli **lit** le `.docx` sans Word (zip + XML, `core/ooxml.ts`) : plan des tit
 mots (hors consignes et mini-sommaires), consignes « À rédiger » restantes, figures, tableaux, notes,
 commentaires (résolus ou non) et modifications suivies, citations Zotero, date de modification ; relu
 au retour dans la fenêtre. Elle n'écrit jamais dans un fichier Word.
+**Numérotation** : la numérotation automatique de Word est lue (`numbering.xml`, listes à plusieurs niveaux
+liées aux styles de titre ou portées par le paragraphe, héritage de style, `startOverride`, chiffres,
+lettres, romains) : le plan affiche « 1.2 Modèles rhéologiques » comme Word ; des numéros tapés restent du texte.
 **Versions** : une copie datée par partie, `manuscrits/<manuscrit>/versions/<partie>/` (les anciennes
-versions, `manuscrits/<nom du fichier>/`, restent lues). Les corrections reçues et les documents fusionnés
-iront au même endroit (`retours/`, `sorties/`) : voir `MANUSCRITS_REFONTE.md` (phases suivantes).
+versions, `manuscrits/<nom du fichier>/`, restent lues).
+**Retours reçus** (1.14.0) : une correction reçue est un objet à part, rangé avec les versions :
+`manuscrits/<manuscrit>/retours/<id>/retour.json` + la copie du fichier sous son nom d'origine. Deux formes :
+un `.docx` relu (commentaires — résolus dans Word = déjà traités — et modifications suivies, regroupées par
+paragraphe, auteur et instant : un remplacement = une remarque) ou un **PDF annoté** (notes, zones de texte,
+surlignages / soulignés / barrés avec le texte marqué, lus par pdf.js). Chaque retour garde l'expéditeur, la
+date de réception, la partie concernée, la version sur laquelle il porte (facultative) et une note ; chaque
+remarque garde son état (à traiter, traitée, refusée) et une note, partagés entre les deux PC. Le plan
+affiche les remarques à traiter par partie. Un retour retiré est rangé dans `retours/.supprimes/`.
+Les documents fusionnés iront dans `sorties/` : voir `MANUSCRITS_REFONTE.md` (phases suivantes).
 
 ### Présentations (Manuscrits → Présentations)
 Une présentation est un fichier Markdown de l'espace (`presentations/<nom>.md`), une diapo

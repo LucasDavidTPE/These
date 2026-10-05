@@ -174,6 +174,27 @@ export function plateformeDemo(scenario: string | null): Plateforme {
       await espace.writeBytesAtomic("manuscrits/these/parties/00_Introduction_generale.docx", docxDemo("Introduction générale", ["Contexte", "Problématique", "Plan du manuscrit"], 2));
       await espace.writeBytesAtomic("manuscrits/these/parties/01_Chapitre1_Etat_de_l_art.docx", docxDemo("Chapitre 1 – État de l'art", ["1.1 Chaussées aéronautiques", "1.2 Matériaux bitumineux", "1.3 Contact pneumatique-chaussée", "1.4 Modélisation multicouche"], 3, true));
     })();
+    espace.poser(
+      "manuscrits/these/retours/2026-09-30_sergio_chapitre1-etat-de-l-art/retour.json",
+      JSON.stringify({
+        id: "2026-09-30_sergio_chapitre1-etat-de-l-art",
+        partie: "chapitre1-etat-de-l-art",
+        de: "Sergio",
+        recu: "2026-09-30",
+        note: "Relecture avant le comité",
+        fichier: "Chapitre 1 relu.docx",
+        type: "docx",
+        taille: 0,
+        empreinte: "00000000",
+        base: "",
+        ajoute: "2026-09-30T18:00:00+02:00",
+        poste: "PC-DEMO",
+        remarques: [
+          { id: "c0", genre: "commentaire", auteur: "Sergio", date: "2026-09-30T09:00:00Z", texte: "Préciser la source de cette valeur.", ancre: "Passage relu par Sergio.", titre: "1.4 Modélisation multicouche", page: null, etat: "a-traiter", note: "" },
+          { id: "m0", genre: "modification", auteur: "Sergio", date: "2026-09-30T10:00:00Z", texte: "« ancienne formule » → « nouvelle formulation »", ancre: "Une nouvelle formulation.", titre: "1.4 Modélisation multicouche", page: null, etat: "traitee", note: "repris" },
+        ],
+      }),
+    );
     espace.poser("planning/PH-0001.json", JSON.stringify({ titre: "Rédiger le chapitre ChaussSpec", categorie: "", debut: "2026-10-05", fin: "2026-10-30" }));
     espace.poser(
       "chausspec/structure-a340.json",

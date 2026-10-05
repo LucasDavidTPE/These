@@ -3,7 +3,7 @@
  * restantes, figures, notes, commentaires, modifications suivies, citations Zotero.
  * Pur : prend les octets du fichier, rend des nombres et des listes.
  */
-import { compterNotes, lireCommentaires, lireDocument, lireProprietes, lireStyles, niveauTitre, ouvrirDocx, type Commentaire, type Modification } from "./ooxml";
+import { compterNotes, lireCommentaires, lireDocument, lireNumerotation, lireProprietes, lireStyles, niveauTitre, numeroter, ouvrirDocx, type Commentaire, type Modification } from "./ooxml";
 
 export interface ReglagesLecture {
   /** Identifiants de style des consignes (texte bleu à supprimer avant le dépôt). */
@@ -18,6 +18,8 @@ export const LECTURE_PAR_DEFAUT: ReglagesLecture = { consignes: ["Consigne"], mi
 
 export interface Titre {
   niveau: number;
+  /** Numéro automatique de Word (« 1.2 », « Chapitre 3 »), « » si les numéros sont tapés dans le texte ou absents. */
+  numero: string;
   texte: string;
   /** Premier signet du titre (« C1_1_2 »), cible des renvois. */
   signet: string;
@@ -53,6 +55,7 @@ export function inventorier(octets: Uint8Array, lecture: ReglagesLecture = LECTU
   const paquet = ouvrirDocx(octets);
   const styles = lireStyles(paquet.fichiers["word/styles.xml"]);
   const doc = lireDocument(paquet.fichiers["word/document.xml"]!, styles);
+  const numeros = numeroter(doc.paragraphes, styles, lireNumerotation(paquet.fichiers["word/numbering.xml"]));
   const props = lireProprietes(paquet);
   const consignes = new Set(lecture.consignes);
   const mini = new Set(lecture.miniSommaires);
@@ -64,9 +67,9 @@ export function inventorier(octets: Uint8Array, lecture: ReglagesLecture = LECTU
   let aRediger = 0;
   let citations = 0;
   let bibliographie = false;
-  for (const p of doc.paragraphes) {
+  for (const [i, p] of doc.paragraphes.entries()) {
     const niveau = niveauTitre(p.style, styles);
-    if (niveau > 0 && p.texte.trim()) plan.push({ niveau, texte: p.texte.trim(), signet: p.signets[0] ?? "" });
+    if (niveau > 0 && p.texte.trim()) plan.push({ niveau, numero: numeros[i]!, texte: p.texte.trim(), signet: p.signets[0] ?? "" });
     if (consignes.has(p.style)) {
       nbConsignes++;
       if (sansAccent(p.texte.trim()).startsWith(debut)) aRediger++;

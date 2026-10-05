@@ -656,3 +656,18 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] Les anciennes versions (dossier `manuscrits/<nom du fichier>/`) apparaissent encore sous la partie correspondante.
 - [ ] Un `.docx` enregistré par Word contenant des commentaires résolus, des zones de texte, des modifications suivies :
       les nombres sont cohérents avec ce que Word indique.
+
+## Manuscrits : numérotation et retours reçus (1.14.0)
+
+- [ ] Plan d'un chapitre dont les titres sont numérotés par Word (liste à plusieurs niveaux liée à Titre 1/2/3) :
+      « Plan » affiche les mêmes numéros que Word (« 1.2.1 », « Chapitre 3 »…), y compris après des titres sans numéro.
+- [ ] Retours → « Ajouter un retour reçu… » avec un `.docx` relu par un directeur (suivi des modifications activé) :
+      le nombre de remarques et les auteurs correspondent à Word (Révision → volet Vérification) ; un remplacement
+      (texte barré puis ajouté) est une seule remarque ; un commentaire résolu dans Word arrive « Traitée ».
+- [ ] Même chose avec un PDF annoté (Acrobat, navigateur, tablette) : notes, zones de texte, surlignages (le texte
+      surligné s'affiche dans « Passage »), page indiquée. Un PDF sans annotation : message clair, rangé quand même.
+- [ ] Le fichier est copié dans `Espace\manuscrits\<manuscrit>\retours\<date>_<auteur>_<partie>\` ; sur l'autre PC,
+      le retour et l'état des remarques sont identiques ; « Ouvrir le fichier » ouvre Word / le lecteur PDF.
+- [ ] Changer l'état d'une remarque, écrire une note, « Tout marquer traité » ; le compteur de l'onglet Retours et la
+      mention « N remarques à traiter » du Plan suivent. « Retirer » range le dossier dans `retours\.supprimes`.
+- [ ] Un retour sur une partie : « Porte sur la version » propose les versions enregistrées de cette partie.

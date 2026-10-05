@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { strToU8, zipSync } from "fflate";
 import { inventorier } from "../core/inventaire";
-import { attr, decoder, lireStyles, niveauTitre, ouvrirDocx, parcourir } from "../core/ooxml";
+import { attr, decoder, lireDocument, lireNumerotation, lireStyles, niveauTitre, numeroter, ouvrirDocx, parcourir } from "../core/ooxml";
 
 const DOSSIER = new URL("./fixtures/manuscrit/", import.meta.url);
 const lire = (rel: string) => new Uint8Array(readFileSync(new URL(rel, DOSSIER)));
@@ -14,7 +14,7 @@ function docx(body: string, extra: Record<string, string> = {}): Uint8Array {
     "word/document.xml": strToU8(`<?xml version="1.0"?><w:document ${ns}><w:body>${body}</w:body></w:document>`),
     "word/styles.xml": strToU8(`<w:styles ${ns}><w:style w:type="paragraph" w:styleId="Titre1"><w:name w:val="heading 1"/></w:style><w:style w:type="paragraph" w:styleId="Titre2"><w:name w:val="heading 2"/></w:style><w:style w:type="paragraph" w:styleId="Consigne"><w:name w:val="Consigne"/></w:style></w:styles>`),
   };
-  for (const [n, c] of Object.entries(extra)) fichiers[n] = strToU8(c.replace("<w:comments", `<w:comments ${ns}`).replace("<w15:commentsEx", `<w15:commentsEx ${ns}`));
+  for (const [n, c] of Object.entries(extra)) fichiers[n] = strToU8(c.replace(/^<(w:comments|w15:commentsEx|w:numbering|w:styles)\b/, `<$1 ${ns}`));
   return zipSync(fichiers);
 }
 const p = (texte: string, style = "") => `<w:p>${style ? `<w:pPr><w:pStyle w:val="${style}"/></w:pPr>` : ""}<w:r><w:t xml:space="preserve">${texte}</w:t></w:r></w:p>`;
@@ -53,8 +53,8 @@ describe("inventaire d'un .docx", () => {
     );
     expect(inv.titre).toBe("Chapitre 1 – État");
     expect(inv.plan).toEqual([
-      { niveau: 1, texte: "Chapitre 1 – État", signet: "CHAP_1" },
-      { niveau: 2, texte: "1.1 Sous-titre", signet: "" },
+      { niveau: 1, numero: "", texte: "Chapitre 1 – État", signet: "CHAP_1" },
+      { niveau: 2, numero: "", texte: "1.1 Sous-titre", signet: "" },
     ]);
     expect(inv.mots).toBe(4 + 4 + 2 + 2);
     expect(inv.consignes).toBe(3);
@@ -76,12 +76,12 @@ describe("inventaire d'un .docx", () => {
     const ext = '<w15:commentsEx><w15:commentEx w15:paraId="AAA" w15:done="1"/><w15:commentEx w15:paraId="CCC" w15:done="0"/></w15:commentsEx>';
     const inv = inventorier(docx(body, { "word/comments.xml": comments, "word/commentsExtended.xml": ext }));
     expect(inv.commentaires).toEqual([
-      { id: "0", auteur: "Sergio", date: "2026-09-01T09:00:00Z", texte: "À reformuler", resolu: true, ancre: "Phrase commentée par Sergio.", titre: "Chapitre 2" },
-      { id: "1", auteur: "Anne", date: "2026-09-02T09:00:00Z", texte: "Source ?\nVoir Olard.", resolu: false, ancre: "Autre passage.", titre: "Chapitre 2" },
+      { id: "0", auteur: "Sergio", date: "2026-09-01T09:00:00Z", texte: "À reformuler", resolu: true, ancre: "Phrase commentée par Sergio.", titre: "Chapitre 2", paragraphe: 1 },
+      { id: "1", auteur: "Anne", date: "2026-09-02T09:00:00Z", texte: "Source ?\nVoir Olard.", resolu: false, ancre: "Autre passage.", titre: "Chapitre 2", paragraphe: 2 },
     ]);
     expect(inv.modifications).toEqual([
-      { genre: "insertion", auteur: "Sergio", date: "2026-09-01T10:00:00Z", texte: "ajouté", titre: "Chapitre 2" },
-      { genre: "suppression", auteur: "Sergio", date: "2026-09-01T10:00:00Z", texte: "supprimé", titre: "Chapitre 2" },
+      { genre: "insertion", auteur: "Sergio", date: "2026-09-01T10:00:00Z", texte: "ajouté", titre: "Chapitre 2", paragraphe: 3 },
+      { genre: "suppression", auteur: "Sergio", date: "2026-09-01T10:00:00Z", texte: "supprimé", titre: "Chapitre 2", paragraphe: 3 },
     ]);
     // le texte supprimé n'est pas compté dans les mots
     expect(inv.mots).toBe(2 + 4 + 2 + 3); // « Chapitre 2 », « Phrase commentée par Sergio. », « Autre passage. », « Avant ajouté après. »
@@ -106,6 +106,60 @@ describe("inventaire d'un .docx", () => {
 
   it("refuse un fichier qui n'est pas un .docx", () => {
     expect(() => inventorier(zipSync({ "a.txt": strToU8("x") }))).toThrow("word/document.xml");
+  });
+});
+
+describe("numérotation automatique de Word", () => {
+  const styles =
+    '<w:styles><w:style w:styleId="Titre1"><w:name w:val="heading 1"/><w:pPr><w:numPr><w:numId w:val="1"/></w:numPr></w:pPr></w:style>' +
+    '<w:style w:styleId="Titre2"><w:name w:val="heading 2"/><w:pPr><w:numPr><w:ilvl w:val="1"/><w:numId w:val="1"/></w:numPr></w:pPr></w:style>' +
+    '<w:style w:styleId="Titre3"><w:name w:val="heading 3"/><w:basedOn w:val="Titre2"/><w:pPr><w:numPr><w:ilvl w:val="2"/></w:numPr></w:pPr></w:style>' +
+    '<w:style w:styleId="Annexe"><w:name w:val="heading 1"/><w:basedOn w:val="Titre1"/></w:style></w:styles>';
+  const lvl = (i: number, fmt: string, texte: string, style = "", debut = 1) =>
+    `<w:lvl w:ilvl="${i}"><w:start w:val="${debut}"/><w:numFmt w:val="${fmt}"/>${style ? `<w:pStyle w:val="${style}"/>` : ""}<w:lvlText w:val="${texte}"/></w:lvl>`;
+  const numbering =
+    "<w:numbering>" +
+    `<w:abstractNum w:abstractNumId="0">${lvl(0, "decimal", "Chapitre %1", "Titre1")}${lvl(1, "decimal", "%1.%2", "Titre2")}${lvl(2, "decimal", "%1.%2.%3", "Titre3")}</w:abstractNum>` +
+    `<w:abstractNum w:abstractNumId="1">${lvl(0, "lowerLetter", "%1)")}${lvl(1, "bullet", "•")}</w:abstractNum>` +
+    `<w:abstractNum w:abstractNumId="2">${lvl(0, "upperRoman", "%1.", "", 1)}</w:abstractNum>` +
+    '<w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num><w:num w:numId="2"><w:abstractNumId w:val="1"/></w:num><w:num w:numId="3"><w:abstractNumId w:val="2"/></w:num>' +
+    '<w:num w:numId="4"><w:abstractNumId w:val="2"/><w:lvlOverride w:ilvl="0"><w:startOverride w:val="4"/></w:lvlOverride></w:num></w:numbering>';
+  const liste = (texte: string, numId: string, niveau = 0) => `<w:p><w:pPr><w:numPr><w:ilvl w:val="${niveau}"/><w:numId w:val="${numId}"/></w:numPr></w:pPr><w:r><w:t>${texte}</w:t></w:r></w:p>`;
+
+  it("titres numérotés par leur style (niveau lié ou explicite, héritage), sans numéro quand numId = 0", () => {
+    const inv = inventorier(
+      docx(
+        p("Contexte", "Titre1") + p("Cadre", "Titre2") + p("Suite", "Titre2") + p("Détail", "Titre3") + p("Deuxième chapitre", "Titre1") + p("Début", "Titre2") + p("Annexe A", "Annexe") +
+          '<w:p><w:pPr><w:pStyle w:val="Titre1"/><w:numPr><w:numId w:val="0"/></w:numPr></w:pPr><w:r><w:t>Sans numéro</w:t></w:r></w:p>',
+        { "word/styles.xml": styles, "word/numbering.xml": numbering },
+      ),
+    );
+    expect(inv.plan.map((t) => t.numero)).toEqual(["Chapitre 1", "1.1", "1.2", "1.2.1", "Chapitre 2", "2.1", "Chapitre 3", ""]);
+    expect(inv.plan.map((t) => t.niveau)).toEqual([1, 2, 2, 3, 1, 2, 1, 1]);
+  });
+
+  it("listes de paragraphes : lettres, puces ignorées, redémarrage par startOverride, chiffres romains", () => {
+    const inv = inventorier(
+      docx(
+        p("Titre", "Titre1") + liste("a", "2") + liste("b", "2") + liste("puce", "2", 1) + liste("c", "2") + liste("r1", "3") + liste("r2", "3") + liste("autre liste", "4") + liste("suite", "4") + p("Titre bis", "Titre1"),
+        { "word/styles.xml": styles, "word/numbering.xml": numbering },
+      ),
+    );
+    expect(inv.plan.map((t) => t.numero)).toEqual(["Chapitre 1", "Chapitre 2"]);
+    // les numéros des paragraphes de liste sont calculés, vérifiés via numeroter
+    const paquet = ouvrirDocx(
+      docx(p("x") + liste("a", "2") + liste("b", "2") + liste("puce", "2", 1) + liste("c", "2") + liste("r1", "3") + liste("r2", "3") + liste("o1", "4") + liste("o2", "4"), { "word/styles.xml": styles, "word/numbering.xml": numbering }),
+    );
+    const st = lireStyles(paquet.fichiers["word/styles.xml"]);
+    const doc = lireDocument(paquet.fichiers["word/document.xml"]!, st);
+    expect(numeroter(doc.paragraphes, st, lireNumerotation(paquet.fichiers["word/numbering.xml"]))).toEqual(["", "a)", "b)", "", "c)", "I.", "II.", "IV.", "V."]);
+  });
+
+  it("formats : lettres au-delà de z, chiffres romains", () => {
+    const n = lireNumerotation(`<w:numbering><w:abstractNum w:abstractNumId="0">${lvl(0, "upperLetter", "%1")}</w:abstractNum><w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num></w:numbering>`);
+    const paras = Array.from({ length: 28 }, () => ({ style: "", texte: "", signets: [], champs: [], commentaires: [], tableau: false, dessin: false, section: false, liste: { numId: "1", niveau: 0 } }));
+    const r = numeroter(paras, lireStyles(undefined), n);
+    expect([r[0], r[25], r[26], r[27]]).toEqual(["A", "Z", "AA", "AB"]);
   });
 });
 

@@ -160,19 +160,21 @@ module : tout passe par le registre.
    par Word (COM : exactement « Texte d'un fichier », fidélité maximale mais Word obligatoire, non testable
    hors Windows). Dans les deux cas, **mise à jour des champs et Zotero > Refresh restent deux clics dans Word**
    (Zotero doit reconstruire la bibliographie sur le document entier).
-3. **Numérotation des titres** — *probablement automatique (à confirmer)* : aujourd'hui tapée à la main (« 1.1 Les chaussées… ») avec des mini-sommaires
+3. **Numérotation des titres** — *tranché : numérotation automatique de Word (1.14.0)*. Avant : tapée à la main (« 1.1 Les chaussées… ») avec des mini-sommaires
    tapés eux aussi. Une numérotation multiniveau liée aux styles de titre (dans le modèle) rend les renvois
    et les mini-sommaires automatiques ; sinon, l'appli doit lire les numéros tapés.
 4. **Présentations et Sources LaTeX** — *tranché : Présentations conservées, Sources LaTeX retiré (1.13.0)*.
-5. **PDF** : l'appli ne peut pas en produire sans Word (elle n'embarque pas de moteur de mise en page) ; l'export
+5. **Corrections reçues** — *tranché : `.docx` (suivi des modifications, commentaires) et, plus rarement, PDF annotés ; les deux sont lus (1.14.0).*
+6. **PDF** : l'appli ne peut pas en produire sans Word (elle n'embarque pas de moteur de mise en page) ; l'export
    PDF reste « Enregistrer sous » dans Word, sauf si le pilotage par Word est retenu.
 
 ## 8. Phases proposées (M1 faite en 1.13.0)
 
 - **M1** — modèle `manuscrit.json` (sources par racine), lecture OOXML, inventaire, écran Plan (lecture seule),
   versions par partie dans `versions/` (reprise des versions existantes).
-- **M1 bis** — « Ajouter un retour reçu » : copie dans `retours/`, extraction des commentaires et modifications
-  suivies, boîte Retours avec états (partagés entre PC).
+- **M1 bis** — *faite en 1.14.0* : « Ajouter un retour reçu » (`.docx` ou PDF annoté) : copie dans `retours/`,
+  extraction des commentaires, modifications suivies et annotations, boîte Retours avec états (partagés entre PC) ;
+  numérotation automatique des titres lue dans le plan.
 - **M2** — moteur de fusion + nettoyage + rapport, test de conformité sur la fixture, bouton Générer.
 - **M3** — progression (consignes, mots), diff du texte entre versions, rapprochement d'un retour avec la version sur laquelle il porte.
 - **M4** — Sources (Zotero ↔ Bibliothèque) et résolution des renvois `[→ §…]`.

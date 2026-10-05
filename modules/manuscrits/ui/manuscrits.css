@@ -81,3 +81,33 @@
   max-height: 260px;
   overflow: auto;
 }
+
+/* Retours reçus */
+.ms-brouillon {
+  margin-bottom: 14px;
+}
+.ms-formulaire {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px 14px;
+  margin: 10px 0;
+}
+.ms-formulaire label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.85rem;
+}
+.ms-formulaire .ms-large {
+  grid-column: 1 / -1;
+}
+.ms-remarques td {
+  vertical-align: top;
+}
+.ms-remarques td:nth-child(5) {
+  min-width: 260px;
+}
+.ms-remarques input[type="text"] {
+  width: 100%;
+  min-width: 130px;
+}

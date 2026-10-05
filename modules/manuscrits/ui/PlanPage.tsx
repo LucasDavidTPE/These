@@ -4,7 +4,7 @@
  * restantes, commentaires, modifications suivies…) et ses versions. Les `.docx` restent où ils
  * sont ; versions et retours sont gardés ensemble dans l'espace (manuscrits/<projet>/).
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Message, Pastille } from "@interface/composants";
 import { useContexte, type Contexte } from "@interface/contexte";
 import { isoAvecDecalage } from "@noyau/dates";
@@ -14,8 +14,6 @@ import {
   ajouterParties,
   deplacerPartie,
   GENRES,
-  idProjet,
-  manuscritVide,
   modifierPartie,
   ordreNaturel,
   retirerPartie,
@@ -25,7 +23,9 @@ import {
 } from "../core/plan";
 import { rattacher, resoudreSource, scinder } from "../core/sources";
 import { empreinte, type Etat } from "../core/versions";
-import { chargerPlan, chargerVersions, ecrirePlan, enregistrerVersion, listerDocx, listerProjets, type Projet, type VersionLue } from "./donnees";
+import { aTraiterParPartie, type Retour } from "../core/retours";
+import { chargerVersions, enregistrerVersion, listerDocx, type VersionLue } from "./donnees";
+import type { ManuscritCourant } from "./useManuscrit";
 import "./manuscrits.css";
 
 type Lecture =
@@ -86,45 +86,17 @@ function useLectures(ctx: Contexte, projet: string | null, m: Manuscrit | null, 
   return lectures;
 }
 
-export function PlanPage() {
+export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; retours: Retour[]; voirRetours(partie: string): void }) {
   const ctx = useContexte();
   const espace = ctx.espace!;
-  const [projets, setProjets] = useState<Projet[] | null>(null);
-  const [projet, setProjet] = useState<string | null>(null);
-  const [m, setM] = useState<Manuscrit | null>(null);
-  const [message, setMessage] = useState<{ niveau: "info" | "erreur"; texte: string } | null>(null);
+  const { projets, projet, setProjet, m, sauver } = ms;
+  const [message, setMessage] = useState<{ niveau: "info" | "erreur"; texte: string } | null>(ms.erreur ? { niveau: "erreur", texte: ms.erreur } : null);
   const [tour, setTour] = useState(0);
   const [titreNouveau, setTitreNouveau] = useState("Thèse");
   const [choix, setChoix] = useState<{ dossier: string; fichiers: { chemin: string; coche: boolean }[] } | null>(null);
   const lectures = useLectures(ctx, projet, m, tour);
   const enCours = useRef(false);
-
-  // Liste des manuscrits (et choix du premier).
-  useEffect(() => {
-    let annule = false;
-    listerProjets(espace.fichiers)
-      .then((l) => {
-        if (annule) return;
-        setProjets(l);
-        setProjet((p) => (p && l.some((x) => x.id === p) ? p : (l[0]?.id ?? null)));
-      })
-      .catch((e: unknown) => !annule && setMessage({ niveau: "erreur", texte: String(e instanceof Error ? e.message : e) }));
-    return () => {
-      annule = true;
-    };
-  }, [espace, ctx.revision]);
-
-  // Plan du manuscrit choisi.
-  useEffect(() => {
-    if (!projet) return;
-    let annule = false;
-    chargerPlan(espace.fichiers, projet)
-      .then((p) => !annule && setM(p))
-      .catch((e: unknown) => !annule && setMessage({ niveau: "erreur", texte: String(e instanceof Error ? e.message : e) }));
-    return () => {
-      annule = true;
-    };
-  }, [espace, projet, ctx.revision]);
+  const aTraiter = useMemo(() => aTraiterParPartie(retours), [retours]);
 
   // Les fichiers Word se modifient hors de l'appli : on relit au retour dans la fenêtre.
   useEffect(() => {
@@ -133,27 +105,8 @@ export function PlanPage() {
     return () => window.removeEventListener("focus", retour);
   }, []);
 
-  const sauver = useCallback(
-    async (suivant: Manuscrit) => {
-      if (!projet) return;
-      setM(suivant);
-      try {
-        await ecrirePlan(espace.fichiers, projet, suivant);
-      } catch (e) {
-        setMessage({ niveau: "erreur", texte: `Plan non enregistré : ${e instanceof Error ? e.message : String(e)}` });
-      }
-    },
-    [espace, projet],
-  );
-
   async function creer() {
-    const id = idProjet(titreNouveau);
-    if (projets?.some((p) => p.id === id)) return setMessage({ niveau: "erreur", texte: `Un manuscrit « ${id} » existe déjà.` });
-    const neuf = manuscritVide(titreNouveau.trim() || "Manuscrit");
-    await ecrirePlan(espace.fichiers, id, neuf);
-    setProjets([...(projets ?? []), { id, titre: neuf.titre }]);
-    setProjet(id);
-    setM(neuf);
+    await ms.creer(titreNouveau);
   }
 
   /** Ajoute des fichiers (chemins absolus) : leurs dossiers deviennent des racines de ce PC si besoin. */
@@ -332,6 +285,9 @@ export function PlanPage() {
               key={p.id}
               p={p}
               l={lectures[p.id] ?? { etat: "lecture" }}
+              aTraiter={aTraiter.get(p.id) ?? 0}
+              nbRetours={retours.filter((r) => r.partie === p.id).length}
+              voirRetours={() => voirRetours(p.id)}
               premiere={i === 0}
               derniere={i === m.parties.length - 1}
               maj={(champs) => void sauver(modifierPartie(m, p.id, champs))}
@@ -362,6 +318,9 @@ function Tuile({ valeur, titre, niveau }: { valeur: string; titre: string; nivea
 function CartePartie({
   p,
   l,
+  aTraiter,
+  nbRetours,
+  voirRetours,
   premiere,
   derniere,
   maj,
@@ -375,6 +334,9 @@ function CartePartie({
 }: {
   p: Partie;
   l: Lecture;
+  aTraiter: number;
+  nbRetours: number;
+  voirRetours(): void;
   premiere: boolean;
   derniere: boolean;
   maj(champs: Partial<Omit<Partie, "id">>): void;
@@ -452,6 +414,12 @@ function CartePartie({
               {nonResolus && nonResolus !== inv.commentaires.length ? ` (${nonResolus} non résolu${nonResolus > 1 ? "s" : ""})` : ""}
             </span>
             <span className={inv.modifications.length ? "ms-attention" : "discret"}>{pluriel(inv.modifications.length, "modification suivie", "modifications suivies")}</span>
+            {nbRetours ? (
+              <button type="button" className="lien" onClick={voirRetours} title="Corrections reçues pour cette partie">
+                {pluriel(nbRetours, "retour reçu", "retours reçus")}
+                {aTraiter ? ` · ${pluriel(aTraiter, "remarque à traiter", "remarques à traiter")}` : " · tout traité"}
+              </button>
+            ) : null}
             <span className="discret">
               {pluriel(inv.figures, "figure")} · {pluriel(inv.tableaux, "tableau", "tableaux")} · {pluriel(inv.notes, "note")} · {pluriel(inv.citations, "citation")} Zotero
             </span>
@@ -497,6 +465,7 @@ function CartePartie({
               <ul>
                 {inv.plan.map((t, i) => (
                   <li key={i} style={{ paddingLeft: `${(t.niveau - 1) * 16}px` }} className={t.niveau === 1 ? "gras" : undefined}>
+                    {t.numero ? `${t.numero} ` : ""}
                     {t.texte}
                     {t.signet ? <span className="discret petit"> · {t.signet}</span> : null}
                   </li>

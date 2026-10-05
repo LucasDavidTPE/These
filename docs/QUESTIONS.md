@@ -23,5 +23,5 @@ reportée dans `SPEC.md` et la question est supprimée d'ici.
 6. **Refonte de Manuscrits.** Analyse et architecture proposées dans `docs/MANUSCRITS_REFONTE.md`
    (parties `.docx` + `manuscrit.json`, fusion générée par l'appli, retours, sources Zotero). Tranché : sources
    `.docx` n'importe où (racines par poste), fusion native, Sources LaTeX retiré, Présentations gardé.
-   Reste : numérotation des titres automatique ou tapée (avant M2/M4), forme des corrections reçues
-   (`.docx` avec suivi ? PDF annotés ?), export PDF depuis l'appli.
+   Numérotation automatique de Word et corrections en `.docx` / PDF annotés : tranchés (1.14.0).
+   Reste : export PDF depuis l'appli (nécessite Word).
