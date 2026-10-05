@@ -52,3 +52,55 @@ export function resoudre(refs: readonly { id: string; valeur: Reference }[], cle
   }
   return out;
 }
+
+// ---- Saisie assistée : « [@ol… » propose les références de la Bibliothèque ----
+
+export interface Suggestion {
+  id: string;
+  /** « Olard & Di Benedetto, 2003 ». */
+  court: string;
+  titre: string;
+}
+
+export interface Completion {
+  /** Position du « [@ » ou du « @ » à remplacer. */
+  debut: number;
+  suggestions: Suggestion[];
+}
+
+const sansAccents = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+/**
+ * Ce qu'on peut proposer au curseur : le texte entre « [@ » (ou un « @ » après un espace, ou après
+ * « ; » dans un groupe) et le curseur est la recherche, par mots, dans l'identifiant, la clé, les auteurs,
+ * l'année et le titre. Null si le curseur n'est pas dans une citation en cours de saisie.
+ */
+export function completionCitation(texte: string, curseur: number, refs: readonly { id: string; valeur: Reference }[], exclure = "", max = 8): Completion | null {
+  const avant = texte.slice(0, curseur);
+  const m = /(^|[\s[;(])@([^\]\n;@]{0,40})$/.exec(avant);
+  if (!m) return null;
+  const debut = m.index + m[1]!.length - (m[1] === "[" ? 1 : 0);
+  const mots = sansAccents(m[2]!).split(/\s+/).filter(Boolean);
+  const trouvees: { s: Suggestion; rang: number }[] = [];
+  for (const r of refs) {
+    if (r.id === exclure) continue;
+    const v = r.valeur;
+    const court = `${auteursCourts(v.auteurs)}, ${v.annee ?? "s. d."}`;
+    const foin = sansAccents(`${r.id} ${v.cle} ${court} ${v.auteurs} ${v.titre}`);
+    if (!mots.every((x) => foin.includes(x))) continue;
+    const tete = sansAccents(`${r.id} ${v.cle} ${court}`);
+    trouvees.push({ s: { id: r.id, court, titre: v.titre }, rang: mots.length === 0 || mots.every((x) => tete.includes(x)) ? 0 : 1 });
+  }
+  trouvees.sort((a, b) => a.rang - b.rang || a.s.id.localeCompare(b.s.id, "fr", { numeric: true }));
+  return trouvees.length ? { debut, suggestions: trouvees.slice(0, max).map((t) => t.s) } : null;
+}
+
+/** Remplace la saisie en cours par la citation : « [@BIB-020] », ou « @BIB-020 » dans un groupe déjà ouvert (« [@BIB-001; @… »). */
+export function insererCitation(texte: string, curseur: number, c: Completion, id: string): { texte: string; curseur: number } {
+  const ouvert = texte.lastIndexOf("[", c.debut) >= 0 && texte.lastIndexOf("]", c.debut) < texte.lastIndexOf("[", c.debut);
+  const dedans = ouvert && texte[c.debut] === "@";
+  const ajout = dedans ? `@${id}` : `[@${id}]`;
+  // un « ] » déjà là (citation corrigée après coup) n'est pas doublé
+  const suite = !dedans && texte[curseur] === "]" ? curseur + 1 : curseur;
+  return { texte: texte.slice(0, c.debut) + ajout + texte.slice(suite), curseur: c.debut + ajout.length };
+}

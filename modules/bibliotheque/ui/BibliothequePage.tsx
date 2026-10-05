@@ -238,7 +238,7 @@ export function BibliothequePage() {
           </button>
         </div>
       ) : courante ? (
-        <Fiche b={b} c={courante} onEnregistrer={(r) => void d.enregistrerReference(courante.id, r)} onFermer={() => setFiche(null)} />
+        <Fiche b={b} c={courante} onEnregistrer={(r) => void d.enregistrerReference(courante.id, r)} onFermer={() => setFiche(null)} onOuvrir={(id) => setFiche(id)} />
       ) : (
         <>
           <nav className="onglets" aria-label="Bibliothèque">

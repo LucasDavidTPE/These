@@ -529,6 +529,11 @@ ENTPE.
   titre court = six mots significatifs sans accents ; nom modifiable), le renomme sur place
   s'il est déjà dans `bibliotheque/pdf` de l'espace, sinon l'y copie (l'original reste), et note son
   nom dans la fiche ; « Renommer selon la convention » pour un PDF déjà rattaché.
+  **Renvoi vers une autre référence** (1.17.0) : dans le commentaire, les notes de lecture et la fiche de lecture,
+  taper `[@` (ou `@` après un espace, ou `; @` dans un groupe) propose les autres références de la Bibliothèque
+  (recherche par mots dans l'identifiant, la clé, les auteurs, l'année et le titre, sans accents ni casse) ;
+  flèches, Entrée ou Tab (ou clic) insèrent `[@BIB-020]`, Échap referme. Le texte garde la syntaxe de citation
+  des présentations (ci-dessous) ; sous le champ, « Cite : Olard & Di Benedetto, 2003 » ouvre la fiche citée. La fiche ne se propose pas elle-même.
 - **Plan de lecture** : un bloc par mois (objectif de fin de mois, documents à demander
   en amont, avancement, liste des références) ; changer le mois d'une référence la
   déplace. Les mois alimentent le **Planning** (§10).

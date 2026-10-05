@@ -708,3 +708,13 @@ nombres doivent être identiques, dans les deux modes.
       (onglet Retours : le même sélecteur, les corrections reçues d'un article restent avec l'article).
 - [ ] La thèse existante est inchangée (type « Thèse » par défaut), son plan et ses versions sont intacts.
 - [ ] « Générer » ne propose plus de choix « version propre » : un seul fichier, consignes gardées.
+
+## Bibliothèque : renvoi vers une autre référence (1.17.0)
+
+- [ ] Fiche d'une référence → champ « Commentaire » : taper `[@` ouvre la liste des autres références ; continuer par `olard`
+      la filtre ; ↓ ↑ puis Entrée (ou un clic) écrit `[@BIB-020]` et le curseur se place après.
+- [ ] Taper `@` après un espace, ou `; @` dans `[@BIB-020; @…`, propose aussi la liste ; Échap la referme sans rien écrire.
+- [ ] Quitter le champ : le texte est enregistré et « Cite : Olard & Di Benedetto, 2003 » apparaît dessous ; cliquer dessus
+      ouvre la fiche citée.
+- [ ] Même saisie dans « Mes notes de lecture » et « Fiche de lecture » ; une adresse e-mail (`a@b.fr`) ne déclenche rien.
+- [ ] La référence ouverte ne figure pas dans sa propre liste.

@@ -263,3 +263,44 @@ textarea.champ {
 .pdf-manque {
   color: var(--attention, #b26a00);
 }
+
+/* Saisie assistée des citations [@BIB-…] dans les textes libres de la fiche */
+.champ-citable {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.suggestions-citation {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 2px 0 0;
+  padding: 3px;
+  list-style: none;
+  max-height: 260px;
+  overflow: auto;
+  background: var(--surface);
+  color: var(--texte);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon, 8px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+.suggestions-citation li {
+  padding: 4px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.suggestions-citation li.actif,
+.suggestions-citation li:hover {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.citations-lues {
+  line-height: 1.5;
+}
+

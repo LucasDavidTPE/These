@@ -196,5 +196,7 @@ lancent tous les tests automatiques sous Windows.
       sections et en-têtes gardés, identifiants renumérotés, rapport ; testée sur la trame fournie (mêmes titres, 12 sections, mêmes en-têtes)
 - [x] Manuscrits : plusieurs documents (thèse, articles, rapports / comptes rendus), chacun avec son plan, ses versions, ses retours ;
       une seule sortie fusionnée, plus de choix « version propre » (1.16.0)
+- [x] Bibliothèque : saisie assistée `[@…` des renvois vers une autre référence dans les commentaires et notes de la fiche,
+      avec lien vers la fiche citée (1.17.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),
       remarques extraites avec état (à traiter / traitée / refusée), compteur par partie, rangés avec les versions
