@@ -654,3 +654,10 @@ nombres doivent être identiques, dans les deux modes.
       « manque » (avec « PDF libre », « Éditeur (abonnement) »…) sinon, « introuvable » si le fichier noté a disparu.
 - [ ] « N sans PDF » filtre la liste (écartées exclues) ; le filtre « PDF : tous » la rétablit.
 - [ ] Après un PDF ajouté depuis la fiche ou récupéré depuis Zotero, la ligne passe à ✓ sans relancer.
+
+## Ouverture des liens (1.12.1)
+
+- [ ] Fiche d'une référence : « Ouvrir le lien », « doi.org » et « Scholar » ouvrent la page dans le navigateur par défaut.
+- [ ] « Mettre à jour Zotero… » → « Créer une clé sur zotero.org » ouvre zotero.org ; un lien Markdown d'une carte
+      (« [texte](https://…) ») aussi ; Figures → palettes « coolors » aussi.
+- [ ] Si une adresse ne peut pas s'ouvrir, un message l'indique (plus de bouton muet).

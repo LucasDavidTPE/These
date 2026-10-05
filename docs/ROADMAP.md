@@ -190,3 +190,4 @@ lancent tous les tests automatiques sous Windows.
 - [x] Bibliothèque : « Mettre à jour Zotero » (sens unique, PDF liés, notes de lecture) et PDF dans l'export RIS (1.10.0)
 - [x] Zotero : « PDF manquants dans Thèse », récupérés depuis Zotero (1.11.0)
 - [x] Références : colonne PDF et filtre « PDF manquant », compteur « N sans PDF » (1.12.0)
+- [x] Liens (doi.org, Scholar, « Ouvrir le lien », zotero.org…) qui ne s'ouvraient pas : la permission Tauri n'avait aucune portée (1.12.1)
