@@ -116,11 +116,8 @@ lancent tous les tests automatiques sous Windows.
       quelles (`study.toml`, `outputs/`, `*.prov.json`)
 - [x] Module Manuscrits : versions datées des `.docx` (racine `manuscrits`), avec une note,
       copiées dans l'espace (`manuscrits/<fichier>/`), état « modifié depuis la dernière
-      version », ouvrir une version, en faire une copie ailleurs
-- [x] Index des sources LaTeX (Manuscrits → Sources LaTeX, racine `latex`) : classement de
-      `lgcb/tex.py` (figure autonome, document, fragment), inclusions, « utilisé par »,
-      inclusions introuvables ; ouverture dans VS Code, PDF compilé s'il existe. Pas de
-      compilation par l'application
+      version », ouvrir une version, en faire une copie ailleurs *(remplacé en 1.13.0 : plan par parties)*
+- [x] ~~Index des sources LaTeX~~ (retiré en 1.13.0)
 - [x] Module ViscoCompare : portage de `LucasDavidTPE/ViscoCompare/main.py` (lecture COMSOL
       et Viscoroute, profil en x = 0, conversions, interpolation), courbes superposées,
       écart sur l'extremum, classeurs `EXCEL_OUTPUT`, figures régénérables
@@ -189,3 +186,8 @@ lancent tous les tests automatiques sous Windows.
 - [x] Journal : note du jour avec tâches reportées, encart « Aujourd'hui » sur l'Accueil (1.9.0)
 - [x] Bibliothèque : « Mettre à jour Zotero » (sens unique, PDF liés, notes de lecture) et PDF dans l'export RIS (1.10.0)
 - [x] Zotero : « PDF manquants dans Thèse », récupérés depuis Zotero (1.11.0)
+- [x] Références : colonne PDF et filtre « PDF manquant », compteur « N sans PDF » (1.12.0)
+- [x] Liens (doi.org, Scholar, « Ouvrir le lien », zotero.org…) qui ne s'ouvraient pas : la permission Tauri n'avait aucune portée (1.12.1)
+- [x] Manuscrits M1 (1.13.0) : plan de la thèse (`manuscrit.json`), parties `.docx` n'importe où (sources par racine),
+      lecture des fichiers Word (mots, consignes, commentaires, modifications suivies), versions par partie,
+      Sources LaTeX retiré. Suite (`docs/MANUSCRITS_REFONTE.md`) : M1 bis retours reçus, M2 fusion, M3 progression, M4 sources Zotero

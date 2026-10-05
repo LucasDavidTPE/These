@@ -101,7 +101,14 @@ export function plateformeTauri(): Plateforme {
     },
     ouvrirVSCode: (chemin) => appel<void>("poste_ouvrir_vscode", { chemin }, chemin),
     ouvrirDossier: (chemin) => openPath(chemin),
-    ouvrirLien: (url) => openUrl(url),
+    ouvrirLien: async (url) => {
+      try {
+        await openUrl(url);
+      } catch (e) {
+        // Un lien qui ne s'ouvre pas ne doit pas rester muet.
+        window.alert(`Impossible d'ouvrir le lien :\n${url}\n\n${e instanceof Error ? e.message : String(e)}`);
+      }
+    },
     verifierLien: (url) => appel<ReponseLien>("lien_verifier", { url }),
     zotero: (requete) => appel<ReponseZotero>("zotero_requete", { requete }),
     zoteroFichier: async (chemin, cle) => new Uint8Array(await appel<ArrayBuffer>("zotero_fichier", { chemin, cle })),

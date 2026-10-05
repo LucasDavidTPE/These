@@ -20,3 +20,8 @@ reportée dans `SPEC.md` et la question est supprimée d'ici.
 5. **Emplacement de l'espace (P0).** `OneDrive - entpe.fr\Thèse\Espace` convient-il ?
    Le OneDrive de l'école reste-t-il accessible après la thèse ? *(1.2 : l'espace se suffit
    à lui-même et s'exporte en un `.zip` depuis les réglages ; reste à choisir où archiver.)*
+6. **Refonte de Manuscrits.** Analyse et architecture proposées dans `docs/MANUSCRITS_REFONTE.md`
+   (parties `.docx` + `manuscrit.json`, fusion générée par l'appli, retours, sources Zotero). Tranché : sources
+   `.docx` n'importe où (racines par poste), fusion native, Sources LaTeX retiré, Présentations gardé.
+   Reste : numérotation des titres automatique ou tapée (avant M2/M4), forme des corrections reçues
+   (`.docx` avec suivi ? PDF annotés ?), export PDF depuis l'appli.

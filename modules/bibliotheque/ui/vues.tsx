@@ -1,13 +1,15 @@
 /** Vues de la bibliothèque : tableau de bord, références, plan de lecture (SPEC §9.2). */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { correspond } from "@noyau/texte";
 import { Section } from "@interface/composants";
+import { useContexte } from "@interface/contexte";
 import { libelleMois, type Calcule } from "../core/calculs";
 import { lienARevoir } from "../core/liens";
+import { etatPdf, type EtatPdf } from "../core/pdf";
 import { PRIORITES, STATUTS } from "../core/modele";
 import { PastilleEtat } from "./commun";
 import { FILTRES_VIDES, pourcent, type Filtres } from "./format";
-import type { Biblio } from "./donnees";
+import { lirePdfsPresents, type Biblio } from "./donnees";
 
 function Tuile({ valeur, titre, niveau }: { valeur: string | number; titre: string; niveau?: "attention" | "erreur" }) {
   return (
@@ -155,9 +157,12 @@ export function TableauDeBordVue({ b, ouvrir }: { b: Biblio; ouvrir(id: string):
   );
 }
 
-function filtrer(calc: Calcule[], f: Filtres): Calcule[] {
+const manque = (e: EtatPdf) => e !== "present";
+
+function filtrer(calc: Calcule[], f: Filtres, pdfs: ReadonlySet<string> | null): Calcule[] {
   const out = calc.filter(
     (c) =>
+      (!f.pdf || (f.pdf === "manquant" ? manque(etatPdf(c.ref.fichierPdf, pdfs)) && c.ref.statut !== "Écarté" : !manque(etatPdf(c.ref.fichierPdf, pdfs)))) &&
       (!f.axe || String(c.ref.axe) === f.axe) &&
       (!f.mois || String(c.ref.mois) === f.mois) &&
       (!f.statut || c.ref.statut === f.statut) &&
@@ -168,8 +173,46 @@ function filtrer(calc: Calcule[], f: Filtres): Calcule[] {
   return f.tri === "score" ? out.sort((a, b) => b.scoreTri - a.scoreTri) : out;
 }
 
+/** Noms des PDF présents dans `bibliotheque/pdf` (null tant que le disque n'a pas répondu). */
+function usePdfsPresents(b: Biblio): ReadonlySet<string> | null {
+  const ctx = useContexte();
+  const dossier = ctx.racines["biblio-pdf"];
+  const [presents, setPresents] = useState<{ pour: Biblio; noms: ReadonlySet<string> } | null>(null);
+  useEffect(() => {
+    if (!dossier) return;
+    let annule = false;
+    void lirePdfsPresents(
+      ctx.plateforme.fichiers(dossier),
+      b.references.map((r) => ({ ref: r.valeur })),
+    ).then((noms) => !annule && setPresents({ pour: b, noms }));
+    return () => {
+      annule = true;
+    };
+  }, [b, dossier, ctx.plateforme]);
+  return presents?.noms ?? null;
+}
+
+function CellulePdf({ c, pdfs }: { c: Calcule; pdfs: ReadonlySet<string> | null }) {
+  const e = etatPdf(c.ref.fichierPdf, pdfs);
+  if (e === "present")
+    return (
+      <span className="pdf-ok" title={c.ref.fichierPdf}>
+        ✓
+      </span>
+    );
+  const comment = [c.ref.accesDocument, c.ref.commentObtenir].filter(Boolean).join(" — ");
+  return (
+    <span className="pdf-manque" title={e === "introuvable" ? `« ${c.ref.fichierPdf} » est noté mais absent de bibliotheque\\pdf` : comment || "Aucun PDF"}>
+      {e === "introuvable" ? "introuvable" : "manque"}
+      {c.ref.accesDocument ? <span className="discret petit"> · {c.ref.accesDocument}</span> : null}
+    </span>
+  );
+}
+
 export function ReferencesVue({ b, ouvrir, filtres, setFiltres }: { b: Biblio; ouvrir(id: string): void; filtres: Filtres; setFiltres(f: Filtres): void }) {
-  const visibles = useMemo(() => filtrer(b.calc, filtres), [b.calc, filtres]);
+  const pdfs = usePdfsPresents(b);
+  const visibles = useMemo(() => filtrer(b.calc, filtres, pdfs), [b.calc, filtres, pdfs]);
+  const sansPdf = useMemo(() => b.calc.filter((c) => manque(etatPdf(c.ref.fichierPdf, pdfs)) && c.ref.statut !== "Écarté").length, [b.calc, pdfs]);
   const f = filtres;
   const maj = (k: keyof Filtres) => (e: { target: { value: string } }) => setFiltres({ ...f, [k]: e.target.value });
   return (
@@ -210,6 +253,11 @@ export function ReferencesVue({ b, ouvrir, filtres, setFiltres }: { b: Biblio; o
             <option key={s}>{s}</option>
           ))}
         </select>
+        <select className="champ" value={f.pdf} onChange={maj("pdf")} aria-label="PDF">
+          <option value="">PDF : tous</option>
+          <option value="manquant">PDF manquant (hors écartés)</option>
+          <option value="present">PDF dans l'espace</option>
+        </select>
         <select className="champ" value={f.tri} onChange={maj("tri")}>
           <option value="id">Ordre du plan</option>
           <option value="score">Quoi lire maintenant (score)</option>
@@ -217,6 +265,11 @@ export function ReferencesVue({ b, ouvrir, filtres, setFiltres }: { b: Biblio; o
         <span className="discret">
           {visibles.length} / {b.calc.length}
         </span>
+        {sansPdf && f.pdf !== "manquant" ? (
+          <button type="button" className="lien" onClick={() => setFiltres({ ...f, pdf: "manquant" })} title="Références sans PDF dans l'espace (hors écartées)">
+            {sansPdf} sans PDF
+          </button>
+        ) : null}
         {JSON.stringify(f) !== JSON.stringify(FILTRES_VIDES) ? (
           <button type="button" className="lien" onClick={() => setFiltres(FILTRES_VIDES)}>
             Tout afficher
@@ -235,6 +288,7 @@ export function ReferencesVue({ b, ouvrir, filtres, setFiltres }: { b: Biblio; o
             <th>État</th>
             <th>Score</th>
             <th>Alerte</th>
+            <th>PDF</th>
           </tr>
         </thead>
         <tbody>
@@ -251,6 +305,9 @@ export function ReferencesVue({ b, ouvrir, filtres, setFiltres }: { b: Biblio; o
               </td>
               <td>{c.score || ""}</td>
               <td className="discret petit">{c.alerte}</td>
+              <td className="nowrap">
+                <CellulePdf c={c} pdfs={pdfs} />
+              </td>
             </tr>
           ))}
         </tbody>
