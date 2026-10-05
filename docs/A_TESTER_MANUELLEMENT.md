@@ -727,3 +727,14 @@ nombres doivent être identiques, dans les deux modes.
       sans toucher à l'autre PC ni aux fichiers Word.
 - [ ] « Choisir un autre dossier… » fonctionne quand rien n'est retrouvé ; chaque carte indique « Introuvable sur ce PC : <fichier>
       n'est pas dans <dossier> ».
+
+## Manuscrits : chemins communs aux deux PC (1.18.0)
+
+- [ ] **PC 1** (où tout marche) : ouvrir Manuscrits → Plan. Message « N parties ont désormais un chemin commun aux deux PC » ;
+      les cartes montrent `espace:…` ou `onedrive:…` sous le titre. Ne rien faire d'autre.
+- [ ] **PC 2** (après synchronisation OneDrive) : Manuscrits → Plan affiche toutes les parties lues, sans bandeau ni réglage.
+- [ ] Une partie encore introuvable (fichier déplacé ou renommé) : le bandeau propose « Retrouvé dans … : utiliser » ; un clic la
+      relie, et l'autre PC la retrouve aussi. « Pointer le fichier… » sur la carte permet de choisir le fichier à la main.
+- [ ] Un `.docx` ajouté depuis le Bureau (hors OneDrive) : message « Dossier réglé sur ce PC seulement » ; sur l'autre PC, la partie est
+      signalée introuvable (normal : le fichier n'y est pas).
+- [ ] « Générer » fonctionne sur les deux PC avec les mêmes parties.

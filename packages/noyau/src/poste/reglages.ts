@@ -89,5 +89,5 @@ export function espacePropose(oneDrive: string): string {
 export const RACINES_CONNUES: readonly { nom: string; description: string; exemple: string }[] = [
   { nom: "essais", description: "Données brutes des essais (sorties machine)", exemple: "E:\\" },
   { nom: "recherche", description: "Dossier de recherche du Bureau (données d'essai triées)", exemple: "C:\\Users\\DAVID\\Desktop\\Recherche" },
-  { nom: "manuscrits", description: "Dossier de vos fichiers Word de manuscrit (facultatif : chaque partie peut vivre ailleurs)", exemple: "C:\\Users\\DAVID\\OneDrive - entpe.fr\\Thèse\\Rédaction" },
+  { nom: "manuscrits", description: "Fichiers Word hors de OneDrive seulement (ceux de OneDrive sont retrouvés seuls sur les deux PC)", exemple: "C:\\Users\\DAVID\\OneDrive - entpe.fr\\Thèse\\Rédaction" },
 ];

@@ -200,5 +200,7 @@ lancent tous les tests automatiques sous Windows.
       avec lien vers la fiche citée (1.17.0)
 - [x] Manuscrits : fichiers Word introuvables sur le second PC (dossier réglé ailleurs) — bandeau groupé par dossier, recherche
       automatique autour de l'espace, réglage en un clic (1.17.1)
+- [x] Manuscrits : chemins des fichiers Word communs aux deux PC (`espace:`, `onedrive:`), conversion automatique des anciennes
+      sources, « Pointer le fichier… », recherche dans tout OneDrive (1.18.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),
       remarques extraites avec état (à traiter / traitée / refusée), compteur par partie, rangés avec les versions
