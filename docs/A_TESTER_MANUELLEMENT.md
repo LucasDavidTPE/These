@@ -166,17 +166,6 @@ Ce qui change avec l'intégration :
       modifier sur A sans recharger : A refuse (« modifié ailleurs… rechargez »), la
       version de B est intacte.
 
-## Manuscrits (versions Word)
-
-- [ ] Manuscrits → « Choisir le dossier des manuscrits… » : les `.docx` du dossier (et de
-      ses sous-dossiers directs) apparaissent, sans les fichiers `~$…` de Word.
-- [ ] « Enregistrer une version » avec une note, **document ouvert dans Word** : la copie
-      est faite (sinon, message clair) ; l'état passe à « à jour ».
-- [ ] Modifier et enregistrer le document dans Word : l'état passe à « modifié depuis la
-      dernière version ».
-- [ ] « Ouvrir » ouvre la version dans Word ; « Copie sous… » l'enregistre ailleurs.
-- [ ] Sur l'autre PC (même dossier via OneDrive, racine réglée) : les mêmes versions.
-
 ## Version 0.2.5 : tests sous Windows, installeur Traitement
 
 - [ ] GitHub → Actions → **tests-windows** → « Run workflow » : toutes les étapes vertes
@@ -227,16 +216,6 @@ Ce qui change avec l'intégration :
       feuille « Ecarts » ; les graphiques Excel du script ne sont pas refaits (ils sont
       dans l'application et dans Figures).
 - [ ] « Enregistrer dans Figures » puis « Régénérer » après avoir remplacé un `.csv`.
-
-## Manuscrits : sources LaTeX
-
-- [ ] Manuscrits → « Sources LaTeX » → choisir le dossier du manuscrit : figures TikZ
-      (`standalone`), documents et chapitres classés comme dans le tableau de bord de
-      these-lgcb ; les dossiers `build`, `out`, `.git` sont ignorés.
-- [ ] Une figure incluse par un chapitre (`\input` ou `\includegraphics` de son PDF)
-      affiche ce chapitre dans « Utilisé par ».
-- [ ] Renommer une image utilisée : elle apparaît dans « Inclusions introuvables ».
-- [ ] « VS Code », « PDF » (si compilé à côté) et « Dossier » ouvrent ce qu'il faut.
 
 ## Traitement 2S2P1D : nouvelle interface (0.2.6)
 
@@ -661,3 +640,19 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] « Mettre à jour Zotero… » → « Créer une clé sur zotero.org » ouvre zotero.org ; un lien Markdown d'une carte
       (« [texte](https://…) ») aussi ; Figures → palettes « coolors » aussi.
 - [ ] Si une adresse ne peut pas s'ouvrir, un message l'indique (plus de bouton muet).
+
+## Manuscrits : plan de la thèse (1.13.0)
+
+- [ ] Manuscrits → Plan → « Créer le manuscrit » ; « Ajouter un dossier… » sur le dossier des chapitres : les `.docx` sont
+      proposés dans l'ordre (la trame fusionnée et les `~$…` décochés), « Ajouter les parties cochées ».
+- [ ] Chaque carte affiche titre, mots, consignes « À rédiger », commentaires (non résolus), modifications suivies,
+      figures / tableaux / notes / citations Zotero ; « Plan » liste les titres. Comparer avec Word sur un vrai chapitre.
+- [ ] Un fichier hors des dossiers déclarés : un dossier est ajouté dans « Réglages du poste » (message de confirmation) ;
+      sur l'autre PC, la carte propose « Choisir le dossier … » et la partie se lit.
+- [ ] Modifier un chapitre dans Word, revenir dans l'appli : la carte se relit toute seule, « modifié depuis la dernière version ».
+- [ ] « Enregistrer une version » (document ouvert dans Word : message clair en cas d'échec) ; « Versions » : ouvrir une
+      copie, « Copie sous… » ; les versions s'ouvrent sur l'autre PC.
+- [ ] Statut, objectif en mots, ↑ ↓ et « Retirer du plan » (le fichier Word et ses versions ne sont pas touchés).
+- [ ] Les anciennes versions (dossier `manuscrits/<nom du fichier>/`) apparaissent encore sous la partie correspondante.
+- [ ] Un `.docx` enregistré par Word contenant des commentaires résolus, des zones de texte, des modifications suivies :
+      les nombres sont cohérents avec ce que Word indique.

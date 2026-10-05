@@ -21,7 +21,7 @@ reportée dans `SPEC.md` et la question est supprimée d'ici.
    Le OneDrive de l'école reste-t-il accessible après la thèse ? *(1.2 : l'espace se suffit
    à lui-même et s'exporte en un `.zip` depuis les réglages ; reste à choisir où archiver.)*
 6. **Refonte de Manuscrits.** Analyse et architecture proposées dans `docs/MANUSCRITS_REFONTE.md`
-   (parties `.docx` + `manuscrit.json`, fusion générée par l'appli, retours, sources Zotero). À trancher
-   avant M1 : moteur de fusion natif ou
-   piloté par Word, numérotation des titres automatique ou tapée, sort des onglets Présentations et
-   Sources LaTeX, besoin d'un export PDF depuis l'appli.
+   (parties `.docx` + `manuscrit.json`, fusion générée par l'appli, retours, sources Zotero). Tranché : sources
+   `.docx` n'importe où (racines par poste), fusion native, Sources LaTeX retiré, Présentations gardé.
+   Reste : numérotation des titres automatique ou tapée (avant M2/M4), forme des corrections reçues
+   (`.docx` avec suivi ? PDF annotés ?), export PDF depuis l'appli.

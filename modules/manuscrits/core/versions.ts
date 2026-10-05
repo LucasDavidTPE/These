@@ -1,8 +1,10 @@
 /**
- * Versions des manuscrits Word : une copie datée du .docx dans l'espace, avec sa fiche.
+ * Versions des parties de manuscrit : une copie datée du .docx dans l'espace, avec sa fiche.
  *
- *   manuscrits/<slug du fichier>/<AAAA-MM-JJ_HHMM>_<note>.docx   la copie
- *   manuscrits/<slug du fichier>/<AAAA-MM-JJ_HHMM>_<note>.json   poste, note, taille, empreinte
+ *   manuscrits/<projet>/versions/<partie>/<AAAA-MM-JJ_HHMM>_<note>.docx   la copie
+ *   manuscrits/<projet>/versions/<partie>/<AAAA-MM-JJ_HHMM>_<note>.json   poste, note, taille, empreinte
+ *
+ * (Avant 1.13 : manuscrits/<slug du fichier>/…, toujours lu pour garder l'historique.)
  *
  * Un fichier par version : deux PC qui enregistrent chacun une version ne se gênent pas.
  */
@@ -31,7 +33,10 @@ export function empreinte(octets: Uint8Array): string {
   return (h >>> 0).toString(16).padStart(8, "0");
 }
 
-/** Dossier des versions d'un manuscrit (d'après son nom, sans l'extension). */
+/** Dossier des versions d'une partie : `manuscrits/<projet>/versions/<partie>` (au même endroit pour toutes les parties). */
+export const dossierVersions = (projet: string, partie: string) => `${DOSSIER}/${projet}/versions/${partie}`;
+
+/** Ancien emplacement (avant 1.13) : un dossier par fichier Word, d'après son nom, sans l'extension. */
 export function dossierManuscrit(nom: string): string {
   return `${DOSSIER}/${slugifier(nom.replace(/\.docx?$/i, "")) || "manuscrit"}`;
 }

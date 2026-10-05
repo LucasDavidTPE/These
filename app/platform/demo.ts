@@ -8,7 +8,7 @@
 import { ecrireReglages } from "@noyau/poste/reglages";
 import { FichiersMemoire, type Fichiers } from "@noyau/stockage";
 import type { Plateforme } from "@interface/plateforme";
-import { zipSync } from "fflate";
+import { strToU8, zipSync } from "fflate";
 import { ZoteroFactice } from "@interface/zoteroFactice";
 
 const ONEDRIVE = "C:\\Users\\DAVID\\OneDrive - entpe.fr";
@@ -37,6 +37,28 @@ function pdfDemo(titre: string, auteurs: string): string {
   const xref = pdf.length;
   pdf += `xref\n0 ${objets.length + 1}\n0000000000 65535 f \n${pos.map((p) => `${String(p).padStart(10, "0")} 00000 n \n`).join("")}`;
   return pdf + `trailer\n<< /Size ${objets.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+}
+
+/** Un petit .docx (titres, texte, consignes « À rédiger », un commentaire, une modification suivie) pour le plan des manuscrits. */
+function docxDemo(titre: string, sections: string[], consignes: number, avecRetours = false): Uint8Array {
+  const ns = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"';
+  const p = (t: string, style = "") => `<w:p>${style ? `<w:pPr><w:pStyle w:val="${style}"/></w:pPr>` : ""}<w:r><w:t xml:space="preserve">${t}</w:t></w:r></w:p>`;
+  const lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.";
+  const corps =
+    `<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:bookmarkStart w:id="1" w:name="CHAP"/><w:r><w:t>${titre}</w:t></w:r></w:p>` +
+    sections.map((t, i) => p(t, "Heading2") + p(lorem.repeat(1 + (i % 3))) + (i < consignes ? p("À rédiger : développer ce point avec les références de la Bibliothèque.", "Consigne") : "")).join("") +
+    (avecRetours
+      ? '<w:p><w:commentRangeStart w:id="0"/><w:r><w:t>Passage relu par Sergio.</w:t></w:r><w:commentRangeEnd w:id="0"/></w:p>' +
+        '<w:p><w:r><w:t xml:space="preserve">Une </w:t></w:r><w:ins w:id="7" w:author="Sergio" w:date="2026-09-30T10:00:00Z"><w:r><w:t>nouvelle formulation</w:t></w:r></w:ins><w:del w:id="8" w:author="Sergio" w:date="2026-09-30T10:00:00Z"><w:r><w:delText>ancienne formule</w:delText></w:r></w:del><w:r><w:t>.</w:t></w:r></w:p>'
+      : "") +
+    "<w:sectPr/>";
+  const f: Record<string, Uint8Array> = {
+    "word/document.xml": strToU8(`<?xml version="1.0" encoding="UTF-8"?><w:document ${ns}><w:body>${corps}</w:body></w:document>`),
+    "word/styles.xml": strToU8(`<w:styles ${ns}><w:style w:styleId="Heading1"><w:name w:val="heading 1"/></w:style><w:style w:styleId="Heading2"><w:name w:val="heading 2"/></w:style><w:style w:styleId="Consigne"><w:name w:val="Consigne"/></w:style></w:styles>`),
+    "docProps/core.xml": strToU8(`<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/"><dc:title>${titre}</dc:title><dcterms:modified>2026-10-01T09:30:00Z</dcterms:modified></cp:coreProperties>`),
+  };
+  if (avecRetours) f["word/comments.xml"] = strToU8(`<w:comments ${ns}><w:comment w:id="0" w:author="Sergio" w:date="2026-09-30T09:00:00Z"><w:p w14:paraId="A1"><w:r><w:t>Préciser la source de cette valeur.</w:t></w:r></w:p></w:comment></w:comments>`);
+  return zipSync(f);
 }
 
 function essaiDemo(): Record<string, string> {
@@ -135,6 +157,23 @@ export function plateformeDemo(scenario: string | null): Plateforme {
     espace.poser("bibliotheque/references/BIB-020.json", JSON.stringify({ titre: "General 2S2P1D model and relation between the linear viscoelastic behaviours of bituminous binders and mixes", auteurs: "Olard, F.; Di Benedetto, H.", annee: 2003, cle: "ref20", fichierPdf: "BIB-020_Olard-DiBenedetto_2003_General-2S2P1D-model.pdf" }));
     dossier(`${ESPACE}\\bibliotheque\\pdf`).poser("BIB-020_Olard-DiBenedetto_2003_General-2S2P1D-model.pdf", pdfDemo("General 2S2P1D model", "F. Olard, H. Di Benedetto (2003)"));
     ref(65, "The general theory of stresses and displacements in layered systems", "Burmister, D. M.", 1945);
+    espace.poser(
+      "manuscrits/these/manuscrit.json",
+      JSON.stringify({
+        version: 1,
+        titre: "Thèse",
+        parties: [
+          { id: "introduction-generale", nom: "Introduction générale", source: "espace:manuscrits/these/parties/00_Introduction_generale.docx", genre: "chapitre", statut: "redaction", objectifMots: 3000 },
+          { id: "chapitre1-etat-de-l-art", nom: "Chapitre1 Etat de l art", source: "espace:manuscrits/these/parties/01_Chapitre1_Etat_de_l_art.docx", genre: "chapitre", statut: "relecture", objectifMots: 12000 },
+          { id: "chapitre2-cadre-theorique", nom: "Chapitre2 Cadre theorique", source: "ailleurs:Thèse/02_Chapitre2_Cadre_theorique.docx", genre: "chapitre", statut: "squelette", objectifMots: null },
+        ],
+      }),
+    );
+    void (async () => {
+      await espace.ensureDir("manuscrits/these/parties");
+      await espace.writeBytesAtomic("manuscrits/these/parties/00_Introduction_generale.docx", docxDemo("Introduction générale", ["Contexte", "Problématique", "Plan du manuscrit"], 2));
+      await espace.writeBytesAtomic("manuscrits/these/parties/01_Chapitre1_Etat_de_l_art.docx", docxDemo("Chapitre 1 – État de l'art", ["1.1 Chaussées aéronautiques", "1.2 Matériaux bitumineux", "1.3 Contact pneumatique-chaussée", "1.4 Modélisation multicouche"], 3, true));
+    })();
     espace.poser("planning/PH-0001.json", JSON.stringify({ titre: "Rédiger le chapitre ChaussSpec", categorie: "", debut: "2026-10-05", fin: "2026-10-30" }));
     espace.poser(
       "chausspec/structure-a340.json",

@@ -393,6 +393,21 @@ fichiers (lecture en Rust). Actions : **exporter en Excel** (`.xlsx`), **copier 
 exporter les données brutes** d'un essai vers un dossier choisi, **enregistrer le
 graphe dans Figures**, **ouvrir dans le traitement 2S2P1D**.
 
+### Manuscrits → Plan (1.13.0)
+Un **manuscrit** est le plan de la thèse : `manuscrits/<manuscrit>/manuscrit.json` (dans l'espace), liste
+ordonnée de **parties** (pages liminaires, chapitres, bibliographie, annexes). Chaque partie pointe
+vers un `.docx` qui reste **où l'on veut** : une source `racine:chemin` (comme les données brutes,
+§4.1) dont chaque PC règle le dossier ; `espace:` désigne l'espace lui-même. Un fichier choisi hors des
+racines connues reçoit pour racine son dossier (à régler aussi sur l'autre PC). Le plan porte aussi le
+statut (squelette, en rédaction, en relecture, figé) et l'objectif en mots de chaque partie.
+L'appli **lit** le `.docx` sans Word (zip + XML, `core/ooxml.ts`) : plan des titres et signets,
+mots (hors consignes et mini-sommaires), consignes « À rédiger » restantes, figures, tableaux, notes,
+commentaires (résolus ou non) et modifications suivies, citations Zotero, date de modification ; relu
+au retour dans la fenêtre. Elle n'écrit jamais dans un fichier Word.
+**Versions** : une copie datée par partie, `manuscrits/<manuscrit>/versions/<partie>/` (les anciennes
+versions, `manuscrits/<nom du fichier>/`, restent lues). Les corrections reçues et les documents fusionnés
+iront au même endroit (`retours/`, `sorties/`) : voir `MANUSCRITS_REFONTE.md` (phases suivantes).
+
 ### Présentations (Manuscrits → Présentations)
 Une présentation est un fichier Markdown de l'espace (`presentations/<nom>.md`), une diapo
 par section séparée par `---` : en-tête (titre, auteur, date, modèle), titres, puces à
@@ -427,9 +442,8 @@ dans la Bibliothèque (« Citations [@…] dans l'application »), réglage part
 
 ### 8.4 Reprise de l'existant
 Import unique des fiches `projects/*.toml`, des aperçus et des notes de these-lgcb.
-Les **études** sont reprises par le module Études (P7). L'**index LaTeX** est repris dans
-Manuscrits (onglet Sources LaTeX, racine `latex`), sans la compilation ni les vignettes de
-`lgcb/tex.py` : l'application ne lance pas LaTeX, elle montre le PDF déjà compilé.
+Les **études** sont reprises par le module Études (P7). L'index des sources LaTeX, repris en P7,
+a été **retiré en 1.13.0** (la thèse s'écrit sous Word).
 
 ## 9. Module Bibliothèque (ex-classeur Excel)
 

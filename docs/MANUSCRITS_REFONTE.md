@@ -156,18 +156,18 @@ module : tout passe par le registre.
 1. **Où vivent les `.docx`** — *tranché* : où l'on veut (références `{racine, chemin}`, réglées par PC) ;
    versions, retours reçus et sorties au même endroit, dans l'espace. Compatible avec la SPEC actuelle
    (racines par poste, copies dans l'espace) ; un seul module, plusieurs racines.
-2. **Moteur de fusion** : natif dans l'appli (recommandé : sans Word, testable, reproductible) ou piloté
+2. **Moteur de fusion** — *tranché : natif dans l'appli* (le pilotage par Word reste possible plus tard, M5). Natif (sans Word, testable, reproductible) ou piloté
    par Word (COM : exactement « Texte d'un fichier », fidélité maximale mais Word obligatoire, non testable
    hors Windows). Dans les deux cas, **mise à jour des champs et Zotero > Refresh restent deux clics dans Word**
    (Zotero doit reconstruire la bibliographie sur le document entier).
-3. **Numérotation des titres** : aujourd'hui tapée à la main (« 1.1 Les chaussées… ») avec des mini-sommaires
+3. **Numérotation des titres** — *probablement automatique (à confirmer)* : aujourd'hui tapée à la main (« 1.1 Les chaussées… ») avec des mini-sommaires
    tapés eux aussi. Une numérotation multiniveau liée aux styles de titre (dans le modèle) rend les renvois
    et les mini-sommaires automatiques ; sinon, l'appli doit lire les numéros tapés.
-4. **Présentations et Sources LaTeX** : conservés tels quels ?
+4. **Présentations et Sources LaTeX** — *tranché : Présentations conservées, Sources LaTeX retiré (1.13.0)*.
 5. **PDF** : l'appli ne peut pas en produire sans Word (elle n'embarque pas de moteur de mise en page) ; l'export
    PDF reste « Enregistrer sous » dans Word, sauf si le pilotage par Word est retenu.
 
-## 8. Phases proposées
+## 8. Phases proposées (M1 faite en 1.13.0)
 
 - **M1** — modèle `manuscrit.json` (sources par racine), lecture OOXML, inventaire, écran Plan (lecture seule),
   versions par partie dans `versions/` (reprise des versions existantes).
