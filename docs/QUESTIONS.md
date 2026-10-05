@@ -22,6 +22,6 @@ reportée dans `SPEC.md` et la question est supprimée d'ici.
    à lui-même et s'exporte en un `.zip` depuis les réglages ; reste à choisir où archiver.)*
 6. **Refonte de Manuscrits.** Analyse et architecture proposées dans `docs/MANUSCRITS_REFONTE.md`
    (parties `.docx` + `manuscrit.json`, fusion générée par l'appli, retours, sources Zotero). À trancher
-   avant M1 : où vivent les `.docx` (dans l'espace, ce qui change la SPEC), moteur de fusion natif ou
+   avant M1 : moteur de fusion natif ou
    piloté par Word, numérotation des titres automatique ou tapée, sort des onglets Présentations et
    Sources LaTeX, besoin d'un export PDF depuis l'appli.

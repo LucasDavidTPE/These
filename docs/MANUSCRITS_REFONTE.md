@@ -46,32 +46,49 @@ Problèmes :
 > Les parties `.docx` sont les seules sources. Le document fusionné est **toujours généré**, jamais édité.
 > Le plan, les règles de nettoyage et l'état de chaque partie sont des données (JSON), pas du texte dans Word.
 
-## 4. Organisation des fichiers (dans l'espace, donc synchronisés sur les deux PC)
+## 4. Organisation : sources n'importe où, versions et retours au même endroit
+
+Les `.docx` de travail **peuvent être n'importe où** (un dossier par PC, une partie sur OneDrive, une autre
+dans le dossier de recherche…). Ce qui est rangé **au même endroit, dans l'espace** (donc synchronisé sur les
+deux PC), c'est tout ce qui a une histoire : les versions, les corrections reçues, les sorties.
 
 ```
 Espace/manuscrits/<these>/
   manuscrit.json                 plan, options de fusion, statut et objectifs de chaque partie
-  modele/Modele_These.dotx
-  parties/
-    liminaires.docx              titre, remerciements, résumé, abstract, TDM, listes, nomenclature
-    00_Introduction_generale.docx … 08_Conclusion_generale.docx
-    bibliographie.docx           « Références bibliographiques » (porte le champ Zotero Add/Edit Bibliography)
-    09_Annexes.docx
-  sorties/                       fusionnés générés (jamais édités à la main)
-    these-relecture.docx         avec consignes et références de chapitre
-    these-propre.docx            sans consignes
-  .versions/<partie>/AAAA-MM-JJ_HHMM_note.docx + .json   copies par partie
+  versions/<partie>/AAAA-MM-JJ_HHMM_<note>.docx + .json       copies datées d'une partie
+  retours/<AAAA-MM-JJ>_<auteur>_<partie>.docx + .json         corrections reçues, copiées ici
+  sorties/these-relecture.docx, these-propre.docx            fusionnés générés, jamais édités
 ```
+
+**Où est la source d'une partie** : une référence `{ racine, chemin }` dans `manuscrit.json`, comme pour les
+données brutes (SPEC §4) — la racine est un nom (« recherche », « manuscrits », « redaction »…) dont le
+dossier est réglé **sur chaque PC** dans les réglages du poste. Une partie peut donc vivre sous une racine
+différente d'une autre, et le même plan marche sur les deux PC même si les chemins diffèrent. Une racine
+absente sur ce PC s'affiche « absente ici », comme aujourd'hui.
+
+**Une partie introuvable ne bloque pas la fusion** : on peut fusionner avec sa **dernière version
+enregistrée** (signalé dans le rapport). Chaque PC peut donc générer le fusionné complet, même s'il ne
+possède pas tous les fichiers sources.
+
+**Les retours reçus** (corrections de directeurs, relecteurs) sont un objet à part, pas une « version » :
+1. « Ajouter un retour reçu… » : on choisit le fichier (où qu'il soit), l'appli le **copie** dans
+   `retours/`, note qui l'a envoyé, la date, la partie concernée et la version sur laquelle il porte ;
+2. elle en **extrait** commentaires et modifications suivies (auteur, date, texte, emplacement) dans le `.json` ;
+3. chaque remarque a un état (à traiter, traitée, refusée, + note), partagé entre les deux PC ;
+4. la boîte « Retours » regroupe tout, par partie, par auteur, par état.
+
+Ainsi, quel que soit l'endroit où vit un `.docx`, **toutes les versions et toutes les corrections reçues se
+retrouvent au même endroit**, sous `Espace/manuscrits/<these>/`.
 
 `manuscrit.json` (un fichier par thèse ; écriture atomique comme le reste) :
 
 ```json
 {
   "titre": "Thèse L. David",
-  "modele": "modele/Modele_These.dotx",
+  "modele": { "racine": "manuscrits", "chemin": "Modele/Modele_These.dotx" },
   "parties": [
-    { "id": "liminaires", "fichier": "parties/liminaires.docx", "genre": "liminaire" },
-    { "id": "ch1", "fichier": "parties/01_Chapitre1_Etat_de_l_art.docx", "genre": "chapitre",
+    { "id": "liminaires", "source": { "racine": "manuscrits", "chemin": "00_Document_maitre.docx" }, "genre": "liminaire" },
+    { "id": "ch1", "source": { "racine": "recherche", "chemin": "These/ch1.docx" }, "genre": "chapitre",
       "statut": "redaction", "objectif_mots": 12000 }
   ],
   "fusion": { "saut": "nextPage", "nettoyage": { "consignes": "Consigne", "blocs": ["Références du chapitre", "Instructions d'assemblage"], "minisommaire": "SommaireChapitre" } }
@@ -136,8 +153,9 @@ module : tout passe par le registre.
 
 ## 7. Décisions ouvertes (voir aussi `QUESTIONS.md`)
 
-1. **Où vivent les `.docx`** : dans l'espace (`Espace/manuscrits/<these>/`), comme ici — ce qui change la SPEC
-   actuelle (les Word restaient dans une racine locale `manuscrits`, l'espace ne gardait que des copies).
+1. **Où vivent les `.docx`** — *tranché* : où l'on veut (références `{racine, chemin}`, réglées par PC) ;
+   versions, retours reçus et sorties au même endroit, dans l'espace. Compatible avec la SPEC actuelle
+   (racines par poste, copies dans l'espace) ; un seul module, plusieurs racines.
 2. **Moteur de fusion** : natif dans l'appli (recommandé : sans Word, testable, reproductible) ou piloté
    par Word (COM : exactement « Texte d'un fichier », fidélité maximale mais Word obligatoire, non testable
    hors Windows). Dans les deux cas, **mise à jour des champs et Zotero > Refresh restent deux clics dans Word**
@@ -151,8 +169,11 @@ module : tout passe par le registre.
 
 ## 8. Phases proposées
 
-- **M1** — modèle `manuscrit.json`, lecture OOXML, inventaire, écran Plan (lecture seule), migration des versions par partie.
+- **M1** — modèle `manuscrit.json` (sources par racine), lecture OOXML, inventaire, écran Plan (lecture seule),
+  versions par partie dans `versions/` (reprise des versions existantes).
+- **M1 bis** — « Ajouter un retour reçu » : copie dans `retours/`, extraction des commentaires et modifications
+  suivies, boîte Retours avec états (partagés entre PC).
 - **M2** — moteur de fusion + nettoyage + rapport, test de conformité sur la fixture, bouton Générer.
-- **M3** — Retours (commentaires, modifications suivies) et progression (consignes, mots).
+- **M3** — progression (consignes, mots), diff du texte entre versions, rapprochement d'un retour avec la version sur laquelle il porte.
 - **M4** — Sources (Zotero ↔ Bibliothèque) et résolution des renvois `[→ §…]`.
 - **M5** — (optionnel) pilotage de Word : mise à jour des champs et export PDF.
