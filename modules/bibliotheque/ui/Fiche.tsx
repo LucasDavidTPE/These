@@ -40,7 +40,7 @@ const NOTES: [keyof NotesLecture, string][] = [
   ["aCiter", "À citer"],
 ];
 
-export function Fiche({ b, c, onEnregistrer, onFermer }: { b: Biblio; c: Calcule; onEnregistrer(r: Reference): void; onFermer(): void }) {
+export function Fiche({ b, c, onEnregistrer, onFermer, onOuvrir }: { b: Biblio; c: Calcule; onEnregistrer(r: Reference): void; onFermer(): void; onOuvrir(id: string): void }) {
   const ctx = useContexte();
   const [erreur, setErreur] = useState<string | null>(null);
   const [doi, setDoi] = useState("");
@@ -64,6 +64,8 @@ export function Fiche({ b, c, onEnregistrer, onFermer }: { b: Biblio; c: Calcule
     }
   }
   const r = c.ref;
+  /** Dans les textes libres, « [@ » propose les autres références et une citation ouvre la fiche citée. */
+  const citer = { refs: b.references.map((x) => ({ id: x.id, valeur: x.valeur })), exclure: c.id, ouvrir: onOuvrir };
   const maj = (champ: Partial<Reference>) => onEnregistrer({ ...r, ...champ });
   const t = (k: keyof Reference) => (v: string) => maj({ [k]: v } as Partial<Reference>);
   const n = (k: keyof Reference) => (v: string) => maj({ [k]: v === "" ? null : Number(v) } as Partial<Reference>);
@@ -168,7 +170,7 @@ export function Fiche({ b, c, onEnregistrer, onFermer }: { b: Biblio; c: Calcule
             <ChampChoix valeur={r.pertinence === null ? "" : String(r.pertinence)} vide="—" options={["1", "2", "3", "4", "5"]} onValider={n("pertinence")} />
           </Libelle>
           <Libelle titre="Commentaire" large>
-            <ChampTexte multiligne valeur={r.commentaire} onValider={t("commentaire")} />
+            <ChampTexte multiligne valeur={r.commentaire} onValider={t("commentaire")} citer={citer} />
           </Libelle>
         </div>
       </Section>
@@ -177,7 +179,7 @@ export function Fiche({ b, c, onEnregistrer, onFermer }: { b: Biblio; c: Calcule
         <div className="grille-champs">
           {NOTES.map(([k, titre]) => (
             <Libelle key={k} titre={titre} large={k !== "chapitre" && k !== "aCiter"}>
-              <ChampTexte multiligne={k !== "chapitre" && k !== "aCiter"} valeur={r.notes[k]} onValider={(v) => maj({ notes: { ...r.notes, [k]: v } })} />
+              <ChampTexte multiligne={k !== "chapitre" && k !== "aCiter"} valeur={r.notes[k]} onValider={(v) => maj({ notes: { ...r.notes, [k]: v } })} citer={citer} />
             </Libelle>
           ))}
         </div>
@@ -190,7 +192,7 @@ export function Fiche({ b, c, onEnregistrer, onFermer }: { b: Biblio; c: Calcule
         <div className="grille-champs">
           {FICHE.map(([k, titre]) => (
             <Libelle key={k} titre={titre} large>
-              <ChampTexte multiligne valeur={r.fiche[k]} onValider={(v) => maj({ fiche: { ...r.fiche, [k]: v } })} />
+              <ChampTexte multiligne valeur={r.fiche[k]} onValider={(v) => maj({ fiche: { ...r.fiche, [k]: v } })} citer={citer} />
             </Libelle>
           ))}
           {DIMENSIONS.map(([k, titre]) => (

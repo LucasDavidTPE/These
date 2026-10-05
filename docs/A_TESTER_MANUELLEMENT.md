@@ -708,3 +708,33 @@ nombres doivent être identiques, dans les deux modes.
       (onglet Retours : le même sélecteur, les corrections reçues d'un article restent avec l'article).
 - [ ] La thèse existante est inchangée (type « Thèse » par défaut), son plan et ses versions sont intacts.
 - [ ] « Générer » ne propose plus de choix « version propre » : un seul fichier, consignes gardées.
+
+## Bibliothèque : renvoi vers une autre référence (1.17.0)
+
+- [ ] Fiche d'une référence → champ « Commentaire » : taper `[@` ouvre la liste des autres références ; continuer par `olard`
+      la filtre ; ↓ ↑ puis Entrée (ou un clic) écrit `[@BIB-020]` et le curseur se place après.
+- [ ] Taper `@` après un espace, ou `; @` dans `[@BIB-020; @…`, propose aussi la liste ; Échap la referme sans rien écrire.
+- [ ] Quitter le champ : le texte est enregistré et « Cite : Olard & Di Benedetto, 2003 » apparaît dessous ; cliquer dessus
+      ouvre la fiche citée.
+- [ ] Même saisie dans « Mes notes de lecture » et « Fiche de lecture » ; une adresse e-mail (`a@b.fr`) ne déclenche rien.
+- [ ] La référence ouverte ne figure pas dans sa propre liste.
+
+## Manuscrits : second PC, fichiers introuvables (1.17.1)
+
+- [ ] Sur le PC où le dossier des `.docx` n'est pas (ou mal) réglé : Manuscrits → Plan affiche **un bandeau** « N parties sont
+      introuvables sur ce PC » avec le dossier cherché, et non des erreurs rouges par carte.
+- [ ] Le bandeau propose « Utiliser <dossier> » (dossier retrouvé à côté de l'espace) : un clic remet toutes les parties,
+      sans toucher à l'autre PC ni aux fichiers Word.
+- [ ] « Choisir un autre dossier… » fonctionne quand rien n'est retrouvé ; chaque carte indique « Introuvable sur ce PC : <fichier>
+      n'est pas dans <dossier> ».
+
+## Manuscrits : chemins communs aux deux PC (1.18.0)
+
+- [ ] **PC 1** (où tout marche) : ouvrir Manuscrits → Plan. Message « N parties ont désormais un chemin commun aux deux PC » ;
+      les cartes montrent `espace:…` ou `onedrive:…` sous le titre. Ne rien faire d'autre.
+- [ ] **PC 2** (après synchronisation OneDrive) : Manuscrits → Plan affiche toutes les parties lues, sans bandeau ni réglage.
+- [ ] Une partie encore introuvable (fichier déplacé ou renommé) : le bandeau propose « Retrouvé dans … : utiliser » ; un clic la
+      relie, et l'autre PC la retrouve aussi. « Pointer le fichier… » sur la carte permet de choisir le fichier à la main.
+- [ ] Un `.docx` ajouté depuis le Bureau (hors OneDrive) : message « Dossier réglé sur ce PC seulement » ; sur l'autre PC, la partie est
+      signalée introuvable (normal : le fichier n'y est pas).
+- [ ] « Générer » fonctionne sur les deux PC avec les mêmes parties.

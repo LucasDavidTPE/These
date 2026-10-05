@@ -401,9 +401,17 @@ libellés (un « chapitre » de thèse est une « section » d'article ou de rap
 regroupe par type, « Nouveau document… » en crée un autre à tout moment. Ce qui suit vaut pour tous.
 Le plan, `manuscrits/<document>/manuscrit.json` (dans l'espace), est la liste
 ordonnée de **parties** (pages liminaires, chapitres, bibliographie, annexes). Chaque partie pointe
-vers un `.docx` qui reste **où l'on veut** : une source `racine:chemin` (comme les données brutes,
-§4.1) dont chaque PC règle le dossier ; `espace:` désigne l'espace lui-même. Un fichier choisi hors des
-racines connues reçoit pour racine son dossier (à régler aussi sur l'autre PC). Le plan porte aussi le
+vers un `.docx` qui reste **où l'on veut** : une source `racine:chemin` (comme les données brutes, §4.1).
+**Sources communes aux deux PC** (1.18.0) : `espace:` (l'espace) et `onedrive:` (le dossier OneDrive qui contient
+l'espace, « OneDrive » ou « OneDrive - … », dont seul le chemin change d'un PC à l'autre) sont toujours préférées,
+même à une racine du poste plus longue, et ne demandent aucun réglage. Une racine du poste n'est utilisée que pour un
+fichier hors de OneDrive (à régler alors sur chaque PC). Une ancienne source par racine du poste dont le fichier est
+lu dans l'espace ou OneDrive est convertie d'elle-même (seulement si le fichier a bien été lu : un dossier mal réglé
+ne peut pas abîmer le plan). « Pointer le fichier… » sur une carte relie la partie à un fichier choisi. Quand un fichier est introuvable
+sur un PC (dossier non réglé, ou réglé ailleurs), un bandeau regroupe les parties concernées par dossier, cherche le
+premier fichier manquant près de l'espace puis dans tout OneDrive (5 niveaux, 1 500 dossiers au plus) et propose le bon
+dossier en un clic (les parties dont le fichier y est sont reliées, en source commune si c'est dans OneDrive) ;
+« Choisir le dossier… » reste possible. Le plan porte aussi le
 statut (squelette, en rédaction, en relecture, figé) et l'objectif en mots de chaque partie.
 L'appli **lit** le `.docx` sans Word (zip + XML, `core/ooxml.ts`) : plan des titres et signets,
 mots (hors consignes et mini-sommaires), consignes « À rédiger » restantes, figures, tableaux, notes,
@@ -529,6 +537,11 @@ ENTPE.
   titre court = six mots significatifs sans accents ; nom modifiable), le renomme sur place
   s'il est déjà dans `bibliotheque/pdf` de l'espace, sinon l'y copie (l'original reste), et note son
   nom dans la fiche ; « Renommer selon la convention » pour un PDF déjà rattaché.
+  **Renvoi vers une autre référence** (1.17.0) : dans le commentaire, les notes de lecture et la fiche de lecture,
+  taper `[@` (ou `@` après un espace, ou `; @` dans un groupe) propose les autres références de la Bibliothèque
+  (recherche par mots dans l'identifiant, la clé, les auteurs, l'année et le titre, sans accents ni casse) ;
+  flèches, Entrée ou Tab (ou clic) insèrent `[@BIB-020]`, Échap referme. Le texte garde la syntaxe de citation
+  des présentations (ci-dessous) ; sous le champ, « Cite : Olard & Di Benedetto, 2003 » ouvre la fiche citée. La fiche ne se propose pas elle-même.
 - **Plan de lecture** : un bloc par mois (objectif de fin de mois, documents à demander
   en amont, avancement, liste des références) ; changer le mois d'une référence la
   déplace. Les mois alimentent le **Planning** (§10).

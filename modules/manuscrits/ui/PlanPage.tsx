@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Message, Pastille } from "@interface/composants";
 import { useContexte, type Contexte } from "@interface/contexte";
 import { isoAvecDecalage } from "@noyau/dates";
+import { lireReference } from "@noyau/poste/racines";
 import { absolu } from "@noyau/stockage";
 import { inventorier, type Inventaire } from "../core/inventaire";
 import {
@@ -24,7 +25,7 @@ import {
   type Partie,
   type TypeDocument,
 } from "../core/plan";
-import { rattacher, resoudreSource, scinder } from "../core/sources";
+import { chercherFichier, dossierOneDrive, estIntrouvable, partagerSources, RACINES_PARTAGEES, rattacher, relierFichier, resoudreSource, scinder } from "../core/sources";
 import { empreinte, type Etat } from "../core/versions";
 import { aTraiterParPartie, type Retour } from "../core/retours";
 import { chargerVersions, enregistrerVersion, listerDocx, type VersionLue } from "./donnees";
@@ -35,8 +36,9 @@ import "./manuscrits.css";
 type Lecture =
   | { etat: "lecture" }
   | { etat: "absent"; message: string; racine: string }
+  | { etat: "introuvable"; racine: string; dossier: string; nom: string }
   | { etat: "erreur"; message: string }
-  | { etat: "ok"; inventaire: Inventaire; empreinte: string; versions: VersionLue[]; absolu: string };
+  | { etat: "ok"; inventaire: Inventaire; empreinte: string; versions: VersionLue[]; absolu: string; /** Source lue (le plan a pu changer depuis). */ source: string };
 
 const ETATS: Record<Etat, [string, "info" | "attention" | "ok"]> = {
   "aucune-version": ["aucune version", "attention"],
@@ -75,9 +77,9 @@ function useLectures(ctx: Contexte, projet: string | null, m: Manuscrit | null, 
         try {
           const octets = await ctx.plateforme.fichiers(r.dossier).readBytes(r.chemin);
           const versions = await chargerVersions(espace.fichiers, projet, p.id, scinder(r.chemin).nom);
-          maj(p.id, { etat: "ok", inventaire: inventorier(octets, lecture), empreinte: empreinte(octets), versions, absolu: r.absolu });
+          maj(p.id, { etat: "ok", inventaire: inventorier(octets, lecture), empreinte: empreinte(octets), versions, absolu: r.absolu, source: p.source });
         } catch (e) {
-          maj(p.id, { etat: "erreur", message: e instanceof Error ? e.message : String(e) });
+          maj(p.id, estIntrouvable(e) ? { etat: "introuvable", racine: r.racine, dossier: r.dossier, nom: scinder(r.chemin).nom } : { etat: "erreur", message: `${e instanceof Error ? e.message : String(e)} (${r.absolu})` });
         }
       }
     })();
@@ -108,6 +110,70 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
     window.addEventListener("focus", retour);
     return () => window.removeEventListener("focus", retour);
   }, []);
+
+  // Les sources lues sur ce PC dans l'espace ou dans OneDrive deviennent communes aux deux PC (`espace:`, `onedrive:`) :
+  // l'autre PC les retrouve alors sans aucun réglage. Seules les parties effectivement lues sont converties.
+  useEffect(() => {
+    if (!m || !projet) return;
+    const lues = new Map<string, string>();
+    for (const p of m.parties) {
+      const l = lectures[p.id];
+      // seulement une lecture de cette source-là (pas celle d'un autre document ayant une partie de même identifiant)
+      if (l?.etat === "ok" && l.source === p.source) lues.set(p.id, l.absolu);
+    }
+    const r = partagerSources(m, lues, espace.racine);
+    if (!r.converties) return;
+    void sauver(r.m).then(() =>
+      setMessage({ niveau: "info", texte: `${pluriel(r.converties, "partie a désormais", "parties ont désormais")} un chemin commun aux deux PC (dans OneDrive ou l'espace) : rien à régler sur l'autre PC.` }),
+    );
+  }, [m, projet, lectures, espace, sauver]);
+
+  /**
+   * Relie des parties à des fichiers retrouvés sur ce PC (chemins absolus) : source commune si le fichier est dans
+   * OneDrive ou l'espace, sinon réglage du dossier sur ce PC (voir `relierFichier`).
+   */
+  async function relier(liens: { id: string; chemin: string }[]) {
+    if (!m || !liens.length) return;
+    let suivant = m;
+    let racines = { ...ctx.reglages.racines };
+    const locales: string[] = [];
+    for (const l of liens) {
+      const p = suivant.parties.find((x) => x.id === l.id);
+      if (!p) continue;
+      const r = relierFichier(p.source, l.chemin, espace.racine, racines);
+      if (r.racine) {
+        racines = { ...racines, [r.racine[0]]: r.racine[1] };
+        locales.push(`« ${r.racine[0]} » = ${r.racine[1]}`);
+      }
+      suivant = modifierPartie(suivant, p.id, { source: r.source });
+    }
+    if (locales.length) await ctx.enregistrerReglages({ ...ctx.reglages, racines });
+    await sauver(suivant);
+    const n = liens.length;
+    setMessage({
+      niveau: "info",
+      texte: `${pluriel(n, "partie retrouvée", "parties retrouvées")}.${
+        locales.length ? ` Dossier réglé sur ce PC seulement (hors OneDrive) : ${[...new Set(locales)].join(" ; ")}.` : " Chemin commun aux deux PC : rien à régler sur l'autre."
+      }`,
+    });
+    setTour((t) => t + 1);
+  }
+
+  /** Relie les parties d'un groupe dont le fichier (même nom) est dans `dossier`. */
+  async function relierDossier(parties: { id: string; nom: string }[], dossier: string) {
+    const fs = ctx.plateforme.fichiers(dossier);
+    const liens: { id: string; chemin: string }[] = [];
+    for (const x of parties) if (await fs.exists(x.nom).catch(() => false)) liens.push({ id: x.id, chemin: absolu(dossier, x.nom) });
+    if (!liens.length) return setMessage({ niveau: "erreur", texte: `Aucun des fichiers attendus n'est dans ${dossier}.` });
+    await relier(liens);
+  }
+
+  async function pointerFichier(p: Partie) {
+    const f = await ctx.plateforme.ouvrirFichier(`Fichier Word de « ${p.nom} »`, ["docx"]);
+    if (!f) return;
+    if (!f.chemin) return setMessage({ niveau: "erreur", texte: "Le chemin du fichier n'est connu que dans l'application installée." });
+    await relier([{ id: p.id, chemin: f.chemin }]);
+  }
 
   async function creer(titre: string, type: TypeDocument) {
     if (await ms.creer(titre, type)) setNouveau(false);
@@ -156,11 +222,6 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
     await ajouter(chemins);
   }
 
-  async function choisirRacine(racine: string) {
-    const d = await ctx.plateforme.choisirDossier(`Dossier « ${racine} » sur ce PC`);
-    if (d) await ctx.enregistrerReglages({ ...ctx.reglages, racines: { ...ctx.reglages.racines, [racine]: d } });
-  }
-
   async function versionner(p: Partie, note: string) {
     if (enCours.current) return;
     enCours.current = true;
@@ -199,6 +260,21 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
     }
     return { mots, aRediger, commentaires, modifiees, lues };
   }, [lectures]);
+
+  /** Parties dont le fichier est introuvable sur ce PC, regroupées par dossier (racine) : un seul réglage les remet toutes. */
+  const absentes = useMemo(() => {
+    const g = new Map<string, Groupe>();
+    for (const p of m?.parties ?? []) {
+      const l = lectures[p.id];
+      if (l?.etat !== "absent" && l?.etat !== "introuvable") continue;
+      const ref = lireReference(p.source);
+      if (!ref) continue;
+      const x = g.get(ref.racine) ?? { racine: ref.racine, dossier: l.etat === "introuvable" ? l.dossier : null, parties: [] };
+      x.parties.push({ id: p.id, nom: scinder(ref.chemin).nom });
+      g.set(ref.racine, x);
+    }
+    return [...g.values()];
+  }, [m, lectures]);
 
   if (!projets) return <p className="discret">Lecture…</p>;
 
@@ -279,6 +355,18 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
             <Tuile valeur={nombre(totaux.commentaires)} titre="commentaires non résolus" niveau={totaux.commentaires ? "attention" : undefined} />
             <Tuile valeur={`${totaux.modifiees} / ${totaux.lues}`} titre="parties sans version à jour (modifiées ou jamais enregistrées)" />
           </div>
+          {absentes.map((g) => (
+            <GroupeAbsent
+              key={g.racine}
+              ctx={ctx}
+              g={g}
+              utiliser={(d) => void relierDossier(g.parties, d)}
+              choisir={async () => {
+                const d = await ctx.plateforme.choisirDossier("Dossier qui contient les fichiers Word manquants");
+                if (d) await relierDossier(g.parties, d);
+              }}
+            />
+          ))}
           {m.parties.map((p, i) => (
             <CartePartie
               key={p.id}
@@ -293,7 +381,7 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
               maj={(champs) => void sauver(modifierPartie(m, p.id, champs))}
               deplacer={(delta) => void sauver(deplacerPartie(m, p.id, delta))}
               retirer={() => window.confirm(`Retirer « ${p.nom} » du plan ? Le fichier Word et ses versions ne sont pas touchés.`) && void sauver(retirerPartie(m, p.id))}
-              choisirRacine={(r) => void choisirRacine(r)}
+              pointer={() => void pointerFichier(p)}
               versionner={(note) => void versionner(p, note)}
               ouvrir={(chemin) => void ctx.plateforme.ouvrirDossier(chemin)}
               ouvrirVersion={(v) => void ctx.plateforme.ouvrirDossier(absolu(espace.racine, `${v.dossier}/${v.fichier}`))}
@@ -303,6 +391,66 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
         </>
       )}
     </>
+  );
+}
+
+interface Groupe {
+  racine: string;
+  dossier: string | null;
+  /** Parties manquantes : identifiant et nom du fichier attendu. */
+  parties: { id: string; nom: string }[];
+}
+
+/**
+ * Bandeau « fichiers Word introuvables sur ce PC », un par dossier : cherche le premier fichier manquant près de
+ * l'espace puis dans tout OneDrive, et propose le dossier trouvé.
+ */
+function GroupeAbsent({ ctx, g, utiliser, choisir }: { ctx: Contexte; g: Groupe; utiliser(dossier: string): void; choisir(): void }) {
+  const [candidats, setCandidats] = useState<string[] | null>(null);
+  const espace = ctx.espace!.racine;
+  const nom = g.parties[0]!.nom;
+  useEffect(() => {
+    let annule = false;
+    const bases = [...new Set([scinder(espace).dossier, dossierOneDrive(espace)].filter((b): b is string => !!b))];
+    (async () => {
+      for (const base of bases) {
+        const l = await chercherFichier(ctx.plateforme.fichiers(base), nom, 5, 1500).catch(() => []);
+        if (l.length) return l.slice(0, 4).map((d) => (d ? absolu(base, d) : base));
+      }
+      return [];
+    })().then((l) => !annule && setCandidats(l));
+    return () => {
+      annule = true;
+    };
+  }, [ctx.plateforme, espace, nom]);
+  const n = g.parties.length;
+  const partagee = RACINES_PARTAGEES.includes(g.racine);
+  return (
+    <Message niveau="attention">
+      <strong>
+        {n} {n > 1 ? "fichiers Word introuvables" : "fichier Word introuvable"} sur ce PC
+      </strong>{" "}
+      {partagee ? (
+        <>: ils ne sont plus à l'endroit enregistré dans {g.racine === "espace" ? "l'espace" : "OneDrive"} (déplacés ou renommés ?).</>
+      ) : (
+        <>
+          : ils sont cherchés dans le dossier « {g.racine} » de ce PC{g.dossier ? <> (<code>{g.dossier}</code>)</> : " (non réglé ici)"}.
+        </>
+      )}{" "}
+      Rien n'est perdu : le plan, les versions et les retours sont dans l'espace, et l'appli ne modifie jamais vos fichiers Word.
+      <div className="rangee" style={{ marginTop: 6 }}>
+        {candidats === null ? <span className="discret">Recherche de « {nom} » dans OneDrive…</span> : null}
+        {(candidats ?? []).map((d) => (
+          <button key={d} type="button" className="principal" onClick={() => utiliser(d)} title={`« ${nom} » s'y trouve`}>
+            Retrouvé dans {d} : utiliser
+          </button>
+        ))}
+        {candidats && !candidats.length ? <span className="discret">« {nom} » n'a pas été retrouvé dans OneDrive.</span> : null}
+        <button type="button" onClick={choisir}>
+          Choisir le dossier…
+        </button>
+      </div>
+    </Message>
   );
 }
 
@@ -359,7 +507,7 @@ function CartePartie({
   maj,
   deplacer,
   retirer,
-  choisirRacine,
+  pointer,
   versionner,
   ouvrir,
   ouvrirVersion,
@@ -376,7 +524,7 @@ function CartePartie({
   maj(champs: Partial<Omit<Partie, "id">>): void;
   deplacer(delta: number): void;
   retirer(): void;
-  choisirRacine(racine: string): void;
+  pointer(): void;
   versionner(note: string): void;
   ouvrir(chemin: string): void;
   ouvrirVersion(v: VersionLue): void;
@@ -423,14 +571,18 @@ function CartePartie({
 
       {l.etat === "lecture" ? <p className="discret">Lecture du fichier…</p> : null}
       {l.etat === "erreur" ? <Message niveau="erreur">{l.message}</Message> : null}
-      {l.etat === "absent" ? (
+      {l.etat === "introuvable" || l.etat === "absent" ? (
         <Message niveau="attention">
-          {l.message}{" "}
-          {l.racine ? (
-            <button type="button" onClick={() => choisirRacine(l.racine)}>
-              Choisir le dossier « {l.racine} »…
-            </button>
-          ) : null}
+          {l.etat === "introuvable" ? (
+            <>
+              Introuvable sur ce PC : <strong>{l.nom}</strong> n'est pas dans <code>{l.dossier}</code>.
+            </>
+          ) : (
+            l.message
+          )}{" "}
+          <button type="button" onClick={pointer}>
+            Pointer le fichier…
+          </button>
         </Message>
       ) : null}
 
@@ -543,7 +695,7 @@ function CartePartie({
             </details>
           ) : null}
         </>
-      ) : l.etat === "absent" || l.etat === "erreur" ? (
+      ) : l.etat === "absent" || l.etat === "introuvable" || l.etat === "erreur" ? (
         <div className="rangee">
           <button type="button" className="lien" onClick={retirer}>
             Retirer du plan

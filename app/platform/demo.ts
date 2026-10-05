@@ -188,10 +188,21 @@ export function plateformeDemo(scenario: string | null): Plateforme {
         version: 1,
         type: "article",
         titre: "Article Prony",
-        parties: [{ id: "article", nom: "Article", source: "espace:manuscrits/article-prony/parties/Article_Prony.docx", genre: "chapitre", statut: "redaction", objectifMots: 6000 }],
+        parties: [
+          { id: "article", nom: "Article", source: "espace:manuscrits/article-prony/parties/Article_Prony.docx", genre: "chapitre", statut: "redaction", objectifMots: 6000 },
+          // le dossier « manuscrits » de ce PC ne le contient pas : l'appli le retrouve à côté de l'espace
+          { id: "annexes", nom: "Annexes Prony", source: "manuscrits:Annexes_Prony.docx", genre: "annexe", statut: "squelette", objectifMots: null },
+          // ancienne source par dossier du poste, dont le fichier est en fait dans OneDrive : convertie en `onedrive:` à la lecture
+          { id: "discussion", nom: "Discussion", source: "manuscrits:Prony_Discussion.docx", genre: "chapitre", statut: "redaction", objectifMots: null },
+        ],
       }),
     );
     void (async () => {
+      // un fichier rangé ailleurs dans OneDrive (le dossier OneDrive démo contient les autres dossiers démo par leur chemin)
+      const onedrive = dossier(ONEDRIVE);
+      await onedrive.ensureDir("Thèse/Documents");
+      await onedrive.writeBytesAtomic("Thèse/Documents/Annexes_Prony.docx", docxDemo("Annexes", ["A. Données brutes"], 1));
+      await dossier(`${ONEDRIVE}\\Thèse\\Rédaction`).writeBytesAtomic("Prony_Discussion.docx", docxDemo("Discussion", ["Limites", "Perspectives"], 2));
       await espace.ensureDir("manuscrits/article-prony/parties");
       await espace.writeBytesAtomic("manuscrits/article-prony/parties/Article_Prony.docx", docxDemo("Calage de séries de Prony", ["Introduction", "Méthode", "Résultats"], 2));
       await espace.ensureDir("manuscrits/these/parties");
@@ -315,9 +326,32 @@ export function plateformeDemo(scenario: string | null): Plateforme {
         return { ...observe(fs, () => undefined), listDir: (c) => fs.listDir(p(c)), exists: (c) => fs.exists(p(c)), readText: (c) => fs.readText(p(c)), readBytes: (c) => fs.readBytes(p(c)) };
       }
       const cle = normaliser(racine);
-      return observe(dossier(racine), (chemin) => {
+      const base = observe(dossier(racine), (chemin) => {
         for (const rappel of abonnes.get(cle) ?? []) rappel([chemin]);
       });
+      // Un dossier démo plus profond (l'espace dans le dossier OneDrive…) répond pour ce qui est chez lui, comme sur disque.
+      const plusProfond = (c: string): [Fichiers, string] | null => {
+        if (!c) return null;
+        const abs = `${cle}\\${normaliser(c.split("/").join("\\"))}`;
+        let meilleur: [string, FichiersMemoire] | null = null;
+        for (const [k, fs] of dossiers) if (k.length > cle.length && (abs === k || abs.startsWith(k + "\\")) && (!meilleur || k.length > meilleur[0].length)) meilleur = [k, fs];
+        if (!meilleur) return null;
+        const rel = c.split("/").slice(meilleur[0].slice(cle.length + 1).split("\\").length).join("/");
+        return [meilleur[1], rel];
+      };
+      const lecture =
+        <R,>(f: (fs: Fichiers, c: string) => Promise<R>) =>
+        (c: string) => {
+          const d = plusProfond(c);
+          return d ? f(d[0], d[1]) : f(base, c);
+        };
+      return {
+        ...base,
+        listDir: lecture((fs, c) => fs.listDir(c)),
+        exists: lecture((fs, c) => fs.exists(c)),
+        readText: lecture((fs, c) => fs.readText(c)),
+        readBytes: lecture((fs, c) => fs.readBytes(c)),
+      };
     },
     supprimerTemporaire: async (racine, chemin) => {
       if (!chemin.endsWith(".tmp")) throw new Error("Seuls les fichiers .tmp peuvent être supprimés.");
