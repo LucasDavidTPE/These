@@ -447,8 +447,13 @@ affiche les remarques à traiter par partie. Un retour retiré est rangé dans `
 - **identifiants** : relations (en-têtes, pieds, images, liens), signets, révisions, dessins, commentaires, notes
   de bas de page et de fin, listes (chaque partie repart de 1 ; les titres numérotés par un style partagent la liste
   du maître) sont renumérotés ; les espaces de noms et les préférences Zotero manquants sont repris ;
-- **styles** : ceux du maître l'emportent ; un style absent du maître est repris de la partie, un style défini
-  autrement est signalé ; un fichier d'une partie introuvable sur ce PC est remplacé par sa dernière version enregistrée ;
+- **styles** : ceux du maître l'emportent ; un style absent du maître est repris de la partie (sans se déclarer
+  « par défaut »), sauf si le maître a un style **de même nom** sous un autre identifiant (« Heading1 » / « Titre1 ») :
+  la partie prend alors celui du maître ; un style défini autrement est signalé ;
+- **fichier valide pour Word** (1.18.1) : une dernière passe garantit un seul style par identifiant (la dernière
+  définition, cas des fichiers produits par script) et un seul style par défaut par type, des identifiants de dessins
+  (`wp:docPr`) uniques dans tout le fichier, en-têtes et pieds compris, des formes VML (`o:spid`) et des `w14:paraId`
+  uniques : sinon Word « répare » les Styles et les Objets dessinés à l'ouverture ; un fichier d'une partie introuvable sur ce PC est remplacé par sa dernière version enregistrée ;
 - **champs** : le document demande la mise à jour des champs à l'ouverture ; la bibliographie Zotero (*Refresh*) reste à
   faire dans Word. Limite : l'état « résolu » des commentaires n'est pas repris. Sortie déterministe.
 Un rapport indique les parties, les sections et les points à voir.

@@ -738,3 +738,11 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] Un `.docx` ajouté depuis le Bureau (hors OneDrive) : message « Dossier réglé sur ce PC seulement » ; sur l'autre PC, la partie est
       signalée introuvable (normal : le fichier n'y est pas).
 - [ ] « Générer » fonctionne sur les deux PC avec les mêmes parties.
+
+## Manuscrits : document généré valide pour Word (1.18.1)
+
+- [ ] « Générer » puis ouvrir dans Word : **aucune** fenêtre « Afficher les réparations » (avant : « Styles 1 » et « Objets dessinés et
+      zones de texte 1 »).
+- [ ] Les titres des chapitres ont bien le style de titre du maître (taille, couleur, numérotation) ; la table des matières les liste.
+- [ ] Images d'en-tête (logo), figures et zones de texte de chaque chapitre présentes et au bon endroit.
+- [ ] Le rapport « À voir » signale les styles remplacés (« Heading1 » remplacé par « Titre1 » du document maître).

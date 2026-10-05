@@ -135,7 +135,7 @@ function estVide(b: string): boolean {
   if (/^<w:bookmark(Start|End)\b/.test(b)) return true;
   if (!estParagraphe(b)) return false;
   if (texteBloc(b).trim()) return false;
-  return !/<w:(drawing|pict|object|fldChar|fldSimple|sdt)\b|<w:br\b[^>]*w:type="page"/.test(b);
+  return !/<w:(drawing|pict|object|fldChar|fldSimple|sdt|footnoteReference|endnoteReference|commentReference|commentRangeStart|sym)\b|<m:oMath|<w:br\b[^>]*w:type="page"/.test(b);
 }
 
 const paragrapheDeSection = (sect: string) => `<w:p><w:pPr>${sect}</w:pPr></w:p>`;
@@ -302,6 +302,8 @@ interface Cartes {
   noteFin: Map<string, string>;
   commentaire: Map<string, string>;
   num: Map<string, string>;
+  /** Styles de la partie repris sous un style du maître de même nom (« Heading1 » → « Titre1 »). */
+  style: Map<string, string>;
   decalageSignet: number;
   decalageRevision: number;
   decalageDessin: number;
@@ -318,7 +320,8 @@ function reecrire(xml: string, c: Cartes): string {
     .replace(/(<w:bookmark(?:Start|End)\b[^>]*?\bw:id=")(\d+)"/g, (_, a: string, v: string) => `${a}${Number(v) + c.decalageSignet}"`)
     .replace(new RegExp(`(<w:(?:${REVISIONS})\\b[^>]*?\\bw:id=")(\\d+)"`, "g"), (_, a: string, v: string) => `${a}${Number(v) + c.decalageRevision}"`)
     .replace(/(<wp:docPr\b[^>]*?\bid=")(\d+)"/g, (_, a: string, v: string) => `${a}${Number(v) + c.decalageDessin}"`)
-    .replace(/(<w:numId\b[^>]*?\bw:val=")(\d+)"/g, (_, a: string, v: string) => `${a}${c.num.get(v) ?? v}"`);
+    .replace(/(<w:numId\b[^>]*?\bw:val=")(\d+)"/g, (_, a: string, v: string) => `${a}${c.num.get(v) ?? v}"`)
+    .replace(/(<w:(?:pStyle|rStyle|tblStyle)\b[^>]*?\bw:val=")([^"]*)"/g, (_, a: string, v: string) => `${a}${c.style.get(v) ?? v}"`);
 }
 
 // ---- Styles ----
@@ -332,19 +335,34 @@ function stylesDe(xml: string): Map<string, string> {
   return m;
 }
 
-/** Styles utilisés par la partie : ceux qui manquent au maître sont ajoutés, ceux qui diffèrent sont signalés. */
-function fusionnerStyles(ctx: Contexte, src: Source, xmlUtilise: string): string[] {
+const nomStyle = (x: string) => (/<w:name\b[^>]*\bw:val="([^"]*)"/.exec(x)?.[1] ?? "").toLowerCase();
+
+/**
+ * Styles utilisés par la partie : un style absent du maître est ajouté (avec ce dont il dépend), sauf si le maître a
+ * un style **de même nom** sous un autre identifiant (« Heading1 » / « Titre1 », tous deux « heading 1 ») : la partie
+ * prend alors celui du maître, car deux styles de même nom rendent le fichier invalide pour Word. Un style défini
+ * autrement que dans le maître est signalé (celui du maître est gardé).
+ */
+function fusionnerStyles(ctx: Contexte, src: Source, xmlUtilise: string): { ajoutes: string[]; renommes: Map<string, string> } {
   const nomBase = "word/styles.xml";
   const base = lire(ctx.out, nomBase);
   const part = lire(src.f, nomBase);
-  if (!base || !part) return [];
+  const renommes = new Map<string, string>();
+  if (!base || !part) return { ajoutes: [], renommes };
   const sBase = stylesDe(base);
   const sPart = stylesDe(part);
+  const parNom = new Map<string, string>();
+  for (const [id, x] of sBase) if (nomStyle(x) && !parNom.has(nomStyle(x))) parNom.set(nomStyle(x), id);
   const utilises = new Set([...xmlUtilise.matchAll(/<w:(?:pStyle|rStyle|tblStyle)\b[^>]*\bw:val="([^"]*)"/g)].map((m) => m[1]!));
   const ajoutes: string[] = [];
   const ajouter = (id: string) => {
     const x = sPart.get(id);
-    if (!x || sBase.has(id)) return;
+    if (!x || sBase.has(id) || renommes.has(id)) return;
+    const homonyme = parNom.get(nomStyle(x));
+    if (homonyme) {
+      renommes.set(id, homonyme);
+      return;
+    }
     sBase.set(id, x);
     ajoutes.push(x);
     for (const dep of x.matchAll(/<w:(?:basedOn|link|next)\b[^>]*\bw:val="([^"]*)"/g)) ajouter(dep[1]!);
@@ -354,12 +372,106 @@ function fusionnerStyles(ctx: Contexte, src: Source, xmlUtilise: string): string
     if (!x) continue;
     if (!sBase.has(id)) {
       ajouter(id);
-      ctx.avert.push({ partie: src.p.nom, message: `Le style « ${id} » n'existe pas dans le document maître : repris de cette partie.` });
+      const h = renommes.get(id);
+      ctx.avert.push({
+        partie: src.p.nom,
+        message: h ? `Le style « ${id} » est remplacé par « ${h} » du document maître (même nom).` : `Le style « ${id} » n'existe pas dans le document maître : repris de cette partie.`,
+      });
     } else if (normaliser(sBase.get(id)!) !== normaliser(x)) {
       ctx.avert.push({ partie: src.p.nom, message: `Le style « ${id} » est défini autrement que dans le document maître (celui du maître est gardé).` });
     }
   }
-  return ajoutes;
+  // un style ajouté ne doit ni se dire « par défaut » (le maître a le sien) ni dépendre d'un style renommé
+  const corriges = ajoutes.map((x) =>
+    x.replace(/\sw:default="(?:1|true|on)"/, "").replace(/(<w:(?:basedOn|link|next)\b[^>]*\bw:val=")([^"]*)"/g, (_, a: string, v: string) => `${a}${renommes.get(v) ?? v}"`),
+  );
+  return { ajoutes: corriges, renommes };
+}
+
+// ---- Dernière passe : ce que Word exige unique dans tout le fichier ----
+
+/** Pièces de texte du document (corps, en-têtes, pieds, notes), dans un ordre stable : le corps d'abord. */
+const piecesTexte = (out: Fichiers) =>
+  [...out.keys()].filter((n) => /^word\/(document|header\d*[^/]*|footer\d*[^/]*|footnotes|endnotes|comments)\.xml$/.test(n)).sort((a, b) => (a === "word/document.xml" ? -1 : b === "word/document.xml" ? 1 : a < b ? -1 : 1));
+
+/**
+ * Assainit le paquet produit, quoi que contiennent les parties (fichiers générés par script, copiés d'un même modèle…) :
+ *  - styles : un seul style par identifiant (le dernier défini, comme le modèle qui l'a ajouté) et un seul style
+ *    « par défaut » par type ;
+ *  - dessins : identifiants `wp:docPr` uniques dans tout le fichier (corps, en-têtes, pieds, notes), numérotés dans
+ *    l'ordre ; formes VML (`o:spid`) uniques ;
+ *  - identifiants de paragraphes et d'ancres Word 2010 (`w14:paraId`, `w14:textId`, `wp14:anchorId`) uniques
+ *    (les commentaires gardent les leurs : leurs états « résolu » y sont rattachés).
+ */
+export function assainir(out: Fichiers): void {
+  const st = lire(out, "word/styles.xml");
+  if (st) {
+    const blocs = [...st.matchAll(/<w:style\b[\s\S]*?<\/w:style>/g)];
+    const dernier = new Map<string, string>();
+    for (const m of blocs) {
+      const id = /\bw:styleId="([^"]*)"/.exec(m[0])?.[1];
+      if (id) dernier.set(id, m[0]);
+    }
+    const vus = new Set<string>();
+    const defauts = new Set<string>();
+    let xml = "";
+    let curseur = 0;
+    for (const m of blocs) {
+      xml += st.slice(curseur, m.index);
+      curseur = m.index! + m[0].length;
+      const id = /\bw:styleId="([^"]*)"/.exec(m[0])?.[1];
+      if (id && vus.has(id)) continue;
+      if (id) vus.add(id);
+      let x = id ? dernier.get(id)! : m[0];
+      const type = /\bw:type="([^"]*)"/.exec(x)?.[1] ?? "";
+      if (/\sw:default="(?:1|true|on)"/.test(x)) {
+        if (defauts.has(type)) x = x.replace(/\sw:default="(?:1|true|on)"/, "");
+        else defauts.add(type);
+      }
+      xml += x;
+    }
+    xml += st.slice(curseur);
+    if (xml !== st) ecrire(out, "word/styles.xml", xml);
+  }
+
+  const pieces = piecesTexte(out);
+  let dessin = 0;
+  const spids = new Set<string>();
+  let spidMax = 2048;
+  for (const n of pieces) for (const m of lire(out, n)!.matchAll(/\bo:spid="_x0000_s(\d+)"/g)) spidMax = Math.max(spidMax, Number(m[1]));
+  const ids14 = new Set<string>();
+  let compteur14 = 0x10000000;
+  const nouvel14 = () => {
+    let v: string;
+    do v = (compteur14++).toString(16).toUpperCase().padStart(8, "0");
+    while (ids14.has(v));
+    ids14.add(v);
+    return v;
+  };
+  for (const n of pieces) {
+    const avantXml = lire(out, n)!;
+    let xml = avantXml.replace(/(<wp:docPr\b[^>]*?\bid=")(\d+)"/g, (_, a: string) => `${a}${++dessin}"`);
+    xml = xml.replace(/\bo:spid="([^"]*)"/g, (tout, v: string) => {
+      if (!spids.has(v)) {
+        spids.add(v);
+        return tout;
+      }
+      const nouveau = `_x0000_s${++spidMax}`;
+      spids.add(nouveau);
+      return `o:spid="${nouveau}"`;
+    });
+    if (n !== "word/comments.xml") {
+      xml = xml.replace(/\b(w14:paraId|w14:textId|wp14:anchorId)="([0-9A-Fa-f]{8})"/g, (tout, nom: string, v: string) => {
+        const cle = v.toUpperCase();
+        if (!ids14.has(cle)) {
+          ids14.add(cle);
+          return tout;
+        }
+        return `${nom}="${nouvel14()}"`;
+      });
+    }
+    if (xml !== avantXml) ecrire(out, n, xml);
+  }
 }
 
 // ---- Numérotation (listes) ----
@@ -572,7 +684,7 @@ export function fusionner(parties: readonly PartieFusion[], options: OptionsFusi
       const u = unirRacines(avantBase, src.doc.avant);
       avantBase = u.avant;
       for (const p of u.conflits) ctx.avert.push({ partie: src.p.nom, message: `L'espace de noms « ${p} » est déclaré avec une autre adresse que dans le maître.` });
-      const ajoutes = fusionnerStyles(ctx, src, xml);
+      const { ajoutes, renommes } = fusionnerStyles(ctx, src, xml);
       const idsNum = new Set([...(xml + ajoutes.join("")).matchAll(/<w:numId\b[^>]*\bw:val="(\d+)"/g)].map((m) => m[1]!));
       const num = fusionnerNumerotation(ctx, src, idsNum);
       if (ajoutes.length) {
@@ -585,6 +697,7 @@ export function fusionner(parties: readonly PartieFusion[], options: OptionsFusi
         noteFin: fusionnerNotes(ctx, src, xml, "endnote"),
         commentaire: fusionnerNotes(ctx, src, xml, "comment"),
         num,
+        style: renommes,
         decalageSignet: bornes.signet + 1,
         decalageRevision: bornes.revision + 1,
         decalageDessin: bornes.dessin + 1,
@@ -689,6 +802,7 @@ export function fusionner(parties: readonly PartieFusion[], options: OptionsFusi
   }
   const noyau = lire(ctx.out, "docProps/core.xml");
   if (noyau && options.titre) ecrire(ctx.out, "docProps/core.xml", noyau.replace(/(<dc:title>)[^<]*(<\/dc:title>)/, (_, a: string, b: string) => `${a}${options.titre.replace(/&/g, "&amp;").replace(/</g, "&lt;")}${b}`));
+  assainir(ctx.out);
   ecrire(ctx.out, "[Content_Types].xml", ctx.ct);
 
   const entrees: Record<string, Uint8Array> = {};
