@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ajouterParties, deplacerPartie, libelleGenre, libelleType, dossierSorties, ecrireManuscrit, FUSION_PAR_DEFAUT, genreProbable, idPartie, idProjet, lireManuscrit, manuscritVide, modifierPartie, nomLisible, nomSortie, ordreFusion, ordreNaturel, retirerPartie } from "../core/plan";
-import { RACINE_ESPACE, rattacher, racineProposee, resoudreSource, scinder, versSource } from "../core/sources";
+import { FichiersMemoire } from "@noyau/stockage";
+import { chercherFichier, estIntrouvable, RACINE_ESPACE, rattacher, racineProposee, resoudreSource, scinder, versSource } from "../core/sources";
 import { dossierVersions } from "../core/versions";
 
 describe("plan d'un manuscrit", () => {
@@ -123,5 +124,30 @@ describe("sources des parties", () => {
     );
     expect(r.nouvellesRacines).toEqual({ these: "D:\\Mes docs\\Thèse", autre: "D:\\Autre" });
     expect(r.sources.map((s) => s.source)).toEqual(["these:ch1.docx", "these:ch2.docx", "autre:ch3.docx", "recherche:ch4.docx"]);
+  });
+});
+
+describe("retrouver un fichier Word sur ce PC", () => {
+  const fs = new FichiersMemoire({
+    "These/Espace/manuscrits/these/parties/00_Introduction_generale.docx": "",
+    "These/Redaction/00_INTRODUCTION_GENERALE.docx": "",
+    "These/Redaction/01_Chapitre1.docx": "",
+    "These/.cache/00_Introduction_generale.docx": "",
+    "Autre/un/deux/trois/quatre/cinq/00_Introduction_generale.docx": "",
+  });
+
+  it("dossiers qui le contiennent, casse ignorée, dossiers cachés et profondeur au-delà de la limite ignorés", async () => {
+    expect(await chercherFichier(fs, "00_Introduction_generale.docx", 5)).toEqual(["These/Redaction", "These/Espace/manuscrits/these/parties"]);
+    expect(await chercherFichier(fs, "01_Chapitre1.docx", 1)).toEqual([]);
+    expect(await chercherFichier(fs, "absent.docx")).toEqual([]);
+  });
+
+  it("limite de dossiers visités", async () => {
+    expect(await chercherFichier(fs, "01_Chapitre1.docx", 5, 2)).toEqual([]);
+  });
+
+  it("erreur « absent » reconnue", async () => {
+    await expect(fs.readBytes("nope.docx")).rejects.toSatisfy(estIntrouvable);
+    expect(estIntrouvable(new Error("Accès refusé"))).toBe(false);
   });
 });

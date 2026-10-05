@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Message, Pastille } from "@interface/composants";
 import { useContexte, type Contexte } from "@interface/contexte";
 import { isoAvecDecalage } from "@noyau/dates";
+import { lireReference } from "@noyau/poste/racines";
 import { absolu } from "@noyau/stockage";
 import { inventorier, type Inventaire } from "../core/inventaire";
 import {
@@ -24,7 +25,7 @@ import {
   type Partie,
   type TypeDocument,
 } from "../core/plan";
-import { rattacher, resoudreSource, scinder } from "../core/sources";
+import { chercherFichier, estIntrouvable, rattacher, resoudreSource, scinder } from "../core/sources";
 import { empreinte, type Etat } from "../core/versions";
 import { aTraiterParPartie, type Retour } from "../core/retours";
 import { chargerVersions, enregistrerVersion, listerDocx, type VersionLue } from "./donnees";
@@ -35,6 +36,7 @@ import "./manuscrits.css";
 type Lecture =
   | { etat: "lecture" }
   | { etat: "absent"; message: string; racine: string }
+  | { etat: "introuvable"; racine: string; dossier: string; nom: string }
   | { etat: "erreur"; message: string }
   | { etat: "ok"; inventaire: Inventaire; empreinte: string; versions: VersionLue[]; absolu: string };
 
@@ -77,7 +79,7 @@ function useLectures(ctx: Contexte, projet: string | null, m: Manuscrit | null, 
           const versions = await chargerVersions(espace.fichiers, projet, p.id, scinder(r.chemin).nom);
           maj(p.id, { etat: "ok", inventaire: inventorier(octets, lecture), empreinte: empreinte(octets), versions, absolu: r.absolu });
         } catch (e) {
-          maj(p.id, { etat: "erreur", message: e instanceof Error ? e.message : String(e) });
+          maj(p.id, estIntrouvable(e) ? { etat: "introuvable", racine: r.racine, dossier: r.dossier, nom: scinder(r.chemin).nom } : { etat: "erreur", message: `${e instanceof Error ? e.message : String(e)} (${r.absolu})` });
         }
       }
     })();
@@ -200,6 +202,21 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
     return { mots, aRediger, commentaires, modifiees, lues };
   }, [lectures]);
 
+  /** Parties dont le fichier est introuvable sur ce PC, regroupées par dossier (racine) : un seul réglage les remet toutes. */
+  const absentes = useMemo(() => {
+    const g = new Map<string, { racine: string; dossier: string | null; noms: string[] }>();
+    for (const p of m?.parties ?? []) {
+      const l = lectures[p.id];
+      if (l?.etat !== "absent" && l?.etat !== "introuvable") continue;
+      const ref = lireReference(p.source);
+      if (!ref) continue;
+      const x = g.get(ref.racine) ?? { racine: ref.racine, dossier: l.etat === "introuvable" ? l.dossier : null, noms: [] };
+      x.noms.push(scinder(ref.chemin).nom);
+      g.set(ref.racine, x);
+    }
+    return [...g.values()];
+  }, [m, lectures]);
+
   if (!projets) return <p className="discret">Lecture…</p>;
 
   if (!projet || !m) {
@@ -279,6 +296,7 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
             <Tuile valeur={nombre(totaux.commentaires)} titre="commentaires non résolus" niveau={totaux.commentaires ? "attention" : undefined} />
             <Tuile valeur={`${totaux.modifiees} / ${totaux.lues}`} titre="parties sans version à jour (modifiées ou jamais enregistrées)" />
           </div>
+          <DossiersAbsents ctx={ctx} groupes={absentes} appliquer={(racine, d) => void ctx.enregistrerReglages({ ...ctx.reglages, racines: { ...ctx.reglages.racines, [racine]: d } })} choisir={(r) => void choisirRacine(r)} />
           {m.parties.map((p, i) => (
             <CartePartie
               key={p.id}
@@ -303,6 +321,55 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
         </>
       )}
     </>
+  );
+}
+
+/** Bandeau « fichiers Word introuvables sur ce PC » : cherche les fichiers autour de l'espace et propose le bon dossier. */
+function DossiersAbsents({ ctx, groupes, appliquer, choisir }: { ctx: Contexte; groupes: { racine: string; dossier: string | null; noms: string[] }[]; appliquer(racine: string, dossier: string): void; choisir(racine: string): void }) {
+  return (
+    <>
+      {groupes.map((g) => (
+        <GroupeAbsent key={g.racine} ctx={ctx} g={g} appliquer={appliquer} choisir={choisir} />
+      ))}
+    </>
+  );
+}
+
+function GroupeAbsent({ ctx, g, appliquer, choisir }: { ctx: Contexte; g: { racine: string; dossier: string | null; noms: string[] }; appliquer(racine: string, dossier: string): void; choisir(racine: string): void }) {
+  const [candidats, setCandidats] = useState<string[] | null>(null);
+  const espace = ctx.espace!.racine;
+  const nom = g.noms[0]!;
+  useEffect(() => {
+    let annule = false;
+    // les fichiers sont le plus souvent à côté de l'espace (même dossier OneDrive) : on y cherche le premier fichier manquant
+    const base = scinder(espace).dossier;
+    chercherFichier(ctx.plateforme.fichiers(base), nom, 5, 400)
+      .then((l) => !annule && setCandidats(l.slice(0, 4).map((d) => (d ? absolu(base, d) : base))))
+      .catch(() => !annule && setCandidats([]));
+    return () => {
+      annule = true;
+    };
+  }, [ctx.plateforme, espace, nom]);
+  const n = g.noms.length;
+  return (
+    <Message niveau="attention">
+      <strong>
+        {n} {n > 1 ? "parties sont introuvables" : "partie est introuvable"} sur ce PC
+      </strong>{" "}
+      : les fichiers Word sont cherchés dans le dossier « {g.racine} »{g.dossier ? <> (<code>{g.dossier}</code>)</> : " (non réglé sur ce PC)"}, qui n'est pas au même endroit sur chaque PC. Rien n'est perdu : le plan, les versions et les retours sont dans l'espace.
+      <div className="rangee" style={{ marginTop: 6 }}>
+        {candidats === null ? <span className="discret">Recherche de « {nom} » autour de l'espace…</span> : null}
+        {(candidats ?? []).map((d) => (
+          <button key={d} type="button" className="principal" onClick={() => appliquer(g.racine, d)} title={`« ${nom} » s'y trouve`}>
+            Utiliser {d}
+          </button>
+        ))}
+        {candidats && !candidats.length ? <span className="discret">« {nom} » n'a pas été retrouvé près de l'espace.</span> : null}
+        <button type="button" onClick={() => choisir(g.racine)}>
+          Choisir un autre dossier…
+        </button>
+      </div>
+    </Message>
   );
 }
 
@@ -423,6 +490,14 @@ function CartePartie({
 
       {l.etat === "lecture" ? <p className="discret">Lecture du fichier…</p> : null}
       {l.etat === "erreur" ? <Message niveau="erreur">{l.message}</Message> : null}
+      {l.etat === "introuvable" ? (
+        <Message niveau="attention">
+          Introuvable sur ce PC : <strong>{l.nom}</strong> n'est pas dans <code>{l.dossier}</code> (dossier « {l.racine} » de ce PC).{" "}
+          <button type="button" onClick={() => choisirRacine(l.racine)}>
+            Choisir le dossier « {l.racine} »…
+          </button>
+        </Message>
+      ) : null}
       {l.etat === "absent" ? (
         <Message niveau="attention">
           {l.message}{" "}
@@ -543,7 +618,7 @@ function CartePartie({
             </details>
           ) : null}
         </>
-      ) : l.etat === "absent" || l.etat === "erreur" ? (
+      ) : l.etat === "absent" || l.etat === "introuvable" || l.etat === "erreur" ? (
         <div className="rangee">
           <button type="button" className="lien" onClick={retirer}>
             Retirer du plan

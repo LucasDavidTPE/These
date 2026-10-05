@@ -4,7 +4,7 @@
  * SPEC §4.1), la racine étant un nom dont chaque poste règle le dossier ; « espace » désigne
  * l'espace Thèse lui-même.
  */
-import { absolu } from "@noyau/stockage";
+import { absolu, joindre, Introuvable, type Fichiers } from "@noyau/stockage";
 import { estNomRacine } from "@noyau/poste/reglages";
 import { ecrireReference, lireReference, referenceDepuisChemin } from "@noyau/poste/racines";
 import { slugifier } from "@noyau/texte";
@@ -79,4 +79,27 @@ export function rattacher(chemins: readonly string[], espace: string | null, rac
     sources.push({ absolu: abs, source: ecrireReference({ racine, chemin: nom }) });
   }
   return { sources, nouvellesRacines: nouvelles };
+}
+
+/** Vrai si l'erreur dit « fichier ou dossier absent » (par opposition à un accès refusé, un fichier verrouillé…). */
+export const estIntrouvable = (e: unknown) => e instanceof Introuvable || (e as { code?: string } | null)?.code === "not-found";
+
+/**
+ * Cherche un fichier par son nom (casse ignorée) sous `fs`, à `profondeur` niveaux au plus et dans la limite de
+ * `maxDossiers` dossiers visités. Renvoie les dossiers (relatifs à `fs`, « » = la racine) qui le contiennent,
+ * les moins profonds d'abord. Sert à retrouver les fichiers Word quand le dossier réglé sur ce PC n'est pas le bon.
+ */
+export async function chercherFichier(fs: Fichiers, nom: string, profondeur = 3, maxDossiers = 300): Promise<string[]> {
+  const voulu = nom.toLowerCase();
+  const trouves: string[] = [];
+  const file = [{ dossier: "", niveau: 0 }];
+  let vus = 0;
+  while (file.length && vus < maxDossiers) {
+    const { dossier, niveau } = file.shift()!;
+    vus++;
+    const entrees = await fs.listDir(dossier).catch(() => []);
+    if (entrees.some((e) => e.kind === "file" && e.name.toLowerCase() === voulu)) trouves.push(dossier);
+    if (niveau < profondeur) for (const e of entrees) if (e.kind === "dir" && !e.name.startsWith(".")) file.push({ dossier: joindre(dossier, e.name), niveau: niveau + 1 });
+  }
+  return trouves;
 }

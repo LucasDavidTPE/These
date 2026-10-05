@@ -403,7 +403,10 @@ Le plan, `manuscrits/<document>/manuscrit.json` (dans l'espace), est la liste
 ordonnée de **parties** (pages liminaires, chapitres, bibliographie, annexes). Chaque partie pointe
 vers un `.docx` qui reste **où l'on veut** : une source `racine:chemin` (comme les données brutes,
 §4.1) dont chaque PC règle le dossier ; `espace:` désigne l'espace lui-même. Un fichier choisi hors des
-racines connues reçoit pour racine son dossier (à régler aussi sur l'autre PC). Le plan porte aussi le
+racines connues reçoit pour racine son dossier (à régler aussi sur l'autre PC). Quand un fichier est introuvable
+sur un PC (dossier non réglé, ou réglé ailleurs), un bandeau regroupe les parties concernées par dossier, cherche le
+premier fichier manquant autour de l'espace (dossier parent, 5 niveaux, 400 dossiers au plus) et propose le bon
+dossier en un clic ; « Choisir un autre dossier… » reste possible. Le plan porte aussi le
 statut (squelette, en rédaction, en relecture, figé) et l'objectif en mots de chaque partie.
 L'appli **lit** le `.docx` sans Word (zip + XML, `core/ooxml.ts`) : plan des titres et signets,
 mots (hors consignes et mini-sommaires), consignes « À rédiger » restantes, figures, tableaux, notes,

@@ -718,3 +718,12 @@ nombres doivent être identiques, dans les deux modes.
       ouvre la fiche citée.
 - [ ] Même saisie dans « Mes notes de lecture » et « Fiche de lecture » ; une adresse e-mail (`a@b.fr`) ne déclenche rien.
 - [ ] La référence ouverte ne figure pas dans sa propre liste.
+
+## Manuscrits : second PC, fichiers introuvables (1.17.1)
+
+- [ ] Sur le PC où le dossier des `.docx` n'est pas (ou mal) réglé : Manuscrits → Plan affiche **un bandeau** « N parties sont
+      introuvables sur ce PC » avec le dossier cherché, et non des erreurs rouges par carte.
+- [ ] Le bandeau propose « Utiliser <dossier> » (dossier retrouvé à côté de l'espace) : un clic remet toutes les parties,
+      sans toucher à l'autre PC ni aux fichiers Word.
+- [ ] « Choisir un autre dossier… » fonctionne quand rien n'est retrouvé ; chaque carte indique « Introuvable sur ce PC : <fichier>
+      n'est pas dans <dossier> ».

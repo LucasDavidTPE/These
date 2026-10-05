@@ -188,10 +188,17 @@ export function plateformeDemo(scenario: string | null): Plateforme {
         version: 1,
         type: "article",
         titre: "Article Prony",
-        parties: [{ id: "article", nom: "Article", source: "espace:manuscrits/article-prony/parties/Article_Prony.docx", genre: "chapitre", statut: "redaction", objectifMots: 6000 }],
+        parties: [
+          { id: "article", nom: "Article", source: "espace:manuscrits/article-prony/parties/Article_Prony.docx", genre: "chapitre", statut: "redaction", objectifMots: 6000 },
+          // le dossier « manuscrits » de ce PC ne le contient pas : l'appli le retrouve à côté de l'espace
+          { id: "annexes", nom: "Annexes Prony", source: "manuscrits:Annexes_Prony.docx", genre: "annexe", statut: "squelette", objectifMots: null },
+        ],
       }),
     );
     void (async () => {
+      const parentEspace = dossier(`${ONEDRIVE}\\Thèse`);
+      await parentEspace.ensureDir("Documents");
+      await parentEspace.writeBytesAtomic("Documents/Annexes_Prony.docx", docxDemo("Annexes", ["A. Données brutes"], 1));
       await espace.ensureDir("manuscrits/article-prony/parties");
       await espace.writeBytesAtomic("manuscrits/article-prony/parties/Article_Prony.docx", docxDemo("Calage de séries de Prony", ["Introduction", "Méthode", "Résultats"], 2));
       await espace.ensureDir("manuscrits/these/parties");
