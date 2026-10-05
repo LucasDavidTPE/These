@@ -1,10 +1,10 @@
 /**
- * Plan du manuscrit : une carte par partie (pages liminaires, chapitres, bibliographie,
- * annexes) dans l'ordre du plan, avec ce que l'appli lit dans son `.docx` (mots, consignes
+ * Plan d'un document (thèse, article, rapport…) : une carte par partie (pages liminaires,
+ * chapitres ou sections, bibliographie, annexes) dans l'ordre du plan, avec ce que l'appli lit dans son `.docx` (mots, consignes
  * restantes, commentaires, modifications suivies…) et ses versions. Les `.docx` restent où ils
  * sont ; versions et retours sont gardés ensemble dans l'espace (manuscrits/<projet>/).
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Message, Pastille } from "@interface/composants";
 import { useContexte, type Contexte } from "@interface/contexte";
 import { isoAvecDecalage } from "@noyau/dates";
@@ -14,18 +14,22 @@ import {
   ajouterParties,
   deplacerPartie,
   GENRES,
-  idProjet,
-  manuscritVide,
+  libelleGenre,
   modifierPartie,
   ordreNaturel,
   retirerPartie,
   STATUTS,
+  TYPES_DOCUMENT,
   type Manuscrit,
   type Partie,
+  type TypeDocument,
 } from "../core/plan";
 import { rattacher, resoudreSource, scinder } from "../core/sources";
 import { empreinte, type Etat } from "../core/versions";
-import { chargerPlan, chargerVersions, ecrirePlan, enregistrerVersion, listerDocx, listerProjets, type Projet, type VersionLue } from "./donnees";
+import { aTraiterParPartie, type Retour } from "../core/retours";
+import { chargerVersions, enregistrerVersion, listerDocx, type VersionLue } from "./donnees";
+import type { ManuscritCourant } from "./useManuscrit";
+import { GenererPanel } from "./GenererPanel";
 import "./manuscrits.css";
 
 type Lecture =
@@ -86,45 +90,17 @@ function useLectures(ctx: Contexte, projet: string | null, m: Manuscrit | null, 
   return lectures;
 }
 
-export function PlanPage() {
+export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; retours: Retour[]; voirRetours(partie: string): void }) {
   const ctx = useContexte();
   const espace = ctx.espace!;
-  const [projets, setProjets] = useState<Projet[] | null>(null);
-  const [projet, setProjet] = useState<string | null>(null);
-  const [m, setM] = useState<Manuscrit | null>(null);
+  const { projets, projet, m, sauver } = ms;
   const [message, setMessage] = useState<{ niveau: "info" | "erreur"; texte: string } | null>(null);
   const [tour, setTour] = useState(0);
-  const [titreNouveau, setTitreNouveau] = useState("Thèse");
+  const [nouveau, setNouveau] = useState(false);
   const [choix, setChoix] = useState<{ dossier: string; fichiers: { chemin: string; coche: boolean }[] } | null>(null);
   const lectures = useLectures(ctx, projet, m, tour);
   const enCours = useRef(false);
-
-  // Liste des manuscrits (et choix du premier).
-  useEffect(() => {
-    let annule = false;
-    listerProjets(espace.fichiers)
-      .then((l) => {
-        if (annule) return;
-        setProjets(l);
-        setProjet((p) => (p && l.some((x) => x.id === p) ? p : (l[0]?.id ?? null)));
-      })
-      .catch((e: unknown) => !annule && setMessage({ niveau: "erreur", texte: String(e instanceof Error ? e.message : e) }));
-    return () => {
-      annule = true;
-    };
-  }, [espace, ctx.revision]);
-
-  // Plan du manuscrit choisi.
-  useEffect(() => {
-    if (!projet) return;
-    let annule = false;
-    chargerPlan(espace.fichiers, projet)
-      .then((p) => !annule && setM(p))
-      .catch((e: unknown) => !annule && setMessage({ niveau: "erreur", texte: String(e instanceof Error ? e.message : e) }));
-    return () => {
-      annule = true;
-    };
-  }, [espace, projet, ctx.revision]);
+  const aTraiter = useMemo(() => aTraiterParPartie(retours), [retours]);
 
   // Les fichiers Word se modifient hors de l'appli : on relit au retour dans la fenêtre.
   useEffect(() => {
@@ -133,27 +109,8 @@ export function PlanPage() {
     return () => window.removeEventListener("focus", retour);
   }, []);
 
-  const sauver = useCallback(
-    async (suivant: Manuscrit) => {
-      if (!projet) return;
-      setM(suivant);
-      try {
-        await ecrirePlan(espace.fichiers, projet, suivant);
-      } catch (e) {
-        setMessage({ niveau: "erreur", texte: `Plan non enregistré : ${e instanceof Error ? e.message : String(e)}` });
-      }
-    },
-    [espace, projet],
-  );
-
-  async function creer() {
-    const id = idProjet(titreNouveau);
-    if (projets?.some((p) => p.id === id)) return setMessage({ niveau: "erreur", texte: `Un manuscrit « ${id} » existe déjà.` });
-    const neuf = manuscritVide(titreNouveau.trim() || "Manuscrit");
-    await ecrirePlan(espace.fichiers, id, neuf);
-    setProjets([...(projets ?? []), { id, titre: neuf.titre }]);
-    setProjet(id);
-    setM(neuf);
+  async function creer(titre: string, type: TypeDocument) {
+    if (await ms.creer(titre, type)) setNouveau(false);
   }
 
   /** Ajoute des fichiers (chemins absolus) : leurs dossiers deviennent des racines de ce PC si besoin. */
@@ -178,14 +135,14 @@ export function PlanPage() {
   }
 
   async function ajouterFichier() {
-    const f = await ctx.plateforme.ouvrirFichier("Une partie du manuscrit (.docx)", ["docx"]);
+    const f = await ctx.plateforme.ouvrirFichier("Une partie du document (.docx)", ["docx"]);
     if (!f) return;
     if (!f.chemin) return setMessage({ niveau: "erreur", texte: "Le chemin du fichier n'est connu que dans l'application installée." });
     await ajouter([f.chemin]);
   }
 
   async function ouvrirDossier() {
-    const dossier = await ctx.plateforme.choisirDossier("Dossier contenant des parties du manuscrit (.docx)");
+    const dossier = await ctx.plateforme.choisirDossier("Dossier contenant des parties du document (.docx)");
     if (!dossier) return;
     const trouves = (await listerDocx(ctx.plateforme.fichiers(dossier))).sort(ordreNaturel);
     if (!trouves.length) return setMessage({ niveau: "info", texte: "Aucun fichier .docx dans ce dossier (ni dans ses sous-dossiers)." });
@@ -249,17 +206,13 @@ export function PlanPage() {
     return (
       <div className="carte">
         {message ? <Message niveau={message.niveau}>{message.texte}</Message> : null}
+        {ms.erreur ? <Message niveau="erreur">{ms.erreur}</Message> : null}
         <p>
-          Un <strong>manuscrit</strong> est la liste ordonnée de ses parties (pages liminaires, chapitres, bibliographie, annexes), chacune étant un
-          fichier Word qui reste <strong>où vous voulez</strong>. L'appli en garde le plan, l'état d'avancement et, au même endroit dans l'espace,
-          toutes les versions (<code>manuscrits/&lt;manuscrit&gt;/versions</code>).
+          Un <strong>document</strong> (la thèse, un article, un rapport ou compte rendu…) est la liste ordonnée de ses parties (pages liminaires,
+          chapitres ou sections, bibliographie, annexes), chacune étant un fichier Word qui reste <strong>où vous voulez</strong>. L'appli en garde le
+          plan, l'état d'avancement et, au même endroit dans l'espace, toutes les versions et les corrections reçues (<code>manuscrits/&lt;document&gt;/</code>).
         </p>
-        <div className="rangee">
-          <input type="text" value={titreNouveau} onChange={(e) => setTitreNouveau(e.target.value)} aria-label="Titre du manuscrit" style={{ width: 280 }} />
-          <button type="button" className="principal" disabled={!titreNouveau.trim()} onClick={() => void creer()}>
-            Créer le manuscrit
-          </button>
-        </div>
+        <NouveauDocument creer={creer} />
       </div>
     );
   }
@@ -267,17 +220,9 @@ export function PlanPage() {
   return (
     <>
       <div className="rangee ms-barre">
-        {projets.length > 1 ? (
-          <select className="champ" value={projet} onChange={(e) => setProjet(e.target.value)} aria-label="Manuscrit">
-            {projets.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.titre}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <strong>{m.titre}</strong>
-        )}
+        <button type="button" onClick={() => setNouveau((n) => !n)} aria-expanded={nouveau} title="Thèse, article, rapport, compte rendu : chacun a son plan, ses versions et ses retours">
+          Nouveau document…
+        </button>
         <button type="button" onClick={() => void ajouterFichier()}>
           Ajouter une partie…
         </button>
@@ -289,11 +234,17 @@ export function PlanPage() {
         </button>
       </div>
       {message ? <Message niveau={message.niveau}>{message.texte}</Message> : null}
+      {ms.erreur ? <Message niveau="erreur">{ms.erreur}</Message> : null}
+      {nouveau ? (
+        <div className="carte">
+          <NouveauDocument creer={creer} annuler={() => setNouveau(false)} />
+        </div>
+      ) : null}
 
       {choix ? (
         <div className="carte">
           <p>
-            <strong>{choix.fichiers.length}</strong> fichiers .docx dans <code>{choix.dossier}</code> : cochez les parties du manuscrit, dans l'ordre du nom.
+            <strong>{choix.fichiers.length}</strong> fichiers .docx dans <code>{choix.dossier}</code> : cochez les parties du document, dans l'ordre du nom.
           </p>
           <ul className="ms-choix">
             {choix.fichiers.map((f, i) => (
@@ -321,6 +272,7 @@ export function PlanPage() {
         </div>
       ) : (
         <>
+          {m.parties.length > 1 ? <GenererPanel projet={projet!} m={m} sauver={sauver} /> : null}
           <div className="ms-totaux">
             <Tuile valeur={nombre(totaux.mots)} titre="mots (consignes exclues)" />
             <Tuile valeur={nombre(totaux.aRediger)} titre="consignes « À rédiger »" niveau={totaux.aRediger ? "attention" : undefined} />
@@ -331,7 +283,11 @@ export function PlanPage() {
             <CartePartie
               key={p.id}
               p={p}
+              type={m.type}
               l={lectures[p.id] ?? { etat: "lecture" }}
+              aTraiter={aTraiter.get(p.id) ?? 0}
+              nbRetours={retours.filter((r) => r.partie === p.id).length}
+              voirRetours={() => voirRetours(p.id)}
               premiere={i === 0}
               derniere={i === m.parties.length - 1}
               maj={(champs) => void sauver(modifierPartie(m, p.id, champs))}
@@ -359,9 +315,45 @@ function Tuile({ valeur, titre, niveau }: { valeur: string; titre: string; nivea
   );
 }
 
+const TITRE_DEFAUT: Record<TypeDocument, string> = { these: "Thèse", article: "Article", rapport: "Rapport", autre: "Document" };
+
+function NouveauDocument({ creer, annuler }: { creer(titre: string, type: TypeDocument): Promise<void>; annuler?(): void }) {
+  const [type, setType] = useState<TypeDocument>("these");
+  const [titre, setTitre] = useState(TITRE_DEFAUT.these);
+  const changerType = (t: TypeDocument) => {
+    // le titre proposé suit le type tant qu'on ne l'a pas écrit soi-même
+    if (titre === TITRE_DEFAUT[type]) setTitre(TITRE_DEFAUT[t]);
+    setType(t);
+  };
+  return (
+    <div className="rangee">
+      <select className="champ" value={type} onChange={(e) => changerType(e.target.value as TypeDocument)} aria-label="Type de document">
+        {TYPES_DOCUMENT.map(([id, nom]) => (
+          <option key={id} value={id}>
+            {nom}
+          </option>
+        ))}
+      </select>
+      <input type="text" value={titre} onChange={(e) => setTitre(e.target.value)} aria-label="Titre du document" placeholder="Titre (sert de nom de dossier)" style={{ width: 280 }} />
+      <button type="button" className="principal" disabled={!titre.trim()} onClick={() => void creer(titre, type)}>
+        Créer le document
+      </button>
+      {annuler ? (
+        <button type="button" onClick={annuler}>
+          Annuler
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function CartePartie({
   p,
+  type,
   l,
+  aTraiter,
+  nbRetours,
+  voirRetours,
   premiere,
   derniere,
   maj,
@@ -374,7 +366,11 @@ function CartePartie({
   copieSous,
 }: {
   p: Partie;
+  type: TypeDocument;
   l: Lecture;
+  aTraiter: number;
+  nbRetours: number;
+  voirRetours(): void;
   premiere: boolean;
   derniere: boolean;
   maj(champs: Partial<Omit<Partie, "id">>): void;
@@ -409,9 +405,9 @@ function CartePartie({
           <div className="discret petit chemin">{p.source}</div>
         </div>
         <select className="champ" value={p.genre} onChange={(e) => maj({ genre: e.target.value as Partie["genre"] })} aria-label="Genre">
-          {GENRES.map(([id, nom]) => (
+          {GENRES.map(([id]) => (
             <option key={id} value={id}>
-              {nom}
+              {libelleGenre(type, id)}
             </option>
           ))}
         </select>
@@ -452,6 +448,12 @@ function CartePartie({
               {nonResolus && nonResolus !== inv.commentaires.length ? ` (${nonResolus} non résolu${nonResolus > 1 ? "s" : ""})` : ""}
             </span>
             <span className={inv.modifications.length ? "ms-attention" : "discret"}>{pluriel(inv.modifications.length, "modification suivie", "modifications suivies")}</span>
+            {nbRetours ? (
+              <button type="button" className="lien" onClick={voirRetours} title="Corrections reçues pour cette partie">
+                {pluriel(nbRetours, "retour reçu", "retours reçus")}
+                {aTraiter ? ` · ${pluriel(aTraiter, "remarque à traiter", "remarques à traiter")}` : " · tout traité"}
+              </button>
+            ) : null}
             <span className="discret">
               {pluriel(inv.figures, "figure")} · {pluriel(inv.tableaux, "tableau", "tableaux")} · {pluriel(inv.notes, "note")} · {pluriel(inv.citations, "citation")} Zotero
             </span>
@@ -497,6 +499,7 @@ function CartePartie({
               <ul>
                 {inv.plan.map((t, i) => (
                   <li key={i} style={{ paddingLeft: `${(t.niveau - 1) * 16}px` }} className={t.niveau === 1 ? "gras" : undefined}>
+                    {t.numero ? `${t.numero} ` : ""}
                     {t.texte}
                     {t.signet ? <span className="discret petit"> · {t.signet}</span> : null}
                   </li>

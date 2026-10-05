@@ -190,4 +190,11 @@ lancent tous les tests automatiques sous Windows.
 - [x] Liens (doi.org, Scholar, « Ouvrir le lien », zotero.org…) qui ne s'ouvraient pas : la permission Tauri n'avait aucune portée (1.12.1)
 - [x] Manuscrits M1 (1.13.0) : plan de la thèse (`manuscrit.json`), parties `.docx` n'importe où (sources par racine),
       lecture des fichiers Word (mots, consignes, commentaires, modifications suivies), versions par partie,
-      Sources LaTeX retiré. Suite (`docs/MANUSCRITS_REFONTE.md`) : M1 bis retours reçus, M2 fusion, M3 progression, M4 sources Zotero
+      Sources LaTeX retiré. Suite (`docs/MANUSCRITS_REFONTE.md`) : M2 fusion, M3 progression, M4 sources Zotero
+- [x] Manuscrits : thème sombre (cartes, tuiles et bordures du Plan et des Retours lisaient des variables de couleur inexistantes) (1.14.1)
+- [x] Manuscrits M2 (1.15.0) : « Générer le manuscrit » — fusion native des parties (repères du maître ou à la suite),
+      sections et en-têtes gardés, identifiants renumérotés, rapport ; testée sur la trame fournie (mêmes titres, 12 sections, mêmes en-têtes)
+- [x] Manuscrits : plusieurs documents (thèse, articles, rapports / comptes rendus), chacun avec son plan, ses versions, ses retours ;
+      une seule sortie fusionnée, plus de choix « version propre » (1.16.0)
+- [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),
+      remarques extraites avec état (à traiter / traitée / refusée), compteur par partie, rangés avec les versions

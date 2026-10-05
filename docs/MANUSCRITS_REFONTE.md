@@ -124,8 +124,8 @@ Entrée : `manuscrit.json` + les `.docx`. Sortie : un `.docx` + un **rapport** (
   corrigée en silence).
 - **Champs** : TDM / listes / renvois sont marqués « à mettre à jour » (`updateFields`), Word le propose à
   l'ouverture ; les champs Zotero passent tels quels.
-- **Modes** : *relecture* (consignes et références de chapitre gardées) ou *propre* ; chaque mode produit son
-  fichier. Option de saut de section « page impaire » pour l'impression recto-verso.
+- **Une seule sortie** (1.16.0) : plus de mode « propre » ; les consignes sont gardées, seuls les blocs
+  d'assemblage partent. Option de saut de section « page impaire » pour l'impression recto-verso.
 - **Déterministe** : mêmes parties, mêmes octets (tests golden), comme les autres exports de l'appli.
 
 **Test de conformité immédiat** : les fichiers fournis servent de fixture. La fusion de `parties/` doit
@@ -137,7 +137,7 @@ On valide aussi la sortie avec `python-docx` (outil de développement seulement,
 1. **Plan** (écran principal) : une carte par partie, dans l'ordre du plan — titre, statut (squelette, rédaction,
    relecture, figé), mots / objectif, consignes restantes, retours non traités, date, état par rapport à la dernière
    version. Glisser pour réordonner. Clic = ouvrir dans Word.
-2. **Générer** : choix du mode (relecture / propre / chapitre seul), bouton, **rapport** d'avertissements
+2. **Générer** : bouton, **rapport** d'avertissements
    (style divergent, en-tête lié au précédent, signet dupliqué, renvoi provisoire non résolu, citation absente
    de la Bibliothèque), ouvrir le résultat dans Word.
 3. **Retours** : boîte de réception des commentaires et modifications suivies de toutes les parties, filtrables
@@ -160,20 +160,30 @@ module : tout passe par le registre.
    par Word (COM : exactement « Texte d'un fichier », fidélité maximale mais Word obligatoire, non testable
    hors Windows). Dans les deux cas, **mise à jour des champs et Zotero > Refresh restent deux clics dans Word**
    (Zotero doit reconstruire la bibliographie sur le document entier).
-3. **Numérotation des titres** — *probablement automatique (à confirmer)* : aujourd'hui tapée à la main (« 1.1 Les chaussées… ») avec des mini-sommaires
+3. **Numérotation des titres** — *tranché : numérotation automatique de Word (1.14.0)*. Avant : tapée à la main (« 1.1 Les chaussées… ») avec des mini-sommaires
    tapés eux aussi. Une numérotation multiniveau liée aux styles de titre (dans le modèle) rend les renvois
    et les mini-sommaires automatiques ; sinon, l'appli doit lire les numéros tapés.
 4. **Présentations et Sources LaTeX** — *tranché : Présentations conservées, Sources LaTeX retiré (1.13.0)*.
-5. **PDF** : l'appli ne peut pas en produire sans Word (elle n'embarque pas de moteur de mise en page) ; l'export
+5. **Corrections reçues** — *tranché : `.docx` (suivi des modifications, commentaires) et, plus rarement, PDF annotés ; les deux sont lus (1.14.0).*
+6. **PDF** : l'appli ne peut pas en produire sans Word (elle n'embarque pas de moteur de mise en page) ; l'export
    PDF reste « Enregistrer sous » dans Word, sauf si le pilotage par Word est retenu.
 
 ## 8. Phases proposées (M1 faite en 1.13.0)
 
 - **M1** — modèle `manuscrit.json` (sources par racine), lecture OOXML, inventaire, écran Plan (lecture seule),
   versions par partie dans `versions/` (reprise des versions existantes).
-- **M1 bis** — « Ajouter un retour reçu » : copie dans `retours/`, extraction des commentaires et modifications
-  suivies, boîte Retours avec états (partagés entre PC).
-- **M2** — moteur de fusion + nettoyage + rapport, test de conformité sur la fixture, bouton Générer.
+- **M1 bis** — *faite en 1.14.0* : « Ajouter un retour reçu » (`.docx` ou PDF annoté) : copie dans `retours/`,
+  extraction des commentaires, modifications suivies et annotations, boîte Retours avec états (partagés entre PC) ;
+  numérotation automatique des titres lue dans le plan.
+- **M2** — *faite en 1.15.0* : moteur de fusion + nettoyage + rapport, test de conformité sur la fixture, bouton Générer. Le moteur sait
+  insérer les parties aux repères « ◆ Insérer ici » du document maître actuel (pas besoin de le découper) ou à la suite.
 - **M3** — progression (consignes, mots), diff du texte entre versions, rapprochement d'un retour avec la version sur laquelle il porte.
 - **M4** — Sources (Zotero ↔ Bibliothèque) et résolution des renvois `[→ §…]`.
 - **M5** — (optionnel) pilotage de Word : mise à jour des champs et export PDF.
+
+## 8. Plusieurs documents (1.16.0)
+
+Le même schéma sert la thèse, les articles et les rapports ou comptes rendus : un dossier
+`manuscrits/<document>/` par document, `type` dans `manuscrit.json` (libellés des parties seulement).
+Rien n'est partagé entre documents : un article réutilisant un chapitre le déclare comme sa propre partie
+(le même `.docx`), et ses versions et retours restent avec lui.

@@ -71,18 +71,35 @@ export function attr(attrs: string, nom: string): string {
 export interface Styles {
   /** Identifiant de style → nom (« Heading1 » → « heading 1 »). */
   noms: Map<string, string>;
+  /** Style → style dont il hérite. */
+  base: Map<string, string>;
+  /** Style → liste numérotée portée par le style (`w:numPr` du style) ; `niveau` absent = déduit de la liste. */
+  liste: Map<string, { numId: string; niveau: number | null }>;
 }
 
 export function lireStyles(xml: string | undefined): Styles {
-  const noms = new Map<string, string>();
-  if (!xml) return { noms };
+  const styles: Styles = { noms: new Map(), base: new Map(), liste: new Map() };
+  if (!xml) return styles;
   let courant = "";
+  let enListe = false;
   parcourir(xml, (e) => {
+    if (e.type === "ferme") {
+      if (e.nom === "w:numPr") enListe = false;
+      return;
+    }
     if (e.type !== "ouvre") return;
     if (e.nom === "w:style") courant = attr(e.attrs, "w:styleId");
-    else if (e.nom === "w:name" && courant) noms.set(courant, attr(e.attrs, "w:val"));
+    else if (!courant) return;
+    else if (e.nom === "w:name") styles.noms.set(courant, attr(e.attrs, "w:val"));
+    else if (e.nom === "w:basedOn") styles.base.set(courant, attr(e.attrs, "w:val"));
+    else if (e.nom === "w:numPr") enListe = true;
+    else if (enListe && e.nom === "w:numId") styles.liste.set(courant, { numId: attr(e.attrs, "w:val"), niveau: styles.liste.get(courant)?.niveau ?? null });
+    else if (enListe && e.nom === "w:ilvl") {
+      const l = styles.liste.get(courant);
+      styles.liste.set(courant, { numId: l?.numId ?? "", niveau: Number(attr(e.attrs, "w:val")) });
+    }
   });
-  return { noms };
+  return styles;
 }
 
 /** Niveau de titre (1 à 9) d'un style : d'après son nom (« heading 1 », « titre 2 »), à défaut son identifiant. */
@@ -108,6 +125,8 @@ export interface Paragraphe {
   dessin: boolean;
   /** Fin de section (porte un `w:sectPr`). */
   section: boolean;
+  /** Liste numérotée portée directement par le paragraphe. */
+  liste?: { numId: string; niveau: number };
 }
 
 export interface Modification {
@@ -117,6 +136,8 @@ export interface Modification {
   texte: string;
   /** Titre (Heading) sous lequel se trouve la modification. */
   titre: string;
+  /** Indice du paragraphe (dans `Document.paragraphes`) où elle se trouve. */
+  paragraphe: number;
 }
 
 export interface Document {
@@ -139,6 +160,8 @@ export function lireDocument(xml: string, styles: Styles): Document {
   let repli = 0;
   let tableau = 0;
   let champ: { instr: string; dans: boolean } | null = null;
+  let enListe = false;
+  let changement = 0;
   let suivi: { genre: Modification["genre"]; auteur: string; date: string; texte: string; profondeur: number } | null = null;
   let titre = "";
   let enTexte = "";
@@ -162,7 +185,19 @@ export function lireDocument(xml: string, styles: Styles): Document {
           if (tableau++ === 0) doc.tableaux++;
           break;
         case "w:pStyle":
-          if (p) p.style = attr(e.attrs, "w:val");
+          if (p && !changement) p.style = attr(e.attrs, "w:val");
+          break;
+        case "w:pPrChange":
+          if (!e.vide) changement++;
+          break;
+        case "w:numPr":
+          if (!changement) enListe = !e.vide;
+          break;
+        case "w:ilvl":
+          if (p && enListe) p.liste = { numId: p.liste?.numId ?? "", niveau: Number(attr(e.attrs, "w:val")) || 0 };
+          break;
+        case "w:numId":
+          if (p && enListe) p.liste = { numId: attr(e.attrs, "w:val"), niveau: p.liste?.niveau ?? 0 };
           break;
         case "w:bookmarkStart": {
           const n = attr(e.attrs, "w:name");
@@ -234,12 +269,18 @@ export function lireDocument(xml: string, styles: Styles): Document {
         case "w:tbl":
           tableau--;
           break;
+        case "w:numPr":
+          enListe = false;
+          break;
+        case "w:pPrChange":
+          changement--;
+          break;
         case "w:ins":
         case "w:moveTo":
         case "w:del":
         case "w:moveFrom":
           if (suivi && profondeurs.length + 1 === suivi.profondeur) {
-            if (suivi.texte.trim()) doc.modifications.push({ genre: suivi.genre, auteur: suivi.auteur, date: suivi.date, texte: suivi.texte, titre });
+            if (suivi.texte.trim()) doc.modifications.push({ genre: suivi.genre, auteur: suivi.auteur, date: suivi.date, texte: suivi.texte, titre, paragraphe: doc.paragraphes.length });
             suivi = null;
           }
           break;
@@ -258,6 +299,165 @@ export function lireDocument(xml: string, styles: Styles): Document {
   return doc;
 }
 
+// ---- Numérotation automatique (listes à plusieurs niveaux, titres numérotés) ----
+
+interface NiveauListe {
+  format: string;
+  texte: string;
+  debut: number;
+  /** Style lié à ce niveau (titres numérotés : « Heading1 » ↔ niveau 0). */
+  style: string;
+}
+
+export interface Numerotation {
+  /** abstractNumId → niveaux. */
+  abstraits: Map<string, NiveauListe[]>;
+  /** numId → abstractNumId. */
+  instances: Map<string, string>;
+  /** numId → niveau → numéro de départ imposé (`w:startOverride`). */
+  departs: Map<string, Map<number, number>>;
+}
+
+export function lireNumerotation(xml: string | undefined): Numerotation {
+  const n: Numerotation = { abstraits: new Map(), instances: new Map(), departs: new Map() };
+  if (!xml) return n;
+  let abstrait = "";
+  let instance = "";
+  let niveau = -1;
+  parcourir(xml, (e) => {
+    if (e.type === "ferme") {
+      if (e.nom === "w:abstractNum") abstrait = "";
+      else if (e.nom === "w:num") instance = "";
+      else if (e.nom === "w:lvl" || e.nom === "w:lvlOverride") niveau = -1;
+      return;
+    }
+    if (e.type !== "ouvre") return;
+    const val = () => attr(e.attrs, "w:val");
+    switch (e.nom) {
+      case "w:abstractNum":
+        abstrait = attr(e.attrs, "w:abstractNumId");
+        n.abstraits.set(abstrait, []);
+        break;
+      case "w:num":
+        instance = attr(e.attrs, "w:numId");
+        break;
+      case "w:abstractNumId":
+        if (instance) n.instances.set(instance, val());
+        break;
+      case "w:lvl":
+        niveau = Number(attr(e.attrs, "w:ilvl")) || 0;
+        if (abstrait) n.abstraits.get(abstrait)![niveau] = { format: "decimal", texte: `%${niveau + 1}`, debut: 1, style: "" };
+        break;
+      case "w:lvlOverride":
+        niveau = Number(attr(e.attrs, "w:ilvl")) || 0;
+        break;
+      case "w:start":
+        if (abstrait && niveau >= 0) n.abstraits.get(abstrait)![niveau]!.debut = Number(val()) || 1;
+        break;
+      case "w:numFmt":
+        if (abstrait && niveau >= 0) n.abstraits.get(abstrait)![niveau]!.format = val();
+        break;
+      case "w:lvlText":
+        if (abstrait && niveau >= 0) n.abstraits.get(abstrait)![niveau]!.texte = val();
+        break;
+      case "w:pStyle":
+        if (abstrait && niveau >= 0) n.abstraits.get(abstrait)![niveau]!.style = val();
+        break;
+      case "w:startOverride":
+        if (instance && niveau >= 0) n.departs.set(instance, (n.departs.get(instance) ?? new Map()).set(niveau, Number(val()) || 1));
+        break;
+    }
+  });
+  return n;
+}
+
+const LETTRES = (n: number, base: number) => {
+  let s = "";
+  for (let k = n; k > 0; k = Math.floor((k - 1) / 26)) s = String.fromCharCode(base + ((k - 1) % 26)) + s;
+  return s;
+};
+const ROMAIN = (n: number) => {
+  const t: [number, string][] = [[1000, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"], [90, "XC"], [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]];
+  let r = "";
+  for (const [v, s] of t) {
+    while (n >= v) {
+      r += s;
+      n -= v;
+    }
+  }
+  return r;
+};
+
+function formater(n: number, format: string): string {
+  switch (format) {
+    case "lowerLetter":
+      return LETTRES(n, 97);
+    case "upperLetter":
+      return LETTRES(n, 65);
+    case "lowerRoman":
+      return ROMAIN(n).toLowerCase();
+    case "upperRoman":
+      return ROMAIN(n);
+    case "decimalZero":
+      return String(n).padStart(2, "0");
+    default:
+      return String(n);
+  }
+}
+
+/** Liste (numéro d'instance, niveau) d'un paragraphe : la sienne, à défaut celle de son style (héritage compris). */
+function listeDe(p: Paragraphe, styles: Styles, num: Numerotation): { numId: string; niveau: number } | null {
+  if (p.liste) return p.liste.numId === "0" || !p.liste.numId ? null : p.liste;
+  const chaine: string[] = [];
+  for (let st = p.style; st && !chaine.includes(st); st = styles.base.get(st) ?? "") chaine.push(st);
+  let numId = "";
+  let niveau: number | null = null;
+  for (const st of chaine) {
+    const l = styles.liste.get(st);
+    if (!l) continue;
+    if (niveau === null && l.niveau !== null) niveau = l.niveau;
+    if (l.numId) {
+      numId = l.numId;
+      break;
+    }
+  }
+  if (!numId || numId === "0") return null;
+  if (niveau === null) {
+    const niveaux = num.abstraits.get(num.instances.get(numId) ?? "") ?? [];
+    const i = niveaux.findIndex((x) => x && chaine.includes(x.style));
+    niveau = i >= 0 ? i : 0;
+  }
+  return { numId, niveau };
+}
+
+/**
+ * Numéro affiché de chaque paragraphe numéroté (« 1.2 », « Chapitre 3 », « A. »), « » pour les
+ * autres et pour les puces. Les compteurs sont partagés par les instances d'une même liste.
+ */
+export function numeroter(paragraphes: readonly Paragraphe[], styles: Styles, num: Numerotation): string[] {
+  const compteurs = new Map<string, number[]>();
+  return paragraphes.map((p) => {
+    const l = listeDe(p, styles, num);
+    if (!l) return "";
+    const abstrait = num.instances.get(l.numId);
+    const niveaux = abstrait === undefined ? undefined : num.abstraits.get(abstrait);
+    const def = niveaux?.[l.niveau];
+    if (!abstrait || !niveaux || !def || def.format === "bullet" || def.format === "none") return "";
+    const depart = (i: number) => num.departs.get(l.numId)?.get(i) ?? niveaux[i]?.debut ?? 1;
+    // Une instance qui impose un départ (`startOverride`) redémarre la liste : compteur à part.
+    const cle = num.departs.has(l.numId) ? `n${l.numId}` : abstrait;
+    const c = compteurs.get(cle) ?? [];
+    c.length = Math.max(c.length, l.niveau + 1);
+    c[l.niveau] = c[l.niveau] === undefined ? depart(l.niveau) : c[l.niveau]! + 1;
+    c.length = l.niveau + 1;
+    compteurs.set(cle, c);
+    return def.texte.replace(/%([1-9])/g, (_, k: string) => {
+      const i = Number(k) - 1;
+      return formater(c[i] ?? depart(i), niveaux[i]?.format ?? "decimal");
+    });
+  });
+}
+
 // ---- Commentaires, notes, propriétés ----
 
 export interface Commentaire {
@@ -271,6 +471,8 @@ export interface Commentaire {
   ancre: string;
   /** Titre sous lequel il se trouve. */
   titre: string;
+  /** Indice du paragraphe où il est ancré (−1 si inconnu). */
+  paragraphe: number;
 }
 
 export function lireCommentaires(paquet: Paquet, doc: Document, styles: Styles): Commentaire[] {
@@ -300,14 +502,14 @@ export function lireCommentaires(paquet: Paquet, doc: Document, styles: Styles):
     }
   });
   let titre = "";
-  const ancres = new Map<string, { ancre: string; titre: string }>();
-  for (const p of doc.paragraphes) {
+  const ancres = new Map<string, { ancre: string; titre: string; paragraphe: number }>();
+  for (const [i, p] of doc.paragraphes.entries()) {
     if (niveauTitre(p.style, styles) > 0 && p.texte.trim()) titre = p.texte.trim();
-    for (const id of p.commentaires) if (!ancres.has(id)) ancres.set(id, { ancre: p.texte.trim().slice(0, 160), titre });
+    for (const id of p.commentaires) if (!ancres.has(id)) ancres.set(id, { ancre: p.texte.trim().slice(0, 160), titre, paragraphe: i });
   }
   return bruts
     .filter((b) => b.texte !== "" || ancres.has(b.id))
-    .map((b) => ({ id: b.id, auteur: b.auteur, date: b.date, texte: b.texte, resolu: resolus.has(b.paraId), ancre: ancres.get(b.id)?.ancre ?? "", titre: ancres.get(b.id)?.titre ?? "" }));
+    .map((b) => ({ id: b.id, auteur: b.auteur, date: b.date, texte: b.texte, resolu: resolus.has(b.paraId), ancre: ancres.get(b.id)?.ancre ?? "", titre: ancres.get(b.id)?.titre ?? "", paragraphe: ancres.get(b.id)?.paragraphe ?? -1 }));
 }
 
 /** Nombre de notes de bas de page ou de fin (hors séparateurs). */
@@ -315,7 +517,11 @@ export function compterNotes(paquet: Paquet): number {
   let n = 0;
   for (const [nom, balise] of [["word/footnotes.xml", "w:footnote"], ["word/endnotes.xml", "w:endnote"]] as const) {
     const xml = paquet.fichiers[nom];
-    if (xml) parcourir(xml, (e) => e.type === "ouvre" && e.nom === balise && !attr(e.attrs, "w:type") && n++ >= 0);
+    if (xml) {
+      parcourir(xml, (e) => {
+        if (e.type === "ouvre" && e.nom === balise && !attr(e.attrs, "w:type")) n++;
+      });
+    }
   }
   return n;
 }

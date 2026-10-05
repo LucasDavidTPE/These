@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ajouterParties, deplacerPartie, ecrireManuscrit, genreProbable, idPartie, idProjet, lireManuscrit, manuscritVide, modifierPartie, nomLisible, ordreNaturel, retirerPartie } from "../core/plan";
+import { ajouterParties, deplacerPartie, libelleGenre, libelleType, dossierSorties, ecrireManuscrit, FUSION_PAR_DEFAUT, genreProbable, idPartie, idProjet, lireManuscrit, manuscritVide, modifierPartie, nomLisible, nomSortie, ordreFusion, ordreNaturel, retirerPartie } from "../core/plan";
 import { RACINE_ESPACE, rattacher, racineProposee, resoudreSource, scinder, versSource } from "../core/sources";
 import { dossierVersions } from "../core/versions";
 
@@ -38,6 +38,33 @@ describe("plan d'un manuscrit", () => {
     expect(retirerPartie(m, "chapitre1").parties.map((p) => p.id)).toEqual(["introduction-generale"]);
   });
 
+  it("ordre de la fusion : le document maître d'abord, sorties nommées d'après le titre", () => {
+    let m = manuscritVide("Thèse L. David");
+    m = ajouterParties(m, [
+      { fichier: "01_Chapitre1.docx", source: "x:01.docx" },
+      { fichier: "00_Document_maitre.docx", source: "x:00.docx" },
+      { fichier: "09_Annexes.docx", source: "x:09.docx" },
+    ]);
+    expect(ordreFusion(m).map((p) => p.id)).toEqual(["document-maitre", "chapitre1", "annexes"]);
+    expect(ordreFusion({ ...m, parties: m.parties.slice(0, 1) }).map((p) => p.id)).toEqual(["chapitre1"]);
+    expect(nomSortie(m)).toBe("these-l-david.docx");
+    expect(nomSortie({ ...m, titre: "…" })).toBe("document.docx");
+    expect(dossierSorties("these")).toBe("manuscrits/these/sorties");
+  });
+
+  it("types de document : thèse par défaut, article et rapport nommés autrement", () => {
+    expect(lireManuscrit({ titre: "Ancien plan" }).type).toBe("these");
+    expect(lireManuscrit({ type: "bateau" }).type).toBe("these");
+    const a = lireManuscrit(JSON.parse(ecrireManuscrit(manuscritVide("Article Prony", "article"))));
+    expect(a.type).toBe("article");
+    expect(libelleType(a.type)).toBe("Article");
+    expect(libelleGenre("these", "chapitre")).toBe("Chapitre");
+    expect(libelleGenre("article", "chapitre")).toBe("Section");
+    expect(libelleGenre("rapport", "liminaire")).toBe("Titre et résumé");
+    // les anciens plans portaient « propre » dans le nettoyage : ignoré
+    expect(lireManuscrit({ fusion: { nettoyage: { propre: ["X"] } } }).fusion.nettoyage).not.toHaveProperty("propre");
+  });
+
   it("lecture tolérante et écriture stable", () => {
     expect(lireManuscrit(null)).toEqual(manuscritVide("Manuscrit"));
     const m = lireManuscrit({
@@ -47,6 +74,11 @@ describe("plan d'un manuscrit", () => {
     });
     expect(m.parties).toEqual([{ id: "a", nom: "a", source: "x:a.docx", genre: "chapitre", statut: "fige", objectifMots: 5000 }]);
     expect(m.lecture).toEqual({ consignes: ["Note"], miniSommaires: ["SommaireChapitre"], debutARediger: "À rédiger" });
+    expect(m.fusion).toEqual(FUSION_PAR_DEFAUT);
+    expect(lireManuscrit({ fusion: { saut: "oddPage", nettoyage: { toujours: ["X"] } } }).fusion).toEqual({
+      saut: "oddPage",
+      nettoyage: { ...FUSION_PAR_DEFAUT.nettoyage, toujours: ["X"] },
+    });
     expect(lireManuscrit(JSON.parse(ecrireManuscrit(m)))).toEqual(m);
   });
 });

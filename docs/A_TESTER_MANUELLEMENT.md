@@ -656,3 +656,55 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] Les anciennes versions (dossier `manuscrits/<nom du fichier>/`) apparaissent encore sous la partie correspondante.
 - [ ] Un `.docx` enregistré par Word contenant des commentaires résolus, des zones de texte, des modifications suivies :
       les nombres sont cohérents avec ce que Word indique.
+
+## Manuscrits : numérotation et retours reçus (1.14.0)
+
+- [ ] Plan d'un chapitre dont les titres sont numérotés par Word (liste à plusieurs niveaux liée à Titre 1/2/3) :
+      « Plan » affiche les mêmes numéros que Word (« 1.2.1 », « Chapitre 3 »…), y compris après des titres sans numéro.
+- [ ] Retours → « Ajouter un retour reçu… » avec un `.docx` relu par un directeur (suivi des modifications activé) :
+      le nombre de remarques et les auteurs correspondent à Word (Révision → volet Vérification) ; un remplacement
+      (texte barré puis ajouté) est une seule remarque ; un commentaire résolu dans Word arrive « Traitée ».
+- [ ] Même chose avec un PDF annoté (Acrobat, navigateur, tablette) : notes, zones de texte, surlignages (le texte
+      surligné s'affiche dans « Passage »), page indiquée. Un PDF sans annotation : message clair, rangé quand même.
+- [ ] Le fichier est copié dans `Espace\manuscrits\<manuscrit>\retours\<date>_<auteur>_<partie>\` ; sur l'autre PC,
+      le retour et l'état des remarques sont identiques ; « Ouvrir le fichier » ouvre Word / le lecteur PDF.
+- [ ] Changer l'état d'une remarque, écrire une note, « Tout marquer traité » ; le compteur de l'onglet Retours et la
+      mention « N remarques à traiter » du Plan suivent. « Retirer » range le dossier dans `retours\.supprimes`.
+- [ ] Un retour sur une partie : « Porte sur la version » propose les versions enregistrées de cette partie.
+- [ ] Windows en thème sombre (Paramètres → Personnalisation → Couleurs) : Manuscrits → Plan et Retours ont des cartes,
+      tuiles, listes et tableaux sombres (plus de fond blanc), texte lisible, bordures visibles. (1.14.1)
+
+## Manuscrits : générer le manuscrit (1.15.0)
+
+À faire sur le vrai manuscrit (ce que les tests automatiques ne peuvent pas vérifier : le rendu dans Word).
+
+- [ ] Plan avec le document maître (pages liminaires + repères « ◆ Insérer ici ») en premier et les chapitres : « Générer »
+      crée `Espace\manuscrits\<manuscrit>\sorties\<titre>.docx` ; « Ouvrir dans Word » l'ouvre ;
+      répondre **Oui** à la mise à jour des champs.
+- [ ] Le document s'ouvre sans message d'erreur ni « réparation » ; les chapitres sont dans l'ordre des repères, chacun
+      commence sur une nouvelle page avec son en-tête (« Chapitre n – … ») et sa pagination continue ; les pages liminaires
+      ont leur numérotation en chiffres romains.
+- [ ] Table des matières, liste des figures et des tableaux : mises à jour par Word, sans entrée parasite (pas de consigne
+      d'assemblage, pas de « Références du chapitre »).
+- [ ] Vrai chapitre rédigé : figures, tableaux, équations, notes de bas de page, listes numérotées, renvois, commentaires et
+      modifications suivies sont tous présents et au bon endroit ; les listes numérotées de chaque chapitre repartent de 1 ; les
+      titres numérotés par Word se suivent d'un chapitre à l'autre.
+- [ ] Citations Zotero : *Zotero → Refresh* fonctionne, la bibliographie se construit une seule fois à l'endroit prévu (partie
+      « Références bibliographiques » ou repère du maître) ; le style de citation est bien celui des chapitres.
+- [ ] « chapitres sur page impaire » : chaque chapitre commence sur une page de droite.
+- [ ] Une partie introuvable sur ce PC (dossier non réglé) : la fusion utilise sa dernière version enregistrée et le dit ; sans version,
+      elle est refusée avec le nom de la partie.
+- [ ] Rapport « À voir » : un style qui diffère du maître, un repère sans partie, un signet en double sont signalés.
+- [ ] Générer deux fois sans rien modifier : même fichier ; le document généré ouvert dans Word → message clair à l'enregistrement
+      (fermer Word avant de régénérer).
+
+## Manuscrits : thèse, articles, rapports (1.16.0)
+
+- [ ] Manuscrits → Plan → « Nouveau document… » : type **Article**, titre « Article Prony » → il apparaît dans le sélecteur
+      « Document » (groupé sous « Article »), avec un plan vide ; sa partie « chapitre » s'appelle « Section ».
+- [ ] « Ajouter une partie… » avec le `.docx` de l'article : une seule partie, pas de panneau « Générer » (rien à fusionner) ;
+      avec un article en plusieurs fichiers (texte, annexes), « Générer » apparaît et produit `sorties\<titre>.docx`.
+- [ ] Un **rapport / compte rendu** de même ; changer de document dans le sélecteur change le plan, les versions et les retours
+      (onglet Retours : le même sélecteur, les corrections reçues d'un article restent avec l'article).
+- [ ] La thèse existante est inchangée (type « Thèse » par défaut), son plan et ses versions sont intacts.
+- [ ] « Générer » ne propose plus de choix « version propre » : un seul fichier, consignes gardées.

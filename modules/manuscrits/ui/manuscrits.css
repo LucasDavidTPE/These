@@ -1,4 +1,8 @@
 /* Plan du manuscrit */
+.ms-document {
+  margin-bottom: 10px;
+  align-items: center;
+}
 .ms-barre {
   margin-bottom: 12px;
 }
@@ -9,24 +13,24 @@
   margin-bottom: 14px;
 }
 .ms-tuile {
-  border: 1px solid var(--bordure, #d9d9d9);
-  border-radius: 8px;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
   padding: 10px 12px;
-  background: var(--fond-carte, #fff);
+  background: var(--surface);
 }
 .ms-tuile-attention {
-  border-color: var(--attention, #8a5a00);
+  border-color: var(--attention);
 }
 .ms-tuile-valeur {
   font-size: 1.5rem;
   font-weight: 600;
 }
 .ms-partie {
-  border: 1px solid var(--bordure, #d9d9d9);
-  border-radius: 8px;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
   padding: 12px 14px;
   margin-bottom: 12px;
-  background: var(--fond-carte, #fff);
+  background: var(--surface);
 }
 .ms-partie-tete {
   display: flex;
@@ -62,7 +66,7 @@
   margin: 10px 0;
 }
 .ms-attention {
-  color: var(--attention, #8a5a00);
+  color: var(--attention);
   font-weight: 600;
 }
 .ms-plan ul {
@@ -80,4 +84,47 @@
   padding: 0;
   max-height: 260px;
   overflow: auto;
+}
+
+/* Retours reçus */
+.ms-brouillon {
+  margin-bottom: 14px;
+}
+.ms-formulaire {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px 14px;
+  margin: 10px 0;
+}
+.ms-formulaire label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.85rem;
+}
+.ms-formulaire .ms-large {
+  grid-column: 1 / -1;
+}
+.ms-remarques td {
+  vertical-align: top;
+}
+.ms-remarques td:nth-child(5) {
+  min-width: 260px;
+}
+.ms-remarques input[type="text"] {
+  width: 100%;
+  min-width: 130px;
+}
+
+/* Génération du manuscrit */
+.ms-generer {
+  margin-bottom: 14px;
+}
+.ms-generer details {
+  margin-top: 8px;
+}
+.ms-avertissements {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 0.9rem;
 }

@@ -394,7 +394,12 @@ exporter les données brutes** d'un essai vers un dossier choisi, **enregistrer 
 graphe dans Figures**, **ouvrir dans le traitement 2S2P1D**.
 
 ### Manuscrits → Plan (1.13.0)
-Un **manuscrit** est le plan de la thèse : `manuscrits/<manuscrit>/manuscrit.json` (dans l'espace), liste
+Un **document** (1.16.0) est la thèse, un article, un rapport ou compte rendu, ou tout autre texte long :
+chacun a son dossier `manuscrits/<document>/` et son `manuscrit.json` (champ `type` : `these` par défaut,
+`article`, `rapport`, `autre`), donc son plan, ses versions, ses retours et sa sortie. Le type ne change que les
+libellés (un « chapitre » de thèse est une « section » d'article ou de rapport) ; le sélecteur de document
+regroupe par type, « Nouveau document… » en crée un autre à tout moment. Ce qui suit vaut pour tous.
+Le plan, `manuscrits/<document>/manuscrit.json` (dans l'espace), est la liste
 ordonnée de **parties** (pages liminaires, chapitres, bibliographie, annexes). Chaque partie pointe
 vers un `.docx` qui reste **où l'on veut** : une source `racine:chemin` (comme les données brutes,
 §4.1) dont chaque PC règle le dossier ; `espace:` désigne l'espace lui-même. Un fichier choisi hors des
@@ -404,9 +409,41 @@ L'appli **lit** le `.docx` sans Word (zip + XML, `core/ooxml.ts`) : plan des tit
 mots (hors consignes et mini-sommaires), consignes « À rédiger » restantes, figures, tableaux, notes,
 commentaires (résolus ou non) et modifications suivies, citations Zotero, date de modification ; relu
 au retour dans la fenêtre. Elle n'écrit jamais dans un fichier Word.
+**Numérotation** : la numérotation automatique de Word est lue (`numbering.xml`, listes à plusieurs niveaux
+liées aux styles de titre ou portées par le paragraphe, héritage de style, `startOverride`, chiffres,
+lettres, romains) : le plan affiche « 1.2 Modèles rhéologiques » comme Word ; des numéros tapés restent du texte.
 **Versions** : une copie datée par partie, `manuscrits/<manuscrit>/versions/<partie>/` (les anciennes
-versions, `manuscrits/<nom du fichier>/`, restent lues). Les corrections reçues et les documents fusionnés
-iront au même endroit (`retours/`, `sorties/`) : voir `MANUSCRITS_REFONTE.md` (phases suivantes).
+versions, `manuscrits/<nom du fichier>/`, restent lues).
+**Retours reçus** (1.14.0) : une correction reçue est un objet à part, rangé avec les versions :
+`manuscrits/<manuscrit>/retours/<id>/retour.json` + la copie du fichier sous son nom d'origine. Deux formes :
+un `.docx` relu (commentaires — résolus dans Word = déjà traités — et modifications suivies, regroupées par
+paragraphe, auteur et instant : un remplacement = une remarque) ou un **PDF annoté** (notes, zones de texte,
+surlignages / soulignés / barrés avec le texte marqué, lus par pdf.js). Chaque retour garde l'expéditeur, la
+date de réception, la partie concernée, la version sur laquelle il porte (facultative) et une note ; chaque
+remarque garde son état (à traiter, traitée, refusée) et une note, partagés entre les deux PC. Le plan
+affiche les remarques à traiter par partie. Un retour retiré est rangé dans `retours/.supprimes/`.
+
+**Générer le document** (1.15.0) : fusion des parties en un seul `.docx`, rangé dans
+`manuscrits/<document>/sorties/<titre>.docx` (une seule sortie, sans choix de « version propre » ; jamais édité
+à la main : on le régénère ; le panneau n'apparaît qu'à partir de deux parties). Le moteur (`core/fusion.ts`, sans Word) :
+- **assemblage** : si le document maître (la première partie « pages liminaires ») contient des repères
+  `◆ Insérer ici : <fichier>.docx`, chaque partie est insérée à la place de son repère (un repère sans partie
+  est signalé et retiré, une partie sans repère est ajoutée à la fin) ; sinon les parties sont mises à la suite ;
+- **nettoyage** : sont retirés les blocs d'assemblage « Procédure de fusion »,
+  « Instructions d'assemblage » et « Références du chapitre » (un titre et les consignes qui le suivent) ;
+  les autres consignes et mini-sommaires sont gardés tels quels. Les listes de titres et de styles sont
+  des réglages du manuscrit (`fusion` dans `manuscrit.json`) ;
+- **sections** : chaque partie garde ses sections (en-têtes, pieds, pagination) ; les sections vides et les
+  paragraphes vides après le dernier saut d'une partie sont écartés ; le dernier saut devient la section du
+  document ; option « chapitres sur page impaire » (recto-verso) ;
+- **identifiants** : relations (en-têtes, pieds, images, liens), signets, révisions, dessins, commentaires, notes
+  de bas de page et de fin, listes (chaque partie repart de 1 ; les titres numérotés par un style partagent la liste
+  du maître) sont renumérotés ; les espaces de noms et les préférences Zotero manquants sont repris ;
+- **styles** : ceux du maître l'emportent ; un style absent du maître est repris de la partie, un style défini
+  autrement est signalé ; un fichier d'une partie introuvable sur ce PC est remplacé par sa dernière version enregistrée ;
+- **champs** : le document demande la mise à jour des champs à l'ouverture ; la bibliographie Zotero (*Refresh*) reste à
+  faire dans Word. Limite : l'état « résolu » des commentaires n'est pas repris. Sortie déterministe.
+Un rapport indique les parties, les sections et les points à voir.
 
 ### Présentations (Manuscrits → Présentations)
 Une présentation est un fichier Markdown de l'espace (`presentations/<nom>.md`), une diapo
