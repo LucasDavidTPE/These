@@ -19,6 +19,7 @@ import { aujourdhui, ecrireCitations, lireCitations, useBiblio } from "./donnees
 import { AnalyseVue, CorrectionsVue, DemandesVue, PistesVue } from "./suivi";
 import { FILTRES_VIDES, type Filtres } from "./format";
 import { PlanVue, ReferencesVue, TableauDeBordVue } from "./vues";
+import { LectureCroisee } from "./lecture/LectureCroisee";
 import "./bibliotheque.css";
 
 const ONGLETS = [
@@ -28,7 +29,8 @@ const ONGLETS = [
   ["demandes", "Demandes"],
   ["corrections", "Corrections TFE"],
   ["pistes", "Pistes"],
-  ["analyse", "Analyse croisée"],
+  ["lecture", "Lecture croisée"],
+  ["analyse", "Analyse (classeur)"],
 ] as const;
 type Onglet = (typeof ONGLETS)[number][0];
 
@@ -238,7 +240,7 @@ export function BibliothequePage() {
           </button>
         </div>
       ) : courante ? (
-        <Fiche b={b} c={courante} onEnregistrer={(r) => void d.enregistrerReference(courante.id, r)} onFermer={() => setFiche(null)} onOuvrir={(id) => setFiche(id)} />
+        <Fiche b={b} c={courante} onEnregistrer={(r) => void d.enregistrerReference(courante.id, r)} onFermer={() => setFiche(null)} onOuvrir={(id) => setFiche(id)} onEnregistrerAutre={(id, r) => void d.enregistrerReference(id, r)} />
       ) : (
         <>
           <nav className="onglets" aria-label="Bibliothèque">
@@ -261,6 +263,8 @@ export function BibliothequePage() {
             <CorrectionsVue b={b} enregistrer={(id, v) => void d.enregistrerCorrection(id, v)} />
           ) : onglet === "pistes" ? (
             <PistesVue b={b} enregistrer={(id, v) => void d.enregistrerPiste(id, v)} />
+          ) : onglet === "lecture" ? (
+            <LectureCroisee b={b} ouvrir={setFiche} />
           ) : (
             <AnalyseVue b={b} enregistrer={(t) => void d.enregistrerAnalyse(t)} />
           )}

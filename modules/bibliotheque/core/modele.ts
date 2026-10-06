@@ -46,6 +46,21 @@ export interface NotesLecture {
   date: string;
 }
 
+/** Une case de la grille de lecture croisée : des étiquettes (vocabulaire du critère) et une note libre. */
+export interface CelluleLecture {
+  etiquettes: string[];
+  note: string;
+}
+
+/** Lien typé vers une autre référence (« étend », « contredit »…), avec une note. */
+export interface LienArticle {
+  /** Identifiant de la référence visée (« BIB-020 »). */
+  vers: string;
+  /** Identifiant du type de lien (voir lecture.ts). */
+  type: string;
+  note: string;
+}
+
 export interface Reference {
   cle: string;
   titre: string;
@@ -90,6 +105,9 @@ export interface Reference {
   voirAussi: string;
   fiche: FicheLecture;
   notes: NotesLecture;
+  /** Grille de lecture croisée : identifiant du critère → case (voir lecture.ts). */
+  lecture: Record<string, CelluleLecture>;
+  liens: LienArticle[];
 }
 
 export interface Demande {
@@ -234,7 +252,25 @@ export function lireReference(b: Record<string, unknown>): Reference {
     voirAussi: t("voirAussi"),
     fiche: champs(FICHE_VIDE, b.fiche),
     notes: champs(NOTES_VIDES, b.notes),
+    lecture: lireGrille(b.lecture),
+    liens: Array.isArray(b.liens)
+      ? b.liens.flatMap((l) => {
+          const o = objet(l);
+          return txt(o.vers) && txt(o.type) ? [{ vers: txt(o.vers), type: txt(o.type), note: txt(o.note) }] : [];
+        })
+      : [],
   };
+}
+
+function lireGrille(v: unknown): Record<string, CelluleLecture> {
+  const out: Record<string, CelluleLecture> = {};
+  for (const [k, c] of Object.entries(objet(v))) {
+    const o = objet(c);
+    const etiquettes = Array.isArray(o.etiquettes) ? o.etiquettes.filter((e): e is string => typeof e === "string" && e.trim() !== "") : [];
+    const note = txt(o.note);
+    if (etiquettes.length || note) out[k] = { etiquettes, note };
+  }
+  return out;
 }
 
 export function lireDemande(b: Record<string, unknown>): Demande {

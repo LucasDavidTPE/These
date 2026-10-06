@@ -204,5 +204,8 @@ lancent tous les tests automatiques sous Windows.
       sources, « Pointer le fichier… », recherche dans tout OneDrive (1.18.0)
 - [x] Manuscrits : document généré refusé par Word (« réparations : Styles, Objets dessinés et zones de texte ») — styles en
       double ou homonymes, dessins d'en-têtes de même identifiant ; passe d'assainissement et tests de validité (1.18.1)
+- [x] Bibliothèque : **Lecture croisée** — grille articles × critères à étiquettes, liens typés entre articles, croisement
+      (trous de la littérature), carte articles/méthodes, synthèse Markdown, classeur Excel synchronisé dans les deux sens
+      avec conflits à trancher (1.19.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),
       remarques extraites avec état (à traiter / traitée / refusée), compteur par partie, rangés avec les versions

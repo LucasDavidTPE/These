@@ -746,3 +746,24 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] Les titres des chapitres ont bien le style de titre du maître (taille, couleur, numérotation) ; la table des matières les liste.
 - [ ] Images d'en-tête (logo), figures et zones de texte de chaque chapitre présentes et au bon endroit.
 - [ ] Le rapport « À voir » signale les styles remplacés (« Heading1 » remplacé par « Titre1 » du document maître).
+
+## Bibliothèque : lecture croisée (1.19.0)
+
+- [ ] Bibliothèque → **Lecture croisée** → « Démarrer la lecture croisée » : la grille reprend les champs Pneu, Contact, Loi,
+      Méthode, Chargement, Cible, Validation des fiches et les catégories de la Matrice croisée (un critère par groupe).
+- [ ] Grille : clic sur une case, taper une étiquette, Entrée ou « ; » ; les étiquettes déjà utilisées sont proposées
+      (« mef » propose « MEF 3D ») ; note facultative ; Échap ferme. La case est enregistrée (visible sur l'autre PC).
+- [ ] Fiche d'un article → section « Lecture croisée » : mêmes cases ; « Liens avec d'autres articles » : choisir un type,
+      chercher l'article (auteur, titre), « Lier » ; le lien apparaît aussi, dans l'autre sens, sur la fiche de l'autre article.
+- [ ] Croisement Loi × Méthode : nombres corrects, clic sur une case = ses articles, cases vides hachurées ;
+      « ☆ Garder dans le classeur Excel ».
+- [ ] Carte : articles et étiquettes, couleurs par critère (thème clair et sombre), survol, zoom molette, déplacement,
+      clic sur un article = sa fiche ; « Enregistrer en SVG… » ouvre bien dans un navigateur.
+- [ ] Synthèse : sections par étiquette, « Copier le Markdown » colle bien le texte (avec les `[@BIB-…]`).
+- [ ] Excel → « Créer le classeur Excel » puis « Ouvrir dans Excel » : 5 feuilles, en-têtes figés et colorés, colonnes
+      grises, filtres, liste déroulante des types de liens ; pas de message de réparation à l'ouverture.
+- [ ] Dans Excel : changer une case de la grille, ajouter une ligne de lien, une définition ; enregistrer, **fermer** ; dans
+      l'appli, le bandeau « Le classeur Excel a été modifié » apparaît ; « Synchroniser » reprend les 3 modifications.
+- [ ] Modifier la même case dans l'appli et dans Excel : la synchronisation présente le conflit, le choix « Excel » est appliqué.
+- [ ] Synchroniser avec le classeur **ouvert** dans Excel : message clair, rien n'est modifié dans l'appli.
+- [ ] Sur l'autre PC (après OneDrive) : même grille, même classeur, synchronisation sans conflit.

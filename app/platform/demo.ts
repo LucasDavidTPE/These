@@ -163,11 +163,19 @@ export function plateformeDemo(scenario: string | null): Plateforme {
   // `?scenario=complet&contenu=1` : un espace déjà garni (pour essayer la recherche globale).
   if (scenario === "complet" && new URLSearchParams(globalThis.location?.search).get("contenu")) {
     const espace = dossier(ESPACE);
-    const ref = (n: number, titre: string, auteurs: string, annee: number) => espace.poser(`bibliotheque/references/BIB-${String(n).padStart(3, "0")}.json`, JSON.stringify({ titre, auteurs, annee, cle: `ref${n}` }));
+    // dimensions de lecture et catégories de la Matrice croisée : de quoi démarrer la lecture croisée
+    const lectures: Record<number, object> = {
+      1: { fiche: { loi: "viscoélastique, 2S2P1D", methodeCategorie: "MEF 3D", chargement: "mobile", pneu: "poids lourd" }, categories: ["Échelle / Structure"] },
+      2: { fiche: { loi: "viscoélastique", methodeCategorie: "semi-analytique", chargement: "mobile", contact: "mesuré" }, categories: ["Échelle / Structure"] },
+      20: { fiche: { loi: "2S2P1D", methodeCategorie: "essai en laboratoire", cible: "module complexe" }, categories: ["Échelle / Matériau"] },
+      65: { fiche: { loi: "élastique", methodeCategorie: "Burmister", chargement: "statique", contact: "uniforme" }, categories: ["Échelle / Structure"] },
+    };
+    const ref = (n: number, titre: string, auteurs: string, annee: number) =>
+      espace.poser(`bibliotheque/references/BIB-${String(n).padStart(3, "0")}.json`, JSON.stringify({ titre, auteurs, annee, cle: `ref${n}`, ...(lectures[n] ?? {}) }));
     ref(1, "Viscoelastic response of asphalt pavements under moving loads", "Lee, S.; Kim, J.", 2019);
     ref(2, "Spectral method for layered media", "David, L.", 2024);
     ref(20, "General 2S2P1D model and relation between the linear viscoelastic behaviours of bituminous binders and mixes", "Olard, F.; Di Benedetto, H.", 2003);
-    espace.poser("bibliotheque/references/BIB-020.json", JSON.stringify({ titre: "General 2S2P1D model and relation between the linear viscoelastic behaviours of bituminous binders and mixes", auteurs: "Olard, F.; Di Benedetto, H.", annee: 2003, cle: "ref20", fichierPdf: "BIB-020_Olard-DiBenedetto_2003_General-2S2P1D-model.pdf" }));
+    espace.poser("bibliotheque/references/BIB-020.json", JSON.stringify({ titre: "General 2S2P1D model and relation between the linear viscoelastic behaviours of bituminous binders and mixes", auteurs: "Olard, F.; Di Benedetto, H.", annee: 2003, cle: "ref20", fichierPdf: "BIB-020_Olard-DiBenedetto_2003_General-2S2P1D-model.pdf", ...lectures[20] }));
     dossier(`${ESPACE}\\bibliotheque\\pdf`).poser("BIB-020_Olard-DiBenedetto_2003_General-2S2P1D-model.pdf", pdfDemo("General 2S2P1D model", "F. Olard, H. Di Benedetto (2003)"));
     ref(65, "The general theory of stresses and displacements in layered systems", "Burmister, D. M.", 1945);
     espace.poser(

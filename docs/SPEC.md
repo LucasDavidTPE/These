@@ -618,6 +618,40 @@ l'application :
 Règle retenue : **PDF récupéré ⇔ fichier PDF renseigné**. Conséquence visible : 20 PDF
 libres à télécharger au lieu de 29 dans le classeur.
 
+### 9.5 Lecture croisée (1.19.0)
+Onglet **Lecture croisée** de la Bibliothèque : lire la littérature en la croisant.
+- **Grille** : une ligne par article, une colonne par **critère** (au départ : pneu, contact, loi de comportement,
+  méthode, chargement, cible, validation, plus un critère par groupe de la Matrice croisée du classeur). Une case
+  contient des **étiquettes** (« MEF 3D », « 2S2P1D »…) prises dans le vocabulaire du critère, qui se construit à la
+  saisie (suggestions, les plus utilisées d'abord ; comparaison sans casse ni accents), et une note. Les critères,
+  les types de liens, les définitions d'étiquettes et les croisements enregistrés sont des réglages partagés
+  (`bibliotheque/lecture-croisee.json`) ; les cases et les liens d'un article sont dans sa fiche (`lecture`, `liens`).
+  Au démarrage (bouton, une fois), les champs Pneu… Validation des fiches (découpés aux « ; » « , » « / ») et les
+  catégories de la Matrice croisée deviennent les premières étiquettes ; les champs d'origine restent dans les fiches.
+- **Liens typés** entre articles (étend, s'appuie sur, se compare à, contredit, même méthode que, utilise les données
+  de ; modifiables), avec une note, saisis dans la fiche ; chaque lien se lit dans les deux sens (« est étendu par »).
+- **Croisement** de deux critères (ou d'un critère avec lui-même) : nombre d'articles par combinaison, liste au clic,
+  **cases vides hachurées** = combinaisons qu'aucun article ne traite.
+- **Carte** : graphe articles (ronds, pleins = lus) et étiquettes (carrés colorés par critère, 8 couleurs en ordre
+  fixe, palette validée pour le daltonisme), arêtes article–étiquette et liens typés (flèches) ; disposition par forces,
+  déterministe ; zoom, déplacement, survol qui isole un nœud et ses voisins, export SVG.
+- **Synthèse** d'un critère en Markdown (une section par étiquette, définition, articles en `[@BIB-…]` avec titre et
+  note, liens entre eux), à copier ou enregistrer.
+- **Critères et vocabulaire** : ajouter, renommer, ordonner, supprimer un critère ; types de liens ; renommer une
+  étiquette dans toutes les fiches (sous le nom d'une autre = fusion), la retirer, la définir.
+- **Classeur Excel synchronisé dans les deux sens** : `bibliotheque/Lecture croisee.xlsx` (dans l'espace). Feuilles
+  Grille (ID, référence, titre, année, statut en gris ; une colonne par critère, case = `étiquette; étiquette | note` ;
+  Commentaire de la référence), Liens (De (ID), Type en liste déroulante, Vers (ID), Note), Vocabulaire (définitions),
+  Croisement (calculé, cases à zéro orangées) et Mode d'emploi. Lignes repérées par l'ID, colonnes par leur titre
+  (trier, filtrer, déplacer sans effet). Synchronisation **à trois voies** depuis l'état de la dernière synchronisation
+  (`lecture-croisee.synchro.json`) : modifié d'un seul côté → passe de l'autre ; des deux côtés différemment →
+  **conflit présenté**, l'utilisateur choisit (appli / Excel, ou tout d'un côté). Une ligne d'article supprimée dans
+  Excel n'efface rien ; une ligne de lien supprimée retire le lien. Le classeur est écrit en premier : ouvert dans
+  Excel (verrouillé), rien n'est modifié et l'appli le dit. Un classeur modifié depuis la dernière synchronisation
+  est signalé au retour dans la fenêtre. Sans état de synchronisation (première fois avec un classeur existant), une
+  case vide prend la valeur de l'autre côté et deux valeurs différentes sont un conflit.
+L'onglet « Analyse croisée » d'origine devient « Analyse (classeur) » (matrice importée et synthèses rédigées).
+
 ## 10. Module Planning (Gantt partagé)
 
 Un calendrier de thèse **propre à l'application**, synchronisé par OneDrive, sans aucun
