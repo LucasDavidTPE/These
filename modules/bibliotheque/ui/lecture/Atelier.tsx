@@ -3,13 +3,13 @@
  *   gauche  : les articles (filtrés par la recherche et les étiquettes choisies), avec leur couverture critère par critère ;
  *   centre  : l'explorateur à facettes (par défaut), la constellation, le croisement, le tableau, la synthèse, Excel… ;
  *   droite  : l'inspecteur de l'article ou de l'étiquette choisis.
- * Clavier : J/K (ou ↓/↑) article suivant/précédent, N suivant à compléter, Échap désélectionner, F plein écran.
+ * Clavier : J/K (ou ↓/↑) article suivant/précédent, N suivant à compléter, V suivant à valider, Échap désélectionner, F plein écran.
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Message } from "@interface/composants";
 import { citation } from "../../core/calculs";
 import { couverture, facettes, filtrer, proposerNettoyage, type Choix } from "../../core/explorer";
-import { cleEtiquette, type ObjetRef, type ReglagesLecture } from "../../core/lecture";
+import { aValider, bilanValidation, cleEtiquette, seulementValidees, type ObjetRef, type ReglagesLecture } from "../../core/lecture";
 import type { Reference } from "../../core/modele";
 import { Constellation, type Centre } from "./Constellation";
 import { CroisementVue } from "./Croisement";
@@ -92,14 +92,26 @@ export function Atelier({
   const [etiquette, setEtiquette] = useState<Choix | null>(null);
   const [plein, setPlein] = useState(false);
   const [refCadre, styleCadre] = useCadreFenetre(!plein);
+  /** Ne croiser que ce qui a été validé (les cases « à valider » sont mises de côté). */
+  const [seulValide, setSeulValide] = useState(false);
+  /** Ne lister que les articles qui ont des cases à valider. */
+  const [aTrier, setATrier] = useState(false);
 
+  // Ce que montrent les vues (facettes, croisement, synthèse, constellation) ; l'édition se fait toujours sur `refs`.
+  const vus = useMemo(() => (seulValide ? seulementValidees(refs) : refs), [refs, seulValide]);
   const visibles = useMemo(() => {
     const q = normal(recherche);
-    return filtrer(refs, choix)
+    return filtrer(vus, choix)
       .filter((r) => ecartes || r.valeur.statut !== "Écarté")
+      .filter((r) => !aTrier || aValider(refs.find((x) => x.id === r.id)?.valeur ?? r.valeur, reglages).length > 0)
       .filter((r) => !q || normal(`${r.id} ${citation(r.valeur)} ${r.valeur.titre} ${r.valeur.auteurs}`).includes(q));
-  }, [refs, choix, recherche, ecartes]);
-  const lesFacettes = useMemo(() => facettes(refs.filter((r) => ecartes || r.valeur.statut !== "Écarté"), visibles, reglages), [refs, visibles, reglages, ecartes]);
+  }, [vus, refs, reglages, choix, recherche, ecartes, aTrier]);
+  const visiblesReels = useMemo(() => {
+    const ids = new Set(visibles.map((r) => r.id));
+    return refs.filter((r) => ids.has(r.id));
+  }, [refs, visibles]);
+  const lesFacettes = useMemo(() => facettes(vus.filter((r) => ecartes || r.valeur.statut !== "Écarté"), visibles, reglages), [vus, visibles, reglages, ecartes]);
+  const validation = useMemo(() => bilanValidation(refs.filter((r) => r.valeur.statut !== "Écarté"), reglages), [refs, reglages]);
   const aNettoyer = useMemo(() => {
     const p = proposerNettoyage(refs, reglages);
     return p.separations.length + p.fusions.length;
@@ -116,13 +128,15 @@ export function Atelier({
   };
   const basculer = (c: Choix) => setChoix((x) => (x.some((y) => y.critere === c.critere && y.cle === c.cle) ? x.filter((y) => !(y.critere === c.critere && y.cle === c.cle)) : [...x, c]));
   const incomplet = (r: ObjetRef) => reglages.criteres.some((c) => !r.valeur.lecture[c.id]?.etiquettes.length);
-  const deplacer = (pas: number, aCompleter = false) => {
+  const reel = (r: ObjetRef) => refs.find((x) => x.id === r.id) ?? r;
+  /** Article suivant (ou précédent) ; `quoi` : le prochain à compléter, ou à valider. */
+  const deplacer = (pas: number, quoi: false | "completer" | "valider" = false) => {
     if (!visibles.length) return;
     const i = visibles.findIndex((r) => r.id === article);
     for (let k = 1; k <= visibles.length; k++) {
       const j = (((i < 0 ? (pas > 0 ? -1 : 0) : i) + pas * k) % visibles.length + visibles.length) % visibles.length;
-      const r = visibles[j]!;
-      if (!aCompleter || incomplet(r)) return choisirArticle(r.id);
+      const r = reel(visibles[j]!);
+      if (!quoi || (quoi === "completer" ? incomplet(r) : aValider(r.valeur, reglages).length > 0)) return choisirArticle(r.id);
     }
   };
 
@@ -136,7 +150,8 @@ export function Atelier({
       } else if (e.key === "k" || e.key === "ArrowUp") {
         e.preventDefault();
         deplacer(-1);
-      } else if (e.key === "n") deplacer(1, true);
+      } else if (e.key === "n") deplacer(1, "completer");
+      else if (e.key === "v") deplacer(1, "valider");
       else if (e.key === "f") setPlein((p) => !p);
       else if (e.key === "Escape") {
         if (plein) setPlein(false);
@@ -169,6 +184,9 @@ export function Atelier({
         <button type="button" className={mode === "nettoyer" ? "actif" : undefined} onClick={() => setMode("nettoyer")} title="Séparer les précisions entre parenthèses, fusionner les écritures voisines">
           Nettoyer{aNettoyer ? <span className="compteur">{aNettoyer}</span> : null}
         </button>
+        <label className="rangee petit lc-seul-valide" title="Facettes, croisement, synthèse et constellation ne tiennent compte que des cases validées">
+          <input type="checkbox" checked={seulValide} onChange={(e) => setSeulValide(e.target.checked)} /> validé seulement
+        </label>
         <button type="button" onClick={() => setPlein((p) => !p)} title="Plein écran (F)">
           {plein ? "⤡ Réduire" : "⤢ Plein écran"}
         </button>
@@ -192,12 +210,15 @@ export function Atelier({
           <span>
             {visibles.length} article{visibles.length > 1 ? "s" : ""}
           </span>
+          <label className="rangee" title="Seulement les articles qui ont des cases à valider">
+            <input type="checkbox" checked={aTrier} onChange={(e) => setATrier(e.target.checked)} /> à valider
+          </label>
           <label className="rangee">
             <input type="checkbox" checked={ecartes} onChange={(e) => setEcartes(e.target.checked)} /> écartés
           </label>
         </div>
         <ul className="lc-liste">
-          {visibles.map((r) => (
+          {visibles.map(reel).map((r) => (
             <li
               key={r.id}
               className={r.id === article ? "actif" : undefined}
@@ -211,10 +232,21 @@ export function Atelier({
               title={`${r.valeur.titre}\nClic : inspecter · double-clic : fiche · glisser sur l'inspecteur : lier`}
             >
               <div className="lc-ligne-article">
-                <strong>{citation(r.valeur) || r.id}</strong>
-                <span className="lc-couverture" aria-label="Critères renseignés">
+                <strong>
+                  {citation(r.valeur) || r.id}
+                  {aValider(r.valeur, reglages).length ? (
+                    <span className="lc-badge-valider" title="Cases à valider">
+                      {aValider(r.valeur, reglages).length}
+                    </span>
+                  ) : null}
+                </strong>
+                <span className="lc-couverture" aria-label="Critères renseignés (atténués : à valider)">
                   {couverture(r, reglages).map((plein, i) => (
-                    <i key={i} className={plein ? "plein" : undefined} style={{ ["--lc-c" as string]: i < 8 ? `var(--lc-serie-${i + 1})` : "var(--discret)" }} />
+                    <i
+                      key={i}
+                      className={plein ? (r.valeur.lecture[reglages.criteres[i]!.id]?.valide === false ? "plein a-valider" : "plein") : undefined}
+                      style={{ ["--lc-c" as string]: i < 8 ? `var(--lc-serie-${i + 1})` : "var(--discret)" }}
+                    />
                   ))}
                 </span>
               </div>
@@ -229,7 +261,7 @@ export function Atelier({
           <Facettes facettes={lesFacettes} reglages={reglages} choix={choix} basculer={basculer} centrer={centrerEtiquette} total={refs.length} selection={visibles.length} />
         ) : mode === "constellation" ? (
           <Constellation
-            refs={refs}
+            refs={vus}
             reglages={reglages}
             centre={centre}
             choisir={(c) => (c.genre === "article" ? choisirArticle(c.id) : (setEtiquette({ critere: c.critere, cle: c.cle }), setArticle(null)))}
@@ -238,7 +270,7 @@ export function Atelier({
         ) : mode === "croisement" ? (
           <CroisementVue refs={visibles} reglages={reglages} enregistrerReglages={enregistrerReglages} ouvrir={choisirArticle} />
         ) : mode === "tableau" ? (
-          <Grille refs={visibles} reglages={reglages} enregistrer={enregistrer} ouvrir={choisirArticle} />
+          <Grille refs={visiblesReels} reglages={reglages} enregistrer={enregistrer} ouvrir={choisirArticle} />
         ) : mode === "synthese" ? (
           <SyntheseVue refs={visibles} reglages={reglages} />
         ) : mode === "excel" ? (
@@ -250,6 +282,11 @@ export function Atelier({
         )}
         {choix.length && (mode === "croisement" || mode === "tableau" || mode === "synthese") ? (
           <Message niveau="info">Vue restreinte aux {visibles.length} article(s) filtré(s) à gauche.</Message>
+        ) : null}
+        {seulValide && (mode === "explorer" || mode === "croisement" || mode === "synthese" || mode === "constellation") ? (
+          <Message niveau="info">
+            Validé seulement : {validation.validees} case(s) sur {validation.cases} ; les cases à valider sont mises de côté.
+          </Message>
         ) : null}
       </main>
 
@@ -263,7 +300,7 @@ export function Atelier({
             ouvrirFiche={ouvrirFiche}
             choisirArticle={choisirArticle}
             precedent={() => deplacer(-1)}
-            suivant={(a) => deplacer(1, a)}
+            suivant={(quoi) => deplacer(1, quoi)}
             position={position}
           />
         ) : etiquette ? (
@@ -278,7 +315,7 @@ export function Atelier({
             centrer={centrerEtiquette}
           />
         ) : (
-          <Bilan refs={refs} reglages={reglages} commencer={() => deplacer(1, true)} nettoyables={aNettoyer} />
+          <Bilan refs={refs} reglages={reglages} commencer={() => deplacer(1, "completer")} valider={() => deplacer(1, "valider")} validation={validation} nettoyables={aNettoyer} />
         )}
       </aside>
     </div>

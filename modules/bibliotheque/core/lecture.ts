@@ -187,7 +187,7 @@ export function decouperTexte(texte: string): CelluleLecture {
     } else if (e.length > ETIQUETTE_MAX) notes.push(e);
     else etiquettes.push(e);
   }
-  return { etiquettes: unirEtiquettes([], etiquettes), note: notes.join(" ; ") };
+  return { etiquettes: unirEtiquettes([], etiquettes), note: notes.join(" ; "), valide: false };
 }
 
 // ---- Cases : texte d'une cellule Excel « a; b | note » ----
@@ -204,7 +204,7 @@ export function lireCellule(texte: string): CelluleLecture {
   const i = texte.indexOf("|");
   const tete = i < 0 ? texte : texte.slice(0, i);
   const note = i < 0 ? "" : texte.slice(i + 1).trim();
-  return { etiquettes: unirEtiquettes([], tete.split(/[;\n]/)), note };
+  return { etiquettes: unirEtiquettes([], tete.split(/[;\n]/)), note, valide: false };
 }
 
 /** Forme canonique d'une case, pour savoir si elle a changé : étiquettes triées sans casse ni accents, note. */
@@ -221,8 +221,62 @@ export const estVide = (c: CelluleLecture | undefined) => !c || (!c.etiquettes.l
 export function avecCellule(r: Reference, critere: string, c: CelluleLecture): Reference {
   const lecture = { ...r.lecture };
   if (estVide(c)) delete lecture[critere];
-  else lecture[critere] = { etiquettes: unirEtiquettes([], c.etiquettes), note: c.note.trim() };
+  else lecture[critere] = { etiquettes: unirEtiquettes([], c.etiquettes), note: c.note.trim(), valide: c.valide };
   return { ...r, lecture };
+}
+
+// ---- Validation : ce qui a été repris automatiquement est « à valider » jusqu'à ce que l'utilisateur le confirme ----
+
+/** Case validée (ou remise « à valider ») ; sans effet sur une case vide. */
+export function validerCase(r: Reference, critere: string, valide = true): Reference {
+  const c = r.lecture[critere];
+  if (!c || c.valide === valide) return r;
+  return { ...r, lecture: { ...r.lecture, [critere]: { ...c, valide } } };
+}
+
+/** Toutes les cases de l'article validées. */
+export function validerArticle(r: Reference): Reference {
+  if (Object.values(r.lecture).every((c) => c.valide)) return r;
+  return { ...r, lecture: Object.fromEntries(Object.entries(r.lecture).map(([k, c]) => [k, { ...c, valide: true }])) };
+}
+
+/** Critères (de la grille) dont la case est remplie mais encore à valider. */
+export function aValider(r: Reference, reglages: ReglagesLecture): string[] {
+  return reglages.criteres.filter((c) => r.lecture[c.id] && !r.lecture[c.id]!.valide).map((c) => c.id);
+}
+
+export interface BilanValidation {
+  /** Cases remplies, et parmi elles les validées. */
+  cases: number;
+  validees: number;
+  /** Articles ayant au moins une case à valider. */
+  articlesAValider: number;
+}
+
+export function bilanValidation(refs: readonly ObjetRef[], reglages: ReglagesLecture): BilanValidation {
+  let cases = 0;
+  let validees = 0;
+  let articlesAValider = 0;
+  for (const r of refs) {
+    let reste = false;
+    for (const c of reglages.criteres) {
+      const x = r.valeur.lecture[c.id];
+      if (!x) continue;
+      cases++;
+      if (x.valide) validees++;
+      else reste = true;
+    }
+    if (reste) articlesAValider++;
+  }
+  return { cases, validees, articlesAValider };
+}
+
+/** Les articles avec leurs seules cases validées (croiser ou synthétiser sur ce qui a été vérifié). */
+export function seulementValidees(refs: readonly ObjetRef[]): ObjetRef[] {
+  return refs.map((r) => {
+    const lecture = Object.fromEntries(Object.entries(r.valeur.lecture).filter(([, c]) => c.valide));
+    return Object.keys(lecture).length === Object.keys(r.valeur.lecture).length ? r : { id: r.id, valeur: { ...r.valeur, lecture } };
+  });
 }
 
 // ---- Initialisation depuis la fiche de lecture et la Matrice croisée du classeur ----
@@ -266,7 +320,7 @@ export function initialiser(refs: readonly ObjetRef[], existants: ReglagesLectur
     for (const cat of v.categories) {
       const [groupe, nom] = cat.includes(" / ") ? [cat.slice(0, cat.indexOf(" / ")), cat.slice(cat.indexOf(" / ") + 3)] : ["Catégories", cat];
       const id = critereDuGroupe(groupe);
-      const avant = v.lecture[id] ?? { etiquettes: [], note: "" };
+      const avant = v.lecture[id] ?? { etiquettes: [], note: "", valide: false };
       v = avecCellule(v, id, { ...avant, etiquettes: unirEtiquettes(avant.etiquettes, [nom]) });
     }
     if (v !== r.valeur) modifiees.push({ id: r.id, valeur: v });

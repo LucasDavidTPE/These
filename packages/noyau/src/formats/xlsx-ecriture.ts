@@ -38,6 +38,8 @@ export interface MiseEnForme {
   zerosEnEvidence?: boolean;
   /** Lignes de données affichées comme des titres (indices dans `lignes`), en gras. */
   lignesTitres?: readonly number[];
+  /** Cases « à revoir » (« ligne,colonne », indices dans `lignes`) : italique sur fond jaune pâle. */
+  aRevoir?: ReadonlySet<string>;
 }
 
 export interface Feuille {
@@ -48,22 +50,24 @@ export interface Feuille {
   mise?: MiseEnForme;
 }
 
-/** Styles (cellXfs) : 1 en-tête, 2 texte renvoyé, 3 grisé, 4 zéro mis en évidence, 5 titre. */
+/** Styles (cellXfs) : 1 en-tête, 2 texte renvoyé, 3 grisé, 4 zéro mis en évidence, 5 titre, 6 à revoir. */
 const STYLES =
   '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
-  '<fonts count="2"><font><sz val="11"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="11"/><name val="Calibri"/><family val="2"/></font></fonts>' +
-  '<fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>' +
+  '<fonts count="3"><font><sz val="11"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="11"/><name val="Calibri"/><family val="2"/></font><font><i/><sz val="11"/><color rgb="FF7F6000"/><name val="Calibri"/><family val="2"/></font></fonts>' +
+  '<fills count="6"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>' +
   '<fill><patternFill patternType="solid"><fgColor rgb="FFDDEBF7"/><bgColor indexed="64"/></patternFill></fill>' +
   '<fill><patternFill patternType="solid"><fgColor rgb="FFF2F2F2"/><bgColor indexed="64"/></patternFill></fill>' +
-  '<fill><patternFill patternType="solid"><fgColor rgb="FFFCE4D6"/><bgColor indexed="64"/></patternFill></fill></fills>' +
+  '<fill><patternFill patternType="solid"><fgColor rgb="FFFCE4D6"/><bgColor indexed="64"/></patternFill></fill>' +
+  '<fill><patternFill patternType="solid"><fgColor rgb="FFFFF2CC"/><bgColor indexed="64"/></patternFill></fill></fills>' +
   '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left/><right/><top/><bottom style="thin"><color rgb="FF8EA9DB"/></bottom><diagonal/></border></borders>' +
   '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
-  '<cellXfs count="6"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+  '<cellXfs count="7"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
   '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>' +
   '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>' +
   '<xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>' +
   '<xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1" applyAlignment="1"><alignment horizontal="center"/></xf>' +
-  '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs>' +
+  '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
+  '<xf numFmtId="0" fontId="2" fillId="5" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf></cellXfs>' +
   '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
 
 /** Nom de feuille permis par Excel : 31 caractères, sans \ / ? * [ ] :. */
@@ -92,7 +96,7 @@ function xmlFeuille(f: Feuille): string {
     let cellules = "";
     l.forEach((v, j) => {
       const ref = `${lettres[j] ?? colonne(j)}${r}`;
-      const style = !m ? 0 : titres.has(i) ? 5 : grisees.has(j) ? 3 : m.zerosEnEvidence && v === 0 ? 4 : m.retour ? 2 : 0;
+      const style = !m ? 0 : titres.has(i) ? 5 : grisees.has(j) ? 3 : m.zerosEnEvidence && v === 0 ? 4 : m.aRevoir?.has(`${i},${j}`) && v !== "" ? 6 : m.retour ? 2 : 0;
       const st = style ? ` s="${style}"` : "";
       if (typeof v === "number" && Number.isFinite(v)) cellules += `<c r="${ref}"${st}><v>${v}</v></c>`;
       else if (typeof v === "string" && v !== "") cellules += `<c r="${ref}"${st} t="inlineStr"><is><t${/^\s|\s$|\n/.test(v) ? ' xml:space="preserve"' : ""}>${echapper(v)}</t></is></c>`;

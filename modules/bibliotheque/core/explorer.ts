@@ -185,7 +185,7 @@ export function appliquerNettoyage(refs: readonly ObjetRef[], separations: reado
       });
       const changees = unirEtiquettes([], etiquettes);
       const note = [cell.note, ...notes].map((n) => n.trim()).filter(Boolean).join(" ; ");
-      if (JSON.stringify(changees) !== JSON.stringify(cell.etiquettes) || note !== cell.note) v = avecCellule(v, critere, { etiquettes: changees, note });
+      if (JSON.stringify(changees) !== JSON.stringify(cell.etiquettes) || note !== cell.note) v = avecCellule(v, critere, { etiquettes: changees, note, valide: cell.valide });
     }
     if (v !== r.valeur) out.push({ id: r.id, valeur: v });
   }

@@ -50,6 +50,11 @@ export interface NotesLecture {
 export interface CelluleLecture {
   etiquettes: string[];
   note: string;
+  /**
+   * Validée par l'utilisateur (confirmée, corrigée ou saisie à la main). Faux pour ce qui a été repris
+   * automatiquement des fiches et des catégories : la case est « à valider ».
+   */
+  valide: boolean;
 }
 
 /** Lien typé vers une autre référence (« étend », « contredit »…), avec une note. */
@@ -268,7 +273,7 @@ function lireGrille(v: unknown): Record<string, CelluleLecture> {
     const o = objet(c);
     const etiquettes = Array.isArray(o.etiquettes) ? o.etiquettes.filter((e): e is string => typeof e === "string" && e.trim() !== "") : [];
     const note = txt(o.note);
-    if (etiquettes.length || note) out[k] = { etiquettes, note };
+    if (etiquettes.length || note) out[k] = { etiquettes, note, valide: o.valide === true };
   }
   return out;
 }

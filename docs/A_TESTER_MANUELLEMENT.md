@@ -802,3 +802,18 @@ nombres doivent être identiques, dans les deux modes.
       « Lu » et date du jour ; la séance est barrée et la référence quitte la colonne.
 - [ ] Bibliothèque : plus d'onglets « Corrections TFE » ni « Analyse (classeur) », plus de tuile « corrections du TFE ».
 
+## Lecture croisée : cases à valider (1.22.0)
+
+- [ ] Après la mise à jour, les cases déjà remplies (reprises des fiches) apparaissent « à valider » : puces en pointillés et
+      italique, petit nombre orangé à côté de chaque article de la liste, carrés de couverture atténués.
+- [ ] Inspecteur d'un article : ✓ à droite d'une case la valide (pointillés → puces pleines) ; « ✓ Tout valider » valide tout
+      l'article et affiche « Toutes les cases sont validées » ; modifier une case (ajouter / retirer une étiquette) la valide aussi.
+- [ ] « À valider ⏭ » et la touche V sautent au prochain article qui a des cases à valider ; « à valider » en haut de la liste
+      ne garde que ces articles ; le bilan (sans article choisi) montre « N cases validées sur M » et la jauge avance.
+- [ ] Fiche d'un article non lu : on peut valider ses cases ; « Marquer comme lu » → la section Lecture croisée affiche
+      « Article lu : N cases à valider ».
+- [ ] « validé seulement » : facettes, croisement et synthèse ne comptent que les cases validées ; décocher rétablit tout.
+- [ ] Excel : « Synchroniser » puis ouvrir le classeur : cases à valider en italique sur fond jaune pâle (pas de message de
+      réparation) ; modifier l'une d'elles dans Excel, enregistrer, fermer, synchroniser → la case est validée dans l'appli.
+- [ ] Sur l'autre PC (après OneDrive) : mêmes états de validation.
+

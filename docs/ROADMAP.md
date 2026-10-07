@@ -214,5 +214,7 @@ lancent tous les tests automatiques sous Windows.
       bande « journée »), Gantt gardé en « Vue d'ensemble » long terme, exports PNG et pgfgantt retirés ; colonne
       **À lire** pour planifier les lectures (glisser, « Placer » au premier créneau libre, « Marquer comme lu ») ;
       Bibliothèque : onglets « Corrections TFE » et « Analyse (classeur) » retirés (1.21.0)
+- [x] Lecture croisée : cases « à valider » (reprises automatiquement) / « validées » (✓, Tout valider, toute modification à la
+      main), suivant à valider (V), filtre de la liste, « validé seulement » pour croiser, cases à valider repérées dans Excel (1.22.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),
       remarques extraites avec état (à traiter / traitée / refusée), compteur par partie, rangés avec les versions

@@ -649,6 +649,16 @@ Onglet **Lecture croisée** de la Bibliothèque : lire la littérature en la cro
   « 2S2P1D », de fusionner les écritures voisines (casse, accents, tirets, pluriel : « Éléments finis » / « element
   fini »), et signale les étiquettes trop longues ; rien n'est appliqué sans clic. Au démarrage, les anciens champs sont
   découpés hors parenthèses et les précisions entre parenthèses vont directement en note.
+- **Cases « à valider » / « validées »** (1.22.0) : chaque case porte `valide` (booléen, absent = faux). Ce qui a été
+  repris automatiquement (démarrage depuis les fiches et la Matrice croisée) est **à valider** : puces en pointillés et
+  italique, carrés de couverture atténués, nombre de cases à valider à côté de l'article. Une case **modifiée à la main**
+  (dans l'appli ou dans Excel) est validée ; **✓** la valide telle quelle ; **Tout valider** valide l'article. On valide un
+  article à tout moment, lu ou non ; un article « Lu » qui a encore des cases à valider le signale en tête de sa section
+  Lecture croisée (fiche et inspecteur). Le nettoyage et le renommage d'étiquettes gardent l'état des cases. Navigation
+  « À valider ⏭ » (V), filtre « à valider » de la liste, bilan (cases validées / total, jauge) ; case à cocher
+  **« validé seulement »** : facettes, croisement, synthèse et constellation ne tiennent compte que des cases validées
+  (l'édition, elle, porte toujours sur toutes les cases). Dans Excel, les cases à valider sont en italique sur fond
+  jaune pâle ; l'état n'est pas relu depuis Excel (une case changée dans Excel devient validée, les autres gardent leur état).
 - **Croisement** de deux critères (ou d'un critère avec lui-même), restreint aux articles filtrés : nombre d'articles
   par combinaison, liste au clic, **cases vides hachurées** = combinaisons qu'aucun article ne traite.
 - **Synthèse** d'un critère en Markdown (une section par étiquette, définition, articles en `[@BIB-…]` avec titre et

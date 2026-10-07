@@ -684,3 +684,84 @@
 .lc-plein {
   grid-template-columns: 300px minmax(0, 1fr) 400px;
 }
+
+/* ---- Validation des cases (1.22.0) ---- */
+.lc-puces.lc-a-valider .lc-puce {
+  background: transparent;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--attention) 60%, var(--bordure));
+  font-style: italic;
+  color: var(--discret);
+}
+.lc-puces.lc-a-valider .lc-note {
+  font-style: italic;
+}
+.lc-case {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+.lc-case .lc-case-bouton {
+  flex: 1;
+  min-width: 0;
+}
+.lc-valider {
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--ok) 50%, var(--bordure));
+  background: transparent;
+  color: var(--ok);
+  border-radius: 999px;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.lc-valider:hover:not(:disabled) {
+  background: var(--ok-fond);
+  color: var(--ok);
+}
+.lc-validation {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  background: var(--attention-fond);
+  color: var(--texte);
+  font-size: 13px;
+}
+.lc-validation span {
+  flex: 1;
+  min-width: 200px;
+}
+.lc-validation-lu {
+  border-left: 3px solid var(--attention);
+}
+.lc-couverture i.plein.a-valider {
+  background: color-mix(in srgb, var(--lc-c) 25%, transparent);
+}
+.lc-badge-valider {
+  font-size: 10.5px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--attention-fond);
+  color: var(--attention);
+  margin-left: 4px;
+}
+.lc-jauge-validation {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  overflow: hidden;
+  margin: 4px 0 8px;
+}
+.lc-jauge-validation span {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+}

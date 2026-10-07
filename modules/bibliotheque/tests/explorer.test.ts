@@ -47,6 +47,7 @@ describe("vocabulaire propre", () => {
     expect(decouperTexte("Viscoélastique (2S2P1D, linéaire), MEF 3D ; mobile")).toEqual({
       etiquettes: ["Viscoélastique", "MEF 3D", "mobile"],
       note: "Viscoélastique : 2S2P1D, linéaire",
+      valide: false,
     });
   });
 

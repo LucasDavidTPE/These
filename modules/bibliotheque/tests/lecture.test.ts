@@ -18,6 +18,11 @@ import {
   texteCellule,
   unirEtiquettes,
   vocabulaire,
+  aValider,
+  bilanValidation,
+  seulementValidees,
+  validerArticle,
+  validerCase,
   type ObjetRef,
 } from "../core/lecture";
 import { lireReference } from "../core/modele";
@@ -30,30 +35,31 @@ describe("étiquettes et cases", () => {
   });
 
   it("ancien texte libre → étiquettes, le texte long part en note", () => {
-    expect(decouperTexte("viscoélastique, 2S2P1D ; mobile")).toEqual({ etiquettes: ["viscoélastique", "2S2P1D", "mobile"], note: "" });
+    expect(decouperTexte("viscoélastique, 2S2P1D ; mobile")).toEqual({ etiquettes: ["viscoélastique", "2S2P1D", "mobile"], note: "", valide: false });
     expect(decouperTexte("Pneu avion / H40\nla pression de gonflage est supposée uniforme sur toute l'empreinte")).toEqual({
       etiquettes: ["Pneu avion", "H40"],
       note: "la pression de gonflage est supposée uniforme sur toute l'empreinte",
+      valide: false,
     });
   });
 
   it("cellule Excel « a; b | note » aller-retour, forme canonique insensible à l'ordre", () => {
     const c = lireCellule("MEF 3D; Burmister | maillage grossier");
-    expect(c).toEqual({ etiquettes: ["MEF 3D", "Burmister"], note: "maillage grossier" });
+    expect(c).toEqual({ etiquettes: ["MEF 3D", "Burmister"], note: "maillage grossier", valide: false });
     expect(texteCellule(c)).toBe("MEF 3D; Burmister | maillage grossier");
     expect(lireCellule(texteCellule(c))).toEqual(c);
-    expect(texteCellule({ etiquettes: [], note: "à voir" })).toBe("| à voir");
-    expect(lireCellule("| à voir")).toEqual({ etiquettes: [], note: "à voir" });
+    expect(texteCellule({ etiquettes: [], note: "à voir", valide: true })).toBe("| à voir");
+    expect(lireCellule("| à voir")).toEqual({ etiquettes: [], note: "à voir", valide: false });
     expect(cleCellule(lireCellule("Burmister;mef 3d"))).toBe(cleCellule(c).replace("|maillage grossier", "|"));
     expect(cleCellule(lireCellule(""))).toBe("");
-    expect(lireCellule("a\nb;  ; c")).toEqual({ etiquettes: ["a", "b", "c"], note: "" });
+    expect(lireCellule("a\nb;  ; c")).toEqual({ etiquettes: ["a", "b", "c"], note: "", valide: false });
   });
 
   it("une case vide est retirée de la fiche", () => {
     const r = ref("BIB-001", {}).valeur;
-    const a = avecCellule(r, "loi", { etiquettes: ["2S2P1D"], note: "" });
-    expect(a.lecture).toEqual({ loi: { etiquettes: ["2S2P1D"], note: "" } });
-    expect(avecCellule(a, "loi", { etiquettes: [], note: " " }).lecture).toEqual({});
+    const a = avecCellule(r, "loi", { etiquettes: ["2S2P1D"], note: "", valide: true });
+    expect(a.lecture).toEqual({ loi: { etiquettes: ["2S2P1D"], note: "", valide: true } });
+    expect(avecCellule(a, "loi", { etiquettes: [], note: " ", valide: true }).lecture).toEqual({});
   });
 });
 
@@ -75,10 +81,10 @@ describe("réglages et initialisation", () => {
     expect(reglages.criteres.map((c) => c.id)).toEqual(["pneu", "contact", "loi", "methode", "chargement", "cible", "validation", "echelle"]);
     expect(modifiees.map((m) => m.id)).toEqual(["BIB-001"]);
     expect(modifiees[0]!.valeur.lecture).toEqual({
-      loi: { etiquettes: ["viscoélastique", "2S2P1D"], note: "" },
-      methode: { etiquettes: ["MEF 3D"], note: "" },
-      pneu: { etiquettes: ["Avion"], note: "" },
-      echelle: { etiquettes: ["Structure"], note: "" },
+      loi: { etiquettes: ["viscoélastique", "2S2P1D"], note: "", valide: false },
+      methode: { etiquettes: ["MEF 3D"], note: "", valide: false },
+      pneu: { etiquettes: ["Avion"], note: "", valide: false },
+      echelle: { etiquettes: ["Structure"], note: "", valide: false },
     });
     // la fiche d'origine est intacte
     expect(modifiees[0]!.valeur.fiche.loi).toBe("viscoélastique, 2S2P1D");
@@ -153,3 +159,47 @@ describe("liens, croisement, synthèse", () => {
   });
 
 });
+
+describe("validation des cases", () => {
+  const avec = () => [
+    ref("BIB-001", { lecture: { loi: { etiquettes: ["2S2P1D"] }, methode: { etiquettes: ["MEF 3D"], valide: true } } }),
+    ref("BIB-002", { lecture: { loi: { etiquettes: ["Élastique"], valide: true } } }),
+    ref("BIB-003", {}),
+  ];
+  const reglages = reglagesLectureVides();
+
+  it("relue : à valider par défaut (anciennes fiches), validée si enregistrée comme telle", () => {
+    const [a, b] = avec();
+    expect(a!.valeur.lecture.loi!.valide).toBe(false);
+    expect(a!.valeur.lecture.methode!.valide).toBe(true);
+    expect(aValider(a!.valeur, reglages)).toEqual(["loi"]);
+    expect(aValider(b!.valeur, reglages)).toEqual([]);
+  });
+
+  it("valider une case, un article ; compter ; ne garder que le validé", () => {
+    const refs = avec();
+    expect(bilanValidation(refs, reglages)).toEqual({ cases: 3, validees: 2, articlesAValider: 1 });
+    const v = validerCase(refs[0]!.valeur, "loi");
+    expect(v.lecture.loi).toEqual({ etiquettes: ["2S2P1D"], note: "", valide: true });
+    expect(validerCase(v, "loi")).toBe(v);
+    expect(validerCase(v, "absent")).toBe(v);
+    expect(validerCase(v, "loi", false).lecture.loi!.valide).toBe(false);
+    const tout = validerArticle(refs[0]!.valeur);
+    expect(Object.values(tout.lecture).every((c) => c.valide)).toBe(true);
+    expect(validerArticle(tout)).toBe(tout);
+    const filtres = seulementValidees(refs);
+    expect(Object.keys(filtres[0]!.valeur.lecture)).toEqual(["methode"]);
+    expect(filtres[1]).toBe(refs[1]);
+  });
+
+  it("les reprises automatiques sont à valider ; le nettoyage et le renommage gardent l'état", () => {
+    const { modifiees } = initialiser([ref("BIB-001", { fiche: { loi: "viscoélastique" } })], null);
+    expect(modifiees[0]!.valeur.lecture.loi!.valide).toBe(false);
+    const refs = avec();
+    const r = renommerEtiquette(refs, "methode", "MEF 3D", "Éléments finis 3D");
+    expect(r[0]!.valeur.lecture.methode).toEqual({ etiquettes: ["Éléments finis 3D"], note: "", valide: true });
+    const r2 = renommerEtiquette(refs, "loi", "2S2P1D", "Viscoélastique");
+    expect(r2[0]!.valeur.lecture.loi!.valide).toBe(false);
+  });
+});
+

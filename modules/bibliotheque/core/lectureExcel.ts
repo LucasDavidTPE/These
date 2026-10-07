@@ -100,6 +100,8 @@ const MODE_EMPLOI = [
   "  Réutilisez les mêmes étiquettes d'un article à l'autre (voir la feuille Vocabulaire) : c'est ce qui permet de croiser.",
   "  Les colonnes grises (ID, référence, titre, année, statut) viennent de l'application : leurs modifications sont ignorées.",
   "  Vous pouvez trier, filtrer, déplacer les colonnes, ajuster les largeurs. Ne modifiez pas les titres des colonnes.",
+  "  Cases en italique sur fond jaune : « à valider » (reprises automatiquement des fiches, pas encore confirmées).",
+  "  Une case que vous modifiez ici devient validée ; pour valider sans rien changer, utilisez l'application.",
   "",
   "Feuille Liens : un lien par ligne. Ajoutez une ligne pour créer un lien, supprimez-la pour le retirer.",
   "  « De (ID) » et « Vers (ID) » : identifiants BIB-… ; Type : choisi dans la liste.",
@@ -121,6 +123,14 @@ export function construireClasseur(refs: readonly ObjetRef[], reglages: Reglages
   };
   const typeNom = new Map(reglages.typesLiens.map((t) => [t.id, t.nom]));
 
+  // cases encore « à valider » dans l'appli (et inchangées dans l'état synchronisé) : en italique sur fond jaune
+  const aRevoir = new Set<string>();
+  tries.forEach((r, i) =>
+    reglages.criteres.forEach((c, k) => {
+      const x = r.valeur.lecture[c.id];
+      if (x && !x.valide && egal(c.id, texteCellule(x), etat.cases[r.id]?.[c.id])) aRevoir.add(`${i},${FIXES.length + k}`);
+    }),
+  );
   const grille: Feuille = {
     nom: FEUILLE_GRILLE,
     entetes: [...FIXES, ...reglages.criteres.map((c) => c.nom), "Commentaire"],
@@ -134,6 +144,7 @@ export function construireClasseur(refs: readonly ObjetRef[], reglages: Reglages
       etat.cases[r.id]?.[COMMENTAIRE] ?? "",
     ]),
     mise: {
+      aRevoir,
       largeurs: [10, 24, 46, 7, 10, ...reglages.criteres.map(() => 26), 40],
       figerColonnes: 2,
       filtre: true,
@@ -470,8 +481,9 @@ export function appliquer(refs: readonly ObjetRef[], reglages: ReglagesLecture, 
     if (ligne) {
       for (const c of reglages.criteres) {
         const cible = lireCellule(ligne[c.id] ?? "");
-        if (cleCellule(cible) !== cleCellule(v.lecture[c.id])) v = avecCellule(v, c.id, cible);
-        else if (ligne[c.id] && texteCellule(v.lecture[c.id]) !== ligne[c.id]) v = avecCellule(v, c.id, cible);
+        // une case changée dans Excel a été écrite à la main : validée ; sinon elle garde son état
+        if (cleCellule(cible) !== cleCellule(v.lecture[c.id])) v = avecCellule(v, c.id, { ...cible, valide: true });
+        else if (ligne[c.id] && texteCellule(v.lecture[c.id]) !== ligne[c.id]) v = avecCellule(v, c.id, { ...cible, valide: v.lecture[c.id]?.valide ?? true });
       }
       const com = ligne[COMMENTAIRE] ?? "";
       if (espaces(com) !== espaces(v.commentaire)) v = { ...v, commentaire: com };

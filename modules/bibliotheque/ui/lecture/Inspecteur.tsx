@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { citation } from "../../core/calculs";
 import { compagnes, filtrer, type Choix } from "../../core/explorer";
-import { cleEtiquette, definir, lier, renommerEtiquette, vocabulaire, type ObjetRef, type ReglagesLecture } from "../../core/lecture";
+import { cleEtiquette, definir, lier, renommerEtiquette, vocabulaire, type BilanValidation, type ObjetRef, type ReglagesLecture } from "../../core/lecture";
 import type { Reference } from "../../core/modele";
 import { ChampTexte } from "../champs";
 import { LectureFiche } from "./LectureFiche";
@@ -31,7 +31,7 @@ export function InspecteurArticle({
   ouvrirFiche(id: string): void;
   choisirArticle(id: string): void;
   precedent(): void;
-  suivant(aCompleter: boolean): void;
+  suivant(quoi: false | "completer" | "valider"): void;
   position: string;
 }) {
   const r = refs.find((x) => x.id === id);
@@ -70,8 +70,11 @@ export function InspecteurArticle({
         <button type="button" onClick={() => suivant(false)} title="Article suivant (J ou ↓)">
           ▶
         </button>
-        <button type="button" onClick={() => suivant(true)} title="Prochain article qui a des critères vides (N)">
-          Suivant à compléter ⏭
+        <button type="button" onClick={() => suivant("completer")} title="Prochain article qui a des critères vides (N)">
+          À compléter ⏭
+        </button>
+        <button type="button" onClick={() => suivant("valider")} title="Prochain article qui a des cases à valider (V)">
+          À valider ⏭
         </button>
       </div>
       <h3 className="lc-titre-article">
@@ -202,7 +205,21 @@ export function InspecteurEtiquette({
   );
 }
 
-export function Bilan({ refs, reglages, commencer, nettoyables }: { refs: ObjetRef[]; reglages: ReglagesLecture; commencer(): void; nettoyables: number }) {
+export function Bilan({
+  refs,
+  reglages,
+  commencer,
+  valider,
+  validation,
+  nettoyables,
+}: {
+  refs: ObjetRef[];
+  reglages: ReglagesLecture;
+  commencer(): void;
+  valider(): void;
+  validation: BilanValidation;
+  nettoyables: number;
+}) {
   const actifs = refs.filter((r) => r.valeur.statut !== "Écarté");
   const complets = actifs.filter((r) => reglages.criteres.every((c) => r.valeur.lecture[c.id]?.etiquettes.length)).length;
   const vides = actifs.filter((r) => !Object.keys(r.valeur.lecture).length).length;
@@ -229,10 +246,29 @@ export function Bilan({ refs, reglages, commencer, nettoyables }: { refs: ObjetR
           <span>liens</span>
         </div>
       </div>
-      <button type="button" className="principal" onClick={commencer}>
-        Passe rapide : article suivant à compléter
-      </button>
-      <p className="discret petit">J / K (ou ↓ / ↑) : article suivant / précédent ; N : suivant à compléter ; Échap : désélectionner ; F : plein écran.</p>
+      <h4>Validation</h4>
+      <p className="petit">
+        <strong>{validation.validees}</strong> case(s) validée(s) sur {validation.cases}
+        {validation.articlesAValider ? ` · ${validation.articlesAValider} article(s) avec des cases à valider` : " · tout est validé"}
+      </p>
+      <div className="lc-jauge-validation" title={`${validation.cases ? Math.round((100 * validation.validees) / validation.cases) : 0} % validé`}>
+        <span style={{ width: `${validation.cases ? (100 * validation.validees) / validation.cases : 0}%` }} />
+      </div>
+      <p className="discret petit">
+        Les cases reprises automatiquement des fiches sont « à valider » (en pointillés). Une case que vous modifiez est validée ; ✓ la valide telle quelle. On
+        peut valider un article à tout moment, lu ou non.
+      </p>
+      <div className="rangee">
+        {validation.articlesAValider ? (
+          <button type="button" className="principal" onClick={valider}>
+            Valider : article suivant
+          </button>
+        ) : null}
+        <button type="button" onClick={commencer}>
+          Compléter : article suivant
+        </button>
+      </div>
+      <p className="discret petit">J / K (ou ↓ / ↑) : article suivant / précédent ; V : suivant à valider ; N : suivant à compléter ; Échap : désélectionner ; F : plein écran.</p>
       {nettoyables ? <p className="lc-attention petit">{nettoyables} étiquette(s) à nettoyer (parenthèses, écritures voisines) : voir « Nettoyer ».</p> : null}
     </div>
   );

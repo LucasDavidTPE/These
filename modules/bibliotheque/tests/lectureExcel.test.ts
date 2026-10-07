@@ -70,7 +70,7 @@ describe("classeur de lecture croisée", () => {
     x = editer(x, 2, { A3: "BIB-003", C3: "se compare à", D3: "BIB-001", F3: "même essai" });
     x = editer(x, 3, { A20: "Méthode", B20: "Burmister", D20: "Multicouche élastique linéaire" });
     // dans l'appli : BIB-001 change de loi
-    const appli = depart().map((r) => (r.id === "BIB-001" ? { id: r.id, valeur: { ...r.valeur, lecture: { ...r.valeur.lecture, loi: { etiquettes: ["Huet-Sayegh"], note: "" } } } } : r));
+    const appli = depart().map((r) => (r.id === "BIB-001" ? { id: r.id, valeur: { ...r.valeur, lecture: { ...r.valeur.lecture, loi: { etiquettes: ["Huet-Sayegh"], note: "", valide: true } } } } : r));
     const f = fusionner(base, etatAppli(appli, reglages), lireClasseur(x, appli, reglages), reglages);
     expect(f.conflits).toEqual([]);
     expect(f.depuisExcel).toBe(4);
@@ -81,7 +81,8 @@ describe("classeur de lecture croisée", () => {
     expect(f.etat.liens["BIB-003|compare|BIB-001"]).toBe("même essai");
     const r = appliquer(appli, reglages, f.etat);
     expect(r.modifiees.map((m) => m.id)).toEqual(["BIB-002", "BIB-003"]);
-    expect(r.modifiees[0]!.valeur.lecture.methode).toEqual({ etiquettes: ["Burmister", "mef 3D"], note: "" });
+    // écrite à la main dans Excel : validée
+    expect(r.modifiees[0]!.valeur.lecture.methode).toEqual({ etiquettes: ["Burmister", "mef 3D"], note: "", valide: true });
     expect(r.modifiees[1]!.valeur.liens).toEqual([{ vers: "BIB-001", type: "compare", note: "même essai" }]);
     expect(r.reglages.definitions.methode).toEqual({ Burmister: "Multicouche élastique linéaire" });
     // le nouveau classeur porte la loi changée dans l'appli
@@ -97,7 +98,7 @@ describe("classeur de lecture croisée", () => {
     const cLoi = col(o, "Loi de comportement");
     const x = editer(o, 1, { [`${cLoi}2`]: "Huet-Sayegh", [`${cLoi}3`]: "élastique; 2S2P1D" });
     const appli = depart().map((r) =>
-      r.id === "BIB-001" ? { id: r.id, valeur: { ...r.valeur, lecture: { ...r.valeur.lecture, loi: { etiquettes: ["Burgers"], note: "" } } } } : r.id === "BIB-002" ? { id: r.id, valeur: { ...r.valeur, lecture: { loi: { etiquettes: ["2S2P1D", "Elastique"], note: "" } } } } : r,
+      r.id === "BIB-001" ? { id: r.id, valeur: { ...r.valeur, lecture: { ...r.valeur.lecture, loi: { etiquettes: ["Burgers"], note: "", valide: true } } } } : r.id === "BIB-002" ? { id: r.id, valeur: { ...r.valeur, lecture: { loi: { etiquettes: ["2S2P1D", "Elastique"], note: "", valide: true } } } } : r,
     );
     const f = fusionner(base, etatAppli(appli, reglages), lireClasseur(x, appli, reglages), reglages);
     expect(f.conflits).toEqual([{ cle: "case|BIB-001|loi", libelle: "BIB-001 · Loi de comportement", appli: "Burgers", excel: "Huet-Sayegh" }]);
@@ -148,4 +149,26 @@ describe("classeur de lecture croisée", () => {
     expect(lireSynchro({})).toBeNull();
     expect(empreinte(new Uint8Array([1, 2, 3]))).not.toBe(empreinte(new Uint8Array([1, 2, 4])));
   });
+
+  it("cases à valider : en italique sur fond jaune dans Excel ; reprises de l'état si inchangées, validées si modifiées dans Excel", () => {
+    // dans depart(), les cases viennent de fichiers sans « valide » : à valider
+    const refs = depart().map((r) => (r.id === "BIB-001" ? { id: r.id, valeur: { ...r.valeur, lecture: { ...r.valeur.lecture, methode: { ...r.valeur.lecture.methode!, valide: true } } } } : r));
+    const o = construireClasseur(refs, reglages);
+    const xml = strFromU8(unzipSync(o)["xl/worksheets/sheet1.xml"]!);
+    const style = (cell: string) => new RegExp(`<c r="${cell}" s="(\\d+)"`).exec(xml)?.[1];
+    const cLoi = col(o, "Loi de comportement");
+    const cMethode = col(o, "Méthode");
+    expect(style(`${cLoi}2`)).toBe("6");
+    expect(style(`${cMethode}2`)).toBe("2");
+    expect(style(`${cLoi}3`)).toBe("6");
+    expect(strFromU8(unzipSync(o)["xl/styles.xml"]!)).toContain('<cellXfs count="7">');
+    // Excel : BIB-002 change de loi, BIB-001 inchangé
+    const base = etatAppli(refs, reglages);
+    const x = editer(o, 1, { [`${cLoi}3`]: "Viscoélastique" });
+    const f = fusionner(base, etatAppli(refs, reglages), lireClasseur(x, refs, reglages), reglages);
+    const r = appliquer(refs, reglages, f.etat);
+    expect(r.modifiees.map((m) => m.id)).toEqual(["BIB-002"]);
+    expect(r.modifiees[0]!.valeur.lecture.loi).toEqual({ etiquettes: ["Viscoélastique"], note: "", valide: true });
+  });
 });
+

@@ -10,7 +10,7 @@ export function Puces({ c, max }: { c: CelluleLecture | undefined; max?: number 
   if (!c) return null;
   const e = max ? c.etiquettes.slice(0, max) : c.etiquettes;
   return (
-    <span className="lc-puces">
+    <span className={`lc-puces${c.valide ? "" : " lc-a-valider"}`} title={c.valide ? undefined : "À valider : repris automatiquement, pas encore confirmé"}>
       {e.map((x) => (
         <span key={x} className="lc-puce">
           {x}
@@ -56,7 +56,8 @@ export function EditeurEtiquettes({
     return vocabulaire.filter((v) => !deja.has(v.cle) && (!q || v.cle.includes(q))).slice(0, 8);
   }, [vocabulaire, etiquettes, saisie]);
 
-  const valider = (e = etiquettes, n = note) => onValider({ etiquettes: e, note: n.trim() });
+  // saisie à la main : la case est validée
+  const valider = (e = etiquettes, n = note) => onValider({ etiquettes: e, note: n.trim(), valide: true });
   const ajouter = (texte: string) => {
     const t = nettoyerEtiquette(texte);
     if (!t) return;

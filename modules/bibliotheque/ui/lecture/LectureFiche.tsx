@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import { Section } from "@interface/composants";
 import { citation } from "../../core/calculs";
-import { avecCellule, cleEtiquette, delier, lier, liensDe, vocabulaire, type ObjetRef, type ReglagesLecture } from "../../core/lecture";
+import { aValider, avecCellule, cleEtiquette, delier, lier, liensDe, validerArticle, validerCase, vocabulaire, type ObjetRef, type ReglagesLecture } from "../../core/lecture";
 import type { Reference } from "../../core/modele";
 import { EditeurEtiquettes, Puces } from "./Etiquettes";
 
@@ -39,8 +39,22 @@ export function LectureFiche({
     return tous.filter((x) => x.id !== id && cleEtiquette(`${x.id} ${citation(x.valeur)} ${x.valeur.titre}`).includes(q)).slice(0, 8);
   }, [tous, id, recherche]);
 
+  const reste = aValider(r, reglages);
   return (
     <Section titre="Lecture croisée">
+      {reste.length ? (
+        <div className={`lc-validation${r.statut === "Lu" ? " lc-validation-lu" : ""}`}>
+          <span>
+            {r.statut === "Lu" ? "Article lu : " : ""}
+            <strong>{reste.length}</strong> case{reste.length > 1 ? "s" : ""} à valider (reprises automatiquement). Confirmez-les (✓), corrigez-les (clic sur la case) ou videz-les.
+          </span>
+          <button type="button" className="principal" onClick={() => enregistrer(validerArticle(r))} title="Toutes les cases de cet article sont confirmées telles quelles">
+            ✓ Tout valider
+          </button>
+        </div>
+      ) : Object.keys(r.lecture).length ? (
+        <p className="lc-ok petit">✓ Toutes les cases sont validées.</p>
+      ) : null}
       <div className="lc-fiche">
         {reglages.criteres.map((c) => (
           <div key={c.id} className="lc-fiche-ligne">
@@ -50,9 +64,16 @@ export function LectureFiche({
             {edition === c.id ? (
               <EditeurEtiquettes autoFocus valeur={r.lecture[c.id]} vocabulaire={vocabulaire(tous, c.id, reglages)} aide={c.aide} onValider={(cell) => enregistrer(avecCellule(r, c.id, cell))} onFermer={() => setEdition(null)} />
             ) : (
-              <button type="button" className="lc-case-bouton" onClick={() => setEdition(c.id)}>
-                {r.lecture[c.id] ? <Puces c={r.lecture[c.id]} /> : <span className="discret">—</span>}
-              </button>
+              <div className="lc-case">
+                <button type="button" className="lc-case-bouton" onClick={() => setEdition(c.id)} title="Modifier (la case devient validée)">
+                  {r.lecture[c.id] ? <Puces c={r.lecture[c.id]} /> : <span className="discret">—</span>}
+                </button>
+                {r.lecture[c.id] && !r.lecture[c.id]!.valide ? (
+                  <button type="button" className="lc-valider" onClick={() => enregistrer(validerCase(r, c.id))} title="Valider cette case telle quelle" aria-label={`Valider ${c.nom}`}>
+                    ✓
+                  </button>
+                ) : null}
+              </div>
             )}
           </div>
         ))}
