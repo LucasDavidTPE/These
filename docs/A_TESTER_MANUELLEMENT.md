@@ -767,3 +767,17 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] Modifier la même case dans l'appli et dans Excel : la synchronisation présente le conflit, le choix « Excel » est appliqué.
 - [ ] Synchroniser avec le classeur **ouvert** dans Excel : message clair, rien n'est modifié dans l'appli.
 - [ ] Sur l'autre PC (après OneDrive) : même grille, même classeur, synchronisation sans conflit.
+
+## Bibliothèque : atelier de lecture croisée (1.20.0)
+
+- [ ] Lecture croisée : l'atelier tient dans la fenêtre (trois colonnes, aucune barre de défilement de la page) ; « Plein écran »
+      (ou F) occupe toute la fenêtre, Échap revient.
+- [ ] **Nettoyer** (badge = nombre de propositions) : avec la grille créée en 1.19, « Viscoélastique (…) » est proposé en
+      « Viscoélastique » + note ; les écritures voisines sont regroupées ; « Appliquer » met les fiches à jour et le badge disparaît.
+- [ ] Explorer : clic sur « Viscoélastique » → la liste se restreint, chaque critère montre les comptes dans la sélection,
+      des étiquettes deviennent hachurées (trous) ; second clic sur une autre étiquette = ET ; « tout effacer ».
+- [ ] Clic droit sur une étiquette → Constellation lisible (étiquette au centre, ses articles, les étiquettes compagnes) ;
+      clic sur un article → sa constellation (ses étiquettes, articles proches, articles liés) ; double-clic → fiche.
+- [ ] Inspecteur : modifier une case ; ◀ ▶ et J/K changent d'article ; « Suivant à compléter » (N) saute aux articles incomplets.
+- [ ] Glisser un article de la liste sur l'inspecteur : choisir le type, « Lier » ; le lien apparaît des deux côtés.
+- [ ] Thème sombre de Windows : couleurs des critères et jetons lisibles.

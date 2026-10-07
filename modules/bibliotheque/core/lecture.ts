@@ -140,16 +140,51 @@ export function unirEtiquettes(liste: readonly string[], ajout: readonly string[
 }
 
 /** Au-delà, un morceau de texte libre n'est pas une étiquette mais une note. */
-const ETIQUETTE_MAX = 48;
+const ETIQUETTE_MAX = 40;
 
-/** Texte libre d'un ancien champ (« viscoélastique, 2S2P1D ; mobile ») → étiquettes et reste en note. */
+/** Découpe aux séparateurs (« ; », « , », retour à la ligne, « / » et « + » entourés d'espaces) hors parenthèses. */
+function morceaux(texte: string): string[] {
+  const out: string[] = [];
+  let profondeur = 0;
+  let debut = 0;
+  for (let i = 0; i < texte.length; i++) {
+    const ch = texte[i]!;
+    if (ch === "(" || ch === "[") profondeur++;
+    else if ((ch === ")" || ch === "]") && profondeur > 0) profondeur--;
+    else if (profondeur === 0) {
+      const sep = ch === ";" || ch === "," || ch === "\n" ? 1 : (ch === "/" || ch === "+") && texte[i - 1] === " " && texte[i + 1] === " " ? 1 : 0;
+      if (sep) {
+        out.push(texte.slice(debut, i));
+        debut = i + 1;
+      }
+    }
+  }
+  out.push(texte.slice(debut));
+  return out;
+}
+
+/** « Viscoélastique (2S2P1D, linéaire) » → tête « Viscoélastique », précision « 2S2P1D, linéaire » ; null sans parenthèse finale. */
+export function separerParenthese(e: string): { tete: string; precision: string } | null {
+  const m = /^(.+?)\s*[([]\s*(.+?)\s*[)\]]\s*$/.exec(nettoyerEtiquette(e));
+  if (!m || !m[1]!.trim() || m[1]!.length > ETIQUETTE_MAX) return null;
+  return { tete: m[1]!.trim(), precision: m[2]!.trim() };
+}
+
+/**
+ * Texte libre d'un ancien champ (« viscoélastique (2S2P1D), MEF 3D ; mobile ») → étiquettes courtes et réutilisables ;
+ * les précisions entre parenthèses et les morceaux trop longs pour être une étiquette vont dans la note.
+ */
 export function decouperTexte(texte: string): CelluleLecture {
   const etiquettes: string[] = [];
   const notes: string[] = [];
-  for (const brut of texte.split(/[;,\n]|\s\/\s|\s\+\s/)) {
+  for (const brut of morceaux(texte)) {
     const e = nettoyerEtiquette(brut).replace(/\.$/, "");
     if (!e) continue;
-    if (e.length > ETIQUETTE_MAX) notes.push(e);
+    const s = separerParenthese(e);
+    if (s) {
+      etiquettes.push(s.tete);
+      notes.push(`${s.tete} : ${s.precision}`);
+    } else if (e.length > ETIQUETTE_MAX) notes.push(e);
     else etiquettes.push(e);
   }
   return { etiquettes: unirEtiquettes([], etiquettes), note: notes.join(" ; ") };
@@ -267,7 +302,9 @@ export function vocabulaire(refs: readonly ObjetRef[], critere: string, reglages
   const defParCle = new Map(Object.entries(defs).map(([e, d]) => [cleEtiquette(e), d]));
   return [...m.entries()]
     .map(([cle, x]) => {
-      const etiquette = [...x.formes.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "fr"))[0]![0];
+      // la forme la plus portée ; à égalité, celle qui a ses accents (« Éléments finis » plutôt que « Elements finis »)
+      const accents = (f: string) => [...f].filter((ch) => ch.normalize("NFD").length > 1).length;
+      const etiquette = [...x.formes.entries()].sort((a, b) => b[1] - a[1] || accents(b[0]) - accents(a[0]) || a[0].localeCompare(b[0], "fr"))[0]![0];
       return { etiquette, cle, ids: x.ids.sort(triIds), definition: defParCle.get(cle) ?? "" };
     })
     .sort((a, b) => b.ids.length - a.ids.length || a.etiquette.localeCompare(b.etiquette, "fr", { sensitivity: "base" }));

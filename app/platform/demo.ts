@@ -178,6 +178,39 @@ export function plateformeDemo(scenario: string | null): Plateforme {
     espace.poser("bibliotheque/references/BIB-020.json", JSON.stringify({ titre: "General 2S2P1D model and relation between the linear viscoelastic behaviours of bituminous binders and mixes", auteurs: "Olard, F.; Di Benedetto, H.", annee: 2003, cle: "ref20", fichierPdf: "BIB-020_Olard-DiBenedetto_2003_General-2S2P1D-model.pdf", ...lectures[20] }));
     dossier(`${ESPACE}\\bibliotheque\\pdf`).poser("BIB-020_Olard-DiBenedetto_2003_General-2S2P1D-model.pdf", pdfDemo("General 2S2P1D model", "F. Olard, H. Di Benedetto (2003)"));
     ref(65, "The general theory of stresses and displacements in layered systems", "Burmister, D. M.", 1945);
+    // `&beaucoup=1` : une centaine de références aux fiches remplies « comme le classeur » (pour éprouver la lecture croisée)
+    if (new URLSearchParams(globalThis.location?.search).get("beaucoup")) {
+      const pick = <T,>(l: readonly T[], k: number) => l[k % l.length]!;
+      const lois = ["Viscoélastique (2S2P1D)", "viscoélastique", "Élastique linéaire", "Elastique", "Huet-Sayegh", "Viscoélastique (Huet-Sayegh)", "Élasto-plastique", "Burgers"];
+      const methodes = ["MEF 3D", "Éléments finis", "element fini", "Burmister", "Semi-analytique (Fourier)", "Méthode spectrale", "Essai en laboratoire", "Mesures in situ"];
+      const pneus = ["Avion (A380)", "Poids lourd", "Avion", "Pneu H40", "Jumelage"];
+      const contacts = ["Uniforme", "Mesuré (capteurs)", "Pression non uniforme", "Rugosité / texture"];
+      const charges = ["Mobile", "Statique", "Dynamique", "Cyclique"];
+      const auteurs = ["Chupin, O.", "Chabot, A.", "Piau, J.-M.", "Olard, F.", "Di Benedetto, H.", "Sauzéat, C.", "Duhamel, D.", "Hammoum, F.", "Nguyen, Q. T.", "Al-Qadi, I."];
+      for (let n = 100; n < 200; n++) {
+        const k = n * 7 + 3;
+        espace.poser(
+          `bibliotheque/references/BIB-${String(n).padStart(3, "0")}.json`,
+          JSON.stringify({
+            titre: `${pick(["Modelling", "Analysis", "Response", "Characterisation", "Behaviour"], k)} of ${pick(["airfield", "asphalt", "flexible", "layered"], k >> 1)} pavements under ${pick(["moving", "aircraft", "heavy", "cyclic"], k >> 2)} loads (${n})`,
+            auteurs: `${pick(auteurs, k)}; ${pick(auteurs, k + 3)}`,
+            annee: 1990 + (k % 35),
+            cle: `ref${n}`,
+            statut: pick(["Lu", "Lu", "À lire", "En cours", "Écarté"], k),
+            fiche: {
+              loi: `${pick(lois, k)}${k % 3 ? "" : `, ${pick(lois, k + 1)}`}`,
+              methodeCategorie: pick(methodes, k >> 1),
+              pneu: k % 4 ? pick(pneus, k) : "",
+              contact: k % 3 ? pick(contacts, k >> 3) : "",
+              chargement: pick(charges, k >> 2),
+            },
+            categories: [`Échelle / ${pick(["Structure", "Matériau", "Interface"], k)}`],
+            // comme une grille déjà remplie par la 1.19 : étiquettes avec parenthèses, à nettoyer
+            ...(n % 5 === 0 ? { lecture: { loi: { etiquettes: [pick(["Viscoélastique (2S2P1D)", "Viscoélastique (Huet-Sayegh, linéaire)", "Élastique (convexe)"], k)] }, methode: { etiquettes: [pick(["Éléments finis (3D)", "element fini", "Eléments finis"], k)] } } } : {}),
+          }),
+        );
+      }
+    }
     espace.poser(
       "manuscrits/these/manuscrit.json",
       JSON.stringify({

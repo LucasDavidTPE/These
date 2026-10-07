@@ -630,11 +630,26 @@ Onglet **Lecture croisée** de la Bibliothèque : lire la littérature en la cro
   catégories de la Matrice croisée deviennent les premières étiquettes ; les champs d'origine restent dans les fiches.
 - **Liens typés** entre articles (étend, s'appuie sur, se compare à, contredit, même méthode que, utilise les données
   de ; modifiables), avec une note, saisis dans la fiche ; chaque lien se lit dans les deux sens (« est étendu par »).
-- **Croisement** de deux critères (ou d'un critère avec lui-même) : nombre d'articles par combinaison, liste au clic,
-  **cases vides hachurées** = combinaisons qu'aucun article ne traite.
-- **Carte** : graphe articles (ronds, pleins = lus) et étiquettes (carrés colorés par critère, 8 couleurs en ordre
-  fixe, palette validée pour le daltonisme), arêtes article–étiquette et liens typés (flèches) ; disposition par forces,
-  déterministe ; zoom, déplacement, survol qui isole un nœud et ses voisins, export SVG.
+- **Atelier** (1.20.0) : tout sur un écran, sans faire défiler la page (l'atelier prend la place restante de la
+  fenêtre ; « Plein écran » ou F pour la fenêtre entière). Trois colonnes : **articles** (recherche, filtres actifs,
+  pastilles de couverture critère par critère, glisser pour lier), **vue centrale**, **inspecteur** (l'article choisi :
+  ses cases et liens, précédent / suivant, « suivant à compléter » ; une étiquette : définition, renommer / fusionner,
+  articles, étiquettes compagnes ; sinon un bilan et la « passe rapide »). Clavier : J/K ou ↓/↑, N, Échap, F.
+- **Explorer** (vue par défaut) : facettes croisées. Chaque critère est une rangée d'étiquettes, de taille selon leur
+  fréquence ; un clic filtre (plusieurs = ET), chaque rangée montre alors combien d'articles de la sélection portent
+  chacune de ses étiquettes, et les **étiquettes à zéro sont hachurées : les trous de la littérature** ; jauge de
+  renseignement par critère ; clic droit = constellation.
+- **Constellation** (remplace la carte globale, illisible au-delà de quelques dizaines d'articles) : disposition
+  radiale fixe. Article au centre : ses étiquettes (anneau intérieur, couleur du critère, 8 couleurs en ordre fixe
+  validées pour le daltonisme), puis les 10 articles qui en partagent le plus (indice de Jaccard), placés près des
+  étiquettes partagées et reliés à elles, et les articles liés (lien typé nommé). Étiquette au centre : ses articles
+  (24 au plus), puis les étiquettes qui les accompagnent le plus. Clic = recentrer, double-clic = fiche.
+- **Nettoyer le vocabulaire** : propose de séparer « Viscoélastique (2S2P1D) » en étiquette « Viscoélastique » + note
+  « 2S2P1D », de fusionner les écritures voisines (casse, accents, tirets, pluriel : « Éléments finis » / « element
+  fini »), et signale les étiquettes trop longues ; rien n'est appliqué sans clic. Au démarrage, les anciens champs sont
+  découpés hors parenthèses et les précisions entre parenthèses vont directement en note.
+- **Croisement** de deux critères (ou d'un critère avec lui-même), restreint aux articles filtrés : nombre d'articles
+  par combinaison, liste au clic, **cases vides hachurées** = combinaisons qu'aucun article ne traite.
 - **Synthèse** d'un critère en Markdown (une section par étiquette, définition, articles en `[@BIB-…]` avec titre et
   note, liens entre eux), à copier ou enregistrer.
 - **Critères et vocabulaire** : ajouter, renommer, ordonner, supprimer un critère ; types de liens ; renommer une

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { construireCarte, disposer, idEtiquette, voisins } from "../core/carte";
 import {
   avecCellule,
   cleCellule,
@@ -119,7 +118,7 @@ describe("vocabulaire, renommage, définitions", () => {
   });
 });
 
-describe("liens, croisement, synthèse, carte", () => {
+describe("liens, croisement, synthèse", () => {
   const types = reglagesLectureVides().typesLiens;
   let refs = [
     ref("BIB-001", { lecture: { loi: { etiquettes: ["2S2P1D"] }, methode: { etiquettes: ["MEF 3D"], note: "maillage fin" } } }),
@@ -153,16 +152,4 @@ describe("liens, croisement, synthèse, carte", () => {
     expect(md).toContain("*1 article(s) non renseigné(s) pour ce critère.*");
   });
 
-  it("carte : nœuds, arêtes, articles écartés masqués, disposition stable dans le cadre", () => {
-    const c = construireCarte(refs, reglagesLectureVides(), { criteres: ["loi", "methode"], liens: true, minArticles: 1, sansEcartes: true });
-    expect(c.noeuds.filter((n) => n.type === "article").map((n) => n.id).sort()).toEqual(["BIB-001", "BIB-002", "BIB-003"]);
-    expect(c.aretes).toContainEqual({ de: "BIB-002", vers: "BIB-001", type: "etend" });
-    expect(c.noeuds.find((n) => n.id === idEtiquette("loi", "2S2P1D"))!.degre).toBe(2);
-    expect([...voisins(c, "BIB-003")].sort()).toEqual(["BIB-003", idEtiquette("loi", "élastique")]);
-    const d = disposer(c, 800, 600, 120);
-    expect(d.noeuds.every((n) => n.x >= 20 && n.x <= 780 && n.y >= 20 && n.y <= 580)).toBe(true);
-    expect(disposer(c, 800, 600, 120)).toEqual(d);
-    const filtre = construireCarte(refs, reglagesLectureVides(), { criteres: ["loi"], liens: false, minArticles: 2, sansEcartes: false });
-    expect(filtre.noeuds.filter((n) => n.type === "etiquette").map((n) => n.libelle).sort()).toEqual(["2S2P1D", "Élastique"]);
-  });
 });

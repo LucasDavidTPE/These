@@ -207,5 +207,8 @@ lancent tous les tests automatiques sous Windows.
 - [x] Bibliothèque : **Lecture croisée** — grille articles × critères à étiquettes, liens typés entre articles, croisement
       (trous de la littérature), carte articles/méthodes, synthèse Markdown, classeur Excel synchronisé dans les deux sens
       avec conflits à trancher (1.19.0)
+- [x] Lecture croisée, **atelier** sur un écran (articles | facettes croisées | inspecteur), constellation radiale à la place
+      de la carte globale, nettoyage du vocabulaire (parenthèses → note, écritures voisines), glisser pour lier, passe
+      rapide au clavier, plein écran (1.20.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),
       remarques extraites avec état (à traiter / traitée / refusée), compteur par partie, rangés avec les versions
