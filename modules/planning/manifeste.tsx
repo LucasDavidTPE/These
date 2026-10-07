@@ -23,7 +23,7 @@ async function semaine(ctx: Contexte) {
 const planning: Manifeste = {
   id: "planning",
   titre: "Planning",
-  resume: "Gantt de la thèse, partagé entre les deux PC",
+  resume: "La semaine, les lectures à placer et la vue d'ensemble de la thèse",
   Icone: IconePlanning,
   Page: PlanningPage,
   etat: async (ctx) => {

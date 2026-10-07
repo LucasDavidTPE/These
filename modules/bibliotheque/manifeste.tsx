@@ -2,10 +2,12 @@ import { IconeBibliotheque } from "@interface/icones";
 import { demanderOuverture } from "@interface/ouverture";
 import type { Contexte } from "@interface/contexte";
 import type { Manifeste } from "@interface/manifeste";
-import { dateLimite, premierJourDuMois, ajouterJours } from "./core/calculs";
+import { dateLimite, premierJourDuMois, ajouterJours, temps } from "./core/calculs";
+import { enregistrerObjet } from "@noyau/stockage";
+import { REFERENCES } from "./core/modele";
 import { BibliothequePage } from "./ui/BibliothequePage";
 import { resoudre } from "./core/citations";
-import { chargerBiblio, lireCitations } from "./ui/donnees";
+import { aujourdhui, chargerBiblio, lireCitations } from "./ui/donnees";
 
 async function charger(ctx: Contexte) {
   return ctx.espace ? chargerBiblio(ctx.espace.fichiers) : null;
@@ -14,7 +16,7 @@ async function charger(ctx: Contexte) {
 const bibliotheque: Manifeste = {
   id: "bibliotheque",
   titre: "Bibliothèque",
-  resume: "Références, plan de lecture, fiches, demandes, analyse croisée",
+  resume: "Références, plan de lecture, fiches, demandes, lecture croisée",
   Icone: IconeBibliotheque,
   Page: BibliothequePage,
   etat: async (ctx) => {
@@ -52,6 +54,26 @@ const bibliotheque: Manifeste = {
       const { ctx, id } = charge as { ctx: Contexte; id: string };
       demanderOuverture("bibliotheque", id);
       ctx.naviguer("bibliotheque");
+    },
+    /**
+     * Pour le Planning (planifier ses lectures) : les références à lire, meilleur score d'abord,
+     * avec leur temps de lecture estimé (h) et leur état (EN RETARD, Ce mois-ci…).
+     */
+    "bibliotheque.a-lire": async (charge) => {
+      const b = await charger(charge as Contexte);
+      if (!b) return [];
+      return b.calc
+        .filter((c) => c.ref.cle && c.ref.statut !== "Lu" && c.ref.statut !== "Écarté")
+        .sort((x, y) => y.score - x.score || x.id.localeCompare(y.id))
+        .map((c) => ({ id: c.id, citation: c.citation, titre: c.ref.titre, priorite: c.ref.priorite, mois: c.ref.mois, etat: c.etat, statut: c.ref.statut, heures: temps(c.ref, b.parametres), score: c.score }));
+    },
+    /** Depuis le Planning : la référence passe à « Lu » (lue aujourd'hui). Charge : { ctx, id }. */
+    "bibliotheque.marquer-lu": async (charge) => {
+      const { ctx, id } = charge as { ctx: Contexte; id: string };
+      const b = await charger(ctx);
+      const r = b?.references.find((x) => x.id === id);
+      if (!ctx.espace || !r) throw new Error(`Référence ${id} introuvable dans la bibliothèque.`);
+      await enregistrerObjet(ctx.espace.fichiers, REFERENCES, id, { ...r.valeur, statut: "Lu", dateLecture: r.valeur.dateLecture || aujourdhui() });
     },
     /**
      * Pour le Planning : un bloc par mois du plan de lecture, et les dates limites des

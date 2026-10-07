@@ -2,7 +2,7 @@
  * Mise en page du Gantt, pure et testée : dates → abscisses, graduations, lignes groupées
  * par catégorie. L'interface ne fait que dessiner.
  */
-import type { Categorie, Element } from "./modele";
+import type { Categorie, Element, LienObjet } from "./modele";
 
 export const MS_JOUR = 86_400_000;
 const MOIS_COURTS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
@@ -21,6 +21,10 @@ export interface Barre {
   /** Fourni par un autre module : modifiable seulement à sa source. */
   source?: string;
   detail?: string;
+  /** « HH:MM » : élément horaire (vue Semaine). */
+  heureDebut?: string;
+  heureFin?: string;
+  lien?: LienObjet | null;
 }
 
 export interface Echelle {
@@ -119,6 +123,8 @@ export function barresDepuis(elements: { id: string; valeur: Element }[]): Barre
       debut: v.debut,
       fin: v.fin,
       avancement: v.avancement,
+      ...(v.heureDebut ? { heureDebut: v.heureDebut, heureFin: v.heureFin } : {}),
+      ...(v.lien ? { lien: v.lien } : {}),
     }));
 }
 

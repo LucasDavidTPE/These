@@ -272,6 +272,21 @@ export function plateformeDemo(scenario: string | null): Plateforme {
       }),
     );
     espace.poser("planning/PH-0001.json", JSON.stringify({ titre: "Rédiger le chapitre ChaussSpec", categorie: "", debut: "2026-10-05", fin: "2026-10-30" }));
+    {
+      // Quelques créneaux dans la semaine en cours (vue Semaine du Planning).
+      const t = new Date();
+      const j = (n: number) => {
+        const d = new Date(t.getFullYear(), t.getMonth(), t.getDate() - ((t.getDay() + 6) % 7) + n);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      };
+      const h = (id: string, o: object) => espace.poser(`planning/${id}.json`, JSON.stringify(o));
+      h("PH-0002", { titre: "Réunion d'équipe", categorie: "reunion", debut: j(0), fin: j(0), heureDebut: "10:00", heureFin: "11:30" });
+      h("PH-0003", { titre: "Préparer les éprouvettes", categorie: "essais", debut: j(1), fin: j(1), heureDebut: "14:00", heureFin: "17:00" });
+      h("PH-0004", { titre: "Point avec Hervé", categorie: "reunion", debut: j(1), fin: j(1), heureDebut: "15:00", heureFin: "16:00" });
+      h("PH-0005", { titre: "Lire Olard & Di Benedetto (2003)", categorie: "biblio", debut: j(2), fin: j(2), heureDebut: "09:30", heureFin: "11:00", lien: { module: "bibliotheque", id: "BIB-020" }, notes: "General “2S2P1D” model and relation between the linear viscoelastic behaviours of bituminous binders and mixes" });
+      h("PH-0006", { titre: "Formation doctorale", categorie: "formation", debut: j(3), fin: j(4) });
+      h("PH-0007", { titre: "Comité de suivi", categorie: "reunion", debut: j(11), fin: "" });
+    }
     espace.poser(
       "chausspec/structure-a340.json",
       JSON.stringify({

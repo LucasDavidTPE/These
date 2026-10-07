@@ -553,10 +553,11 @@ ENTPE.
 - **Demandes** (PEB, documentation ENTPE, STAC) : date limite d'envoi calculée (premier
   jour du mois d'usage − délai max), relance (envoi + délai), alertes ENVOYER MAINTENANT
   / RELANCER.
-- **Corrections TFE**, **Pistes non couvertes** : listes simples avec statut.
-- **Analyse croisée** : matrice (● modifiables), totaux et croisements **calculés** ;
-  synthèses rédigées (thèmes, convergences, divergences, lacunes, positionnement) en
-  Markdown éditable.
+- **Pistes non couvertes** : liste simple avec statut.
+- ~~Corrections TFE~~ et ~~Analyse croisée / Analyse (classeur)~~ : onglets **retirés en 1.21.0** à la demande
+  de l'utilisateur (redondants avec la Lecture croisée). L'import du classeur les lit toujours et les fichiers
+  de l'espace (`bibliotheque/corrections/`, `bibliotheque/analyse/`) ne sont ni modifiés ni effacés ; le calcul
+  du tableau de bord (test de conformité) est inchangé, seule sa tuile « corrections restantes » n'est plus affichée.
 
 ### 9.3 Actions (les macros)
 | Macro Excel | Dans l'application |
@@ -665,9 +666,9 @@ Onglet **Lecture croisée** de la Bibliothèque : lire la littérature en la cro
   Excel (verrouillé), rien n'est modifié et l'appli le dit. Un classeur modifié depuis la dernière synchronisation
   est signalé au retour dans la fenêtre. Sans état de synchronisation (première fois avec un classeur existant), une
   case vide prend la valeur de l'autre côté et deux valeurs différentes sont un conflit.
-L'onglet « Analyse croisée » d'origine devient « Analyse (classeur) » (matrice importée et synthèses rédigées).
+L'onglet « Analyse croisée » d'origine, devenu « Analyse (classeur) » en 1.19.0, est retiré en 1.21.0 (voir §9.2).
 
-## 10. Module Planning (Gantt partagé)
+## 10. Module Planning (semaine et vue d'ensemble, partagés)
 
 Un calendrier de thèse **propre à l'application**, synchronisé par OneDrive, sans aucun
 service extérieur.
@@ -680,8 +681,12 @@ Un élément (`planning/PH-0001.json`) :
   être supprimé. Le choix est partagé entre les deux PC ;
 - avancement (%), notes, couleur (par défaut celle de la catégorie) ;
 - sous-éléments (une phase contient des tâches), repliables ;
-- lien facultatif vers un objet d'un autre module (une campagne, un axe de
-  bibliographie, une figure…).
+- lien facultatif vers un objet d'un autre module (`lien: { module, id }`, 1.21.0 : une
+  référence à lire) ;
+- **horaires** facultatifs (`heureDebut`, `heureFin`, « HH:MM », 1.21.0) : un élément horaire
+  tient sur un jour (début = fin) ; sans horaires, il occupe la journée entière. Des horaires
+  incohérents (fin avant début, plusieurs jours) sont ignorés à la lecture. Les anciens
+  fichiers, sans ces champs, se relisent tels quels.
 
 Catégories par défaut, modifiables et extensibles : **Bibliographie**, **Campagne
 d'essais**, **Modélisation**, **Rédaction**, **Réunion / comité de suivi**, **Congrès**,
@@ -698,12 +703,40 @@ Gantt** (on les modifie à leur source, un clic y mène) :
   prévue pour une campagne à venir.
 
 ### 10.3 Vues
-- **Gantt** : zoom semaine / mois / trimestre / thèse entière, ligne « aujourd'hui »,
-  glisser pour déplacer ou étirer, double-clic pour créer, regroupement par catégorie.
-- **Liste** : les mêmes éléments en tableau, triables.
+- **Semaine** (vue par défaut depuis 1.21.0), à la manière d'un agenda : sept jours (ou cinq
+  sans le week-end), grille horaire au quart d'heure, ligne « maintenant », bande « journée »
+  en haut (périodes coupées à la semaine, jalons ◆, éléments fournis par les autres modules
+  en atténué). **Créer** : clic sur un créneau (1 h) ou glisser sur la durée voulue → bulle de
+  création rapide (titre, heures, « Toute la journée », catégorie — la dernière choisie est
+  reprise —, Entrée enregistre, « Plus d'options » ouvre le formulaire complet) ; dans la bande,
+  clic ou glisser sur plusieurs jours → élément « journée ». **Modifier** : glisser un élément
+  (heure et jour), glisser son bas (fin), glisser une barre de la bande (jours) ; clic → bulle
+  de détail (modifier, supprimer, « ✓ Fait »). Éléments qui se chevauchent : côte à côte, chacun
+  débordant sur le suivant. Navigation ‹ › et « Aujourd'hui » (clavier ← → T).
+- **Vue d'ensemble** (Gantt) : zoom mois / trimestre / thèse entière, ligne « aujourd'hui »,
+  glisser pour déplacer ou étirer, regroupement par catégorie. Le long terme seulement : les
+  éléments à heure fixe (réunions, séances de lecture) n'y figurent pas.
+- **Liste** : tous les éléments en tableau.
 - **Cette semaine** : widget de l'Accueil.
-- Export **PNG / SVG** et **pgfgantt** (TikZ) pour un comité de suivi ou le manuscrit,
-  via Figures.
+- Le formulaire complet s'ouvre en fenêtre par-dessus la vue.
+- Export **SVG** de la vue d'ensemble et figure régénérable via Figures. Les exports **PNG** et
+  **pgfgantt** sont retirés en 1.21.0 à la demande de l'utilisateur (jugés inutiles).
+
+### 10.4 Lectures à planifier (1.21.0)
+À droite de la semaine, la colonne **À lire** (si la Bibliothèque est dans l'installeur, action
+`bibliotheque.a-lire`) : les références ni lues ni écartées, meilleur score d'abord (§9),
+filtrées par défaut sur « en retard » et « ce mois-ci », avec leur temps de lecture estimé.
+
+- **Glisser** une lecture sur un créneau crée une séance « Lire <citation> » (catégorie
+  Bibliographie, durée = temps estimé, entre 30 min et 4 h, au quart d'heure ; le titre de
+  l'article en notes ; lien vers la référence). Déposée dans la bande : séance « journée ».
+- **Placer** la met au premier créneau libre (9 h – 18 h, du lundi au vendredi, sans chevaucher
+  un élément horaire, sur quatre semaines) à partir de maintenant (ou du lundi affiché s'il est
+  plus tard) ; **Répartir** en place jusqu'à dix d'un coup, l'une après l'autre (avec
+  confirmation).
+- Une lecture planifiée affiche « prévu mer. 7, 10:00 » (clic : la semaine et la séance).
+- Bulle d'une séance : **Ouvrir la fiche**, **Marquer comme lu** (action
+  `bibliotheque.marquer-lu` : statut « Lu », date de lecture du jour ; la séance passe à 100 %).
 
 ## 11. Module ViscoCompare (retiré en 1.7.0)
 

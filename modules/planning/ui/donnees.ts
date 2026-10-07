@@ -3,6 +3,7 @@ import { chargerCollection, creerObjet, enregistrerObjet, jsonStable, type Fichi
 import type { Contexte } from "@interface/contexte";
 import { svgTexteEnPng } from "@interface/image";
 import { barresDepuis, grouper, type Barre, type Groupe } from "../core/gantt";
+import { estHoraire } from "../core/semaine";
 import { ganttSvg } from "../core/svg";
 import { DOSSIER_SUPPRIMES, ELEMENTS, FICHIER_CATEGORIES, lireCategories, type Categorie, type Element } from "../core/modele";
 
@@ -67,9 +68,12 @@ export async function chargerPlanning(ctx: Contexte): Promise<Planning | null> {
   return { elements: col.objets, categories, externes: ext, problemes };
 }
 
-/** Ce que montre le Gantt : éléments actifs et éléments fournis, par catégorie active. */
-export function groupesDe(p: Planning): Groupe[] {
-  return grouper([...barresDepuis(p.elements), ...p.externes], p.categories);
+/**
+ * Éléments actifs et éléments fournis, par catégorie active. La vue d'ensemble (Gantt, figure)
+ * laisse de côté les éléments à heure fixe (réunions, séances de lecture) : c'est le long terme.
+ */
+export function groupesDe(p: Planning, avecHoraires = false): Groupe[] {
+  return grouper([...barresDepuis(p.elements), ...p.externes].filter((b) => avecHoraires || !estHoraire(b)), p.categories);
 }
 
 export function aujourdhui(): string {
@@ -114,17 +118,29 @@ export function usePlanning(ctx: Contexte) {
     }
   }
 
+  // Mise à jour immédiate de l'écran (glisser un élément ne doit pas « revenir » en attendant la surveillance).
+  const local = (f: (e: ObjetCharge<Element>[]) => ObjetCharge<Element>[]) => setPlanning((p) => (p ? { ...p, elements: f(p.elements) } : p));
+
   return {
     planning,
     erreur,
-    creer: (e: Element) => garde((f) => creerObjet(f, ELEMENTS, e)),
-    enregistrer: (id: string, e: Element) => garde((f) => enregistrerObjet(f, ELEMENTS, id, e)),
-    supprimer: (id: string) =>
-      garde(async (f) => {
+    creer: async (e: Element) => {
+      const id = await garde((f) => creerObjet(f, ELEMENTS, e));
+      if (id) local((l) => [...l.filter((x) => x.id !== id), { id, chemin: `${ELEMENTS.dossier}/${id}.json`, valeur: e }]);
+      return id;
+    },
+    enregistrer: async (id: string, e: Element) => {
+      local((l) => l.map((x) => (x.id === id ? { ...x, valeur: e } : x)));
+      await garde((f) => enregistrerObjet(f, ELEMENTS, id, e));
+    },
+    supprimer: async (id: string) => {
+      await garde(async (f) => {
         await f.ensureDir(DOSSIER_SUPPRIMES);
         const cible = `${DOSSIER_SUPPRIMES}/${id}-${Date.now()}.json`;
         await f.rename(`${ELEMENTS.dossier}/${id}.json`, cible);
-      }),
+      });
+      local((l) => l.filter((x) => x.id !== id));
+    },
     enregistrerCategories: (c: Categorie[]) => garde(async (f) => (await f.ensureDir("planning"), f.writeTextAtomic(FICHIER_CATEGORIES, jsonStable(c)))),
   };
 }

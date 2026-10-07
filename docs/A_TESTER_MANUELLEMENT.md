@@ -781,3 +781,24 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] Inspecteur : modifier une case ; ◀ ▶ et J/K changent d'article ; « Suivant à compléter » (N) saute aux articles incomplets.
 - [ ] Glisser un article de la liste sur l'inspecteur : choisir le type, « Lier » ; le lien apparaît des deux côtés.
 - [ ] Thème sombre de Windows : couleurs des critères et jetons lisibles.
+
+## Planning : semaine et lectures à planifier (1.21.0)
+
+- [ ] Planning s'ouvre sur la **Semaine** ; la grille tient dans la fenêtre et commence vers 7 h 30 ; la ligne rouge
+      « maintenant » est à la bonne heure ; les heures des champs s'affichent en 24 h (13:00, pas 01:00 PM).
+- [ ] Clic sur un créneau → bulle « Ajouter un titre » ; taper, choisir une catégorie, **Entrée** : l'élément apparaît
+      (et sur l'autre PC après OneDrive). Glisser de 14 h à 16 h → la bulle propose 14:00 – 16:00.
+- [ ] « Plus d'options » ouvre le formulaire complet en fenêtre, prérempli ; Échap / clic à côté ferme.
+- [ ] Glisser un élément vers un autre jour et une autre heure ; glisser son bas pour l'allonger ; clic → bulle (✎, 🗑,
+      « ✓ Fait » barre l'élément).
+- [ ] Bande « journée » : clic ou glisser sur plusieurs jours → élément journée ; glisser une barre la décale de jours.
+- [ ] ‹ › et « Aujourd'hui », et au clavier ← → T ; décocher « week-end » → 5 jours (réglage gardé sur ce poste).
+- [ ] Vue d'ensemble : plus de réunions ni de séances de lecture, seulement les phases, tâches et jalons ; « SVG » et
+      « Enregistrer dans Figures » marchent ; plus de boutons PNG ni pgfgantt.
+- [ ] Colonne **À lire** : les références en retard / du mois, temps estimé ; glisser l'une sur mardi 10 h → séance
+      « 📖 Lire … » de la bonne durée ; « Placer » → premier créneau libre, la semaine s'affiche et la bulle s'ouvre ;
+      la carte affiche « prévu … ».
+- [ ] Bulle d'une séance : « Ouvrir la fiche » ouvre la référence ; « Marquer comme lu » → dans la Bibliothèque, statut
+      « Lu » et date du jour ; la séance est barrée et la référence quitte la colonne.
+- [ ] Bibliothèque : plus d'onglets « Corrections TFE » ni « Analyse (classeur) », plus de tuile « corrections du TFE ».
+

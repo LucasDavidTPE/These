@@ -210,5 +210,9 @@ lancent tous les tests automatiques sous Windows.
 - [x] Lecture croisée, **atelier** sur un écran (articles | facettes croisées | inspecteur), constellation radiale à la place
       de la carte globale, nettoyage du vocabulaire (parenthèses → note, écritures voisines), glisser pour lier, passe
       rapide au clavier, plein écran (1.20.0)
+- [x] Planning : vue **Semaine** façon agenda (création rapide au clic ou en glissant, glisser pour déplacer / étirer,
+      bande « journée »), Gantt gardé en « Vue d'ensemble » long terme, exports PNG et pgfgantt retirés ; colonne
+      **À lire** pour planifier les lectures (glisser, « Placer » au premier créneau libre, « Marquer comme lu ») ;
+      Bibliothèque : onglets « Corrections TFE » et « Analyse (classeur) » retirés (1.21.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),
       remarques extraites avec état (à traiter / traitée / refusée), compteur par partie, rangés avec les versions
