@@ -46,6 +46,59 @@ export interface Essai {
   notes: string;
   /** Droites de régression posées sur ses courbes (vitesse de refroidissement…). */
   regressions: RegressionDemandee[];
+  /** Fiche de l'éprouvette (1.23.0) : ce qui permet de trier et de comparer les essais. */
+  fiche: Eprouvette;
+  /** « valide », « ecarte » (exclu des moyennes) ou vide (pas encore jugé). */
+  validite: string;
+  /** Pourquoi l'essai est écarté (ou toute réserve). */
+  motif: string;
+  /** Voie de température retenue pour le dépouillement (nom brut de l'export) ; vide = automatique. */
+  voieTemperature: string;
+}
+
+export interface Eprouvette {
+  /** Matériau ou formulation ; vide = celui de la campagne. */
+  materiau: string;
+  forme: "" | "prisme" | "cylindre";
+  /** Dimensions en mm. */
+  largeur: number | null;
+  epaisseur: number | null;
+  diametre: number | null;
+  longueur: number | null;
+  /** Section saisie (mm²) ; sinon calculée depuis les dimensions. */
+  section: number | null;
+  /** Teneur en vides (%). */
+  vides: number | null;
+  /** « aucun », « RTFOT », « PAV 20 h », « 3 mois en étuve »… */
+  vieillissement: string;
+  /** Date de fabrication « AAAA-MM-JJ ». */
+  fabrication: string;
+  /** Vitesse de refroidissement de consigne (°C/h). */
+  consigne: number | null;
+}
+
+export const VALIDITES = [
+  ["", "à juger"],
+  ["valide", "valide"],
+  ["ecarte", "écarté"],
+] as const;
+
+export function lireEprouvette(brut: unknown): Eprouvette {
+  const b = o(brut);
+  const forme = b.forme === "prisme" || b.forme === "cylindre" ? b.forme : "";
+  return {
+    materiau: t(b.materiau),
+    forme,
+    largeur: n(b.largeur),
+    epaisseur: n(b.epaisseur),
+    diametre: n(b.diametre),
+    longueur: n(b.longueur),
+    section: n(b.section),
+    vides: n(b.vides),
+    vieillissement: t(b.vieillissement),
+    fabrication: t(b.fabrication),
+    consigne: n(b.consigne),
+  };
 }
 
 export const DOSSIER = "campagnes";
@@ -83,6 +136,10 @@ export function lireEssai(brut: unknown): Essai {
     etat: t(b.etat),
     notes: t(b.notes),
     regressions: regressions.map((r) => ({ panneau: r.panneau as string, trace: r.trace as string, de: r.de as number, a: r.a as number })),
+    fiche: lireEprouvette(b.fiche),
+    validite: b.validite === "valide" || b.validite === "ecarte" ? b.validite : "",
+    motif: t(b.motif),
+    voieTemperature: t(b.voieTemperature),
   };
 }
 

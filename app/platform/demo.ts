@@ -92,6 +92,33 @@ function essaiDemo(): Record<string, string> {
   return { "Demo CM/Essai1/Essai1.steps.tracking.csv": l.join("\n"), "Demo CM/Essai1/Essai1.log": log };
 }
 
+/** Quatre essais TSRST synthétiques (palier à +5 °C puis 10 °C/h, rupture vers −25 à −30 °C). */
+function tsrstDemo(): Record<string, string> {
+  const essais: [string, number, number, number][] = [
+    ["Essai1", -28, -8, 1],
+    ["Essai2", -27, -7, 1.05],
+    ["Essai3", -24, -5, 0.9],
+    ["Essai4", -25.5, -6, 0.95],
+  ];
+  const out: Record<string, string> = {};
+  essais.forEach(([nom, rupture, transition, k], n) => {
+    const l = ["Temps total (s);Température(8800:Enceinte) (°C);Température(8800:Eprouvette) (°C);Force(8800 (0,1):Charge) (kN)"];
+    let rompu = false;
+    for (let t = 0; t <= 4.5 * 3600; t += 15) {
+      const h = t / 3600;
+      const air = h < 0.5 ? 5 : 5 - 10 * (h - 0.5);
+      const ep = air + 0.3 + 0.03 * Math.sin(t / 41);
+      if (ep <= rupture) rompu = true;
+      const sigma = rompu ? 0.02 : k * (ep > transition ? 0.03 * (5 - ep) : 0.03 * (5 - transition) + 0.2 * (transition - ep)) + 0.006 * Math.sin(t / 59);
+      l.push([t, air.toFixed(3), ep.toFixed(3), (-sigma * 2.5).toFixed(4)].join(";").replace(/\./g, ","));
+    }
+    const jour = `0${22 + n}/06/2026`.slice(-10);
+    out[`Demo TSRST/${nom}/${nom}.steps.tracking.csv`] = l.join("\n");
+    out[`Demo TSRST/${nom}/${nom}.log`] = [`${jour};09:00:00;Demo;${nom};60101;Création;`, `${jour};13:30:00;Demo;${nom};60120;Durée;16200`, `${jour};13:30:00;Demo;${nom};60202;État;Essai terminé`].join("\n");
+  });
+  return out;
+}
+
 function normaliser(chemin: string): string {
   return chemin.replace(/[\\/]+$/, "").toLowerCase();
 }
@@ -158,6 +185,7 @@ export function plateformeDemo(scenario: string | null): Plateforme {
     dossier(`${ONEDRIVE}\\Thèse\\Rédaction`).poser("Manuscrit thèse.docx", "PK démonstration");
     const recherche = dossier(RECHERCHE);
     for (const [chemin, contenu] of Object.entries(essaiDemo())) recherche.poser(chemin, contenu);
+    for (const [chemin, contenu] of Object.entries(tsrstDemo())) recherche.poser(chemin, contenu);
   }
 
   // `?scenario=complet&contenu=1` : un espace déjà garni (pour essayer la recherche globale).
@@ -303,6 +331,14 @@ export function plateformeDemo(scenario: string | null): Plateforme {
     espace.poser(`journal/${j}.md`, "# Hier\n\n## À faire\n- [x] Caler 2S2P1D sur Essai1\n- [ ] Relire le chapitre 2\n- [ ] Répondre au mail de Sergio\n\n## Notes\nRéunion : **valider la structure PEP** avant vendredi.\n");
     espace.poser("campagnes/demo-cm/campagne.json", JSON.stringify({ titre: "Module complexe démo", type: "module-complexe", statut: "en cours", donnees: "recherche:Demo CM" }));
     espace.poser("campagnes/demo-cm/essais/Essai1/essai.json", "{}");
+    espace.poser("campagnes/tsrst-demo/campagne.json", JSON.stringify({ titre: "TSRST démo", type: "tsrst", statut: "en cours", materiau: "BB 35/50", donnees: "recherche:Demo TSRST" }));
+    const fiche = (o: object) => ({ forme: "prisme", largeur: 50, epaisseur: 50, longueur: 250, consigne: 10, ...o });
+    [
+      ["Essai1", { eprouvette: "P1", debut: "2026-06-22 09:00:00", fiche: fiche({ vides: 4.8 }) }],
+      ["Essai2", { eprouvette: "P2", debut: "2026-06-23 09:00:00", fiche: fiche({ vides: 5.1 }), validite: "valide" }],
+      ["Essai3", { eprouvette: "P3", debut: "2026-06-24 09:00:00", fiche: fiche({ materiau: "BB 35/50 + 20 % AE", vides: 5.6, vieillissement: "RTFOT" }) }],
+      ["Essai4", { eprouvette: "P4", debut: "2026-06-25 09:00:00", fiche: { materiau: "BB 35/50 + 20 % AE", vieillissement: "RTFOT" } }],
+    ].forEach(([nom, e]) => espace.poser(`campagnes/tsrst-demo/essais/${nom as string}/essai.json`, JSON.stringify(e)));
     espace.poser("campagnes/autre/campagne.json", JSON.stringify({ titre: "Autre campagne", type: "module-complexe", statut: "en cours", donnees: "" }));
     const figures = dossier(`${ESPACE}\\figures`);
     figures.poser("FIG-0001_courbe/meta.json", JSON.stringify({ id: "FIG-0001", title: "Courbe maîtresse", kind: "graph", created: "2026-09-20T10:00:00Z", modified: "2026-09-20T10:00:00Z", tags: ["2s2p1d"], used_in: [] }));

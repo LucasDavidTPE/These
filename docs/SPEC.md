@@ -393,6 +393,33 @@ fichiers (lecture en Rust). Actions : **exporter en Excel** (`.xlsx`), **copier 
 exporter les données brutes** d'un essai vers un dossier choisi, **enregistrer le
 graphe dans Figures**, **ouvrir dans le traitement 2S2P1D**.
 
+### 8.4 Essais TSRST (1.23.0)
+Pour les campagnes de type TSRST (éprouvette maintenue à longueur constante, refroidie à vitesse constante).
+
+- **Fiche de l'éprouvette** (dans `essai.json`, champ `fiche`) : repère, matériau / formulation (vide = celui de la
+  campagne), vieillissement, teneur en vides, forme (prisme / cylindre) et dimensions (mm), section (saisie, sinon
+  calculée), vitesse de refroidissement de consigne, date de fabrication ; **validité** (à juger, valide, écarté)
+  et motif. Un essai écarté n'entre jamais dans les moyennes.
+- **Dépouillement** (« Dépouiller », « Tout dépouiller ») depuis l'export WaveMatrix (la copie dans l'espace, §4.1) :
+  voie de température de l'éprouvette (reconnue par son nom ; sinon la première ; imposable par essai), contrainte =
+  force / section (ou la voie de contrainte si l'export en a une), traction positive quel que soit le signe de la
+  machine. **Rupture** : pic de contrainte (température, contrainte, instant) ; « rupture nette » si la contrainte
+  retombe sous 30 % du pic ensuite, sinon avertissement. σ(T) est prise du début du refroidissement (dernier instant à
+  moins de 0,5 °C de la température maximale avant le pic) jusqu'au pic, moyennée par tranches de température
+  (300 points au plus). **Transition** : ajustement bilinéaire continu de σ(T) (moindres carrés, cassure parmi les
+  températures mesurées hors 10 % aux extrémités) ; retenue si elle réduit d'au moins moitié l'erreur d'une droite et
+  si la pente en dessous dépasse 1,5 fois celle du dessus ; **pente** = MPa par °C de refroidissement sous la
+  transition. **σ à des températures fixées** (−10, −20, −30 °C par défaut, réglage partagé
+  `campagnes/tsrst-reglages.json`), par interpolation sur σ(T), vide hors de la plage refroidie avant la rupture.
+- Le résultat, **courbe σ(T) comprise**, est rangé dans `campagnes/<campagne>/essais/<essai>/tsrst.json` : la
+  comparaison et l'archive se passent des données brutes (autre PC, disque débranché). Redépouiller remplace.
+- Page de campagne : tableau éprouvettes × résultats, fiche dépliable, validité, superposition des σ(T).
+- Vue **Essais TSRST** (Campagnes → « Essais TSRST ») : tous les essais de toutes les campagnes ; tri par n'importe
+  quelle colonne (valeurs manquantes à la fin), filtres (texte, matériau, vieillissement, sans les écartés,
+  dépouillés seulement) ; **moyenne ± écart-type** par matériau, vieillissement ou campagne ; superposition des σ(T)
+  des essais cochés (sinon de tous ceux affichés, 12 au plus) ; **export Excel d'archive** (feuilles Essais,
+  Synthèse, Courbes σ(T)) ; **figure** dans Figures, régénérable depuis les dépouillements rangés.
+
 ### Manuscrits → Plan (1.13.0)
 Un **document** (1.16.0) est la thèse, un article, un rapport ou compte rendu, ou tout autre texte long :
 chacun a son dossier `manuscrits/<document>/` et son `manuscrit.json` (champ `type` : `these` par défaut,

@@ -4,6 +4,7 @@ import { slugifier } from "@noyau/texte";
 import type { ApercuEssai } from "../core/courbes";
 import { resumeTraitement, type ResumeTraitement } from "../core/traitement";
 import { DOSSIER, lireCampagne, lireEssai, type Campagne, type Essai } from "../core/modele";
+import { lireResultats, TEMPERATURES_DEFAUT, type ResultatsTsrst } from "../core/tsrst";
 
 export interface Note {
   fichier: string;
@@ -24,6 +25,8 @@ export interface CampagneChargee {
   depouilles: string[];
   /** Résultats de ces dépouillements (modèle, paramètres calés), par essai. */
   traitements: Record<string, ResumeTraitement>;
+  /** Dépouillements TSRST (tsrst.json), par essai. */
+  tsrst: Record<string, ResultatsTsrst>;
 }
 
 async function lister(fs: Fichiers, chemin: string) {
@@ -65,6 +68,7 @@ export async function chargerCampagnes(fs: Fichiers): Promise<{ campagnes: Campa
     let apercu: ApercuEssai | null = null;
     const depouilles: string[] = [];
     const traitements: Record<string, ResumeTraitement> = {};
+    const tsrst: Record<string, ResultatsTsrst> = {};
     for (const e of (await lister(fs, joindre(base, "essais"))).filter((x) => x.kind === "dir")) {
       const dossierEssai = joindre(base, "essais", e.name);
       const noms = (await fs.listDir(dossierEssai)).map((x) => x.name);
@@ -72,6 +76,10 @@ export async function chargerCampagnes(fs: Fichiers): Promise<{ campagnes: Campa
         depouilles.push(e.name);
         const r = await lireJson(fs, joindre(dossierEssai, "traitement.json"), resumeTraitement, problemes);
         if (r) traitements[e.name] = r;
+      }
+      if (noms.includes("tsrst.json")) {
+        const r = await lireJson(fs, joindre(dossierEssai, "tsrst.json"), lireResultats, problemes);
+        if (r) tsrst[e.name] = r;
       }
       if (!apercu && noms.includes("apercu.json")) apercu = await lireJson(fs, joindre(dossierEssai, "apercu.json"), (b) => b as ApercuEssai, problemes);
       conflits(dossierEssai, noms, "essai.json", problemes);
@@ -85,7 +93,7 @@ export async function chargerCampagnes(fs: Fichiers): Promise<{ campagnes: Campa
     }
     notes.sort((a, b) => (a.fichier < b.fichier ? 1 : -1));
     const images = (await lister(fs, joindre(base, "images"))).filter((x) => x.kind === "file" && /\.(png|jpe?g|gif|webp|bmp)$/i.test(x.name)).map((x) => x.name);
-    campagnes.push({ slug: d.name, campagne, essais, notes, images, apercu, depouilles, traitements });
+    campagnes.push({ slug: d.name, campagne, essais, notes, images, apercu, depouilles, traitements, tsrst });
   }
   return { campagnes, problemes };
 }
@@ -169,4 +177,31 @@ export async function preparerEssaiTraitement(fs: Fichiers, slug: string, nom: s
     await fs.rename(chemin, joindre(dossier, ".anciens", `${Date.now()}-traitement.json`));
   }
   return { chemin, existe };
+}
+
+const cheminEssai = (slug: string, nom: string) => joindre(DOSSIER, slug, "essais", nom.replace(/[\\/:*?"<>|]/g, "_"));
+
+/** Range le dépouillement TSRST d'un essai (`tsrst.json` à côté de `essai.json`). */
+export async function enregistrerTsrst(fs: Fichiers, slug: string, nom: string, r: ResultatsTsrst) {
+  await fs.ensureDir(cheminEssai(slug, nom));
+  await fs.writeTextAtomic(joindre(cheminEssai(slug, nom), "tsrst.json"), jsonStable(r));
+}
+
+/** Réglages partagés des essais TSRST : températures où relever la contrainte. */
+export const FICHIER_REGLAGES_TSRST = joindre(DOSSIER, "tsrst-reglages.json");
+
+export async function lireReglagesTsrst(fs: Fichiers): Promise<{ temperatures: number[] }> {
+  try {
+    if (!(await fs.exists(FICHIER_REGLAGES_TSRST))) return { temperatures: [...TEMPERATURES_DEFAUT] };
+    const b = JSON.parse(await fs.readText(FICHIER_REGLAGES_TSRST)) as { temperatures?: unknown };
+    const t = Array.isArray(b.temperatures) ? b.temperatures.filter((x): x is number => typeof x === "number" && Number.isFinite(x)) : [];
+    return { temperatures: t.length ? t : [...TEMPERATURES_DEFAUT] };
+  } catch {
+    return { temperatures: [...TEMPERATURES_DEFAUT] };
+  }
+}
+
+export async function ecrireReglagesTsrst(fs: Fichiers, r: { temperatures: number[] }) {
+  await fs.ensureDir(DOSSIER);
+  await fs.writeTextAtomic(FICHIER_REGLAGES_TSRST, jsonStable(r));
 }

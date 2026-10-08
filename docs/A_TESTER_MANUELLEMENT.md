@@ -817,3 +817,18 @@ nombres doivent être identiques, dans les deux modes.
       réparation) ; modifier l'une d'elles dans Excel, enregistrer, fermer, synchroniser → la case est validée dans l'appli.
 - [ ] Sur l'autre PC (après OneDrive) : mêmes états de validation.
 
+## Campagnes : essais TSRST (1.23.0)
+
+- [ ] Campagne TSRST réelle : « Fiche » d'un essai → forme, dimensions (la section calculée s'affiche), matériau,
+      vieillissement, vides ; les valeurs restent après fermeture et sur l'autre PC.
+- [ ] « Tout dépouiller » : T et σ de rupture, transition, pente, σ à −10 / −20 / −30 °C cohérents avec ce que donnait
+      le dépouillement habituel (Excel) sur au moins un essai ; la voie de température retenue est bien celle de
+      l'éprouvette (voir la ligne sous la fiche) ; un essai sans dimensions est signalé par son nom.
+- [ ] Un essai arrêté avant rupture : « * » à côté de σ rupt. et avertissement « Pas de rupture nette ».
+- [ ] « Superposer σ(T) » dans la campagne ; validité « écarté » → la ligne s'estompe, la courbe disparaît.
+- [ ] Campagnes → « Essais TSRST » : tri par chaque colonne (2e clic = sens inverse), filtres, moyennes par matériau /
+      vieillissement / campagne ; modifier « σ à » (par exemple « -15 ; -25 ») → colonnes et moyennes suivent, sur les deux PC.
+- [ ] « Exporter en Excel » : 3 feuilles (Essais, Synthèse, Courbes σ(T)), s'ouvre sans message de réparation.
+- [ ] « Enregistrer dans Figures » puis, dans Figures, « Régénérer » après un nouveau dépouillement : la figure suit.
+- [ ] Sur le PC sans les données brutes : la vue Essais TSRST et les comparaisons fonctionnent (résultats rangés dans l'espace).
+
