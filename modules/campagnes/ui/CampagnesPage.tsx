@@ -23,6 +23,7 @@ import { valeur } from "../core/traitement";
 import { ajouterImage, ajouterNote, chargerCampagnes, cheminTraitement, creerCampagne, enregistrerApercu, enregistrerCampagne, enregistrerEssai, type CampagneChargee } from "./donnees";
 import { renduCourbes, titreFigure, type OrigineCourbes } from "./figure";
 import { useOuverture } from "@interface/ouverture";
+import { EssaisTsrst, SectionTsrst } from "./Tsrst";
 import "./campagnes.css";
 
 function heures(c: CampagneChargee): number {
@@ -385,6 +386,8 @@ function VueCampagne({ c, fermer, rafraichir }: { c: CampagneChargee; fermer(): 
         )}
       </Section>
 
+      {k.type === "tsrst" || Object.keys(c.tsrst).length ? <SectionTsrst ctx={ctx} c={c} rafraichir={rafraichir} signaler={(niveau, texte) => setMessage({ niveau, texte })} /> : null}
+
       {Object.keys(c.traitements).length > 0 ? (
         <Section titre="Résultats du traitement 2S2P1D">
           <table className="tableau">
@@ -513,6 +516,22 @@ export function CampagnesPage() {
   }, [fs, ctx.revision, tour]);
 
   const [filtre, setFiltre] = useState(FILTRE_VIDE);
+  const [vue, setVueBrute] = useState<"galerie" | "tsrst">(() => {
+    try {
+      return localStorage.getItem("campagnes.vue") === "tsrst" ? "tsrst" : "galerie";
+    } catch {
+      return "galerie";
+    }
+  });
+  const setVue = (v: "galerie" | "tsrst") => {
+    setVueBrute(v);
+    try {
+      localStorage.setItem("campagnes.vue", v);
+    } catch {
+      /* préférence de confort seulement */
+    }
+  };
+  const avecTsrst = (etat ?? []).some((c) => c.campagne.type === "tsrst" || Object.keys(c.tsrst).length);
   const materiaux = useMemo(() => [...new Set((etat ?? []).map((c) => c.campagne.materiau).filter(Boolean))].sort(), [etat]);
   const triees = useMemo(
     () => [...(etat ?? [])].sort((a, b) => ((periode(Object.values(b.essais), b.campagne)?.debut ?? "") > (periode(Object.values(a.essais), a.campagne)?.debut ?? "") ? 1 : -1)),
@@ -566,6 +585,20 @@ export function CampagnesPage() {
         </div>
       ) : (
         <>
+          {avecTsrst ? (
+            <span className="segmente ts-vues">
+              <button type="button" className={vue === "galerie" ? "actif" : undefined} onClick={() => setVue("galerie")}>
+                Campagnes
+              </button>
+              <button type="button" className={vue === "tsrst" ? "actif" : undefined} onClick={() => setVue("tsrst")}>
+                Essais TSRST
+              </button>
+            </span>
+          ) : null}
+          {avecTsrst && vue === "tsrst" ? (
+            <EssaisTsrst ctx={ctx} campagnes={etat} ouvrir={setOuverte} />
+          ) : (
+          <>
           <div className="filtres">
             <input className="recherche" type="search" placeholder="Rechercher (fiche, essais, carnet)…" value={filtre.texte} onChange={(e) => setFiltre({ ...filtre, texte: e.target.value })} />
             <select value={filtre.type} onChange={(e) => setFiltre({ ...filtre, type: e.target.value })} aria-label="Type">
@@ -601,6 +634,8 @@ export function CampagnesPage() {
               <Carte key={c.slug} c={c} ouvrir={() => setOuverte(c.slug)} />
             ))}
           </div>
+          </>
+          )}
         </>
       )}
     </Page>

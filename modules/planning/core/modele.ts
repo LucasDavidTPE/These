@@ -19,6 +19,16 @@ export interface Element {
   notes: string;
   /** ID de l'élément parent (une phase contient des tâches) ; vide sinon. */
   parent: string;
+  /** « HH:MM » : élément horaire d'un seul jour (vue Semaine) ; vide = toute la journée. */
+  heureDebut: string;
+  heureFin: string;
+  /** Objet d'un autre module (une référence à lire…) ; null sinon. */
+  lien: LienObjet | null;
+}
+
+export interface LienObjet {
+  module: string;
+  id: string;
 }
 
 export interface Categorie {
@@ -46,6 +56,21 @@ export const FICHIER_CATEGORIES = `${DOSSIER_PLANNING}/categories.json`;
 export const DOSSIER_SUPPRIMES = `${DOSSIER_PLANNING}/.supprimes`;
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const HEURE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/** Horaires gardés seulement pour un élément d'un jour, fin après le début. */
+function horaires(b: Record<string, unknown>, debut: string, fin: string): { heureDebut: string; heureFin: string } {
+  const hd = typeof b.heureDebut === "string" && HEURE.test(b.heureDebut) ? b.heureDebut : "";
+  const hf = typeof b.heureFin === "string" && HEURE.test(b.heureFin) ? b.heureFin : "";
+  if (!hd || !hf || hf <= hd || fin !== debut) return { heureDebut: "", heureFin: "" };
+  return { heureDebut: hd, heureFin: hf };
+}
+
+function lireLien(v: unknown): LienObjet | null {
+  if (typeof v !== "object" || v === null) return null;
+  const l = v as Record<string, unknown>;
+  return typeof l.module === "string" && typeof l.id === "string" && l.module && l.id ? { module: l.module, id: l.id } : null;
+}
 
 export function lireElement(b: Record<string, unknown>): Element {
   if (typeof b.titre !== "string") throw new Error("Champ « titre » manquant.");
@@ -61,6 +86,8 @@ export function lireElement(b: Record<string, unknown>): Element {
     avancement: av,
     notes: typeof b.notes === "string" ? b.notes : "",
     parent: typeof b.parent === "string" ? b.parent : "",
+    ...horaires(b, b.debut, fin),
+    lien: lireLien(b.lien),
   };
 }
 
@@ -81,3 +108,8 @@ export function lireCategories(brut: unknown): Categorie[] {
 export const ELEMENTS: DefinitionCollection<Element> = { dossier: DOSSIER_PLANNING, format: { prefixe: "PH-", chiffres: 4 }, lire: lireElement };
 
 export const estJalon = (e: Pick<Element, "fin">) => e.fin === "";
+
+/** Élément vierge (formulaire, création rapide). */
+export function elementVide(debut: string, m: Partial<Element> = {}): Element {
+  return { titre: "", categorie: "", debut, fin: debut, actif: true, avancement: 0, notes: "", parent: "", heureDebut: "", heureFin: "", lien: null, ...m };
+}

@@ -147,9 +147,7 @@ export function useBiblio() {
       return id;
     },
     enregistrerDemande: (id: string, d: Demande) => garde((f) => enregistrerObjet(f, DEMANDES, id, d)),
-    enregistrerCorrection: (id: string, c: Correction) => garde((f) => enregistrerObjet(f, CORRECTIONS, id, c)),
     enregistrerPiste: (id: string, p: Piste) => garde((f) => enregistrerObjet(f, PISTES, id, p)),
-    enregistrerAnalyse: (texte: string) => garde(async (f) => (await f.ensureDir(`${DOSSIER}/analyse`), f.writeTextAtomic(FICHIER_ANALYSE, texte))),
     importer: (imp: ImportClasseur) => garde((f) => ecrireImport(f, imp)),
   };
 }

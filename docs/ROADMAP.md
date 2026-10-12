@@ -202,5 +202,24 @@ lancent tous les tests automatiques sous Windows.
       automatique autour de l'espace, réglage en un clic (1.17.1)
 - [x] Manuscrits : chemins des fichiers Word communs aux deux PC (`espace:`, `onedrive:`), conversion automatique des anciennes
       sources, « Pointer le fichier… », recherche dans tout OneDrive (1.18.0)
+- [x] Manuscrits : document généré refusé par Word (« réparations : Styles, Objets dessinés et zones de texte ») — styles en
+      double ou homonymes, dessins d'en-têtes de même identifiant ; passe d'assainissement et tests de validité (1.18.1)
+- [x] Bibliothèque : **Lecture croisée** — grille articles × critères à étiquettes, liens typés entre articles, croisement
+      (trous de la littérature), carte articles/méthodes, synthèse Markdown, classeur Excel synchronisé dans les deux sens
+      avec conflits à trancher (1.19.0)
+- [x] Lecture croisée, **atelier** sur un écran (articles | facettes croisées | inspecteur), constellation radiale à la place
+      de la carte globale, nettoyage du vocabulaire (parenthèses → note, écritures voisines), glisser pour lier, passe
+      rapide au clavier, plein écran (1.20.0)
+- [x] Planning : vue **Semaine** façon agenda (création rapide au clic ou en glissant, glisser pour déplacer / étirer,
+      bande « journée »), Gantt gardé en « Vue d'ensemble » long terme, exports PNG et pgfgantt retirés ; colonne
+      **À lire** pour planifier les lectures (glisser, « Placer » au premier créneau libre, « Marquer comme lu ») ;
+      Bibliothèque : onglets « Corrections TFE » et « Analyse (classeur) » retirés (1.21.0)
+- [x] Lecture croisée : cases « à valider » (reprises automatiquement) / « validées » (✓, Tout valider, toute modification à la
+      main), suivant à valider (V), filtre de la liste, « validé seulement » pour croiser, cases à valider repérées dans Excel (1.22.0)
+- [x] Campagnes : **essais TSRST** — fiche structurée de l'éprouvette (matériau, dimensions, section, vides, vieillissement,
+      validité), dépouillement (rupture, transition bilinéaire et pente, σ à températures fixées) rangé avec sa courbe σ(T),
+      vue « Essais TSRST » toutes campagnes (tri, filtres, moyennes ± écart-type, superposition σ(T), export Excel, figure) (1.23.0)
+- [x] Figures → Graphes : **exports COMSOL** — profils superposés (fichiers ou expressions, légendes automatiques, cote en mm),
+      profil extrait d'une coupe, carte en couleurs d'une coupe (SVG, bibliothèque) (1.24.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),
       remarques extraites avec état (à traiter / traitée / refusée), compteur par partie, rangés avec les versions

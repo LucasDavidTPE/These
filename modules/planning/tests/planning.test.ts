@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { chargerCollection, creerObjet, FichiersMemoire } from "@noyau/stockage";
 import { barresDepuis, cetteSemaine, echelle, graduations, grouper, x, type Barre } from "../core/gantt";
 import { CATEGORIES_PAR_DEFAUT, ELEMENTS, lireCategories, lireElement } from "../core/modele";
-import { versPgfgantt } from "../core/pgfgantt";
 
 const b = (id: string, categorie: string, debut: string, fin = ""): Barre => ({ id, titre: id, categorie, debut, fin, avancement: 0 });
 
@@ -64,14 +63,6 @@ describe("Gantt", () => {
   it("« Cette semaine » : en cours, ou qui commence dans les 7 jours", () => {
     const s = cetteSemaine([b("en-cours", "", "2026-09-01", "2026-10-31"), b("passe", "", "2026-09-01", "2026-09-20"), b("bientot", "", "2026-10-01"), b("loin", "", "2026-11-01")], "2026-09-26");
     expect(s.map((x) => x.id)).toEqual(["en-cours", "bientot"]);
-  });
-
-  it("export pgfgantt", () => {
-    const g = grouper([b("Lecture 1_2", "biblio", "2026-10-01", "2026-10-31"), b("Comité", "reunion", "2027-03-15")], CATEGORIES_PAR_DEFAUT);
-    const t = versPgfgantt(g, "2026-10-01", "2027-06-30");
-    expect(t).toContain("\\begin{ganttchart}");
-    expect(t).toContain("\\ganttbar[bar/.append style={fill={[HTML]2F5F8A}}]{Lecture 1\\_2}{2026-10-01}{2026-10-01} \\\\");
-    expect(t).toContain("\\ganttmilestone[milestone/.append style={fill={[HTML]8A5A00}}]{Comité}{2027-03-01}\n\\end{ganttchart}");
   });
 });
 

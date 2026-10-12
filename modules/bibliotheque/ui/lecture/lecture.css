@@ -1,0 +1,767 @@
+/* Lecture croisée (Bibliothèque) */
+.lc-intro h2 {
+  margin-top: 0;
+}
+.lc-vues {
+  margin-bottom: 12px;
+}
+
+/* Étiquettes */
+.lc-puces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+}
+.lc-puce {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--bordure));
+  color: var(--texte);
+  border-radius: 999px;
+  padding: 0 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.lc-puce button {
+  border: none;
+  background: none;
+  color: var(--discret);
+  padding: 0 0 0 2px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+.lc-note {
+  font-size: 11.5px;
+  color: var(--discret);
+  font-style: italic;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Éditeur d'une case */
+.lc-editeur {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 220px;
+}
+.lc-saisie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 3px 4px;
+  background: var(--surface);
+  cursor: text;
+}
+.lc-champ {
+  flex: 1 1 80px;
+  min-width: 80px;
+  border: none;
+  outline: none;
+  font: inherit;
+  font-size: 13px;
+  background: transparent;
+  color: inherit;
+}
+.lc-note-champ {
+  font-size: 12px;
+  padding: 2px 6px;
+}
+.lc-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 2px 0 0;
+  padding: 3px;
+  list-style: none;
+  max-height: 240px;
+  overflow: auto;
+  background: var(--surface);
+  color: var(--texte);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+.lc-suggestions li {
+  padding: 3px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lc-suggestions li.actif,
+.lc-suggestions li:hover {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* Grille */
+.lc-grille-cadre {
+  max-height: 70vh;
+}
+.lc-grille {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.lc-grille th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--surface-2);
+  vertical-align: bottom;
+  min-width: 150px;
+}
+.lc-grille .lc-fixe {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--surface);
+  min-width: 190px;
+  max-width: 240px;
+  box-shadow: 1px 0 0 var(--bordure);
+}
+.lc-grille th.lc-fixe {
+  z-index: 4;
+  background: var(--surface-2);
+}
+.lc-titre {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 230px;
+}
+.lc-case {
+  vertical-align: top;
+  cursor: pointer;
+  min-width: 150px;
+}
+.lc-case:hover {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+.lc-case:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.lc-case-edition {
+  cursor: default;
+  background: var(--surface);
+  min-width: 240px;
+}
+.lc-ecarte td {
+  opacity: 0.55;
+}
+
+/* Croisement */
+.lc-croisement {
+  width: auto;
+}
+.lc-croisement th,
+.lc-croisement td {
+  text-align: center;
+}
+.lc-croisement tbody th {
+  text-align: left;
+  white-space: nowrap;
+}
+.lc-vertical {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  display: inline-block;
+  max-height: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lc-compte {
+  min-width: 34px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lc-trou {
+  cursor: default;
+  background: repeating-linear-gradient(45deg, transparent 0 4px, color-mix(in srgb, var(--attention) 22%, transparent) 4px 6px);
+}
+.lc-diag {
+  background: var(--surface-2);
+  cursor: default;
+}
+.lc-actif {
+  outline: 2px solid var(--texte);
+  outline-offset: -2px;
+}
+.lc-choix ul {
+  margin: 6px 0 0;
+}
+
+/* 8 couleurs de critères, ordre fixe (palette validée pour le daltonisme) */
+.lc-atelier,
+.lc-fiche-couleurs {
+  --lc-serie-1: #2a78d6;
+  --lc-serie-2: #eb6834;
+  --lc-serie-3: #1baf7a;
+  --lc-serie-4: #eda100;
+  --lc-serie-5: #e87ba4;
+  --lc-serie-6: #008300;
+  --lc-serie-7: #4a3aa7;
+  --lc-serie-8: #e34948;
+}
+@media (prefers-color-scheme: dark) {
+  .lc-atelier,
+  .lc-fiche-couleurs {
+    --lc-serie-1: #3987e5;
+    --lc-serie-2: #d95926;
+    --lc-serie-3: #199e70;
+    --lc-serie-4: #c98500;
+    --lc-serie-5: #d55181;
+    --lc-serie-6: #008300;
+    --lc-serie-7: #9085e9;
+    --lc-serie-8: #e66767;
+  }
+}
+.lc-legende {
+  gap: 4px;
+}
+.lc-pastille {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+.lc-article {
+  fill: var(--surface);
+  stroke: var(--texte);
+  stroke-width: 1.5;
+}
+.lc-article.lc-lu {
+  fill: var(--texte);
+}
+.lc-etiquette {
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.lc-texte {
+  font-size: 11px;
+  fill: var(--texte);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  pointer-events: none;
+}
+.lc-texte-article {
+  font-size: 10px;
+  fill: var(--discret);
+}
+
+/* Synthèse */
+.lc-synthese {
+  max-height: 70vh;
+  overflow: auto;
+}
+
+/* Fiche */
+.lc-fiche {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) 1fr;
+  gap: 6px 12px;
+  align-items: start;
+}
+.lc-fiche-ligne {
+  display: contents;
+}
+.lc-case-bouton {
+  text-align: left;
+  background: none;
+  border: 1px dashed transparent;
+  border-radius: 6px;
+  padding: 2px 4px;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+.lc-case-bouton:hover {
+  border-color: var(--bordure);
+}
+.lc-sous-titre {
+  font-size: 14px;
+  margin: 16px 0 6px;
+}
+.lc-liens {
+  margin: 0 0 8px;
+  padding-left: 18px;
+}
+.lc-ajout-lien {
+  flex-wrap: wrap;
+}
+.lc-cible {
+  position: relative;
+}
+.lc-cible .champ {
+  width: 280px;
+}
+.lc-cible .lc-suggestions {
+  min-width: 380px;
+}
+.lc-conflits td {
+  vertical-align: top;
+}
+
+/* ---- Atelier : trois colonnes à hauteur d'écran ---- */
+.lc-atelier {
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr) 360px;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  height: calc(100vh - 230px);
+  min-height: 520px;
+}
+.lc-atelier.lc-plein {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  height: auto;
+  padding: 12px;
+  background: var(--fond);
+}
+.lc-barre {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.lc-modes {
+  display: flex;
+  gap: 2px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 2px;
+  margin-right: auto;
+}
+.lc-modes button,
+.lc-barre > button {
+  border: none;
+  background: transparent;
+  color: var(--texte);
+  border-radius: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font: inherit;
+}
+.lc-barre > button {
+  border: 1px solid var(--bordure);
+  background: var(--surface);
+}
+.lc-modes button.actif,
+.lc-modes button.actif:hover:not(:disabled),
+.lc-barre > button.actif,
+.lc-barre > button.actif:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--accent-texte);
+}
+.lc-colonne {
+  min-height: 0;
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  padding: 10px 12px;
+}
+
+/* Articles */
+.lc-articles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+}
+.lc-entete-liste {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.lc-choix-actifs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.lc-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  flex: 1;
+}
+.lc-liste li {
+  padding: 5px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+.lc-liste li:hover {
+  background: var(--surface-2);
+}
+.lc-liste li.actif {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border-left-color: var(--accent);
+}
+.lc-ligne-article {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  align-items: center;
+  font-size: 13px;
+}
+.lc-titre-court {
+  font-size: 11.5px;
+  color: var(--discret);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lc-couverture {
+  display: inline-flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.lc-couverture i {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  border: 1px solid color-mix(in srgb, var(--lc-c) 60%, var(--bordure));
+}
+.lc-couverture i.plein {
+  background: var(--lc-c);
+  border-color: var(--lc-c);
+}
+
+/* Facettes */
+.lc-facettes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.lc-facette header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.lc-facette .lc-pastille {
+  background: var(--lc-c);
+}
+.lc-jauge {
+  width: 70px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.lc-jauge span {
+  display: block;
+  height: 100%;
+  background: var(--lc-c);
+}
+.lc-nuage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: baseline;
+}
+.lc-jeton {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  border: 1px solid color-mix(in srgb, var(--lc-c, var(--accent)) 45%, var(--bordure));
+  background: color-mix(in srgb, var(--lc-c, var(--accent)) 10%, var(--surface));
+  color: var(--texte);
+  border-radius: 999px;
+  padding: 1px 9px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.lc-jeton:hover:not(:disabled) {
+  border-color: var(--lc-c, var(--accent));
+  background: color-mix(in srgb, var(--lc-c, var(--accent)) 20%, var(--surface));
+}
+.lc-jeton-n {
+  font-size: 10.5px;
+  color: var(--discret);
+  font-variant-numeric: tabular-nums;
+}
+.lc-jeton.lc-jeton-actif,
+.lc-jeton.lc-jeton-actif:hover:not(:disabled) {
+  background: var(--lc-c, var(--accent));
+  border-color: var(--lc-c, var(--accent));
+  color: #fff;
+}
+.lc-jeton-actif .lc-jeton-n {
+  color: rgba(255, 255, 255, 0.85);
+}
+.lc-jeton-trou {
+  opacity: 0.55;
+  border-style: dashed;
+  background: repeating-linear-gradient(45deg, transparent 0 4px, color-mix(in srgb, var(--attention) 18%, transparent) 4px 6px);
+}
+
+/* Constellation */
+.lc-cadre-constellation {
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  overflow: hidden;
+}
+.lc-constellation {
+  display: block;
+}
+.lc-orbite {
+  fill: none;
+  stroke: var(--bordure);
+  stroke-dasharray: 2 4;
+}
+.lc-rayon {
+  stroke-width: 1.5;
+}
+.lc-fil {
+  stroke-width: 1;
+}
+.lc-lien-type {
+  stroke: var(--texte);
+  stroke-width: 1.6;
+  stroke-dasharray: 6 3;
+}
+.lc-legende-lien {
+  font-size: 11px;
+  fill: var(--texte);
+  font-style: italic;
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 3px;
+}
+.lc-centre-article {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 3;
+}
+.lc-texte-fort {
+  font-size: 12px;
+  font-weight: 600;
+}
+.lc-texte-centre {
+  font-size: 15px;
+  font-weight: 700;
+}
+.lc-compte-texte {
+  fill: var(--discret);
+  font-size: 10px;
+}
+.lc-cliquable {
+  cursor: pointer;
+}
+.lc-vide {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--discret);
+  text-align: center;
+}
+
+/* Inspecteur */
+.lc-inspecteur h4 {
+  margin: 14px 0 4px;
+  font-size: 13px;
+}
+.lc-titre-article {
+  margin: 4px 0 2px;
+  font-size: 17px;
+}
+.lc-sous-titre-article {
+  margin: 0 0 4px;
+  font-size: 13px;
+}
+.lc-nav {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.lc-nav button {
+  padding: 2px 8px;
+}
+.lc-inspecteur-article {
+  border-radius: var(--rayon);
+}
+.lc-depot {
+  outline: 2px dashed var(--accent);
+  outline-offset: 4px;
+}
+.lc-astuce {
+  margin: 2px 0 6px;
+}
+.lc-lier-depose {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  margin-bottom: 8px;
+}
+.lc-inspecteur .lc-fiche {
+  grid-template-columns: 110px 1fr;
+}
+.lc-inspecteur section > h2 {
+  font-size: 14px;
+}
+.lc-inspecteur .lc-ajout-lien .champ,
+.lc-inspecteur .lc-cible .champ {
+  width: 100%;
+}
+.lc-liste-simple {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 13px;
+}
+.lc-chiffres {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0;
+}
+.lc-chiffres div {
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+}
+.lc-chiffres strong {
+  font-size: 20px;
+}
+.lc-chiffres span {
+  font-size: 12px;
+  color: var(--discret);
+}
+.lc-attention {
+  color: var(--attention);
+}
+.lc-ok {
+  color: var(--ok);
+}
+.lc-propositions {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+.lc-propositions s {
+  color: var(--discret);
+  margin-right: 4px;
+}
+.lc-nettoyage h3 {
+  margin: 0 auto 0 0;
+}
+@media (max-width: 1200px) {
+  .lc-atelier {
+    grid-template-columns: 220px minmax(0, 1fr) 300px;
+  }
+}
+.lc-plein {
+  grid-template-columns: 300px minmax(0, 1fr) 400px;
+}
+
+/* ---- Validation des cases (1.22.0) ---- */
+.lc-puces.lc-a-valider .lc-puce {
+  background: transparent;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--attention) 60%, var(--bordure));
+  font-style: italic;
+  color: var(--discret);
+}
+.lc-puces.lc-a-valider .lc-note {
+  font-style: italic;
+}
+.lc-case {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+.lc-case .lc-case-bouton {
+  flex: 1;
+  min-width: 0;
+}
+.lc-valider {
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--ok) 50%, var(--bordure));
+  background: transparent;
+  color: var(--ok);
+  border-radius: 999px;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.lc-valider:hover:not(:disabled) {
+  background: var(--ok-fond);
+  color: var(--ok);
+}
+.lc-validation {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  background: var(--attention-fond);
+  color: var(--texte);
+  font-size: 13px;
+}
+.lc-validation span {
+  flex: 1;
+  min-width: 200px;
+}
+.lc-validation-lu {
+  border-left: 3px solid var(--attention);
+}
+.lc-couverture i.plein.a-valider {
+  background: color-mix(in srgb, var(--lc-c) 25%, transparent);
+}
+.lc-badge-valider {
+  font-size: 10.5px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--attention-fond);
+  color: var(--attention);
+  margin-left: 4px;
+}
+.lc-jauge-validation {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  overflow: hidden;
+  margin: 4px 0 8px;
+}
+.lc-jauge-validation span {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+}

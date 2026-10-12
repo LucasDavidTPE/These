@@ -16,9 +16,10 @@ import { nouvelleReference } from "../core/modele";
 import { Fiche } from "./Fiche";
 import { PanneauZotero } from "./Zotero";
 import { aujourdhui, ecrireCitations, lireCitations, useBiblio } from "./donnees";
-import { AnalyseVue, CorrectionsVue, DemandesVue, PistesVue } from "./suivi";
+import { DemandesVue, PistesVue } from "./suivi";
 import { FILTRES_VIDES, type Filtres } from "./format";
 import { PlanVue, ReferencesVue, TableauDeBordVue } from "./vues";
+import { LectureCroisee } from "./lecture/LectureCroisee";
 import "./bibliotheque.css";
 
 const ONGLETS = [
@@ -26,9 +27,8 @@ const ONGLETS = [
   ["references", "Références"],
   ["plan", "Plan de lecture"],
   ["demandes", "Demandes"],
-  ["corrections", "Corrections TFE"],
   ["pistes", "Pistes"],
-  ["analyse", "Analyse croisée"],
+  ["lecture", "Lecture croisée"],
 ] as const;
 type Onglet = (typeof ONGLETS)[number][0];
 
@@ -204,7 +204,7 @@ export function BibliothequePage() {
         <div className="message message-attention">
           <p>
             <strong>{aImporter.nom}</strong> : {aImporter.imp.references.length} références, {aImporter.imp.demandes.length} demandes,{" "}
-            {aImporter.imp.corrections.length} corrections, {aImporter.imp.pistes.length} pistes, plan de {aImporter.imp.parametres.nbMois} mois à partir du{" "}
+            {aImporter.imp.pistes.length} pistes, plan de {aImporter.imp.parametres.nbMois} mois à partir du{" "}
             {aImporter.imp.parametres.debutPlan}.
           </p>
           <p>
@@ -230,15 +230,15 @@ export function BibliothequePage() {
         <div className="carte">
           <p>La bibliothèque est vide.</p>
           <p className="discret">
-            Importez le classeur <code>Biblio_These_Lucas_MAITRE.xlsx</code> : références, fiches de lecture, notes, plan de lecture, demandes,
-            corrections du TFE et pistes sont repris ; ce qu'Excel calculait est recalculé à l'identique.
+            Importez le classeur <code>Biblio_These_Lucas_MAITRE.xlsx</code> : références, fiches de lecture, notes, plan de lecture, demandes et
+            pistes sont repris ; ce qu'Excel calculait est recalculé à l'identique.
           </p>
           <button type="button" className="principal" onClick={() => void choisirClasseur()}>
             Importer le classeur…
           </button>
         </div>
       ) : courante ? (
-        <Fiche b={b} c={courante} onEnregistrer={(r) => void d.enregistrerReference(courante.id, r)} onFermer={() => setFiche(null)} onOuvrir={(id) => setFiche(id)} />
+        <Fiche b={b} c={courante} onEnregistrer={(r) => void d.enregistrerReference(courante.id, r)} onFermer={() => setFiche(null)} onOuvrir={(id) => setFiche(id)} onEnregistrerAutre={(id, r) => void d.enregistrerReference(id, r)} />
       ) : (
         <>
           <nav className="onglets" aria-label="Bibliothèque">
@@ -257,12 +257,10 @@ export function BibliothequePage() {
             <PlanVue b={b} ouvrir={setFiche} />
           ) : onglet === "demandes" ? (
             <DemandesVue b={b} enregistrer={(id, v) => void d.enregistrerDemande(id, v)} />
-          ) : onglet === "corrections" ? (
-            <CorrectionsVue b={b} enregistrer={(id, v) => void d.enregistrerCorrection(id, v)} />
           ) : onglet === "pistes" ? (
             <PistesVue b={b} enregistrer={(id, v) => void d.enregistrerPiste(id, v)} />
           ) : (
-            <AnalyseVue b={b} enregistrer={(t) => void d.enregistrerAnalyse(t)} />
+            <LectureCroisee b={b} ouvrir={setFiche} />
           )}
         </>
       )}

@@ -11,6 +11,8 @@ import { cleProposee, depuisCrossref, urlCrossref } from "../core/doi";
 import { libelleLien, lienARevoir } from "../core/liens";
 import { ACCES_DOCUMENT, PRIORITES, STATUTS, VERIFICATIONS, type FicheLecture, type NotesLecture, type Reference } from "../core/modele";
 import { BlocPdf } from "./BlocPdf";
+import { LectureFiche } from "./lecture/LectureFiche";
+import { useReglagesLecture } from "./lecture/donnees";
 import { ChampChoix, ChampTexte, Libelle } from "./champs";
 import { PastilleEtat } from "./commun";
 import { aujourdhui, type Biblio } from "./donnees";
@@ -40,8 +42,23 @@ const NOTES: [keyof NotesLecture, string][] = [
   ["aCiter", "À citer"],
 ];
 
-export function Fiche({ b, c, onEnregistrer, onFermer, onOuvrir }: { b: Biblio; c: Calcule; onEnregistrer(r: Reference): void; onFermer(): void; onOuvrir(id: string): void }) {
+export function Fiche({
+  b,
+  c,
+  onEnregistrer,
+  onFermer,
+  onOuvrir,
+  onEnregistrerAutre,
+}: {
+  b: Biblio;
+  c: Calcule;
+  onEnregistrer(r: Reference): void;
+  onFermer(): void;
+  onOuvrir(id: string): void;
+  onEnregistrerAutre(id: string, r: Reference): void;
+}) {
   const ctx = useContexte();
+  const { reglages: lecture } = useReglagesLecture();
   const [erreur, setErreur] = useState<string | null>(null);
   const [doi, setDoi] = useState("");
   const [recherche, setRecherche] = useState(false);
@@ -195,14 +212,28 @@ export function Fiche({ b, c, onEnregistrer, onFermer, onOuvrir }: { b: Biblio; 
               <ChampTexte multiligne valeur={r.fiche[k]} onValider={(v) => maj({ fiche: { ...r.fiche, [k]: v } })} citer={citer} />
             </Libelle>
           ))}
-          {DIMENSIONS.map(([k, titre]) => (
-            <Libelle key={k} titre={titre}>
-              <ChampTexte valeur={r.fiche[k]} onValider={(v) => maj({ fiche: { ...r.fiche, [k]: v } })} />
-            </Libelle>
-          ))}
+          {lecture
+            ? null
+            : DIMENSIONS.map(([k, titre]) => (
+                <Libelle key={k} titre={titre}>
+                  <ChampTexte valeur={r.fiche[k]} onValider={(v) => maj({ fiche: { ...r.fiche, [k]: v } })} />
+                </Libelle>
+              ))}
         </div>
-        {r.categories.length ? <p className="discret">Matrice croisée : {r.categories.join(" · ")}</p> : null}
+        {r.categories.length && !lecture ? <p className="discret">Matrice croisée : {r.categories.join(" · ")}</p> : null}
       </Section>
+
+      {lecture ? (
+        <LectureFiche
+          id={c.id}
+          r={r}
+          refs={b.references}
+          reglages={lecture}
+          enregistrer={onEnregistrer}
+          enregistrerAutre={onEnregistrerAutre}
+          ouvrir={onOuvrir}
+        />
+      ) : null}
 
       <Section titre="Accès et vérification">
         <div className="grille-champs">

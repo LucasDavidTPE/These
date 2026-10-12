@@ -15,6 +15,10 @@ import {
   STYLES_DIR,
   styleFileName,
   validateGraph,
+  decodeText,
+  estComsol,
+  lireComsol,
+  type ExportComsol,
   type GraphDoc,
   type GraphStyle,
   type Box,
@@ -22,6 +26,7 @@ import {
   type Sheet,
 } from "../../core/graph";
 import { LockedError, createFigure, joinPath, saveMeta, validateMeta, type FigureMeta } from "../../core/library";
+import { enregistrerImage } from "../../core/action";
 import { svgToPng } from "../editor/raster";
 import { nowIso, useLibrary } from "../library/useLibrary";
 import { getBackend } from "../platform/backend";
@@ -70,6 +75,14 @@ interface GraphState {
   deleteStyle(name: string): Promise<void>;
   /** Remplace le graphe par un modèle (nouvelle figure). */
   fromTemplate(doc: GraphDoc, title: string): void;
+  /** Exports COMSOL ouverts (panneau COMSOL). */
+  comsol: ExportComsol[];
+  ouvrirComsol(): Promise<void>;
+  retirerComsol(i: number): void;
+  /** Remplace le graphe par des profils COMSOL (nouvelle figure). */
+  tracerComsol(doc: GraphDoc, title: string): void;
+  /** Carte d'une coupe COMSOL : nouvelle figure (image SVG + PNG) dans la bibliothèque. */
+  enregistrerCarte(svg: string, titre: string, source: string): Promise<void>;
   /** Historique des modifications du graphe (données comprises). */
   past: GraphDoc[];
   future: GraphDoc[];
@@ -202,6 +215,11 @@ export const useGraph = create<GraphState>()((set, get) => {
       run(async () => {
         const f = await (await getBackend()).openDataFile();
         if (!f) return;
+        const texte = /\.(txt|csv|dat)$/i.test(f.name) ? decodeText(f.bytes) : "";
+        if (texte && estComsol(texte)) {
+          set({ comsol: [...get().comsol, lireComsol(texte, f.name)], message: { kind: "info", text: `${f.name} : export COMSOL reconnu, à tracer depuis le panneau « Exports COMSOL ».` } });
+          return;
+        }
         const sheets = readDataFile(f.name, f.bytes);
         set({ sheets, sourceName: f.name, pick: defaultPick(sheets) });
       }),
@@ -363,6 +381,37 @@ export const useGraph = create<GraphState>()((set, get) => {
         await fs.rename(joinPath(STYLES_DIR, file), joinPath(STYLES_DIR, ".supprimes", `${Date.now()}-${file}`));
         set({ message: { kind: "info", text: `Style « ${name} » retiré (rangé dans ${STYLES_DIR}/.supprimes).` } });
         await get().loadStyles();
+      }),
+
+    comsol: [],
+    ouvrirComsol: () =>
+      run(async () => {
+        const fichiers = await (await getBackend()).openDataFiles();
+        const lus: ExportComsol[] = [];
+        const refuses: string[] = [];
+        for (const f of fichiers) {
+          const texte = decodeText(f.bytes);
+          if (!estComsol(texte)) refuses.push(f.name);
+          else lus.push(lireComsol(texte, f.name));
+        }
+        set({ comsol: [...get().comsol, ...lus] });
+        if (refuses.length) set({ message: { kind: "error", text: `Pas des exports COMSOL (en-tête « % Model: … » attendu) : ${refuses.join(", ")}.` } });
+      }),
+    retirerComsol: (i) => set({ comsol: get().comsol.filter((_, k) => k !== i) }),
+    tracerComsol: (doc, title) => {
+      void releaseLock();
+      commit(doc);
+      set({ folder: null, meta: null, title, message: { kind: "info", text: "Profils COMSOL tracés : ajustez l'apparence, puis « Enregistrer » pour les garder dans la bibliothèque." } });
+    },
+    enregistrerCarte: (svg, titre, source) =>
+      run(async () => {
+        await useLibrary.getState().init();
+        const { backend, root, host } = useLibrary.getState();
+        if (!backend || !root) throw new Error("Choisissez d'abord le dossier de la bibliothèque (page Bibliothèque).");
+        const px = (k: "width" | "height") => Number(new RegExp(`${k}="([\\d.]+)"`).exec(svg)?.[1] ?? 600);
+        const png = await svgToPng(svg, (px("width") * 25.4) / 96, (px("height") * 25.4) / 96, 300, "white");
+        const dossier = await enregistrerImage(backend.fs(root), { titre, svg, png, source, tags: ["COMSOL", "carte"] }, nowIso(), host);
+        set({ message: { kind: "info", text: `Carte enregistrée dans la bibliothèque : ${dossier}.` } });
       }),
 
     fromTemplate: (doc, title) => {

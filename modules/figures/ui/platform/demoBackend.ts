@@ -207,6 +207,15 @@ export function demoBackend(): Backend {
         };
         input.click();
       }),
+    openDataFiles: () =>
+      new Promise((resolve) => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.multiple = true;
+        input.accept = ".txt,.csv,.dat";
+        input.onchange = async () => resolve(await Promise.all([...(input.files ?? [])].map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) }))));
+        input.click();
+      }),
     readDroppedFile: async () => {
       throw new Error("Glisser-déposer par chemin : seulement dans l'appli.");
     },

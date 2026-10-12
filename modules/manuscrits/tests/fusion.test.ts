@@ -63,6 +63,25 @@ function verifier(octets: Uint8Array) {
     if (xmlPartie && !xmlPartie.startsWith("("))
       for (const m of xmlPartie.matchAll(/\b(?:r:(?:id|embed|link|pict)|o:relid)="([^"]+)"/g)) if (!ids.has(m[1]!)) problemes.push(`${partie} : relation ${m[1]} non déclarée`);
   }
+  // ce que Word exige unique dans tout le fichier (sinon : « Word a réparé : Styles, Objets dessinés… »)
+  const pieces = [...p.entries()].filter(([n]) => /^word\/(document|header[^/]*|footer[^/]*|footnotes|endnotes)\.xml$/.test(n));
+  const uniques = (motif: RegExp, nom: string, xmls: string[]) => {
+    const vus = new Set<string>();
+    for (const x of xmls)
+      for (const m of x.matchAll(motif)) {
+        const v = m[1]!.toLowerCase();
+        if (vus.has(v)) problemes.push(`${nom} ${m[1]} en double`);
+        vus.add(v);
+      }
+  };
+  uniques(/<wp:docPr\b[^>]*?\bid="(\d+)"/g, "dessin (docPr)", pieces.map(([, x]) => x));
+  uniques(/\bo:spid="([^"]+)"/g, "forme VML", pieces.map(([, x]) => x));
+  uniques(/\bw14:paraId="([^"]+)"/g, "w14:paraId", pieces.map(([, x]) => x));
+  const styles = [...(p.get("word/styles.xml") ?? "").matchAll(/<w:style\b[\s\S]*?<\/w:style>/g)].map((m) => m[0]);
+  uniques(/\bw:styleId="([^"]*)"/g, "style", styles);
+  uniques(/<w:name\b[^>]*\bw:val="([^"]*)"/g, "nom de style", styles);
+  const defauts = styles.filter((x) => /\sw:default="1"/.test(x)).map((x) => /\bw:type="([^"]*)"/.exec(x)?.[1]);
+  if (new Set(defauts).size !== defauts.length) problemes.push(`plusieurs styles par défaut pour un même type : ${defauts.join(", ")}`);
   const doc = p.get("word/document.xml")!;
   const dupl = (motif: RegExp, nom: string) => {
     const vus = new Set<string>();
@@ -429,5 +448,53 @@ describe("fusion de documents riches", () => {
     // la partie seule : son saut (avec en-tête) devient la section finale du document, plus de saut en cours de corps
     expect(d.slice(d.indexOf("<w:body>"), d.lastIndexOf("<w:sectPr"))).not.toContain("<w:sectPr");
     expect(d.slice(d.lastIndexOf("<w:sectPr"))).toContain("<w:headerReference");
+  });
+});
+
+describe("fichier valide pour Word, même avec des parties imparfaites", () => {
+  const VML = 'xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"';
+  // parties copiées d'un même modèle : mêmes paraId, même forme VML (zone de texte), même image d'en-tête (docPr 7)
+  const zone = '<w:p w14:paraId="1A2B3C4D" w14:textId="77777777"><w:r><w:pict><v:shape id="Zone1" o:spid="_x0000_s1026" type="#_x0000_t202"><v:textbox><w:txbxContent><w:p w14:paraId="0F0F0F0F"><w:r><w:t>Encadré</w:t></w:r></w:p></w:txbxContent></v:textbox></v:shape></w:pict></w:r></w:p>';
+  // styles en double (fichier produit par script) et style « Heading1 » de même nom que « Titre1 » du maître
+  const doublons =
+    '<w:style w:type="paragraph" w:styleId="Normal" w:default="1"><w:name w:val="Normal"/></w:style>' +
+    '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="Heading 2"/><w:rPr><w:sz w:val="20"/></w:rPr></w:style>' +
+    '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="Heading 2"/><w:pPr><w:outlineLvl w:val="1"/></w:pPr></w:style>';
+  const enPartie =
+    '<w:style w:type="paragraph" w:styleId="Standard" w:default="1"><w:name w:val="Standard"/></w:style>' +
+    '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="Heading 1"/><w:basedOn w:val="Standard"/></w:style>' +
+    '<w:style w:type="paragraph" w:styleId="Legende"><w:name w:val="Légende figure"/><w:basedOn w:val="Heading1"/></w:style>';
+  const M = partie("m", { titre: "Maître", image: "A", styles: doublons, corps: zone, extraNs: VML }, "liminaire");
+  const X = partie("x", { titre: "Chap X", image: "B", styles: enPartie, extraNs: VML, corps: zone + '<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Section</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val="Legende"/></w:pPr><w:r><w:t>Figure 1</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val="Standard"/></w:pPr><w:r><w:t>texte</w:t></w:r></w:p>' });
+  const Y = partie("y", { titre: "Chap Y", image: "B", styles: enPartie, extraNs: VML, corps: zone });
+  const r = fusionner([M, X, Y], OPT);
+  const p = paquet(r.octets);
+
+  it("aucun doublon de style, de dessin, de forme ni d'identifiant de paragraphe", () => {
+    expect(verifier(r.octets)).toEqual([]);
+  });
+
+  it("le style en double garde sa dernière définition ; « Heading1 » de la partie devient « Titre1 » du maître", () => {
+    const st = p.get("word/styles.xml")!;
+    expect(st.match(/w:styleId="Heading2"/g)).toHaveLength(1);
+    expect(st).toContain('<w:outlineLvl w:val="1"/>');
+    expect(st).not.toContain('w:styleId="Heading1"');
+    const doc = p.get("word/document.xml")!;
+    expect(doc).not.toContain('w:val="Heading1"');
+    expect(doc).toMatch(/<w:pStyle w:val="Titre1"\/><\/w:pPr><w:r><w:t>Section/);
+    // le style ajouté (Légende) suit le renommage et ne se déclare pas « par défaut »
+    expect(st).toMatch(/w:styleId="Legende"><w:name w:val="Légende figure"\/><w:basedOn w:val="Titre1"\/>/);
+    expect(st.match(/w:default="1"/g)).toHaveLength(1);
+    expect(r.rapport.avertissements.some((a) => a.message.includes("« Heading1 » est remplacé par « Titre1 »"))).toBe(true);
+  });
+
+  it("dessins numérotés dans tout le fichier, en-têtes compris", () => {
+    const ids = [...p.entries()].filter(([n]) => /^word\/(document|header[^/]*)\.xml$/.test(n)).flatMap(([, x]) => [...x.matchAll(/<wp:docPr\b[^>]*?\bid="(\d+)"/g)].map((m) => Number(m[1])));
+    expect(ids.length).toBeGreaterThanOrEqual(6);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("la trame fournie (styles Heading1-3 définis deux fois par le script) donne un fichier sans doublon", () => {
+    expect(verifier(fusionner(parties(), OPT).octets)).toEqual([]);
   });
 });

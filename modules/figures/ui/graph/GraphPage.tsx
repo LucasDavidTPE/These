@@ -5,6 +5,7 @@ import { useLibrary } from "../library/useLibrary";
 import { Apercu } from "./Apercu";
 import { Apparence, SerieLook } from "./Apparence";
 import { DonneesSerie } from "./DonneesSerie";
+import { Comsol } from "./Comsol";
 import { Modeles } from "./Modeles";
 import { RegressionSerie } from "./Regression";
 import { useGraph } from "./useGraph";
@@ -88,6 +89,7 @@ export function GraphPage() {
       <div className="editor-body">
         <aside className="panel graph-data">
           <Modeles />
+          <Comsol />
           <h3>Données</h3>
           <label className="field">
             <span>Coller depuis Excel (colonnes séparées par des tabulations)</span>

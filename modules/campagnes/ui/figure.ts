@@ -10,6 +10,7 @@ import { svgTexteEnPng } from "@interface/image";
 import type { Contexte } from "@interface/contexte";
 import { panneaux } from "../core/courbes";
 import { SUFFIXE_SUIVI } from "../core/decouverte";
+import { lignesTsrst, panneauComparaison, type LigneTsrst } from "../core/tsrst";
 import { chargerCampagnes } from "./donnees";
 
 /** Ce qu'une figure retient pour être refaite (`meta.json`, champ `origine`). */
@@ -42,4 +43,25 @@ export async function regenererCourbes(ctx: Contexte, o: OrigineCourbes): Promis
   if (!fichier) throw new Error(`Pas d'export ${SUFFIXE_SUIVI} de ${o.essai}, ni dans l'espace ni sur ce poste (${c.campagne.donnees}).`);
   const serie = lireCsv(new TextDecoder().decode(await fs.readBytes(`${o.essai}/${fichier.name}`)));
   return renduCourbes(panneaux(serie), titreFigure(c.campagne.titre, o.essai), o.vue);
+}
+
+/** Figure « comparaison σ(T) » de plusieurs essais TSRST, refaite depuis les dépouillements rangés dans l'espace. */
+export interface OrigineComparaison {
+  module: "campagnes";
+  comparaison: { campagne: string; essai: string }[];
+  titre: string;
+}
+
+export async function renduComparaison(lignes: readonly LigneTsrst[], titre: string): Promise<{ svg: string; png: Uint8Array }> {
+  const svg = courbesSvg([panneauComparaison(lignes)], { titre, xLibelle: "température (°C)", hauteur: 420 });
+  return { svg, png: await svgTexteEnPng(svg) };
+}
+
+export async function regenererComparaison(ctx: Contexte, o: OrigineComparaison): Promise<{ svg: string; png: Uint8Array }> {
+  if (!ctx.espace) throw new Error("Aucun espace Thèse ouvert.");
+  const { campagnes } = await chargerCampagnes(ctx.espace.fichiers);
+  const toutes = lignesTsrst(campagnes.map((c) => ({ slug: c.slug, titre: c.campagne.titre, type: c.campagne.type, materiau: c.campagne.materiau, essais: c.essais, tsrst: c.tsrst })));
+  const choisies = o.comparaison.map((x) => toutes.find((l) => l.slug === x.campagne && l.essai === x.essai)).filter((l): l is LigneTsrst => !!l?.resultats);
+  if (!choisies.length) throw new Error("Aucun des essais de cette comparaison n'a encore de dépouillement TSRST dans l'espace.");
+  return renduComparaison(choisies, o.titre);
 }

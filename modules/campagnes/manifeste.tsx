@@ -4,7 +4,7 @@ import type { Manifeste } from "@interface/manifeste";
 import { essaisRecents, periode, typeDe } from "./core/modele";
 import { CampagnesPage } from "./ui/CampagnesPage";
 import { chargerCampagnes, preparerEssaiTraitement } from "./ui/donnees";
-import { regenererCourbes, type OrigineCourbes } from "./ui/figure";
+import { regenererComparaison, regenererCourbes, type OrigineComparaison, type OrigineCourbes } from "./ui/figure";
 import { demanderOuverture } from "@interface/ouverture";
 
 const charger = (ctx: Contexte) => (ctx.espace ? chargerCampagnes(ctx.espace.fichiers) : Promise.resolve(null));
@@ -52,10 +52,13 @@ const campagnes: Manifeste = {
       demanderOuverture("campagnes", slug);
       ctx.naviguer("campagnes");
     },
-    /** Refait une figure « courbes d'un essai » depuis les données brutes ; charge : { ctx, origine }. */
+    /**
+     * Refait une figure : « courbes d'un essai » depuis les données brutes, ou « comparaison σ(T) » d'essais
+     * TSRST depuis leurs dépouillements ; charge : { ctx, origine }.
+     */
     "campagnes.regenerer-figure": async (charge) => {
-      const { ctx, origine } = charge as { ctx: Contexte; origine: OrigineCourbes };
-      return regenererCourbes(ctx, origine);
+      const { ctx, origine } = charge as { ctx: Contexte; origine: OrigineCourbes | OrigineComparaison };
+      return "comparaison" in origine ? regenererComparaison(ctx, origine) : regenererCourbes(ctx, origine);
     },
     /** Pour le Planning (SPEC §10.2) : la période réelle (ou prévue) de chaque campagne. */
     "campagnes.planning": async (ctx) => {

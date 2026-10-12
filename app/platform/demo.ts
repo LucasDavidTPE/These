@@ -92,6 +92,33 @@ function essaiDemo(): Record<string, string> {
   return { "Demo CM/Essai1/Essai1.steps.tracking.csv": l.join("\n"), "Demo CM/Essai1/Essai1.log": log };
 }
 
+/** Quatre essais TSRST synthétiques (palier à +5 °C puis 10 °C/h, rupture vers −25 à −30 °C). */
+function tsrstDemo(): Record<string, string> {
+  const essais: [string, number, number, number][] = [
+    ["Essai1", -28, -8, 1],
+    ["Essai2", -27, -7, 1.05],
+    ["Essai3", -24, -5, 0.9],
+    ["Essai4", -25.5, -6, 0.95],
+  ];
+  const out: Record<string, string> = {};
+  essais.forEach(([nom, rupture, transition, k], n) => {
+    const l = ["Temps total (s);Température(8800:Enceinte) (°C);Température(8800:Eprouvette) (°C);Force(8800 (0,1):Charge) (kN)"];
+    let rompu = false;
+    for (let t = 0; t <= 4.5 * 3600; t += 15) {
+      const h = t / 3600;
+      const air = h < 0.5 ? 5 : 5 - 10 * (h - 0.5);
+      const ep = air + 0.3 + 0.03 * Math.sin(t / 41);
+      if (ep <= rupture) rompu = true;
+      const sigma = rompu ? 0.02 : k * (ep > transition ? 0.03 * (5 - ep) : 0.03 * (5 - transition) + 0.2 * (transition - ep)) + 0.006 * Math.sin(t / 59);
+      l.push([t, air.toFixed(3), ep.toFixed(3), (-sigma * 2.5).toFixed(4)].join(";").replace(/\./g, ","));
+    }
+    const jour = `0${22 + n}/06/2026`.slice(-10);
+    out[`Demo TSRST/${nom}/${nom}.steps.tracking.csv`] = l.join("\n");
+    out[`Demo TSRST/${nom}/${nom}.log`] = [`${jour};09:00:00;Demo;${nom};60101;Création;`, `${jour};13:30:00;Demo;${nom};60120;Durée;16200`, `${jour};13:30:00;Demo;${nom};60202;État;Essai terminé`].join("\n");
+  });
+  return out;
+}
+
 function normaliser(chemin: string): string {
   return chemin.replace(/[\\/]+$/, "").toLowerCase();
 }
@@ -158,18 +185,60 @@ export function plateformeDemo(scenario: string | null): Plateforme {
     dossier(`${ONEDRIVE}\\Thèse\\Rédaction`).poser("Manuscrit thèse.docx", "PK démonstration");
     const recherche = dossier(RECHERCHE);
     for (const [chemin, contenu] of Object.entries(essaiDemo())) recherche.poser(chemin, contenu);
+    for (const [chemin, contenu] of Object.entries(tsrstDemo())) recherche.poser(chemin, contenu);
   }
 
   // `?scenario=complet&contenu=1` : un espace déjà garni (pour essayer la recherche globale).
   if (scenario === "complet" && new URLSearchParams(globalThis.location?.search).get("contenu")) {
     const espace = dossier(ESPACE);
-    const ref = (n: number, titre: string, auteurs: string, annee: number) => espace.poser(`bibliotheque/references/BIB-${String(n).padStart(3, "0")}.json`, JSON.stringify({ titre, auteurs, annee, cle: `ref${n}` }));
+    // dimensions de lecture et catégories de la Matrice croisée : de quoi démarrer la lecture croisée
+    const lectures: Record<number, object> = {
+      1: { fiche: { loi: "viscoélastique, 2S2P1D", methodeCategorie: "MEF 3D", chargement: "mobile", pneu: "poids lourd" }, categories: ["Échelle / Structure"] },
+      2: { fiche: { loi: "viscoélastique", methodeCategorie: "semi-analytique", chargement: "mobile", contact: "mesuré" }, categories: ["Échelle / Structure"] },
+      20: { fiche: { loi: "2S2P1D", methodeCategorie: "essai en laboratoire", cible: "module complexe" }, categories: ["Échelle / Matériau"] },
+      65: { fiche: { loi: "élastique", methodeCategorie: "Burmister", chargement: "statique", contact: "uniforme" }, categories: ["Échelle / Structure"] },
+    };
+    const ref = (n: number, titre: string, auteurs: string, annee: number) =>
+      espace.poser(`bibliotheque/references/BIB-${String(n).padStart(3, "0")}.json`, JSON.stringify({ titre, auteurs, annee, cle: `ref${n}`, ...(lectures[n] ?? {}) }));
     ref(1, "Viscoelastic response of asphalt pavements under moving loads", "Lee, S.; Kim, J.", 2019);
     ref(2, "Spectral method for layered media", "David, L.", 2024);
     ref(20, "General 2S2P1D model and relation between the linear viscoelastic behaviours of bituminous binders and mixes", "Olard, F.; Di Benedetto, H.", 2003);
-    espace.poser("bibliotheque/references/BIB-020.json", JSON.stringify({ titre: "General 2S2P1D model and relation between the linear viscoelastic behaviours of bituminous binders and mixes", auteurs: "Olard, F.; Di Benedetto, H.", annee: 2003, cle: "ref20", fichierPdf: "BIB-020_Olard-DiBenedetto_2003_General-2S2P1D-model.pdf" }));
+    espace.poser("bibliotheque/references/BIB-020.json", JSON.stringify({ titre: "General 2S2P1D model and relation between the linear viscoelastic behaviours of bituminous binders and mixes", auteurs: "Olard, F.; Di Benedetto, H.", annee: 2003, cle: "ref20", fichierPdf: "BIB-020_Olard-DiBenedetto_2003_General-2S2P1D-model.pdf", ...lectures[20] }));
     dossier(`${ESPACE}\\bibliotheque\\pdf`).poser("BIB-020_Olard-DiBenedetto_2003_General-2S2P1D-model.pdf", pdfDemo("General 2S2P1D model", "F. Olard, H. Di Benedetto (2003)"));
     ref(65, "The general theory of stresses and displacements in layered systems", "Burmister, D. M.", 1945);
+    // `&beaucoup=1` : une centaine de références aux fiches remplies « comme le classeur » (pour éprouver la lecture croisée)
+    if (new URLSearchParams(globalThis.location?.search).get("beaucoup")) {
+      const pick = <T,>(l: readonly T[], k: number) => l[k % l.length]!;
+      const lois = ["Viscoélastique (2S2P1D)", "viscoélastique", "Élastique linéaire", "Elastique", "Huet-Sayegh", "Viscoélastique (Huet-Sayegh)", "Élasto-plastique", "Burgers"];
+      const methodes = ["MEF 3D", "Éléments finis", "element fini", "Burmister", "Semi-analytique (Fourier)", "Méthode spectrale", "Essai en laboratoire", "Mesures in situ"];
+      const pneus = ["Avion (A380)", "Poids lourd", "Avion", "Pneu H40", "Jumelage"];
+      const contacts = ["Uniforme", "Mesuré (capteurs)", "Pression non uniforme", "Rugosité / texture"];
+      const charges = ["Mobile", "Statique", "Dynamique", "Cyclique"];
+      const auteurs = ["Chupin, O.", "Chabot, A.", "Piau, J.-M.", "Olard, F.", "Di Benedetto, H.", "Sauzéat, C.", "Duhamel, D.", "Hammoum, F.", "Nguyen, Q. T.", "Al-Qadi, I."];
+      for (let n = 100; n < 200; n++) {
+        const k = n * 7 + 3;
+        espace.poser(
+          `bibliotheque/references/BIB-${String(n).padStart(3, "0")}.json`,
+          JSON.stringify({
+            titre: `${pick(["Modelling", "Analysis", "Response", "Characterisation", "Behaviour"], k)} of ${pick(["airfield", "asphalt", "flexible", "layered"], k >> 1)} pavements under ${pick(["moving", "aircraft", "heavy", "cyclic"], k >> 2)} loads (${n})`,
+            auteurs: `${pick(auteurs, k)}; ${pick(auteurs, k + 3)}`,
+            annee: 1990 + (k % 35),
+            cle: `ref${n}`,
+            statut: pick(["Lu", "Lu", "À lire", "En cours", "Écarté"], k),
+            fiche: {
+              loi: `${pick(lois, k)}${k % 3 ? "" : `, ${pick(lois, k + 1)}`}`,
+              methodeCategorie: pick(methodes, k >> 1),
+              pneu: k % 4 ? pick(pneus, k) : "",
+              contact: k % 3 ? pick(contacts, k >> 3) : "",
+              chargement: pick(charges, k >> 2),
+            },
+            categories: [`Échelle / ${pick(["Structure", "Matériau", "Interface"], k)}`],
+            // comme une grille déjà remplie par la 1.19 : étiquettes avec parenthèses, à nettoyer
+            ...(n % 5 === 0 ? { lecture: { loi: { etiquettes: [pick(["Viscoélastique (2S2P1D)", "Viscoélastique (Huet-Sayegh, linéaire)", "Élastique (convexe)"], k)] }, methode: { etiquettes: [pick(["Éléments finis (3D)", "element fini", "Eléments finis"], k)] } } } : {}),
+          }),
+        );
+      }
+    }
     espace.poser(
       "manuscrits/these/manuscrit.json",
       JSON.stringify({
@@ -231,6 +300,21 @@ export function plateformeDemo(scenario: string | null): Plateforme {
       }),
     );
     espace.poser("planning/PH-0001.json", JSON.stringify({ titre: "Rédiger le chapitre ChaussSpec", categorie: "", debut: "2026-10-05", fin: "2026-10-30" }));
+    {
+      // Quelques créneaux dans la semaine en cours (vue Semaine du Planning).
+      const t = new Date();
+      const j = (n: number) => {
+        const d = new Date(t.getFullYear(), t.getMonth(), t.getDate() - ((t.getDay() + 6) % 7) + n);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      };
+      const h = (id: string, o: object) => espace.poser(`planning/${id}.json`, JSON.stringify(o));
+      h("PH-0002", { titre: "Réunion d'équipe", categorie: "reunion", debut: j(0), fin: j(0), heureDebut: "10:00", heureFin: "11:30" });
+      h("PH-0003", { titre: "Préparer les éprouvettes", categorie: "essais", debut: j(1), fin: j(1), heureDebut: "14:00", heureFin: "17:00" });
+      h("PH-0004", { titre: "Point avec Hervé", categorie: "reunion", debut: j(1), fin: j(1), heureDebut: "15:00", heureFin: "16:00" });
+      h("PH-0005", { titre: "Lire Olard & Di Benedetto (2003)", categorie: "biblio", debut: j(2), fin: j(2), heureDebut: "09:30", heureFin: "11:00", lien: { module: "bibliotheque", id: "BIB-020" }, notes: "General “2S2P1D” model and relation between the linear viscoelastic behaviours of bituminous binders and mixes" });
+      h("PH-0006", { titre: "Formation doctorale", categorie: "formation", debut: j(3), fin: j(4) });
+      h("PH-0007", { titre: "Comité de suivi", categorie: "reunion", debut: j(11), fin: "" });
+    }
     espace.poser(
       "chausspec/structure-a340.json",
       JSON.stringify({
@@ -247,6 +331,14 @@ export function plateformeDemo(scenario: string | null): Plateforme {
     espace.poser(`journal/${j}.md`, "# Hier\n\n## À faire\n- [x] Caler 2S2P1D sur Essai1\n- [ ] Relire le chapitre 2\n- [ ] Répondre au mail de Sergio\n\n## Notes\nRéunion : **valider la structure PEP** avant vendredi.\n");
     espace.poser("campagnes/demo-cm/campagne.json", JSON.stringify({ titre: "Module complexe démo", type: "module-complexe", statut: "en cours", donnees: "recherche:Demo CM" }));
     espace.poser("campagnes/demo-cm/essais/Essai1/essai.json", "{}");
+    espace.poser("campagnes/tsrst-demo/campagne.json", JSON.stringify({ titre: "TSRST démo", type: "tsrst", statut: "en cours", materiau: "BB 35/50", donnees: "recherche:Demo TSRST" }));
+    const fiche = (o: object) => ({ forme: "prisme", largeur: 50, epaisseur: 50, longueur: 250, consigne: 10, ...o });
+    [
+      ["Essai1", { eprouvette: "P1", debut: "2026-06-22 09:00:00", fiche: fiche({ vides: 4.8 }) }],
+      ["Essai2", { eprouvette: "P2", debut: "2026-06-23 09:00:00", fiche: fiche({ vides: 5.1 }), validite: "valide" }],
+      ["Essai3", { eprouvette: "P3", debut: "2026-06-24 09:00:00", fiche: fiche({ materiau: "BB 35/50 + 20 % AE", vides: 5.6, vieillissement: "RTFOT" }) }],
+      ["Essai4", { eprouvette: "P4", debut: "2026-06-25 09:00:00", fiche: { materiau: "BB 35/50 + 20 % AE", vieillissement: "RTFOT" } }],
+    ].forEach(([nom, e]) => espace.poser(`campagnes/tsrst-demo/essais/${nom as string}/essai.json`, JSON.stringify(e)));
     espace.poser("campagnes/autre/campagne.json", JSON.stringify({ titre: "Autre campagne", type: "module-complexe", statut: "en cours", donnees: "" }));
     const figures = dossier(`${ESPACE}\\figures`);
     figures.poser("FIG-0001_courbe/meta.json", JSON.stringify({ id: "FIG-0001", title: "Courbe maîtresse", kind: "graph", created: "2026-09-20T10:00:00Z", modified: "2026-09-20T10:00:00Z", tags: ["2s2p1d"], used_in: [] }));

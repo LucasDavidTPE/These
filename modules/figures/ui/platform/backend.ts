@@ -50,6 +50,8 @@ export interface Backend {
   openImageFile(): Promise<Uint8Array | null>;
   /** Boîte « Ouvrir des données » (.xlsx, .csv, .txt) ; nom et contenu du fichier. */
   openDataFile(): Promise<{ name: string; bytes: Uint8Array } | null>;
+  /** Idem, plusieurs fichiers d'un coup (exports COMSOL) ; liste vide si annulé. */
+  openDataFiles(): Promise<{ name: string; bytes: Uint8Array }[]>;
   /** Contenu d'un fichier déposé par glisser-déposer (chemin fourni par Tauri). */
   readDroppedFile(path: string): Promise<Uint8Array>;
   /** Abonnement aux fichiers déposés sur la fenêtre (Tauri) ; renvoie le désabonnement. */

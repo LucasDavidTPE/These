@@ -9,3 +9,4 @@ export * from "./templates";
 export * from "./table";
 export * from "./ticks";
 export * from "./xlsx";
+export * from "./comsol";

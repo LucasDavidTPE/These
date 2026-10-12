@@ -280,6 +280,20 @@ Ajouts permis par l'intégration :
 - **modèles de graphes** (courbe maîtresse, Cole-Cole, orniérage, fatigue, TSRST, suivi
   temporel, barres) avec des valeurs d'exemple inventées ; **zoom** de l'aperçu (ajusté,
   Ctrl + molette, taille réelle) et zoom sur une zone des données (fixe les bornes des axes) ;
+- **exports COMSOL** (1.24.0), panneau de la page Graphes : un ou plusieurs exports « Données » de COMSOL
+  (`.txt`, `.csv` : en-tête `% Model: …`, ligne `% X Y Z expr (unité) @ solution: paramètres`, valeurs séparées
+  par des espaces ; « Ouvrir des données… » les reconnaît aussi). Lus : métadonnées, coordonnées, chaque
+  expression avec son unité, sa solution et les **paramètres de l'étude** (`lc=3, VE=0, Temps=10 s`). Géométrie
+  détectée : **profil** (une coordonnée varie ; vertical si c'est Z), **coupe** (deux ; grille régulière ou non).
+  **Profils superposés** en un graphe modifiable : une série par fichier (plusieurs fichiers) ou par expression
+  (plusieurs expressions), légendes = mots qui diffèrent dans les noms de fichiers, sinon paramètres qui
+  diffèrent, modifiables ; profil vertical : valeur en abscisse, cote z (ou profondeur positive) en ordonnée de la
+  surface au point le plus bas ; longueurs en mm, cm ou m ; libellés pgfplots (`1e6*solid.eZZ` →
+  « $\varepsilon_{zz}$ (µdef) », ×1e-6 Pa → MPa, principales ε1 ε3, σ, u) ; légende placée dans le coin le moins
+  chargé. **Coupe** : profil extrait le long de la ligne de grille choisie (ajouté à la liste, tracé avec les
+  autres) ; **carte** en couleurs (échelle divergente rouge-bleu centrée sur 0 si les valeurs changent de signe,
+  sinon viridis ; 24 niveaux ; barre de couleurs ; exagération verticale réglable), en SVG ou enregistrée dans la
+  bibliothèque (image SVG + PNG 300 dpi).
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,
@@ -393,6 +407,33 @@ fichiers (lecture en Rust). Actions : **exporter en Excel** (`.xlsx`), **copier 
 exporter les données brutes** d'un essai vers un dossier choisi, **enregistrer le
 graphe dans Figures**, **ouvrir dans le traitement 2S2P1D**.
 
+### 8.4 Essais TSRST (1.23.0)
+Pour les campagnes de type TSRST (éprouvette maintenue à longueur constante, refroidie à vitesse constante).
+
+- **Fiche de l'éprouvette** (dans `essai.json`, champ `fiche`) : repère, matériau / formulation (vide = celui de la
+  campagne), vieillissement, teneur en vides, forme (prisme / cylindre) et dimensions (mm), section (saisie, sinon
+  calculée), vitesse de refroidissement de consigne, date de fabrication ; **validité** (à juger, valide, écarté)
+  et motif. Un essai écarté n'entre jamais dans les moyennes.
+- **Dépouillement** (« Dépouiller », « Tout dépouiller ») depuis l'export WaveMatrix (la copie dans l'espace, §4.1) :
+  voie de température de l'éprouvette (reconnue par son nom ; sinon la première ; imposable par essai), contrainte =
+  force / section (ou la voie de contrainte si l'export en a une), traction positive quel que soit le signe de la
+  machine. **Rupture** : pic de contrainte (température, contrainte, instant) ; « rupture nette » si la contrainte
+  retombe sous 30 % du pic ensuite, sinon avertissement. σ(T) est prise du début du refroidissement (dernier instant à
+  moins de 0,5 °C de la température maximale avant le pic) jusqu'au pic, moyennée par tranches de température
+  (300 points au plus). **Transition** : ajustement bilinéaire continu de σ(T) (moindres carrés, cassure parmi les
+  températures mesurées hors 10 % aux extrémités) ; retenue si elle réduit d'au moins moitié l'erreur d'une droite et
+  si la pente en dessous dépasse 1,5 fois celle du dessus ; **pente** = MPa par °C de refroidissement sous la
+  transition. **σ à des températures fixées** (−10, −20, −30 °C par défaut, réglage partagé
+  `campagnes/tsrst-reglages.json`), par interpolation sur σ(T), vide hors de la plage refroidie avant la rupture.
+- Le résultat, **courbe σ(T) comprise**, est rangé dans `campagnes/<campagne>/essais/<essai>/tsrst.json` : la
+  comparaison et l'archive se passent des données brutes (autre PC, disque débranché). Redépouiller remplace.
+- Page de campagne : tableau éprouvettes × résultats, fiche dépliable, validité, superposition des σ(T).
+- Vue **Essais TSRST** (Campagnes → « Essais TSRST ») : tous les essais de toutes les campagnes ; tri par n'importe
+  quelle colonne (valeurs manquantes à la fin), filtres (texte, matériau, vieillissement, sans les écartés,
+  dépouillés seulement) ; **moyenne ± écart-type** par matériau, vieillissement ou campagne ; superposition des σ(T)
+  des essais cochés (sinon de tous ceux affichés, 12 au plus) ; **export Excel d'archive** (feuilles Essais,
+  Synthèse, Courbes σ(T)) ; **figure** dans Figures, régénérable depuis les dépouillements rangés.
+
 ### Manuscrits → Plan (1.13.0)
 Un **document** (1.16.0) est la thèse, un article, un rapport ou compte rendu, ou tout autre texte long :
 chacun a son dossier `manuscrits/<document>/` et son `manuscrit.json` (champ `type` : `these` par défaut,
@@ -447,8 +488,13 @@ affiche les remarques à traiter par partie. Un retour retiré est rangé dans `
 - **identifiants** : relations (en-têtes, pieds, images, liens), signets, révisions, dessins, commentaires, notes
   de bas de page et de fin, listes (chaque partie repart de 1 ; les titres numérotés par un style partagent la liste
   du maître) sont renumérotés ; les espaces de noms et les préférences Zotero manquants sont repris ;
-- **styles** : ceux du maître l'emportent ; un style absent du maître est repris de la partie, un style défini
-  autrement est signalé ; un fichier d'une partie introuvable sur ce PC est remplacé par sa dernière version enregistrée ;
+- **styles** : ceux du maître l'emportent ; un style absent du maître est repris de la partie (sans se déclarer
+  « par défaut »), sauf si le maître a un style **de même nom** sous un autre identifiant (« Heading1 » / « Titre1 ») :
+  la partie prend alors celui du maître ; un style défini autrement est signalé ;
+- **fichier valide pour Word** (1.18.1) : une dernière passe garantit un seul style par identifiant (la dernière
+  définition, cas des fichiers produits par script) et un seul style par défaut par type, des identifiants de dessins
+  (`wp:docPr`) uniques dans tout le fichier, en-têtes et pieds compris, des formes VML (`o:spid`) et des `w14:paraId`
+  uniques : sinon Word « répare » les Styles et les Objets dessinés à l'ouverture ; un fichier d'une partie introuvable sur ce PC est remplacé par sa dernière version enregistrée ;
 - **champs** : le document demande la mise à jour des champs à l'ouverture ; la bibliographie Zotero (*Refresh*) reste à
   faire dans Word. Limite : l'état « résolu » des commentaires n'est pas repris. Sortie déterministe.
 Un rapport indique les parties, les sections et les points à voir.
@@ -548,10 +594,11 @@ ENTPE.
 - **Demandes** (PEB, documentation ENTPE, STAC) : date limite d'envoi calculée (premier
   jour du mois d'usage − délai max), relance (envoi + délai), alertes ENVOYER MAINTENANT
   / RELANCER.
-- **Corrections TFE**, **Pistes non couvertes** : listes simples avec statut.
-- **Analyse croisée** : matrice (● modifiables), totaux et croisements **calculés** ;
-  synthèses rédigées (thèmes, convergences, divergences, lacunes, positionnement) en
-  Markdown éditable.
+- **Pistes non couvertes** : liste simple avec statut.
+- ~~Corrections TFE~~ et ~~Analyse croisée / Analyse (classeur)~~ : onglets **retirés en 1.21.0** à la demande
+  de l'utilisateur (redondants avec la Lecture croisée). L'import du classeur les lit toujours et les fichiers
+  de l'espace (`bibliotheque/corrections/`, `bibliotheque/analyse/`) ne sont ni modifiés ni effacés ; le calcul
+  du tableau de bord (test de conformité) est inchangé, seule sa tuile « corrections restantes » n'est plus affichée.
 
 ### 9.3 Actions (les macros)
 | Macro Excel | Dans l'application |
@@ -613,7 +660,66 @@ l'application :
 Règle retenue : **PDF récupéré ⇔ fichier PDF renseigné**. Conséquence visible : 20 PDF
 libres à télécharger au lieu de 29 dans le classeur.
 
-## 10. Module Planning (Gantt partagé)
+### 9.5 Lecture croisée (1.19.0)
+Onglet **Lecture croisée** de la Bibliothèque : lire la littérature en la croisant.
+- **Grille** : une ligne par article, une colonne par **critère** (au départ : pneu, contact, loi de comportement,
+  méthode, chargement, cible, validation, plus un critère par groupe de la Matrice croisée du classeur). Une case
+  contient des **étiquettes** (« MEF 3D », « 2S2P1D »…) prises dans le vocabulaire du critère, qui se construit à la
+  saisie (suggestions, les plus utilisées d'abord ; comparaison sans casse ni accents), et une note. Les critères,
+  les types de liens, les définitions d'étiquettes et les croisements enregistrés sont des réglages partagés
+  (`bibliotheque/lecture-croisee.json`) ; les cases et les liens d'un article sont dans sa fiche (`lecture`, `liens`).
+  Au démarrage (bouton, une fois), les champs Pneu… Validation des fiches (découpés aux « ; » « , » « / ») et les
+  catégories de la Matrice croisée deviennent les premières étiquettes ; les champs d'origine restent dans les fiches.
+- **Liens typés** entre articles (étend, s'appuie sur, se compare à, contredit, même méthode que, utilise les données
+  de ; modifiables), avec une note, saisis dans la fiche ; chaque lien se lit dans les deux sens (« est étendu par »).
+- **Atelier** (1.20.0) : tout sur un écran, sans faire défiler la page (l'atelier prend la place restante de la
+  fenêtre ; « Plein écran » ou F pour la fenêtre entière). Trois colonnes : **articles** (recherche, filtres actifs,
+  pastilles de couverture critère par critère, glisser pour lier), **vue centrale**, **inspecteur** (l'article choisi :
+  ses cases et liens, précédent / suivant, « suivant à compléter » ; une étiquette : définition, renommer / fusionner,
+  articles, étiquettes compagnes ; sinon un bilan et la « passe rapide »). Clavier : J/K ou ↓/↑, N, Échap, F.
+- **Explorer** (vue par défaut) : facettes croisées. Chaque critère est une rangée d'étiquettes, de taille selon leur
+  fréquence ; un clic filtre (plusieurs = ET), chaque rangée montre alors combien d'articles de la sélection portent
+  chacune de ses étiquettes, et les **étiquettes à zéro sont hachurées : les trous de la littérature** ; jauge de
+  renseignement par critère ; clic droit = constellation.
+- **Constellation** (remplace la carte globale, illisible au-delà de quelques dizaines d'articles) : disposition
+  radiale fixe. Article au centre : ses étiquettes (anneau intérieur, couleur du critère, 8 couleurs en ordre fixe
+  validées pour le daltonisme), puis les 10 articles qui en partagent le plus (indice de Jaccard), placés près des
+  étiquettes partagées et reliés à elles, et les articles liés (lien typé nommé). Étiquette au centre : ses articles
+  (24 au plus), puis les étiquettes qui les accompagnent le plus. Clic = recentrer, double-clic = fiche.
+- **Nettoyer le vocabulaire** : propose de séparer « Viscoélastique (2S2P1D) » en étiquette « Viscoélastique » + note
+  « 2S2P1D », de fusionner les écritures voisines (casse, accents, tirets, pluriel : « Éléments finis » / « element
+  fini »), et signale les étiquettes trop longues ; rien n'est appliqué sans clic. Au démarrage, les anciens champs sont
+  découpés hors parenthèses et les précisions entre parenthèses vont directement en note.
+- **Cases « à valider » / « validées »** (1.22.0) : chaque case porte `valide` (booléen, absent = faux). Ce qui a été
+  repris automatiquement (démarrage depuis les fiches et la Matrice croisée) est **à valider** : puces en pointillés et
+  italique, carrés de couverture atténués, nombre de cases à valider à côté de l'article. Une case **modifiée à la main**
+  (dans l'appli ou dans Excel) est validée ; **✓** la valide telle quelle ; **Tout valider** valide l'article. On valide un
+  article à tout moment, lu ou non ; un article « Lu » qui a encore des cases à valider le signale en tête de sa section
+  Lecture croisée (fiche et inspecteur). Le nettoyage et le renommage d'étiquettes gardent l'état des cases. Navigation
+  « À valider ⏭ » (V), filtre « à valider » de la liste, bilan (cases validées / total, jauge) ; case à cocher
+  **« validé seulement »** : facettes, croisement, synthèse et constellation ne tiennent compte que des cases validées
+  (l'édition, elle, porte toujours sur toutes les cases). Dans Excel, les cases à valider sont en italique sur fond
+  jaune pâle ; l'état n'est pas relu depuis Excel (une case changée dans Excel devient validée, les autres gardent leur état).
+- **Croisement** de deux critères (ou d'un critère avec lui-même), restreint aux articles filtrés : nombre d'articles
+  par combinaison, liste au clic, **cases vides hachurées** = combinaisons qu'aucun article ne traite.
+- **Synthèse** d'un critère en Markdown (une section par étiquette, définition, articles en `[@BIB-…]` avec titre et
+  note, liens entre eux), à copier ou enregistrer.
+- **Critères et vocabulaire** : ajouter, renommer, ordonner, supprimer un critère ; types de liens ; renommer une
+  étiquette dans toutes les fiches (sous le nom d'une autre = fusion), la retirer, la définir.
+- **Classeur Excel synchronisé dans les deux sens** : `bibliotheque/Lecture croisee.xlsx` (dans l'espace). Feuilles
+  Grille (ID, référence, titre, année, statut en gris ; une colonne par critère, case = `étiquette; étiquette | note` ;
+  Commentaire de la référence), Liens (De (ID), Type en liste déroulante, Vers (ID), Note), Vocabulaire (définitions),
+  Croisement (calculé, cases à zéro orangées) et Mode d'emploi. Lignes repérées par l'ID, colonnes par leur titre
+  (trier, filtrer, déplacer sans effet). Synchronisation **à trois voies** depuis l'état de la dernière synchronisation
+  (`lecture-croisee.synchro.json`) : modifié d'un seul côté → passe de l'autre ; des deux côtés différemment →
+  **conflit présenté**, l'utilisateur choisit (appli / Excel, ou tout d'un côté). Une ligne d'article supprimée dans
+  Excel n'efface rien ; une ligne de lien supprimée retire le lien. Le classeur est écrit en premier : ouvert dans
+  Excel (verrouillé), rien n'est modifié et l'appli le dit. Un classeur modifié depuis la dernière synchronisation
+  est signalé au retour dans la fenêtre. Sans état de synchronisation (première fois avec un classeur existant), une
+  case vide prend la valeur de l'autre côté et deux valeurs différentes sont un conflit.
+L'onglet « Analyse croisée » d'origine, devenu « Analyse (classeur) » en 1.19.0, est retiré en 1.21.0 (voir §9.2).
+
+## 10. Module Planning (semaine et vue d'ensemble, partagés)
 
 Un calendrier de thèse **propre à l'application**, synchronisé par OneDrive, sans aucun
 service extérieur.
@@ -626,8 +732,12 @@ Un élément (`planning/PH-0001.json`) :
   être supprimé. Le choix est partagé entre les deux PC ;
 - avancement (%), notes, couleur (par défaut celle de la catégorie) ;
 - sous-éléments (une phase contient des tâches), repliables ;
-- lien facultatif vers un objet d'un autre module (une campagne, un axe de
-  bibliographie, une figure…).
+- lien facultatif vers un objet d'un autre module (`lien: { module, id }`, 1.21.0 : une
+  référence à lire) ;
+- **horaires** facultatifs (`heureDebut`, `heureFin`, « HH:MM », 1.21.0) : un élément horaire
+  tient sur un jour (début = fin) ; sans horaires, il occupe la journée entière. Des horaires
+  incohérents (fin avant début, plusieurs jours) sont ignorés à la lecture. Les anciens
+  fichiers, sans ces champs, se relisent tels quels.
 
 Catégories par défaut, modifiables et extensibles : **Bibliographie**, **Campagne
 d'essais**, **Modélisation**, **Rédaction**, **Réunion / comité de suivi**, **Congrès**,
@@ -644,12 +754,40 @@ Gantt** (on les modifie à leur source, un clic y mène) :
   prévue pour une campagne à venir.
 
 ### 10.3 Vues
-- **Gantt** : zoom semaine / mois / trimestre / thèse entière, ligne « aujourd'hui »,
-  glisser pour déplacer ou étirer, double-clic pour créer, regroupement par catégorie.
-- **Liste** : les mêmes éléments en tableau, triables.
+- **Semaine** (vue par défaut depuis 1.21.0), à la manière d'un agenda : sept jours (ou cinq
+  sans le week-end), grille horaire au quart d'heure, ligne « maintenant », bande « journée »
+  en haut (périodes coupées à la semaine, jalons ◆, éléments fournis par les autres modules
+  en atténué). **Créer** : clic sur un créneau (1 h) ou glisser sur la durée voulue → bulle de
+  création rapide (titre, heures, « Toute la journée », catégorie — la dernière choisie est
+  reprise —, Entrée enregistre, « Plus d'options » ouvre le formulaire complet) ; dans la bande,
+  clic ou glisser sur plusieurs jours → élément « journée ». **Modifier** : glisser un élément
+  (heure et jour), glisser son bas (fin), glisser une barre de la bande (jours) ; clic → bulle
+  de détail (modifier, supprimer, « ✓ Fait »). Éléments qui se chevauchent : côte à côte, chacun
+  débordant sur le suivant. Navigation ‹ › et « Aujourd'hui » (clavier ← → T).
+- **Vue d'ensemble** (Gantt) : zoom mois / trimestre / thèse entière, ligne « aujourd'hui »,
+  glisser pour déplacer ou étirer, regroupement par catégorie. Le long terme seulement : les
+  éléments à heure fixe (réunions, séances de lecture) n'y figurent pas.
+- **Liste** : tous les éléments en tableau.
 - **Cette semaine** : widget de l'Accueil.
-- Export **PNG / SVG** et **pgfgantt** (TikZ) pour un comité de suivi ou le manuscrit,
-  via Figures.
+- Le formulaire complet s'ouvre en fenêtre par-dessus la vue.
+- Export **SVG** de la vue d'ensemble et figure régénérable via Figures. Les exports **PNG** et
+  **pgfgantt** sont retirés en 1.21.0 à la demande de l'utilisateur (jugés inutiles).
+
+### 10.4 Lectures à planifier (1.21.0)
+À droite de la semaine, la colonne **À lire** (si la Bibliothèque est dans l'installeur, action
+`bibliotheque.a-lire`) : les références ni lues ni écartées, meilleur score d'abord (§9),
+filtrées par défaut sur « en retard » et « ce mois-ci », avec leur temps de lecture estimé.
+
+- **Glisser** une lecture sur un créneau crée une séance « Lire <citation> » (catégorie
+  Bibliographie, durée = temps estimé, entre 30 min et 4 h, au quart d'heure ; le titre de
+  l'article en notes ; lien vers la référence). Déposée dans la bande : séance « journée ».
+- **Placer** la met au premier créneau libre (9 h – 18 h, du lundi au vendredi, sans chevaucher
+  un élément horaire, sur quatre semaines) à partir de maintenant (ou du lundi affiché s'il est
+  plus tard) ; **Répartir** en place jusqu'à dix d'un coup, l'une après l'autre (avec
+  confirmation).
+- Une lecture planifiée affiche « prévu mer. 7, 10:00 » (clic : la semaine et la séance).
+- Bulle d'une séance : **Ouvrir la fiche**, **Marquer comme lu** (action
+  `bibliotheque.marquer-lu` : statut « Lu », date de lecture du jour ; la séance passe à 100 %).
 
 ## 11. Module ViscoCompare (retiré en 1.7.0)
 

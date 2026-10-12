@@ -738,3 +738,111 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] Un `.docx` ajouté depuis le Bureau (hors OneDrive) : message « Dossier réglé sur ce PC seulement » ; sur l'autre PC, la partie est
       signalée introuvable (normal : le fichier n'y est pas).
 - [ ] « Générer » fonctionne sur les deux PC avec les mêmes parties.
+
+## Manuscrits : document généré valide pour Word (1.18.1)
+
+- [ ] « Générer » puis ouvrir dans Word : **aucune** fenêtre « Afficher les réparations » (avant : « Styles 1 » et « Objets dessinés et
+      zones de texte 1 »).
+- [ ] Les titres des chapitres ont bien le style de titre du maître (taille, couleur, numérotation) ; la table des matières les liste.
+- [ ] Images d'en-tête (logo), figures et zones de texte de chaque chapitre présentes et au bon endroit.
+- [ ] Le rapport « À voir » signale les styles remplacés (« Heading1 » remplacé par « Titre1 » du document maître).
+
+## Bibliothèque : lecture croisée (1.19.0)
+
+- [ ] Bibliothèque → **Lecture croisée** → « Démarrer la lecture croisée » : la grille reprend les champs Pneu, Contact, Loi,
+      Méthode, Chargement, Cible, Validation des fiches et les catégories de la Matrice croisée (un critère par groupe).
+- [ ] Grille : clic sur une case, taper une étiquette, Entrée ou « ; » ; les étiquettes déjà utilisées sont proposées
+      (« mef » propose « MEF 3D ») ; note facultative ; Échap ferme. La case est enregistrée (visible sur l'autre PC).
+- [ ] Fiche d'un article → section « Lecture croisée » : mêmes cases ; « Liens avec d'autres articles » : choisir un type,
+      chercher l'article (auteur, titre), « Lier » ; le lien apparaît aussi, dans l'autre sens, sur la fiche de l'autre article.
+- [ ] Croisement Loi × Méthode : nombres corrects, clic sur une case = ses articles, cases vides hachurées ;
+      « ☆ Garder dans le classeur Excel ».
+- [ ] Carte : articles et étiquettes, couleurs par critère (thème clair et sombre), survol, zoom molette, déplacement,
+      clic sur un article = sa fiche ; « Enregistrer en SVG… » ouvre bien dans un navigateur.
+- [ ] Synthèse : sections par étiquette, « Copier le Markdown » colle bien le texte (avec les `[@BIB-…]`).
+- [ ] Excel → « Créer le classeur Excel » puis « Ouvrir dans Excel » : 5 feuilles, en-têtes figés et colorés, colonnes
+      grises, filtres, liste déroulante des types de liens ; pas de message de réparation à l'ouverture.
+- [ ] Dans Excel : changer une case de la grille, ajouter une ligne de lien, une définition ; enregistrer, **fermer** ; dans
+      l'appli, le bandeau « Le classeur Excel a été modifié » apparaît ; « Synchroniser » reprend les 3 modifications.
+- [ ] Modifier la même case dans l'appli et dans Excel : la synchronisation présente le conflit, le choix « Excel » est appliqué.
+- [ ] Synchroniser avec le classeur **ouvert** dans Excel : message clair, rien n'est modifié dans l'appli.
+- [ ] Sur l'autre PC (après OneDrive) : même grille, même classeur, synchronisation sans conflit.
+
+## Bibliothèque : atelier de lecture croisée (1.20.0)
+
+- [ ] Lecture croisée : l'atelier tient dans la fenêtre (trois colonnes, aucune barre de défilement de la page) ; « Plein écran »
+      (ou F) occupe toute la fenêtre, Échap revient.
+- [ ] **Nettoyer** (badge = nombre de propositions) : avec la grille créée en 1.19, « Viscoélastique (…) » est proposé en
+      « Viscoélastique » + note ; les écritures voisines sont regroupées ; « Appliquer » met les fiches à jour et le badge disparaît.
+- [ ] Explorer : clic sur « Viscoélastique » → la liste se restreint, chaque critère montre les comptes dans la sélection,
+      des étiquettes deviennent hachurées (trous) ; second clic sur une autre étiquette = ET ; « tout effacer ».
+- [ ] Clic droit sur une étiquette → Constellation lisible (étiquette au centre, ses articles, les étiquettes compagnes) ;
+      clic sur un article → sa constellation (ses étiquettes, articles proches, articles liés) ; double-clic → fiche.
+- [ ] Inspecteur : modifier une case ; ◀ ▶ et J/K changent d'article ; « Suivant à compléter » (N) saute aux articles incomplets.
+- [ ] Glisser un article de la liste sur l'inspecteur : choisir le type, « Lier » ; le lien apparaît des deux côtés.
+- [ ] Thème sombre de Windows : couleurs des critères et jetons lisibles.
+
+## Planning : semaine et lectures à planifier (1.21.0)
+
+- [ ] Planning s'ouvre sur la **Semaine** ; la grille tient dans la fenêtre et commence vers 7 h 30 ; la ligne rouge
+      « maintenant » est à la bonne heure ; les heures des champs s'affichent en 24 h (13:00, pas 01:00 PM).
+- [ ] Clic sur un créneau → bulle « Ajouter un titre » ; taper, choisir une catégorie, **Entrée** : l'élément apparaît
+      (et sur l'autre PC après OneDrive). Glisser de 14 h à 16 h → la bulle propose 14:00 – 16:00.
+- [ ] « Plus d'options » ouvre le formulaire complet en fenêtre, prérempli ; Échap / clic à côté ferme.
+- [ ] Glisser un élément vers un autre jour et une autre heure ; glisser son bas pour l'allonger ; clic → bulle (✎, 🗑,
+      « ✓ Fait » barre l'élément).
+- [ ] Bande « journée » : clic ou glisser sur plusieurs jours → élément journée ; glisser une barre la décale de jours.
+- [ ] ‹ › et « Aujourd'hui », et au clavier ← → T ; décocher « week-end » → 5 jours (réglage gardé sur ce poste).
+- [ ] Vue d'ensemble : plus de réunions ni de séances de lecture, seulement les phases, tâches et jalons ; « SVG » et
+      « Enregistrer dans Figures » marchent ; plus de boutons PNG ni pgfgantt.
+- [ ] Colonne **À lire** : les références en retard / du mois, temps estimé ; glisser l'une sur mardi 10 h → séance
+      « 📖 Lire … » de la bonne durée ; « Placer » → premier créneau libre, la semaine s'affiche et la bulle s'ouvre ;
+      la carte affiche « prévu … ».
+- [ ] Bulle d'une séance : « Ouvrir la fiche » ouvre la référence ; « Marquer comme lu » → dans la Bibliothèque, statut
+      « Lu » et date du jour ; la séance est barrée et la référence quitte la colonne.
+- [ ] Bibliothèque : plus d'onglets « Corrections TFE » ni « Analyse (classeur) », plus de tuile « corrections du TFE ».
+
+## Lecture croisée : cases à valider (1.22.0)
+
+- [ ] Après la mise à jour, les cases déjà remplies (reprises des fiches) apparaissent « à valider » : puces en pointillés et
+      italique, petit nombre orangé à côté de chaque article de la liste, carrés de couverture atténués.
+- [ ] Inspecteur d'un article : ✓ à droite d'une case la valide (pointillés → puces pleines) ; « ✓ Tout valider » valide tout
+      l'article et affiche « Toutes les cases sont validées » ; modifier une case (ajouter / retirer une étiquette) la valide aussi.
+- [ ] « À valider ⏭ » et la touche V sautent au prochain article qui a des cases à valider ; « à valider » en haut de la liste
+      ne garde que ces articles ; le bilan (sans article choisi) montre « N cases validées sur M » et la jauge avance.
+- [ ] Fiche d'un article non lu : on peut valider ses cases ; « Marquer comme lu » → la section Lecture croisée affiche
+      « Article lu : N cases à valider ».
+- [ ] « validé seulement » : facettes, croisement et synthèse ne comptent que les cases validées ; décocher rétablit tout.
+- [ ] Excel : « Synchroniser » puis ouvrir le classeur : cases à valider en italique sur fond jaune pâle (pas de message de
+      réparation) ; modifier l'une d'elles dans Excel, enregistrer, fermer, synchroniser → la case est validée dans l'appli.
+- [ ] Sur l'autre PC (après OneDrive) : mêmes états de validation.
+
+## Campagnes : essais TSRST (1.23.0)
+
+- [ ] Campagne TSRST réelle : « Fiche » d'un essai → forme, dimensions (la section calculée s'affiche), matériau,
+      vieillissement, vides ; les valeurs restent après fermeture et sur l'autre PC.
+- [ ] « Tout dépouiller » : T et σ de rupture, transition, pente, σ à −10 / −20 / −30 °C cohérents avec ce que donnait
+      le dépouillement habituel (Excel) sur au moins un essai ; la voie de température retenue est bien celle de
+      l'éprouvette (voir la ligne sous la fiche) ; un essai sans dimensions est signalé par son nom.
+- [ ] Un essai arrêté avant rupture : « * » à côté de σ rupt. et avertissement « Pas de rupture nette ».
+- [ ] « Superposer σ(T) » dans la campagne ; validité « écarté » → la ligne s'estompe, la courbe disparaît.
+- [ ] Campagnes → « Essais TSRST » : tri par chaque colonne (2e clic = sens inverse), filtres, moyennes par matériau /
+      vieillissement / campagne ; modifier « σ à » (par exemple « -15 ; -25 ») → colonnes et moyennes suivent, sur les deux PC.
+- [ ] « Exporter en Excel » : 3 feuilles (Essais, Synthèse, Courbes σ(T)), s'ouvre sans message de réparation.
+- [ ] « Enregistrer dans Figures » puis, dans Figures, « Régénérer » après un nouveau dépouillement : la figure suit.
+- [ ] Sur le PC sans les données brutes : la vue Essais TSRST et les comparaisons fonctionnent (résultats rangés dans l'espace).
+
+## Figures : exports COMSOL (1.24.0)
+
+- [ ] Graphes → « Ouvrir des exports COMSOL… » : choisir plusieurs fichiers `verticale_…txt` d'un coup (Ctrl+clic) ; chacun
+      est listé « profil vertical (Z), 161 points », légende = ce qui diffère dans les noms (« el lc3 het », « ve lc1 rect »…).
+- [ ] « Tracer les N profils » (εzz coché) : un graphe, z en mm de 0 à −320, εzz (µdef) en abscisse, légende dans un coin
+      vide ; cocher εxx et εyy avec un seul fichier → une courbe par grandeur. Modifier une légende, retracer.
+- [ ] Apparence, « Enregistrer », « Copier pgfplots » : le graphe se comporte comme les autres (compilation LaTeX correcte
+      de `$\varepsilon_{zz}$`).
+- [ ] Ouvrir la `coupe_yz_…txt` (7 Mo) : lecture en quelques secondes au plus, « coupe YZ, 263 × 65 points » ; la carte
+      s'affiche ; changer la grandeur et l'exagération ; « Enregistrer la carte » → figure dans la Bibliothèque ;
+      « SVG… » s'ouvre dans un navigateur.
+- [ ] « Extraire un profil » à Y = 4,6 → « Ajouter ce profil » : il rejoint la liste et se trace avec les profils verticaux.
+- [ ] « Ouvrir des données… » sur un export COMSOL : message « export COMSOL reconnu », le fichier apparaît dans le panneau.
+

@@ -63,7 +63,6 @@ export function TableauDeBordVue({ b, ouvrir }: { b: Biblio; ouvrir(id: string):
         <Tuile valeur={t.pdfLibresATelecharger} titre="PDF libres à télécharger" />
         <Tuile valeur={t.demandesAEnvoyer} titre="demandes à envoyer ou relancer" niveau={t.demandesAEnvoyer ? "erreur" : undefined} />
         <Tuile valeur={`${t.verifiees} / ${t.total}`} titre={`vérifiées (${t.partielles} partielles, ${t.nonVerifiees} non)`} />
-        <Tuile valeur={t.correctionsRestantes} titre="corrections du TFE restantes" />
       </div>
 
       <Section titre="Prochaines lectures conseillées">
