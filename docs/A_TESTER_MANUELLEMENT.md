@@ -832,3 +832,17 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] « Enregistrer dans Figures » puis, dans Figures, « Régénérer » après un nouveau dépouillement : la figure suit.
 - [ ] Sur le PC sans les données brutes : la vue Essais TSRST et les comparaisons fonctionnent (résultats rangés dans l'espace).
 
+## Figures : exports COMSOL (1.24.0)
+
+- [ ] Graphes → « Ouvrir des exports COMSOL… » : choisir plusieurs fichiers `verticale_…txt` d'un coup (Ctrl+clic) ; chacun
+      est listé « profil vertical (Z), 161 points », légende = ce qui diffère dans les noms (« el lc3 het », « ve lc1 rect »…).
+- [ ] « Tracer les N profils » (εzz coché) : un graphe, z en mm de 0 à −320, εzz (µdef) en abscisse, légende dans un coin
+      vide ; cocher εxx et εyy avec un seul fichier → une courbe par grandeur. Modifier une légende, retracer.
+- [ ] Apparence, « Enregistrer », « Copier pgfplots » : le graphe se comporte comme les autres (compilation LaTeX correcte
+      de `$\varepsilon_{zz}$`).
+- [ ] Ouvrir la `coupe_yz_…txt` (7 Mo) : lecture en quelques secondes au plus, « coupe YZ, 263 × 65 points » ; la carte
+      s'affiche ; changer la grandeur et l'exagération ; « Enregistrer la carte » → figure dans la Bibliothèque ;
+      « SVG… » s'ouvre dans un navigateur.
+- [ ] « Extraire un profil » à Y = 4,6 → « Ajouter ce profil » : il rejoint la liste et se trace avec les profils verticaux.
+- [ ] « Ouvrir des données… » sur un export COMSOL : message « export COMSOL reconnu », le fichier apparaît dans le panneau.
+

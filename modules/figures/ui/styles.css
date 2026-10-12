@@ -1031,3 +1031,80 @@ button.small-btn.actif {
   font-family: ui-monospace, monospace;
   font-size: 11px;
 }
+
+/* Exports COMSOL (page Graphes) */
+.comsol-panneau {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comsol-panneau h4 {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+}
+
+.comsol-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.comsol-liste li {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.comsol-tete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.comsol-tete strong {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+}
+
+.comsol-nom {
+  margin: 2px 0 0;
+}
+
+.comsol-expressions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.comsol-extraire {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.comsol-carte {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.comsol-carte svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}

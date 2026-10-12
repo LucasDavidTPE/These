@@ -280,6 +280,20 @@ Ajouts permis par l'intégration :
 - **modèles de graphes** (courbe maîtresse, Cole-Cole, orniérage, fatigue, TSRST, suivi
   temporel, barres) avec des valeurs d'exemple inventées ; **zoom** de l'aperçu (ajusté,
   Ctrl + molette, taille réelle) et zoom sur une zone des données (fixe les bornes des axes) ;
+- **exports COMSOL** (1.24.0), panneau de la page Graphes : un ou plusieurs exports « Données » de COMSOL
+  (`.txt`, `.csv` : en-tête `% Model: …`, ligne `% X Y Z expr (unité) @ solution: paramètres`, valeurs séparées
+  par des espaces ; « Ouvrir des données… » les reconnaît aussi). Lus : métadonnées, coordonnées, chaque
+  expression avec son unité, sa solution et les **paramètres de l'étude** (`lc=3, VE=0, Temps=10 s`). Géométrie
+  détectée : **profil** (une coordonnée varie ; vertical si c'est Z), **coupe** (deux ; grille régulière ou non).
+  **Profils superposés** en un graphe modifiable : une série par fichier (plusieurs fichiers) ou par expression
+  (plusieurs expressions), légendes = mots qui diffèrent dans les noms de fichiers, sinon paramètres qui
+  diffèrent, modifiables ; profil vertical : valeur en abscisse, cote z (ou profondeur positive) en ordonnée de la
+  surface au point le plus bas ; longueurs en mm, cm ou m ; libellés pgfplots (`1e6*solid.eZZ` →
+  « $\varepsilon_{zz}$ (µdef) », ×1e-6 Pa → MPa, principales ε1 ε3, σ, u) ; légende placée dans le coin le moins
+  chargé. **Coupe** : profil extrait le long de la ligne de grille choisie (ajouté à la liste, tracé avec les
+  autres) ; **carte** en couleurs (échelle divergente rouge-bleu centrée sur 0 si les valeurs changent de signe,
+  sinon viridis ; 24 niveaux ; barre de couleurs ; exagération verticale réglable), en SVG ou enregistrée dans la
+  bibliothèque (image SVG + PNG 300 dpi).
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,

@@ -219,5 +219,7 @@ lancent tous les tests automatiques sous Windows.
 - [x] Campagnes : **essais TSRST** — fiche structurée de l'éprouvette (matériau, dimensions, section, vides, vieillissement,
       validité), dépouillement (rupture, transition bilinéaire et pente, σ à températures fixées) rangé avec sa courbe σ(T),
       vue « Essais TSRST » toutes campagnes (tri, filtres, moyennes ± écart-type, superposition σ(T), export Excel, figure) (1.23.0)
+- [x] Figures → Graphes : **exports COMSOL** — profils superposés (fichiers ou expressions, légendes automatiques, cote en mm),
+      profil extrait d'une coupe, carte en couleurs d'une coupe (SVG, bibliothèque) (1.24.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),
       remarques extraites avec état (à traiter / traitée / refusée), compteur par partie, rangés avec les versions
