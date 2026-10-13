@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type PageId = "library" | "cutout" | "schema" | "crop" | "graphs" | "about";
+export type PageId = "library" | "cutout" | "schema" | "crop" | "graphs" | "planches" | "about";
 
 export interface PageDef {
   id: PageId;
@@ -15,6 +15,7 @@ export const PAGES: readonly PageDef[] = [
   { id: "schema", label: "Schéma", description: "Composants de mécanique des chaussées, export TikZ et SVG." },
   { id: "crop", label: "Recadrage", description: "Recadrage libre, ratio fixe, marges en millimètres." },
   { id: "graphs", label: "Graphes", description: "Import Excel ou CSV, export pgfplots et SVG." },
+  { id: "planches", label: "Planches", description: "Plusieurs graphes assemblés en une figure, étiquettes (a), (b)…" },
 ];
 
 interface NavigationState {

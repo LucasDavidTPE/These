@@ -5,6 +5,7 @@ import { useLibrary } from "../library/useLibrary";
 import { Apercu } from "./Apercu";
 import { Apparence, SerieLook } from "./Apparence";
 import { DonneesSerie } from "./DonneesSerie";
+import { CarteReglages } from "./CarteReglages";
 import { Comsol } from "./Comsol";
 import { Modeles } from "./Modeles";
 import { RegressionSerie } from "./Regression";
@@ -212,6 +213,7 @@ export function GraphPage() {
               </div>
             </fieldset>
           ))}
+          <CarteReglages />
           <label className="field">
             <span>Légende</span>
             <select value={s.doc.legend} onChange={(e) => s.update({ legend: e.target.value as LegendPos })}>

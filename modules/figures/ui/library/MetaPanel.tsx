@@ -18,6 +18,7 @@ import {
 import { useCrop } from "../crop/useCrop";
 import { useEditor } from "../editor/useEditor";
 import { useGraph } from "../graph/useGraph";
+import { usePlanche } from "../planche/usePlanche";
 import { useNavigation } from "../navigation";
 import { KIND_LABELS, SOURCE_LABELS } from "./labels";
 import { useLibrary } from "./useLibrary";
@@ -88,6 +89,30 @@ export function MetaPanel({ entry }: { entry: FigureEntry }) {
           }}
         >
           Ouvrir dans Graphes
+        </button>
+      )}
+      {entry.meta?.kind === "planche" && entry.files.includes("planche.json") && !isEditing && (
+        <button
+          type="button"
+          onClick={async () => {
+            await select(null);
+            useNavigation.getState().goTo("planches");
+            await usePlanche.getState().openFromLibrary(entry.folder);
+          }}
+        >
+          Ouvrir dans Planches
+        </button>
+      )}
+      {entry.meta?.kind === "graph" && entry.files.includes("graph.json") && !isEditing && (
+        <button
+          type="button"
+          title="Ajoute ce graphe à la planche en cours (page Planches)"
+          onClick={async () => {
+            await usePlanche.getState().ajouter(entry.folder);
+            useNavigation.getState().goTo("planches");
+          }}
+        >
+          Ajouter à une planche
         </button>
       )}
       {thumbnailFile(entry) && !isEditing && (

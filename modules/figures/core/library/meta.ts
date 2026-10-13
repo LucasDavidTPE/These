@@ -8,7 +8,7 @@
 import { isIsoDateTime } from "./dates";
 import { parseFigureId } from "./ids";
 
-export const FIGURE_KINDS = ["schema", "image", "graph", "crop"] as const;
+export const FIGURE_KINDS = ["schema", "image", "graph", "crop", "planche"] as const;
 export type FigureKind = (typeof FIGURE_KINDS)[number];
 
 export const SOURCE_TYPES = ["own", "web", "article", "other"] as const;

@@ -10,3 +10,5 @@ export * from "./table";
 export * from "./ticks";
 export * from "./xlsx";
 export * from "./comsol";
+export * from "./carte";
+export * from "./planche";

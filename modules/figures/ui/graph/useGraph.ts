@@ -26,7 +26,6 @@ import {
   type Sheet,
 } from "../../core/graph";
 import { LockedError, createFigure, joinPath, saveMeta, validateMeta, type FigureMeta } from "../../core/library";
-import { enregistrerImage } from "../../core/action";
 import { svgToPng } from "../editor/raster";
 import { nowIso, useLibrary } from "../library/useLibrary";
 import { getBackend } from "../platform/backend";
@@ -81,8 +80,6 @@ interface GraphState {
   retirerComsol(i: number): void;
   /** Remplace le graphe par des profils COMSOL (nouvelle figure). */
   tracerComsol(doc: GraphDoc, title: string): void;
-  /** Carte d'une coupe COMSOL : nouvelle figure (image SVG + PNG) dans la bibliothèque. */
-  enregistrerCarte(svg: string, titre: string, source: string): Promise<void>;
   /** Historique des modifications du graphe (données comprises). */
   past: GraphDoc[];
   future: GraphDoc[];
@@ -129,7 +126,7 @@ export const useGraph = create<GraphState>()((set, get) => {
   const checked = () => {
     const v = validateGraph(get().doc);
     if (!v.ok) throw new Error(v.errors.map((e) => `${e.path} : ${e.message}`).join("\n"));
-    if (v.doc.series.length === 0) throw new Error("Ajoutez au moins une série.");
+    if (v.doc.series.length === 0 && !v.doc.carte) throw new Error("Ajoutez au moins une série.");
     return v.doc;
   };
   const png = async (dpi = 300) => {
@@ -401,19 +398,8 @@ export const useGraph = create<GraphState>()((set, get) => {
     tracerComsol: (doc, title) => {
       void releaseLock();
       commit(doc);
-      set({ folder: null, meta: null, title, message: { kind: "info", text: "Profils COMSOL tracés : ajustez l'apparence, puis « Enregistrer » pour les garder dans la bibliothèque." } });
+      set({ folder: null, meta: null, title, message: { kind: "info", text: "Tracé depuis COMSOL : tout se modifie à droite (axes, couleurs, taille…), puis « Enregistrer » pour le garder dans la bibliothèque." } });
     },
-    enregistrerCarte: (svg, titre, source) =>
-      run(async () => {
-        await useLibrary.getState().init();
-        const { backend, root, host } = useLibrary.getState();
-        if (!backend || !root) throw new Error("Choisissez d'abord le dossier de la bibliothèque (page Bibliothèque).");
-        const px = (k: "width" | "height") => Number(new RegExp(`${k}="([\\d.]+)"`).exec(svg)?.[1] ?? 600);
-        const png = await svgToPng(svg, (px("width") * 25.4) / 96, (px("height") * 25.4) / 96, 300, "white");
-        const dossier = await enregistrerImage(backend.fs(root), { titre, svg, png, source, tags: ["COMSOL", "carte"] }, nowIso(), host);
-        set({ message: { kind: "info", text: `Carte enregistrée dans la bibliothèque : ${dossier}.` } });
-      }),
-
     fromTemplate: (doc, title) => {
       void releaseLock();
       commit(JSON.parse(JSON.stringify(doc)) as GraphDoc);

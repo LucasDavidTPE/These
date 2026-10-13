@@ -12,6 +12,7 @@ import { joinPath } from "./paths";
 export const FIGURE_FILES = [
   "figure.json",
   "graph.json",
+  "planche.json",
   "meta.json",
   "original.png",
   "export.tex",

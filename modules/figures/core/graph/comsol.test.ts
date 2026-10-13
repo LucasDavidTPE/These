@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { exportGraphSvg } from "./export";
 import { validateGraph } from "./model";
-import { carte, carteSvg, coinLibre, descriptionGeometrie, estComsol, extraireProfil, geometrie, grapheProfils, legendes, libelleExpression, lireComsol, lireTitres } from "./comsol";
+import { grapheCarte, coinLibre, lecturesPossibles, descriptionGeometrie, estComsol, extraireProfil, geometrie, grapheProfils, legendes, libelleExpression, lireComsol, lireTitres } from "./comsol";
 
 const fixture = (n: string) => readFileSync(new URL(`./fixtures/${n}`, import.meta.url), "utf8");
 const el = () => lireComsol(fixture("verticale_max_std_el_lc3_het.txt"), "verticale_max_std_el_lc3_het.txt");
@@ -89,15 +90,32 @@ describe("exports COMSOL", () => {
     expect(geometrie(p)).toMatchObject({ genre: "profil", varient: [2] });
     expect(p.lignes).toBe(9);
     expect(p.nom).toContain(`Y = ${ys[3]}`);
-    const m = carte(c, "1e6*solid.eZZ", "mm");
-    expect(m.x).toHaveLength(9);
-    expect(m.y).toHaveLength(9);
-    expect(m.y[0]).toBeCloseTo(-319.9, 6);
-    expect(m.v.flat().every(Number.isFinite)).toBe(true);
-    const svg = carteSvg(m, { legende: "εzz (µdef)", uniteLongueur: "mm", exageration: 4, titre: "Coupe YZ" });
-    expect(svg.startsWith("<svg")).toBe(true);
-    expect(svg).toContain("εzz (µdef)");
-    expect(svg).not.toMatch(/NaN|undefined/);
-    expect(svg).toBe(carteSvg(m, { legende: "εzz (µdef)", uniteLongueur: "mm", exageration: 4, titre: "Coupe YZ" }));
+    const d = grapheCarte(c, "1e6*solid.eZZ", "mm");
+    expect(validateGraph(JSON.parse(JSON.stringify(d))).ok).toBe(true);
+    expect(d.carte!.x).toHaveLength(9);
+    expect(d.carte!.y).toHaveLength(9);
+    expect(d.carte!.y[0]).toBeCloseTo(-319.9, 6);
+    expect(d.carte!.v.flat().every((v) => v !== null)).toBe(true);
+    expect(d.carte).toMatchObject({ palette: "divergente", legende: "$\\varepsilon_{zz}$ (µdef)" });
+    expect(d.x).toMatchObject({ label: "$y$ (mm)", min: d.carte!.x[0] });
+    expect(d.y.label).toBe("$z$ (mm)");
+    expect(exportGraphSvg(d)).not.toMatch(/NaN|undefined/);
+  });
+
+  it("lecture imposée : profil selon une autre coordonnée, coupe aux axes échangés, orientation du tracé", () => {
+    const c = coupe();
+    expect(lecturesPossibles(c).map((l) => l.libelle).slice(0, 4)).toEqual(["Profil selon X", "Profil selon Y", "Profil selon Z", "Coupe X (horizontal) × Y (vertical)"]);
+    const t = { ...c, forcer: [2, 1] };
+    expect(geometrie(t)).toMatchObject({ genre: "coupe", varient: [2, 1], reguliere: true });
+    const d = grapheCarte(t, "1e6*solid.eZZ", "mm");
+    expect(d.x.label).toBe("$z$ (mm)");
+    expect(d.carte!.v[0]![3]).toBe(grapheCarte(c, "1e6*solid.eZZ", "mm").carte!.v[3]![0]);
+    // un profil vertical tracé « horizontalement » : la cote en abscisse
+    const h = grapheProfils([el()], { expressions: ["1e6*solid.eZZ"], longueur: "mm", orientation: "horizontale" });
+    expect(h.x.label).toBe("$z$ (mm)");
+    expect(h.series[0]!.x[0]).toBeCloseTo(-319.9, 6);
+    // un profil forcé selon Z d'un fichier mal reconnu
+    expect(geometrie({ ...el(), forcer: [2] })).toMatchObject({ genre: "profil", varient: [2] });
   });
 });
+

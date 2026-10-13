@@ -5,6 +5,7 @@ export const KIND_LABELS: Record<FigureKind, string> = {
   image: "Image",
   graph: "Graphe",
   crop: "Recadrage",
+  planche: "Planche",
 };
 
 export const SOURCE_LABELS: Record<SourceType, string> = {

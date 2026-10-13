@@ -1108,3 +1108,68 @@ button.small-btn.actif {
   width: 100%;
   height: auto;
 }
+
+/* Planches */
+.planche-recherche {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.planche-choix {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.planche-choix li {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  font-size: 12.5px;
+}
+
+.planche-choix button {
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+.planche-apercu {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: 16px;
+  background: repeating-conic-gradient(#f2f2f2 0% 25%, #fafafa 0% 50%) 0 0 / 16px 16px;
+}
+
+.planche-svg {
+  background: #fff;
+  display: block;
+  max-width: 1000px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
+}
+
+.planche-svg svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.planche-nom {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+}
+
+.planche-ligne {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--border, #ddd);
+}

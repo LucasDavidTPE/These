@@ -1,6 +1,7 @@
 /**
  * Modèle d'un graphe (SPEC §10), stocké dans `graph.json` (kind = graph).
  */
+import { parseCarte, type CarteDoc } from "./carte";
 import { parseFit, type SeriesFit } from "./fit";
 import { parseSeriesLook, parseStyle, type GraphStyle, type SeriesLook } from "./style";
 
@@ -44,6 +45,8 @@ export interface GraphDoc {
   style?: GraphStyle;
   /** Coin des équations de régression ; absent : opposé à la légende. */
   fit_pos?: Exclude<LegendPos, "none">;
+  /** Carte en couleurs sous les courbes (coupe 2D) ; absente : graphe ordinaire. */
+  carte?: CarteDoc;
   series: Series[];
 }
 
@@ -120,6 +123,8 @@ export function validateGraph(raw: unknown): { ok: true; doc: GraphDoc } | { ok:
   const style = parseStyle(raw.style);
   if (style) doc.style = style;
   if (LEGENDS.includes(raw.fit_pos as LegendPos) && raw.fit_pos !== "none") doc.fit_pos = raw.fit_pos as Exclude<LegendPos, "none">;
+  const carte = parseCarte(raw.carte, err);
+  if (carte) doc.carte = carte;
   if (!Array.isArray(raw.series)) err("series", "doit être une liste.");
   (Array.isArray(raw.series) ? raw.series : []).forEach((s: unknown, i) => {
     const p = `series[${i}]`;

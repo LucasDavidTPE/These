@@ -7,6 +7,7 @@ import { escapeXml, primitiveSvg } from "../schema/export/svg";
 import { THEMES } from "../schema/theme";
 import { latexText } from "../schema/export/tikz";
 import { generateSty } from "../schema/export/sty";
+import { bornesCarte, couleursCarte } from "./carte";
 import { fitCorner } from "./fit";
 import { fitRows, graphFits, graphLayout, legendRow } from "./layout";
 import { GRAPH_FORMAT, validateGraph, type GraphDoc, type GraphError } from "./model";
@@ -24,7 +25,7 @@ export class GraphExportError extends Error {
 function prepare(raw: unknown): GraphDoc {
   const v = validateGraph(raw);
   if (!v.ok) throw new GraphExportError(v.errors);
-  if (v.doc.series.length === 0) throw new GraphExportError([{ path: "series", message: "aucune série à tracer." }]);
+  if (v.doc.series.length === 0 && !v.doc.carte) throw new GraphExportError([{ path: "series", message: "aucune série à tracer." }]);
   return v.doc;
 }
 
@@ -108,6 +109,18 @@ export function exportPgfplots(raw: unknown, options: PgfplotsOptions = {}): Pgf
   const police = doc.style ? texFont(doc.style.fontScale) : null;
   if (police) extraAxis.push(`font=${police}, label style={font=${police}}, legend style={font=${police}}`);
   const barSeries = doc.series.map((s, i) => ({ s, i })).filter(({ s }) => s.type === "bar");
+  // carte : barre de couleurs à paliers, mêmes couleurs et mêmes bornes que le SVG
+  const c = doc.carte;
+  if (c) {
+    const [lo, hi] = bornesCarte(c);
+    const rgb = couleursCarte(c).map((h) => `rgb255=(${[0, 1, 2].map((k) => parseInt(h.slice(1 + 2 * k, 3 + 2 * k), 16)).join(",")})`);
+    extraAxis.push(
+      `colormap={carte}{${rgb.join(" ")}}, colormap access=piecewise constant`,
+      `point meta min=${formatData(lo)}, point meta max=${formatData(hi)}`,
+      `colorbar, colorbar style={width=3.5mm${c.legende ? `, ylabel={${latexText(c.legende)}}` : ""}}`,
+      "unbounded coords=jump",
+    );
+  }
   const lines: string[] = [
     `% Graphe généré par Figurine -- format ${GRAPH_FORMAT}, thème « ${doc.theme} ».`,
     "% Nécessite \\usepackage{figurine} (charge pgfplots). Taille de la zone des axes imposée.",
@@ -116,6 +129,22 @@ export function exportPgfplots(raw: unknown, options: PgfplotsOptions = {}): Pgf
     `  ${[...axisOptions("x", xs, doc.x.label), ...axisOptions("y", ys, doc.y.label)].join(",\n  ")},`,
     `  legend pos=${doc.legend === "none" ? "north east" : doc.legend}${doc.grid ? ", grid=major" : ""}${extraAxis.length ? `,\n  ${extraAxis.join(",\n  ")}` : ""}]`,
   ];
+  if (c) {
+    lines.push("");
+    lines.push(`% Carte : ${c.x.length} × ${c.y.length} valeurs (cellules centrées sur les nœuds)`);
+    const rows: string[] = [];
+    c.y.forEach((y, j) => c.x.forEach((x, i) => rows.push(`${formatData(x)} ${formatData(y)} ${c.v[j]![i] === null ? "nan" : formatData(c.v[j]![i]!)}`)));
+    const style = `matrix plot*, mesh/cols=${c.x.length}, mesh/rows=${c.y.length}, point meta=explicit, forget plot`;
+    if (options.dataFiles) {
+      files["export-carte.dat"] = ["x y c", ...rows].join("\n") + "\n";
+      lines.push(`\\addplot[${style}] table[meta=c] {\\figurinedatadir export-carte.dat};`);
+    } else {
+      lines.push(`\\addplot[${style}] table[meta=c, row sep=\\\\] {`);
+      lines.push("x y c \\\\");
+      for (const r of rows) lines.push(`${r} \\\\`);
+      lines.push("};");
+    }
+  }
   doc.series.forEach((s, i) => {
     const k = barSeries.findIndex((b) => b.i === i);
     const st = theme.graph.series[i]!;

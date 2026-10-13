@@ -1,16 +1,17 @@
 /**
  * Panneau « Exports COMSOL » de la page Graphes : un ou plusieurs exports « Données » de COMSOL (.txt),
- * profils superposés en un clic (une série par fichier ou par expression, légende tirée des paramètres de
- * l'étude), profil extrait d'une coupe, carte en couleurs d'une coupe.
+ * profils superposés en un clic (une série par fichier ou par expression, légendes automatiques), profil
+ * extrait d'une coupe, carte en couleurs d'une coupe. Tout aboutit à un graphe modifiable (axes, couleurs,
+ * bornes, taille…) ; la lecture d'un fichier se corrige si la détection automatique s'est trompée.
  */
 import { useMemo, useState } from "react";
 import {
-  carte,
-  carteSvg,
   descriptionGeometrie,
   extraireProfil,
   geometrie,
+  grapheCarte,
   grapheProfils,
+  lecturesPossibles,
   legendeCarte,
   legendes,
   libelleExpression,
@@ -18,22 +19,10 @@ import {
   type ExportComsol,
   type UniteLongueur,
 } from "../../core/graph";
-import { getBackend } from "../platform/backend";
 import { useGraph } from "./useGraph";
 
 const nf = (x: number) => String(Number(x.toPrecision(5))).replace(".", ",");
-
-function calculerCarte(coupe: ExportComsol, exprC: string, longueur: UniteLongueur, exageration: number | null): { svg: string; exa: number } | null {
-  try {
-    const m = carte(coupe, exprC, longueur);
-    const lx = m.x.at(-1)! - m.x[0]!;
-    const ly = m.y.at(-1)! - m.y[0]!;
-    const exa = exageration ?? Math.max(1, Math.round(lx / ly / 3));
-    return { svg: carteSvg(m, { titre: `${coupe.nom.replace(/\.(txt|csv|dat)$/i, "")} — ${legendeCarte(coupe, exprC)}`, legende: legendeCarte(coupe, exprC), uniteLongueur: longueur, exageration: exa }), exa };
-  } catch {
-    return null;
-  }
-}
+const sansExt = (n: string) => n.replace(/\.(txt|csv|dat)$/i, "");
 
 export function Comsol() {
   const s = useGraph();
@@ -42,9 +31,9 @@ export function Comsol() {
   const [choisies, setChoisies] = useState<string[] | null>(null);
   const [longueur, setLongueur] = useState<UniteLongueur>("mm");
   const [profondeur, setProfondeur] = useState(false);
+  const [orientation, setOrientation] = useState<"auto" | "verticale" | "horizontale">("auto");
   const [iCoupe, setICoupe] = useState(0);
   const [exprCarte, setExprCarte] = useState<string | null>(null);
-  const [exageration, setExageration] = useState<number | null>(null);
   const [ligne, setLigne] = useState<{ fixe: number; valeur: number } | null>(null);
 
   const profils = exports.map((e, i) => ({ e, i })).filter(({ e }) => geometrie(e).genre === "profil");
@@ -56,22 +45,34 @@ export function Comsol() {
   const expressions = profils.length ? profils[0]!.e.colonnes.map((c) => c.expression).filter((x) => profils.every(({ e }) => e.colonnes.some((c) => c.expression === x))) : [];
   const parDefaut = expressions.find((x) => /eZZ$/i.test(x)) ?? expressions[0];
   const actives = (choisies ?? (parDefaut ? [parDefaut] : [])).filter((x) => expressions.includes(x));
-  const vertical = profils.length > 0 && profils.every(({ e }) => /^z$/i.test(e.coordonnees[geometrie(e).varient[0]!]!));
+  const enZ = profils.length > 0 && profils.every(({ e }) => /^z$/i.test(e.coordonnees[geometrie(e).varient[0]!]!));
 
   const coupe = coupes[Math.min(iCoupe, coupes.length - 1)]?.e;
   const gc = coupe ? geometrie(coupe) : null;
   const exprC = coupe ? (exprCarte && coupe.colonnes.some((c) => c.expression === exprCarte) ? exprCarte : (coupe.colonnes.find((c) => /eZZ$/i.test(c.expression)) ?? coupe.colonnes[0])?.expression) : undefined;
-  const laCarte = coupe && exprC ? calculerCarte(coupe, exprC, longueur, exageration) : null;
+
+  const remplacer = (doc: Parameters<typeof s.tracerComsol>[0], titre: string) => {
+    if ((s.doc.series.length || s.doc.carte) && !window.confirm("Remplacer le graphe en cours ?")) return;
+    s.tracerComsol(doc, titre);
+  };
 
   function tracer() {
     try {
       const doc = grapheProfils(
         profils.map((p) => p.e),
-        { expressions: actives, longueur, profondeur, noms: profils.map((p) => legende(p.i)) },
+        { expressions: actives, longueur, profondeur, orientation, noms: profils.map((p) => legende(p.i)) },
       );
       const titre = actives.length === 1 ? `${libelleExpression(profils[0]!.e.colonnes.find((c) => c.expression === actives[0])!).court} — ${profils.length} profil(s) COMSOL` : `Profils COMSOL — ${profils.map((p) => legende(p.i)).join(", ")}`;
-      if (s.doc.series.length && !window.confirm("Remplacer le graphe en cours par ces profils ?")) return;
-      s.tracerComsol(doc, titre);
+      remplacer(doc, titre);
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  function tracerCarte() {
+    if (!coupe || !exprC) return;
+    try {
+      remplacer(grapheCarte(coupe, exprC, longueur), `${sansExt(coupe.nom)} — ${legendeCarte(coupe, exprC)}`);
     } catch (e) {
       window.alert(e instanceof Error ? e.message : String(e));
     }
@@ -80,6 +81,14 @@ export function Comsol() {
   function ajouterProfil() {
     if (!coupe || !ligne) return;
     useGraph.setState({ comsol: [...exports, extraireProfil(coupe, ligne.fixe, ligne.valeur)] });
+  }
+
+  /** Lecture imposée d'un fichier (null : détection automatique). */
+  function lire(i: number, forcer: number[] | null) {
+    const e: ExportComsol = { ...exports[i]! };
+    if (forcer) e.forcer = forcer;
+    else delete e.forcer;
+    useGraph.setState({ comsol: exports.map((x, k) => (k === i ? e : x)) });
   }
 
   return (
@@ -94,12 +103,26 @@ export function Comsol() {
           {exports.map((e, i) => (
             <li key={`${e.nom}-${i}`} title={`${e.meta.Model ?? ""} · ${e.meta.Date ?? ""}\n${Object.entries(parametresDe(e)).map(([k, v]) => `${k} = ${v}`).join(", ")}`}>
               <div className="comsol-tete">
-                <strong>{e.nom.replace(/\.(txt|csv|dat)$/i, "")}</strong>
+                <strong>{sansExt(e.nom)}</strong>
                 <button type="button" className="small-btn" aria-label={`Retirer ${e.nom}`} onClick={() => s.retirerComsol(i)}>
                   ×
                 </button>
               </div>
-              <span className="muted small">{descriptionGeometrie(e)}</span>
+              <select
+                className="small-select"
+                aria-label="Lecture du fichier"
+                title="Si la détection automatique s'est trompée : choisir la coordonnée du profil, ou les axes de la coupe"
+                value={e.forcer ? e.forcer.join(",") : ""}
+                onChange={(x) => lire(i, x.target.value ? x.target.value.split(",").map(Number) : null)}
+              >
+                <option value="">{e.forcer ? "Détection automatique" : `Auto : ${descriptionGeometrie({ ...e, forcer: undefined })}`}</option>
+                {lecturesPossibles(e).map((l) => (
+                  <option key={l.forcer.join(",")} value={l.forcer.join(",")}>
+                    {l.libelle}
+                  </option>
+                ))}
+              </select>
+              {e.forcer ? <span className="muted small">{descriptionGeometrie(e)}</span> : null}
               {geometrie(e).genre === "profil" ? (
                 <label className="field comsol-nom">
                   <span>Légende</span>
@@ -109,6 +132,17 @@ export function Comsol() {
             </li>
           ))}
         </ul>
+      ) : null}
+
+      {exports.length ? (
+        <label className="field">
+          <span>Longueurs en</span>
+          <select value={longueur} onChange={(e) => setLongueur(e.target.value as UniteLongueur)}>
+            <option value="mm">mm</option>
+            <option value="cm">cm</option>
+            <option value="m">m</option>
+          </select>
+        </label>
       ) : null}
 
       {profils.length ? (
@@ -125,22 +159,20 @@ export function Comsol() {
               );
             })}
           </div>
-          <div className="grid2">
-            <label className="field">
-              <span>Longueurs en</span>
-              <select value={longueur} onChange={(e) => setLongueur(e.target.value as UniteLongueur)}>
-                <option value="mm">mm</option>
-                <option value="cm">cm</option>
-                <option value="m">m</option>
-              </select>
+          <label className="field">
+            <span>Tracé</span>
+            <select value={orientation} onChange={(e) => setOrientation(e.target.value as typeof orientation)}>
+              <option value="auto">Auto ({enZ ? "valeur en abscisse, cote en ordonnée" : "position en abscisse"})</option>
+              <option value="verticale">Valeur en abscisse, position en ordonnée</option>
+              <option value="horizontale">Position en abscisse, valeur en ordonnée</option>
+            </select>
+          </label>
+          {enZ && orientation !== "horizontale" ? (
+            <label className="chip">
+              <input type="checkbox" checked={profondeur} onChange={(e) => setProfondeur(e.target.checked)} />
+              profondeur positive (vers le bas)
             </label>
-            {vertical ? (
-              <label className="chip">
-                <input type="checkbox" checked={profondeur} onChange={(e) => setProfondeur(e.target.checked)} />
-                profondeur positive
-              </label>
-            ) : null}
-          </div>
+          ) : null}
           <button type="button" className="primary" disabled={!actives.length} onClick={tracer}>
             Tracer {profils.length > 1 ? `les ${profils.length} profils` : "le profil"}
           </button>
@@ -172,8 +204,11 @@ export function Comsol() {
               ))}
             </select>
           </label>
+          <button type="button" className="primary" onClick={tracerCarte} title="Carte en couleurs, modifiable ensuite comme un graphe : palette, bornes, niveaux, axes, taille">
+            Tracer la carte
+          </button>
           <div className="comsol-extraire">
-            <span className="muted small">Extraire un profil :</span>
+            <span className="muted small">Ou extraire un profil :</span>
             {gc.varient.map((k, n) => (
               <label key={k} className="field">
                 <span>
@@ -193,23 +228,6 @@ export function Comsol() {
               Ajouter ce profil
             </button>
           </div>
-          {laCarte ? (
-            <>
-              <label className="field">
-                <span>Exagération verticale de la carte (×)</span>
-                <input type="number" min={1} max={50} step={1} value={laCarte.exa} onChange={(e) => setExageration(Math.max(1, Number(e.target.value) || 1))} />
-              </label>
-              <div className="comsol-carte" dangerouslySetInnerHTML={{ __html: laCarte.svg }} />
-              <div className="row">
-                <button type="button" onClick={() => void s.enregistrerCarte(laCarte.svg, `${coupe.nom.replace(/\.(txt|csv|dat)$/i, "")} — ${legendeCarte(coupe, exprC)}`, `COMSOL : ${coupe.meta.Model ?? coupe.nom}`)}>
-                  Enregistrer la carte
-                </button>
-                <button type="button" onClick={() => void getBackend().then((b) => b.saveTextAs(laCarte.svg, `${coupe.nom.replace(/\.(txt|csv|dat)$/i, "")}.svg`, "svg"))}>
-                  SVG…
-                </button>
-              </div>
-            </>
-          ) : null}
         </>
       ) : null}
     </section>

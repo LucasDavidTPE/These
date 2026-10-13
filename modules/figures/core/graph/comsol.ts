@@ -29,6 +29,11 @@ export interface ExportComsol {
   /** Valeurs : une colonne par coordonnée puis par expression. */
   valeurs: Float64Array[];
   lignes: number;
+  /**
+   * Lecture imposée par l'utilisateur quand la détection se trompe : coordonnées à prendre comme variables,
+   * dans l'ordre du tracé ([k] : profil selon k ; [kx, ky] : coupe, kx à l'horizontale).
+   */
+  forcer?: number[];
 }
 
 export const estComsol = (texte: string) => /^\uFEFF?%\s*(Model|Modèle|Version|Dimension|Nodes)\s*:/m.test(texte.slice(0, 2000));
@@ -142,7 +147,8 @@ export interface Geometrie {
 const distinctes = (v: Float64Array) => [...new Set([...v].filter(Number.isFinite).map((x) => Number(x.toPrecision(10))))].sort((a, b) => a - b);
 
 export function geometrie(e: ExportComsol): Geometrie {
-  const varient = e.coordonnees.map((_, k) => k).filter((k) => {
+  const forcees = (e.forcer ?? []).filter((k, i, t) => k >= 0 && k < e.coordonnees.length && t.indexOf(k) === i);
+  const varient = forcees.length ? forcees : e.coordonnees.map((_, k) => k).filter((k) => {
     let mn = Infinity;
     let mx = -Infinity;
     for (const v of e.valeurs[k]!) {
@@ -155,6 +161,14 @@ export function geometrie(e: ExportComsol): Geometrie {
   const genre = varient.length === 0 ? "point" : varient.length === 1 ? "profil" : varient.length === 2 ? "coupe" : "volume";
   const reguliere = genre === "coupe" && grilles[0]!.length * grilles[1]!.length === e.lignes;
   return { varient, genre, grilles, reguliere };
+}
+
+/** Lectures possibles d'un export (pour corriger la détection) : profil selon chaque coordonnée, coupe pour chaque couple ordonné. */
+export function lecturesPossibles(e: ExportComsol): { libelle: string; forcer: number[] }[] {
+  const c = e.coordonnees;
+  const out = c.map((n, k) => ({ libelle: `Profil selon ${n}`, forcer: [k] }));
+  for (let a = 0; a < c.length; a++) for (let b = 0; b < c.length; b++) if (a !== b) out.push({ libelle: `Coupe ${c[a]} (horizontal) × ${c[b]} (vertical)`, forcer: [a, b] });
+  return out;
 }
 
 /** « profil vertical (Z), 161 points », « coupe YZ, 263 × 65 points ». */
@@ -220,6 +234,11 @@ export interface OptionsProfils {
   longueur: UniteLongueur;
   /** Profil vertical tracé en profondeur positive (vers le bas) plutôt qu'en z négatif. */
   profondeur?: boolean;
+  /**
+   * « verticale » : valeur en abscisse, coordonnée en ordonnée (profil en profondeur) ; « horizontale » :
+   * l'inverse ; « auto » (défaut) : verticale si la coordonnée est Z.
+   */
+  orientation?: "auto" | "verticale" | "horizontale";
 }
 
 /**
@@ -230,7 +249,8 @@ export function grapheProfils(exports: readonly ExportComsol[], o: OptionsProfil
   const profils = exports.filter((e) => geometrie(e).genre === "profil");
   if (!profils.length) throw new Error("Aucun profil (ligne) parmi ces exports : pour une coupe, extraire d'abord un profil.");
   const noms = o.noms ?? legendes(exports);
-  const vertical = profils.every((e) => /^z$/i.test(e.coordonnees[geometrie(e).varient[0]!]!));
+  const estZ = profils.every((e) => /^z$/i.test(e.coordonnees[geometrie(e).varient[0]!]!));
+  const vertical = o.orientation === "verticale" || (o.orientation !== "horizontale" && estZ);
   const series: Series[] = [];
   const unites = new Set<string>();
   const grandeurs = new Set<string>();
@@ -254,7 +274,8 @@ export function grapheProfils(exports: readonly ExportComsol[], o: OptionsProfil
   if (!series.length) throw new Error("Aucune des expressions choisies dans ces exports.");
   const g = [...grandeurs];
   const valeur = `${g.length === 1 ? g[0] : g.length <= 3 ? g.join(", ") : "Valeur"} (${[...unites].join(", ")})`;
-  const coordNom = vertical ? (o.profondeur ? "Profondeur" : "$z$") : `$${profils[0]!.coordonnees[geometrie(profils[0]!).varient[0]!]!.toLowerCase()}$`;
+  const nomCoord = `$${profils[0]!.coordonnees[geometrie(profils[0]!).varient[0]!]!.toLowerCase()}$`;
+  const coordNom = vertical && estZ ? (o.profondeur ? "Profondeur" : "$z$") : nomCoord;
   const coord = `${coordNom} (${o.longueur})`;
   // cote : de la surface (0) au point le plus bas, arrondi
   const toutes = series.flatMap((s) => (vertical ? s.y : s.x));
@@ -267,7 +288,7 @@ export function grapheProfils(exports: readonly ExportComsol[], o: OptionsProfil
     height: vertical ? 110 : 80,
     theme: "these",
     x: { label: vertical ? valeur : coord, log: false },
-    y: { label: vertical ? coord : valeur, log: false, ...(vertical && !o.profondeur ? { min: borne, max: 0 } : vertical ? { min: 0, max: borne } : {}) },
+    y: { label: vertical ? coord : valeur, log: false, ...(vertical && estZ && !o.profondeur && extreme < 0 ? { min: borne, max: 0 } : vertical && estZ && o.profondeur && extreme > 0 ? { min: 0, max: borne } : {}) },
     legend: coinLibre(series),
     grid: true,
     bar_width: 3,
@@ -299,20 +320,10 @@ export function extraireProfil(e: ExportComsol, fixe: number, valeur: number): E
 
 // ---- Carte d'une coupe ----
 
-export interface Carte {
-  /** Abscisses et ordonnées de la grille (unités de longueur choisies), valeurs [ligne y][colonne x]. */
-  x: number[];
-  y: number[];
-  v: number[][];
-  min: number;
-  max: number;
-  nomX: string;
-  nomY: string;
-}
-
-export function carte(e: ExportComsol, expression: string, longueur: UniteLongueur): Carte {
+/** Grille d'une coupe régulière : nœuds (unité de longueur choisie) et valeurs [ligne y][colonne x] (null : absente). */
+export function grilleCoupe(e: ExportComsol, expression: string, longueur: UniteLongueur): { x: number[]; y: number[]; v: (number | null)[][]; nomX: string; nomY: string } {
   const g = geometrie(e);
-  if (g.genre !== "coupe" || !g.reguliere) throw new Error("Carte possible seulement pour une coupe sur grille régulière.");
+  if (g.genre !== "coupe" || !g.reguliere) throw new Error("Carte possible seulement pour une coupe sur grille régulière (sinon, choisir une autre lecture du fichier).");
   const j = e.colonnes.findIndex((c) => c.expression === expression);
   if (j < 0) throw new Error(`Expression absente : ${expression}.`);
   const [kx, ky] = g.varient as [number, number];
@@ -321,122 +332,45 @@ export function carte(e: ExportComsol, expression: string, longueur: UniteLongue
   const gy = g.grilles[1]!;
   const ix = new Map(gx.map((v, i) => [v, i]));
   const iy = new Map(gy.map((v, i) => [v, i]));
-  const v = gy.map(() => gx.map(() => NaN));
+  const v: (number | null)[][] = gy.map(() => gx.map(() => null));
   const col = e.valeurs[e.coordonnees.length + j]!;
-  let min = Infinity;
-  let max = -Infinity;
   for (let i = 0; i < e.lignes; i++) {
     const a = ix.get(Number(e.valeurs[kx]![i]!.toPrecision(10)));
     const b = iy.get(Number(e.valeurs[ky]![i]!.toPrecision(10)));
-    if (a === undefined || b === undefined) continue;
-    const x = col[i]!;
-    v[b]![a] = x;
-    if (Number.isFinite(x)) {
-      if (x < min) min = x;
-      if (x > max) max = x;
-    }
+    if (a === undefined || b === undefined || !Number.isFinite(col[i]!)) continue;
+    v[b]![a] = Number(col[i]!.toPrecision(8));
   }
-  return { x: gx.map((x) => x * f), y: gy.map((y) => y * f), v, min, max, nomX: e.coordonnees[kx]!.toLowerCase(), nomY: e.coordonnees[ky]!.toLowerCase() };
+  const r = (x: number) => Number((x * f).toPrecision(10));
+  return { x: gx.map(r), y: gy.map(r), v, nomX: e.coordonnees[kx]!.toLowerCase(), nomY: e.coordonnees[ky]!.toLowerCase() };
 }
-
-/** Viridis (séquentielle) et rouge-bleu (divergente), 9 repères chacune. */
-const VIRIDIS = ["#440154", "#472d7b", "#3b528b", "#2c728e", "#21918c", "#28ae80", "#5ec962", "#addc30", "#fde725"];
-const ROUGE_BLEU = ["#2166ac", "#4393c3", "#92c5de", "#d1e5f0", "#f7f7f7", "#fddbc7", "#f4a582", "#d6604d", "#b2182b"];
-
-function interpCouleur(echelle: string[], t: number): string {
-  const u = Math.max(0, Math.min(1, t)) * (echelle.length - 1);
-  const i = Math.min(echelle.length - 2, Math.floor(u));
-  const f = u - i;
-  const a = echelle[i]!;
-  const b = echelle[i + 1]!;
-  const c = (s: string, k: number) => parseInt(s.slice(1 + 2 * k, 3 + 2 * k), 16);
-  return `#${[0, 1, 2].map((k) => Math.round(c(a, k) + f * (c(b, k) - c(a, k))).toString(16).padStart(2, "0")).join("")}`;
-}
-
-const nb = (x: number) => String(Number(x.toPrecision(4))).replace(/^-/, "−").replace(".", ",");
 
 /**
- * Carte en couleurs d'une coupe, en SVG autonome : cellules de la grille (regroupées par plages de même
- * couleur), axes gradués, barre de couleurs. Échelle divergente centrée sur 0 si les valeurs changent de
- * signe, sinon viridis. `exageration` : facteur d'échelle verticale (coupes de chaussée très allongées).
+ * Carte d'une coupe en graphe modifiable (champ `carte` de `graph.json`) : palette divergente si les valeurs
+ * changent de signe, viridis sinon ; hauteur choisie pour une exagération verticale raisonnable.
  */
-export function carteSvg(c: Carte, o: { titre?: string; legende: string; uniteLongueur: string; exageration?: number; niveaux?: number; largeur?: number }): string {
-  const niveaux = o.niveaux ?? 24;
-  const div = c.min < 0 && c.max > 0;
-  const borne = Math.max(Math.abs(c.min), Math.abs(c.max));
-  const [lo, hi] = div ? [-borne, borne] : [c.min, c.max];
-  const echelle = div ? ROUGE_BLEU : VIRIDIS;
-  const niveau = (v: number) => Math.min(niveaux - 1, Math.max(0, Math.floor(((v - lo) / (hi - lo || 1)) * niveaux)));
-  const couleurNiveau = (k: number) => interpCouleur(echelle, (k + 0.5) / niveaux);
-
-  const W = o.largeur ?? 640;
-  const M = { g: 64, d: 90, h: o.titre ? 34 : 14, b: 44 };
-  const lx = c.x.at(-1)! - c.x[0]!;
-  const ly = c.y.at(-1)! - c.y[0]!;
-  const pw = W - M.g - M.d;
-  const ph = Math.max(60, Math.min(600, (pw * ly * (o.exageration ?? 1)) / (lx || 1)));
-  const H = M.h + ph + M.b;
-  const px = (x: number) => M.g + ((x - c.x[0]!) / (lx || 1)) * pw;
-  const py = (y: number) => M.h + (1 - (y - c.y[0]!) / (ly || 1)) * ph;
-  // bornes des cellules : milieux entre nœuds
-  const bord = (g: number[], i: number, cote: -1 | 1) => (cote < 0 ? (i === 0 ? g[0]! : (g[i - 1]! + g[i]!) / 2) : i === g.length - 1 ? g[i]! : (g[i]! + g[i + 1]!) / 2);
-  const out: string[] = [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${Math.round(H)}" viewBox="0 0 ${W} ${Math.round(H)}" font-family="Segoe UI, Arial, sans-serif">`,
-    `<rect width="100%" height="100%" fill="#ffffff"/>`,
-  ];
-  if (o.titre) out.push(`<text x="${M.g}" y="20" font-size="14" font-weight="600" fill="#1d1d1b">${echapper(o.titre)}</text>`);
-  out.push(`<g shape-rendering="crispEdges">`);
-  c.y.forEach((_, j) => {
-    const y0 = py(bord(c.y, j, 1));
-    const y1 = py(bord(c.y, j, -1));
-    let i = 0;
-    while (i < c.x.length) {
-      const v = c.v[j]![i]!;
-      if (!Number.isFinite(v)) {
-        i++;
-        continue;
-      }
-      const k = niveau(v);
-      let fin = i;
-      while (fin + 1 < c.x.length && Number.isFinite(c.v[j]![fin + 1]!) && niveau(c.v[j]![fin + 1]!) === k) fin++;
-      const x0 = px(bord(c.x, i, -1));
-      const x1 = px(bord(c.x, fin, 1));
-      out.push(`<rect x="${r2(x0)}" y="${r2(y0)}" width="${r2(x1 - x0 + 0.3)}" height="${r2(y1 - y0 + 0.3)}" fill="${couleurNiveau(k)}"/>`);
-      i = fin + 1;
-    }
-  });
-  out.push(`</g>`, `<rect x="${M.g}" y="${M.h}" width="${r2(pw)}" height="${r2(ph)}" fill="none" stroke="#333" stroke-width="0.8"/>`);
-  // graduations
-  for (const t of graduer(c.x[0]!, c.x.at(-1)!, 7)) out.push(`<line x1="${r2(px(t))}" y1="${r2(M.h + ph)}" x2="${r2(px(t))}" y2="${r2(M.h + ph + 4)}" stroke="#333"/><text x="${r2(px(t))}" y="${r2(M.h + ph + 16)}" font-size="11" text-anchor="middle" fill="#333">${nb(t)}</text>`);
-  for (const t of graduer(c.y[0]!, c.y.at(-1)!, 5)) out.push(`<line x1="${M.g - 4}" y1="${r2(py(t))}" x2="${M.g}" y2="${r2(py(t))}" stroke="#333"/><text x="${M.g - 7}" y="${r2(py(t) + 4)}" font-size="11" text-anchor="end" fill="#333">${nb(t)}</text>`);
-  out.push(`<text x="${r2(M.g + pw / 2)}" y="${r2(H - 8)}" font-size="12" text-anchor="middle" fill="#1d1d1b">${c.nomX} (${o.uniteLongueur})</text>`);
-  out.push(`<text transform="translate(16 ${r2(M.h + ph / 2)}) rotate(-90)" font-size="12" text-anchor="middle" fill="#1d1d1b">${c.nomY} (${o.uniteLongueur})</text>`);
-  // barre de couleurs
-  const bx = W - M.d + 18;
-  const bh = Math.max(60, ph);
-  for (let k = 0; k < niveaux; k++) out.push(`<rect x="${bx}" y="${r2(M.h + bh - ((k + 1) * bh) / niveaux)}" width="14" height="${r2(bh / niveaux + 0.3)}" fill="${couleurNiveau(k)}"/>`);
-  out.push(`<rect x="${bx}" y="${M.h}" width="14" height="${r2(bh)}" fill="none" stroke="#333" stroke-width="0.6"/>`);
-  for (const t of graduer(lo, hi, 5)) {
-    const y = M.h + bh - ((t - lo) / (hi - lo || 1)) * bh;
-    out.push(`<line x1="${bx + 14}" y1="${r2(y)}" x2="${bx + 18}" y2="${r2(y)}" stroke="#333"/><text x="${bx + 21}" y="${r2(y + 4)}" font-size="10.5" fill="#333">${nb(t)}</text>`);
-  }
-  out.push(`<text x="${bx}" y="${M.h - 4}" font-size="11" fill="#1d1d1b">${echapper(o.legende)}</text>`);
-  out.push(`</svg>`);
-  return out.join("\n");
-}
-
-const r2 = (x: number) => Math.round(x * 100) / 100;
-const echapper = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-function graduer(a: number, b: number, n: number): number[] {
-  const etendue = b - a;
-  if (!(etendue > 0)) return [a];
-  const brut = etendue / n;
-  const p = 10 ** Math.floor(Math.log10(brut));
-  const pas = [1, 2, 2.5, 5, 10].map((m) => m * p).find((s) => etendue / s <= n) ?? 10 * p;
-  const out: number[] = [];
-  for (let t = Math.ceil(a / pas - 1e-9) * pas; t <= b + 1e-9 * etendue; t += pas) out.push(Math.abs(t) < pas * 1e-9 ? 0 : Number(t.toPrecision(10)));
-  return out;
+export function grapheCarte(e: ExportComsol, expression: string, longueur: UniteLongueur): GraphDoc {
+  const g = grilleCoupe(e, expression, longueur);
+  const lib = libelleExpression(e.colonnes.find((c) => c.expression === expression)!);
+  const vals = g.v.flat().filter((x): x is number => x !== null);
+  const div = vals.some((x) => x < 0) && vals.some((x) => x > 0);
+  const lx = g.x.at(-1)! - g.x[0]!;
+  const ly = g.y.at(-1)! - g.y[0]!;
+  const largeur = 160;
+  const boite = largeur - 16 - 3 - 3 - 3.5 - 11 - 5;
+  const hauteur = Math.round(Math.max(45, Math.min(140, (boite * ly) / (lx || 1) + 15)));
+  return {
+    format: GRAPH_FORMAT,
+    width: largeur,
+    height: hauteur,
+    theme: "these",
+    x: { label: `$${g.nomX}$ (${longueur})`, log: false, min: g.x[0]!, max: g.x.at(-1)! },
+    y: { label: `$${g.nomY}$ (${longueur})`, log: false, min: g.y[0]!, max: g.y.at(-1)! },
+    legend: "none",
+    grid: false,
+    bar_width: 3,
+    carte: { x: g.x, y: g.y, v: g.v, palette: div ? "divergente" : "viridis", niveaux: 24, legende: `${lib.grandeur} (${lib.unite})`, inverser: false },
+    series: [],
+  };
 }
 
 /** Libellé de légende de la carte : « εzz (µdef) ». */
