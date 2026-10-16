@@ -245,6 +245,8 @@ lancent tous les tests automatiques sous Windows.
       et **convergence du maillage** (EL / EL-fin : écart sur le pic, pire point, L2), dans le rapport LaTeX (1.34.0)
 - [x] COMSOL : **profils le long de segments** quelconques (deux clics), **lissage** de la carte, **animation** des instants en GIF
       animé ou en images + `\animategraphics` pour Beamer (1.35.0)
+- [x] COMSOL : **sensibilité à un paramètre** (balayage ou instants d'un fichier, paramètre d'en-tête d'un fichier à l'autre ;
+      extremum ou valeur en un point) et **export Excel** des données de chaque tracé et des tableaux (1.36.0)
 - [x] Manuscrits : anciens fichiers **.doc** acceptés (parties, dossiers, corrections reçues), convertis en `.docx` par Word
       à côté de l'original (1.26.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),

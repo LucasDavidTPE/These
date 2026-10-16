@@ -10,16 +10,22 @@ import {
   CAPTEURS_HWD,
   avecSurface,
   bassinsLatex,
+  candidatsSensibilite,
   courtDe,
   executerTrace,
   expressionsCommunes,
+  geometrie,
+  libelleDe,
   lireMesure,
   lireValeurs,
   maillageLatex,
   pairesMaillage,
+  sensibiliteLatex,
+  sourcesSensibilite,
   type PaireMaillage,
   type TraceBassin,
   type TraceMaillage,
+  type TraceSensibilite,
   type UniteLongueur,
 } from "../../core/graph";
 import { getBackend } from "../platform/backend";
@@ -580,6 +586,156 @@ export function ModeMaillage() {
           <div className="atelier-apercu vide">
             Choisissez au moins une paire et une grandeur.
           </div>
+        ) : null}
+      </section>
+    </>
+  );
+}
+
+// ---- Sensibilité à un paramètre ----
+
+export function ModeSensibilite() {
+  const c = useContexteTrace();
+  const legende = useLegende();
+  const [t, maj] = useTrace<TraceSensibilite>("sensibilite");
+  const src = sourcesSensibilite(c.exports);
+  const params = t.source === "instants" ? src.instants : src.fichiers;
+  const candidats = candidatsSensibilite(c.exports, t.source, t.parametre);
+  const choisis = t.fichiers ? candidats.filter((e) => t.fichiers!.includes(e.nom)) : candidats;
+  const dispo = expressionsCommunes(choisis.length ? choisis : candidats);
+  const plans = choisis.filter((e) => geometrie(e).genre === "coupe" && geometrie(e).reguliere);
+  const [px, setPx] = useState(t.point ? String(t.point.x) : "");
+  const [py, setPy] = useState(t.point ? String(t.point.y) : "");
+  const resultat = calculer(() => executerTrace(t, c));
+  const series = resultat && "sensibilite" in resultat ? resultat.sensibilite : undefined;
+  const unite = params.find((p) => p.nom === t.parametre)?.unite ?? "";
+  const tex = () => (series && t.parametre && t.expression && choisis[0] ? sensibiliteLatex(series, { parametre: t.parametre, unite, libelle: libelleDe(choisis[0], t.expression), virgule: t.virgule }) : "");
+  const basculer = (nom: string, oui: boolean) => {
+    const actuels = t.fichiers ?? candidats.map((e) => e.nom);
+    const n = oui ? [...actuels, nom] : actuels.filter((x) => x !== nom);
+    maj({ fichiers: n.length === candidats.length ? null : n });
+  };
+  const xs = series ? [...new Set(series.flatMap((s) => s.points.map((p) => p.x)))].sort((a, b) => a - b) : [];
+  const g0 = plans[0] ? geometrie(plans[0]) : null;
+  const [nh, nv] = g0 && plans[0] ? (g0.varient.map((k) => plans[0]!.coordonnees[k]!.toLowerCase()) as [string, string]) : ["x", "z"];
+  return (
+    <>
+      <div className="atelier-reglages">
+        {t.source === "fichiers" ? <ChoixEtape mode="sensibilite" /> : null}
+        <fieldset className="atelier-champ">
+          <legend>Le paramètre varie…</legend>
+          <label className="chip">
+            <input type="radio" checked={t.source === "instants"} disabled={!src.instants.length} onChange={() => maj({ source: "instants", parametre: null, fichiers: null })} />
+            dans un même fichier (balayage, instants : colonnes « @ E=… », « @ t=… »)
+          </label>
+          <label className="chip">
+            <input type="radio" checked={t.source === "fichiers"} disabled={!src.fichiers.length} onChange={() => maj({ source: "fichiers", parametre: null, fichiers: null })} />
+            d'un fichier à l'autre (paramètre de l'en-tête : lc=1, lc=2…)
+          </label>
+        </fieldset>
+        <label className="field">
+          <span>Paramètre</span>
+          <select value={t.parametre ?? ""} onChange={(e) => maj({ parametre: e.target.value, fichiers: null })}>
+            {params.map((p) => (
+              <option key={p.nom} value={p.nom}>
+                {p.nom}
+                {p.unite ? ` (${p.unite})` : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+        <fieldset className="atelier-champ">
+          <legend>Fichiers</legend>
+          {candidats.map((e) => (
+            <label key={e.nom} className="chip">
+              <input type="checkbox" checked={!t.fichiers || t.fichiers.includes(e.nom)} onChange={(x) => basculer(e.nom, x.target.checked)} />
+              {legende(e)}
+            </label>
+          ))}
+        </fieldset>
+        <label className="field">
+          <span>Grandeur</span>
+          <select value={t.expression ?? ""} onChange={(e) => maj({ expression: e.target.value })}>
+            {dispo.map((x) => (
+              <option key={x} value={x}>
+                {courtDe(choisis[0] ?? candidats[0], x)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <fieldset className="atelier-champ">
+          <legend>Valeur retenue</legend>
+          <label className="chip">
+            <input type="radio" checked={!t.point} onChange={() => maj({ point: null })} />
+            extremum sur tout le fichier :
+          </label>
+          <select value={t.statistique} disabled={!!t.point} onChange={(e) => maj({ statistique: e.target.value as TraceSensibilite["statistique"] })}>
+            <option value="abs">plus grande valeur absolue</option>
+            <option value="max">maximum</option>
+            <option value="min">minimum</option>
+          </select>
+          {plans.length ? (
+            <>
+              <label className="chip">
+                <input type="radio" checked={!!t.point} onChange={() => maj({ point: { x: Number(px.replace(",", ".")) || 0, y: Number(py.replace(",", ".")) || 0 } })} />
+                valeur en un point des coupes ({c.cadre.longueur}) :
+              </label>
+              <div className="comsol-ligne small">
+                <span>{nh} =</span>
+                <input value={px} onChange={(e) => setPx(e.target.value)} onBlur={() => t.point && maj({ point: { x: Number(px.replace(",", ".").replace("−", "-")) || 0, y: t.point.y } })} aria-label="Abscisse du point" />
+                <span>{nv} =</span>
+                <input value={py} onChange={(e) => setPy(e.target.value)} onBlur={() => t.point && maj({ point: { x: t.point.x, y: Number(py.replace(",", ".").replace("−", "-")) || 0 } })} aria-label="Ordonnée du point" />
+              </div>
+            </>
+          ) : null}
+        </fieldset>
+        <label className="chip">
+          <input type="checkbox" checked={t.virgule} onChange={(e) => maj({ virgule: e.target.checked })} />
+          Virgule décimale dans le LaTeX
+        </label>
+      </div>
+      <section className="atelier-colonne atelier-resultat">
+        <h3>
+          <span className="atelier-etape">3</span> Sensibilité
+        </h3>
+        {resultat && "erreur" in resultat ? <p className="banner error">{resultat.erreur}</p> : null}
+        {series ? (
+          <>
+            <div className="comsol-synthese">
+              <table>
+                <thead>
+                  <tr>
+                    <th>
+                      {t.parametre}
+                      {unite ? ` (${unite})` : ""}
+                    </th>
+                    {series.map((s) => (
+                      <th key={s.nom}>{s.nom}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {xs.map((x) => (
+                    <tr key={x}>
+                      <td>{fr(x, 4)}</td>
+                      {series.map((s) => {
+                        const p = s.points.find((q) => q.x === x);
+                        return (
+                          <td key={s.nom} title={p?.position ? Object.entries(p.position).map(([k, v]) => `${k.toLowerCase()} = ${fr(v, 4)}`).join(", ") : undefined}>
+                            {fr(p?.y, 4)}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <BoutonsLatex tex={tex} nom="sensibilite-comsol.tex" />
+            <AtelierApercu resultat={resultat} trace={t} />
+          </>
+        ) : !(resultat && "erreur" in resultat) ? (
+          <div className="atelier-apercu vide">Choisissez un paramètre, des fichiers et une grandeur.</div>
         ) : null}
       </section>
     </>

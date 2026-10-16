@@ -405,6 +405,13 @@ Ajouts permis par l'intégration :
   `lissage`) ; `comsolAnimation.ts` (`imagesInstants` : une carte par instant, bornes communes ; `animationBeamer`) ;
   `@noyau/formats/gif` (`gifAnime` : GIF89a, palette commune par coupe médiane sur 5 bits, LZW avec remise à zéro
   à 4096 codes, boucle NETSCAPE2.0) ; rendu RVBA `svgToRgba` ; enregistrement par `plateforme.enregistrerSous`.
+- **sensibilité et Excel** (1.36.0) : `comsolSensibilite.ts` (`statistique` : extremum et position, ou valeur
+  bilinéaire en un point d'une coupe ; `sensibiliteInterne` sur `parametresVariables` d'un fichier ;
+  `parametresFichiers` / `sensibiliteFichiers` sur les paramètres d'en-tête numériques, groupés par les autres
+  paramètres ; `grapheSensibilite`, `sensibiliteLatex`) ; recette `TraceSensibilite` (source instants | fichiers,
+  pas de vue à l'instant appliquée d'avance pour un balayage interne). `comsolExcel.ts` : `feuillesGraphe`
+  (courbes, grille), `feuilleSynthese`, `feuilleCriteres`, `feuilleBassins`, `feuilleMaillage`,
+  `feuilleSensibilite` → `ecrireClasseur` (noyau) ; `nomDeFichier` (sans accents ni grec).
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,

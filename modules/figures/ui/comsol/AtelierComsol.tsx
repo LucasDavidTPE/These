@@ -13,12 +13,12 @@ import { ModeComparer, ModeCoupeProfils, ModeProfils, ModeSynthese, ModeTemps } 
 import { ModeCarte } from "./ModeCarte";
 import { regenererEtude } from "./lot";
 import { ModeCriteres } from "./ModeCriteres";
-import { ModeBassin, ModeMaillage } from "./ModesIngenierie";
+import { ModeBassin, ModeMaillage, ModeSensibilite } from "./ModesIngenierie";
 import { ReglagesPartages } from "./Outils";
 import { RapportEtude } from "./RapportEtude";
 import { useAtelier } from "./useAtelier";
 
-const ICONES: Record<ModeAtelier, string> = { profils: "⫼", carte: "▦", "coupe-profils": "▥", temps: "∿", comparer: "÷", synthese: "▤", criteres: "⚖", bassin: "◡", maillage: "⊞" };
+const ICONES: Record<ModeAtelier, string> = { profils: "⫼", carte: "▦", "coupe-profils": "▥", temps: "∿", comparer: "÷", synthese: "▤", criteres: "⚖", bassin: "◡", maillage: "⊞", sensibilite: "↗" };
 
 /** Racines du poste et surveillance des dossiers pour l'atelier ; glisser-déposer des fichiers sur la page. */
 function useBranchements() {
@@ -223,6 +223,7 @@ export function AtelierComsol() {
             {mode === "criteres" ? <ModeCriteres /> : null}
             {mode === "bassin" ? <ModeBassin /> : null}
             {mode === "maillage" ? <ModeMaillage /> : null}
+            {mode === "sensibilite" ? <ModeSensibilite /> : null}
             {!mode ? <p className="muted atelier-attente">Ouvrez des fichiers (à gauche) : les tracés possibles s'allument.</p> : null}
           </div>
         </div>

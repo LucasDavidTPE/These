@@ -4,7 +4,9 @@
  * figure saura se régénérer quand COMSOL réexportera les fichiers.
  */
 import { useMemo, useState } from "react";
-import { exportGraphSvg, graphLayout, versDonnees, type GraphDoc, type Trace } from "../../core/graph";
+import { useContexte } from "@interface/contexte";
+import { ecrireClasseur, type Feuille } from "@noyau/formats/xlsx-ecriture";
+import { exportGraphSvg, feuilleBassins, feuilleCriteres, feuilleMaillage, feuilleSensibilite, feuilleSynthese, feuillesGraphe, graphLayout, nomDeFichier, versDonnees, type GraphDoc, type ResultatTrace, type Trace } from "../../core/graph";
 import { envoyerVersGraphes, type Resultat } from "./atelierCalcul";
 import { useAtelier } from "./useAtelier";
 
@@ -26,6 +28,7 @@ export function AtelierApercu({
 }) {
   const [titre, setTitre] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
+  const ctx = useContexte();
   // le titre saisi tient tant que le titre proposé ne change pas (autre grandeur, autres fichiers…)
   const propose = resultat && "doc" in resultat ? resultat.titre : "";
   const [vu, setVu] = useState(propose);
@@ -61,6 +64,21 @@ export function AtelierApercu({
     const p = position(ev);
     onSurvol(p ? { x: p.x, y: p.y } : null);
   };
+  // données du graphe et tableaux calculés, pour Excel
+  const excel = async () => {
+    const r = resultat as ResultatTrace;
+    const sansExt = (n: string) => n.replace(/\.(txt|csv|dat)$/i, "");
+    const feuilles: Feuille[] = [
+      ...(r.lignes ? [feuilleSynthese(r.lignes, useAtelier.getState().cadre.longueur)] : []),
+      ...(r.tableau ? [feuilleCriteres(r.tableau)] : []),
+      ...(r.bassins ? [feuilleBassins(r.bassins, r.ecartsMesure)] : []),
+      ...(r.maillage ? [feuilleMaillage(r.maillage, sansExt)] : []),
+      ...(r.sensibilite && trace?.mode === "sensibilite" ? [feuilleSensibilite(r.sensibilite, trace.parametre ?? "paramètre")] : []),
+      ...feuillesGraphe(doc),
+    ];
+    const nom = nomDeFichier(titre ?? resultat.titre);
+    await ctx.plateforme.enregistrerSous(`${nom}.xlsx`, ecrireClasseur(feuilles));
+  };
   const continuer = async () => {
     const t = titre ?? resultat.titre;
     setEnvoi(true);
@@ -79,6 +97,9 @@ export function AtelierApercu({
       {trace ? (
         <div className="atelier-envoi">
           <input value={titre ?? resultat.titre} onChange={(e) => setTitre(e.target.value)} aria-label="Titre du graphe" title="Titre dans la bibliothèque" />
+          <button type="button" onClick={() => void excel()} title="Les données de ce graphe (courbes, ou grille de la carte) et les tableaux calculés, dans un classeur Excel">
+            Excel…
+          </button>
           <button
             type="button"
             className="primary"

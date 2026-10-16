@@ -18,6 +18,7 @@ import {
   grilleCoupe,
   legendes,
   libelleColonne,
+  parametresDe,
   lireComsol,
   type Correspondance,
   type ExportComsol,
@@ -27,10 +28,11 @@ import {
 } from "./comsol";
 import { ajouterColonne, changerRepere, combiner, grapheBarres, grapheTemporel, motsDuNom, pic, profilsInterpoles, synthese, type LigneSynthese, type ModePic, type Operation, type Statistique } from "./comsolCalcul";
 import { grapheCriteres, tableauCriteres, type AffichageCriteres, type Critere, type TableauCriteres } from "./comsolCriteres";
-import { affinerCarte, parametresDesExports, signalAuPoint, titreEtape, valeurCarte, vueEtape, type Etape } from "./comsolInstants";
+import { affinerCarte, parametresDesExports, parametresVariables, signalAuPoint, titreEtape, valeurCarte, vueEtape, type Etape } from "./comsolInstants";
 import { grapheSegments, type Segment } from "./comsolSegments";
 import { bassin, ecartMesure, expressionDeflexion, grapheBassins, ligneSurface, type Bassin, type Mesure } from "./comsolBassin";
 import { comparerMaillages, grapheMaillage, pairesMaillage, type LigneMaillage, type PaireMaillage } from "./comsolMaillage";
+import { grapheSensibilite, libelleDe, parametresFichiers, sensibiliteFichiers, sensibiliteInterne, type SerieSensibilite, type StatSensibilite } from "./comsolSensibilite";
 import { hauteurEgale } from "./layout";
 import type { GraphDoc, Series } from "./model";
 
@@ -70,7 +72,7 @@ export const sourcesDerive = (d: Derive) => (d.genre === "operation" ? [d.a, d.b
 
 // ---- Recettes (tracés de l'atelier) ----
 
-export type ModeTrace = "profils" | "carte" | "coupe-profils" | "temps" | "comparer" | "synthese" | "criteres" | "bassin" | "maillage";
+export type ModeTrace = "profils" | "carte" | "coupe-profils" | "temps" | "comparer" | "synthese" | "criteres" | "bassin" | "maillage" | "sensibilite";
 
 /**
  * Instant (ou enveloppe) choisi pour les exports à plusieurs instants ; absent : le premier instant. Commun à
@@ -173,7 +175,19 @@ export interface TraceMaillage extends AvecEtape {
   mesure: "pic" | "l2" | "max";
   virgule: boolean;
 }
-export type Trace = TraceProfils | TraceCarte | TraceCoupeProfils | TraceTemps | TraceComparer | TraceSynthese | TraceCriteres | TraceBassin | TraceMaillage;
+export interface TraceSensibilite extends AvecEtape {
+  mode: "sensibilite";
+  /** Balayage dans un même fichier (instants, @ E=…) ou paramètre de l'en-tête d'un fichier à l'autre. */
+  source: "instants" | "fichiers";
+  parametre: string | null;
+  fichiers: string[] | null;
+  expression: string | null;
+  statistique: StatSensibilite;
+  /** Valeur en un point d'une coupe (unité de tracé) ; null : extremum sur tout le fichier. */
+  point: { x: number; y: number } | null;
+  virgule: boolean;
+}
+export type Trace = TraceProfils | TraceCarte | TraceCoupeProfils | TraceTemps | TraceComparer | TraceSynthese | TraceCriteres | TraceBassin | TraceMaillage | TraceSensibilite;
 
 /** Réglages de l'atelier au moment du tracé (gardés avec la recette). */
 export interface Cadre {
@@ -220,11 +234,30 @@ export function traceVide(mode: ModeTrace): Trace {
       return { mode, fichiers: null, expression: null, centre: null, capteurs: [...CAPTEURS_HWD], rayon: 0.2, mesure: null, virgule: true };
     case "maillage":
       return { mode, paires: null, expressions: [], mesure: "pic", virgule: true };
+    case "sensibilite":
+      return { mode, source: "instants", parametre: null, fichiers: null, expression: null, statistique: "abs", point: null, virgule: true };
   }
+}
+
+/** Fichiers et paramètres possibles pour une étude de sensibilité. */
+export function sourcesSensibilite(exports: readonly ExportComsol[]): { instants: { nom: string; unite: string }[]; fichiers: { nom: string; unite: string }[] } {
+  const donnees = exports.filter((e) => e.nature !== "table");
+  return {
+    instants: parametresDesExports(donnees)
+      .filter((p) => p.valeurs.every((v) => Number.isFinite(v.nombre)))
+      .map((p) => ({ nom: p.nom, unite: p.unite })),
+    fichiers: parametresFichiers(donnees),
+  };
 }
 
 /** Géophones d'un HWD (m) : 0, 200, 300, 450, 600, 900, 1200, 1500, 1800 mm. */
 export const CAPTEURS_HWD = [0, 0.2, 0.3, 0.45, 0.6, 0.9, 1.2, 1.5, 1.8];
+/** Fichiers concernés par une sensibilité : ceux qui ont le paramètre (dans leurs colonnes, ou dans l'en-tête). */
+export function candidatsSensibilite(exports: readonly ExportComsol[], source: "instants" | "fichiers", parametre: string | null): ExportComsol[] {
+  const donnees = exports.filter((e) => e.nature !== "table");
+  if (!parametre) return [];
+  return source === "instants" ? donnees.filter((e) => parametresVariables(e).some((p) => p.nom === parametre)) : donnees.filter((e) => parametresDe(e)[parametre] !== undefined);
+}
 /** Exports où lire un bassin : une ligne de surface et une déflexion. */
 export const avecSurface = (es: readonly ExportComsol[]) => es.filter((e) => e.nature !== "table" && ligneSurface(e) !== null && expressionDeflexion(e) !== null);
 
@@ -314,6 +347,17 @@ export function normaliser(t: Trace, exports: readonly ExportComsol[]): Trace {
       const l = avecSurface(exports);
       return { ...t, fichiers: t.fichiers ? t.fichiers.filter((n) => l.some((e) => e.nom === n)) : null };
     }
+    case "sensibilite": {
+      const src = sourcesSensibilite(exports);
+      const liste = t.source === "instants" ? src.instants : src.fichiers;
+      const source = liste.length ? t.source : src.instants.length ? "instants" : "fichiers";
+      const params = source === "instants" ? src.instants : src.fichiers;
+      const parametre = t.parametre && params.some((p) => p.nom === t.parametre) ? t.parametre : (params[0]?.nom ?? null);
+      const candidats = candidatsSensibilite(exports, source, parametre);
+      const l = choisis(candidats, t.fichiers);
+      const dispo = expressionsCommunes(l.length ? l : candidats);
+      return { ...t, source, parametre, fichiers: t.fichiers ? t.fichiers.filter((n) => candidats.some((e) => e.nom === n)) : null, expression: t.expression && dispo.includes(t.expression) ? t.expression : expressionParDefaut(dispo) };
+    }
     case "maillage": {
       const paires = (t.paires ?? pairesMaillage(exports)).filter((p) => exports.some((e) => e.nom === p.grossier) && exports.some((e) => e.nom === p.fin));
       const es = paires.flatMap((p) => exports.filter((e) => e.nom === p.grossier || e.nom === p.fin));
@@ -359,6 +403,8 @@ export interface ResultatTrace {
   /** Convergence du maillage (mode maillage) ; paires qui n'ont pas pu être comparées. */
   maillage?: LigneMaillage[];
   problemes?: string[];
+  /** Séries de la sensibilité (mode sensibilité). */
+  sensibilite?: SerieSensibilite[];
 }
 
 const interfacesSi = (c: ContexteTrace) => (c.cadre.couches ? c.interfaces : undefined);
@@ -386,9 +432,11 @@ export function carteDeSelection(t0: TraceCoupeProfils, c: ContexteTrace): Graph
 export function executerTrace(t0: Trace, c0: ContexteTrace): ResultatTrace | null {
   // exports à plusieurs instants : vus à l'instant choisi (ou en enveloppe) ; les autres passent tels quels
   const params = parametresDesExports(c0.exports);
-  const c = params.length ? { ...c0, exports: c0.exports.map((e) => vueEtape(e, t0.etape)) } : c0;
+  // (la sensibilité à un balayage interne lit elle-même chaque instant)
+  const c = params.length && !(t0.mode === "sensibilite" && t0.source === "instants") ? { ...c0, exports: c0.exports.map((e) => vueEtape(e, t0.etape)) } : c0;
   const r = executerVue(t0, c);
-  return r && params.length && t0.mode !== "temps" ? { ...r, titre: `${r.titre} (${titreEtape(t0.etape, params)})` } : r;
+  const sansInstant = t0.mode === "temps" || (t0.mode === "sensibilite" && t0.source === "instants");
+  return r && params.length && !sansInstant ? { ...r, titre: `${r.titre} (${titreEtape(t0.etape, params)})` } : r;
 }
 
 /** Valeur des points épinglés sur la carte : annotations (texte vers l'intérieur de la carte). */
@@ -496,6 +544,22 @@ function executerVue(t0: Trace, c: ContexteTrace): ResultatTrace | null {
         titre: `Bassin de déflexion — ${l.map(legende).join(", ")}`,
         bassins,
         ...(t.mesure ? { ecartsMesure: bassins.map((b) => ecartMesure(b, t.mesure!)) } : {}),
+      };
+    }
+    case "sensibilite": {
+      if (!t.parametre || !t.expression) return null;
+      const l = choisis(candidatsSensibilite(c.exports, t.source, t.parametre), t.fichiers);
+      if (!l.length) return null;
+      const o = { stat: t.statistique, point: t.point, longueur: L };
+      const series = t.source === "instants" ? sensibiliteInterne(l, t.parametre, t.expression, { ...o, etape: t.etape ?? null, legende }) : sensibiliteFichiers(l, t.parametre, t.expression, o);
+      if (!series.length) throw new Error(t.point ? "Le point est hors des coupes choisies." : "Aucune valeur pour ce paramètre.");
+      const src = sourcesSensibilite(c.exports);
+      const unite = [...src.instants, ...src.fichiers].find((p) => p.nom === t.parametre)?.unite ?? "";
+      const libelle = libelleDe(l[0]!, t.expression);
+      return {
+        doc: grapheSensibilite(series, { parametre: t.parametre, unite, libelle, stat: t.statistique, point: t.point }),
+        titre: `Sensibilité de ${libelle.court} à ${t.parametre}${t.point ? " (en un point)" : ""} — ${t.source === "instants" ? l.map(legende).join(", ") : `${l.length} fichiers`}`,
+        sensibilite: series,
       };
     }
     case "maillage": {
@@ -633,7 +697,7 @@ export const memesBornes = (a: GraphDoc, b: GraphDoc) => !a.carte || !b.carte ||
 const estObjet = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 const chaines = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 const nombres = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is number => typeof x === "number" && Number.isFinite(x)) : []);
-const MODES: ModeTrace[] = ["profils", "carte", "coupe-profils", "temps", "comparer", "synthese", "criteres", "bassin", "maillage"];
+const MODES: ModeTrace[] = ["profils", "carte", "coupe-profils", "temps", "comparer", "synthese", "criteres", "bassin", "maillage", "sensibilite"];
 
 export function lireCadre(v: unknown): Cadre {
   const c = estObjet(v) ? v : {};
@@ -714,6 +778,19 @@ function lireTraceSeule(v: unknown): Trace | null {
         capteurs: Array.isArray(v.capteurs) ? nombres(v.capteurs) : base.capteurs,
         rayon: typeof v.rayon === "number" && v.rayon > 0 ? v.rayon : base.rayon,
         mesure: m && Array.isArray(m.r) && Array.isArray(m.d) && m.r.length === m.d.length ? { r: nombres(m.r), d: nombres(m.d) } : null,
+        virgule: v.virgule !== false,
+      };
+    }
+    case "sensibilite": {
+      const pt = estObjet(v.point) && typeof v.point.x === "number" && typeof v.point.y === "number" ? { x: v.point.x, y: v.point.y } : null;
+      return {
+        ...base,
+        source: v.source === "fichiers" ? "fichiers" : "instants",
+        parametre: ch("parametre"),
+        fichiers: liste("fichiers"),
+        expression: ch("expression"),
+        statistique: v.statistique === "max" || v.statistique === "min" ? v.statistique : "abs",
+        point: pt,
         virgule: v.virgule !== false,
       };
     }

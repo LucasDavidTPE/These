@@ -989,3 +989,10 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
 - [ ] Carte : lissage × 4 ; Continuer dans Graphes, Enregistrer ; compilation pgfplots (taille du fichier acceptable).
 - [ ] Export VE à tous les instants → « Animer les instants » : GIF lu dans PowerPoint (lecture en boucle), couleurs fidèles ;
       archive Beamer : `\input` du .tex avec `animate`, animation dans Adobe Reader.
+
+## COMSOL : sensibilité, Excel (1.36.0)
+
+- [ ] Balayage paramétrique exporté en un fichier (`@ E=…`) : tuile « Sensibilité », courbe du pic en fonction de E ; valeur
+      en un point d'une coupe.
+- [ ] Trois fichiers lc=1, 2, 3 (EL et VE) : « d'un fichier à l'autre », deux courbes VE=0 / VE=1.
+- [ ] « Excel… » sur une carte, des profils, une synthèse, des critères : classeur lisible dans Excel, valeurs justes.

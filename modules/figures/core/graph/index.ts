@@ -25,3 +25,5 @@ export * from "./comsolBassin";
 export * from "./comsolMaillage";
 export * from "./comsolSegments";
 export * from "./comsolAnimation";
+export * from "./comsolSensibilite";
+export * from "./comsolExcel";

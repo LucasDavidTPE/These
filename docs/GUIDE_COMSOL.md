@@ -147,6 +147,16 @@ Les deux vont aussi dans le **rapport LaTeX** (sections et phrases chiffrées). 
   courriel) ou **images PNG + code `\animategraphics`** pour Beamer (archive .zip), même échelle de couleurs,
   instant écrit sous l'axe. Détails : § 4.4.
 
+### Sensibilité à un paramètre, exports Excel (1.36.0)
+
+- **« Sensibilité à un paramètre »** (↗) : le pic d'une grandeur (maximum, minimum ou plus grande valeur
+  absolue, avec sa position) ou sa **valeur en un point** d'une coupe, en fonction d'un paramètre — un
+  **balayage COMSOL** ou les **instants** d'un même fichier (`@ E=…`, `@ t=…`), ou un **paramètre de
+  l'en-tête qui change d'un fichier à l'autre** (`lc=1`, `lc=2`, `lc=3`, une courbe par groupe d'autres
+  paramètres : `VE=0`, `VE=1`). Tableau, booktabs. Détails : § 5.8.
+- **« Excel… »** sous chaque aperçu : les données du graphe (x et y de chaque courbe, ou la grille de la carte)
+  et les tableaux calculés (synthèse, critères, bassins, maillage, sensibilité) dans un classeur .xlsx.
+
 Les sections suivantes détaillent les données attendues et chaque calcul.
 
 ---
@@ -608,6 +618,24 @@ interpolé aux points du grossier (dans la maille d'une coupe, linéairement le 
 Verdict : plus grand écart sur le pic, et « le maillage grossier suffit » s'il reste sous 2 %. Diagramme en
 barres (écart sur le pic, au pire point ou L2), tableau booktabs, et une phrase dans le rapport LaTeX.
 
+### 5.8 Sensibilité à un paramètre (tuile « Sensibilité à un paramètre »)
+
+**Le paramètre varie…**
+
+- **dans un même fichier** : un balayage paramétrique ou une étude temporelle exportés en une fois (une colonne
+  par grandeur et par valeur, `@ E=1000`, `@ t=9`) ; une courbe par fichier ;
+- **d'un fichier à l'autre** : un paramètre de l'en-tête des colonnes COMSOL (`… @ 3: lc=2, VE=0`) qui a des
+  valeurs numériques différentes selon les fichiers ; les fichiers qui ont les mêmes autres paramètres forment
+  une courbe (`VE=0`, `VE=1`).
+
+**Valeur retenue** : l'extremum sur tout le fichier (plus grande valeur absolue avec son signe, maximum ou
+minimum ; le survol d'une case du tableau donne sa position), ou la **valeur en un point** des coupes
+(interpolée dans la maille ; coordonnées dans l'unité de tracé).
+
+Graphe : la valeur en fonction du paramètre (courbes avec points) ; tableau (une ligne par valeur du
+paramètre, une colonne par courbe), booktabs, Excel. Avec des fichiers à plusieurs instants et un paramètre
+d'en-tête, le cadre « Instant tracé » choisit l'instant (ou l'enveloppe) de chaque fichier.
+
 ---
 
 ## 6. Séries temporelles (exports de tables)
@@ -711,6 +739,19 @@ Ce que contient le fichier :
 
 Les phrases sont **exactes mais mécaniques** : elles donnent les chiffres et les comparaisons ; le
 commentaire physique reste à écrire.
+
+### 9.2 Données vers Excel (1.36.0)
+
+**« Excel… »** à côté de « Continuer dans Graphes » (tous les tracés de l'atelier) : un classeur .xlsx avec
+
+- **Courbes** : pour chaque courbe, une colonne x et une colonne y (titres = légende et titre d'axe) ; pour un
+  diagramme en barres, la catégorie au lieu du numéro ;
+- **Carte** : la grille (première colonne = ordonnées, première ligne = abscisses, cases vides sans valeur) ;
+- et selon le tracé : **Synthèse** (max, min, positions), **Critères** (µdef, N admissible, dommage, critère
+  dimensionnant), **Bassins** (D aux géophones, SCI, BDI, BCI, AREA, R, écarts à la mesure), **Maillage**,
+  **Sensibilité**.
+
+Les noms de fichiers proposés sont sans accents ni lettres grecques (`Sensibilite-de-ezz-a-lc.xlsx`).
 
 ## 10. Assembler plusieurs graphes : les planches
 

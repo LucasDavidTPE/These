@@ -5,7 +5,7 @@
  */
 import { FACTEUR_LONGUEUR, geometrie, libelleColonne, parametresDe, type ExportComsol, type UniteLongueur } from "./comsol";
 import { combiner } from "./comsolCalcul";
-import { avecCote, avecSurface } from "./comsolEtude";
+import { avecCote, avecSurface, sourcesSensibilite } from "./comsolEtude";
 import { parametresVariables } from "./comsolInstants";
 import type { GraphLayout } from "./layout";
 import type { GraphDoc } from "./model";
@@ -100,7 +100,7 @@ function decrireForme(e: ExportComsol, longueur: UniteLongueur): Description {
   return { forme: "point", titre: "Un seul point", detail: `${e.lignes} ligne(s)`, grandeurs, etude, avertissement: "Aucune coordonnée ne varie : rien à tracer en courbe." };
 }
 
-export type ModeAtelier = "profils" | "carte" | "coupe-profils" | "temps" | "comparer" | "synthese" | "criteres" | "bassin" | "maillage";
+export type ModeAtelier = "profils" | "carte" | "coupe-profils" | "temps" | "comparer" | "synthese" | "criteres" | "bassin" | "maillage" | "sensibilite";
 
 export const MODES: { id: ModeAtelier; titre: string; explication: string }[] = [
   { id: "profils", titre: "Comparer des profils", explication: "Des courbes le long d'une ligne (εzz en profondeur…), un fichier ou une grandeur par courbe." },
@@ -112,6 +112,7 @@ export const MODES: { id: ModeAtelier; titre: string; explication: string }[] = 
   { id: "criteres", titre: "Critères de dimensionnement", explication: "εt à la base des couches liées, εz au sommet du sol : cycles admissibles, dommage, cas dimensionnant." },
   { id: "bassin", titre: "Bassin de déflexion", explication: "Déflexion en surface lue comme un essai HWD : D0, SCI, BDI, BCI, AREA, rayon de courbure ; écart à un bassin mesuré." },
   { id: "maillage", titre: "Convergence du maillage", explication: "Maillage grossier contre raffiné (EL / EL-fin) : écart sur le pic, plus grand écart, norme L2." },
+  { id: "sensibilite", titre: "Sensibilité à un paramètre", explication: "Pic (ou valeur en un point) en fonction d'un balayage COMSOL, des instants, ou d'un paramètre qui change d'un fichier à l'autre." },
 ];
 
 /** Pour chaque tracé : null s'il est possible avec les fichiers ouverts, sinon ce qu'il manque. */
@@ -131,6 +132,10 @@ export function modesDisponibles(exports: readonly ExportComsol[]): Record<ModeA
     criteres: avecCote(exports).length ? null : exports.length ? "Aucune coupe contenant z ni profil vertical." : aucun,
     bassin: avecSurface(exports).length ? null : exports.length ? "Aucune ligne de surface avec une déflexion w (ligne horizontale en surface, ou coupe contenant z)." : aucun,
     maillage: exports.length >= 2 ? null : "Il faut deux fichiers : le même cas sur un maillage grossier et sur un maillage fin (« EL » et « EL-fin »).",
+    sensibilite: (() => {
+      const s = sourcesSensibilite(exports);
+      return s.instants.length || s.fichiers.length ? null : exports.length ? "Ni balayage dans un fichier (@ E=…, @ t=…), ni paramètre de l'en-tête qui change d'un fichier à l'autre." : aucun;
+    })(),
   };
 }
 

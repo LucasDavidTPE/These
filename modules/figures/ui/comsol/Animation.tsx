@@ -10,6 +10,7 @@ import { gifAnime } from "@noyau/formats/gif";
 import {
   animationBeamer,
   exportGraphSvg,
+  nomDeFichier,
   imagesInstants,
   parametresVariables,
   type ExportComsol,
@@ -17,14 +18,6 @@ import {
 } from "../../core/graph";
 import { svgToPng, svgToRgba } from "../editor/raster";
 import { useContexteTrace } from "./hooks";
-
-const nomFichier = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^A-Za-z0-9-]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .toLowerCase() || "animation";
 
 export function AnimationInstants({
   t,
@@ -42,7 +35,7 @@ export function AnimationInstants({
   const [dpi, setDpi] = useState(110);
   const [etat, setEtat] = useState("");
   const choisis = valeurs.filter((_, i) => i % pas === 0);
-  const base = nomFichier(
+  const base = nomDeFichier(
     `${plan.nom.replace(/\.(txt|csv|dat)$/i, "")}-${t.expression ?? ""}`,
   );
 
