@@ -1020,3 +1020,8 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
 
 - [ ] Ouvrir les fichiers de l'article : les pistes proposées ont du sens ; chacune mène au bon endroit ; « masquer ».
 - [ ] Les tuiles restent lisibles sur l'écran du PC portable (3 colonnes) comme sur le grand écran (4 colonnes).
+
+## COMSOL : conversions d'unité (1.40.0)
+
+- [ ] Un export où εzz est sans facteur 1e6 : « Vérifier » le signale ; « Transformer » → « + εzz (µdef) » pour ce fichier ;
+      la courbe se superpose aux autres.

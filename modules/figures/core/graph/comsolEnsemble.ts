@@ -220,6 +220,37 @@ export function colonnesProposees(e: ExportComsol): ColonneProposee[] {
       unite: unite("sxx"),
       explication: "Contrainte équivalente de von Mises.",
     });
+  // conversions d'unité : grandeur exportée sans facteur (εzz sans unité, σ en Pa, w en m)
+  for (const c of e.colonnes) {
+    const lib = libelleColonne(c);
+    const v = c.expression
+      .replace(/^\s*[0-9.eE+-]+\s*\*\s*/, "")
+      .split(".")
+      .pop()!
+      .toLowerCase();
+    if (!n.has(v)) continue;
+    if (lib.unite === "-" && /^e/.test(v))
+      out.push({
+        nom: `${lib.court} (µdef)`,
+        formule: `1e6*${v}`,
+        unite: "µdef",
+        explication: `${lib.court} exportée sans facteur (m/m) : convertie en µdef, comme les autres fichiers.`,
+      });
+    else if (lib.unite === "Pa")
+      out.push({
+        nom: `${lib.court} (MPa)`,
+        formule: `1e-6*${v}`,
+        unite: "MPa",
+        explication: `${lib.court} en Pa : convertie en MPa.`,
+      });
+    else if (lib.unite === "m" && /^[uvw]$/.test(v))
+      out.push({
+        nom: `${lib.court} (mm)`,
+        formule: `1e3*${v}`,
+        unite: "mm",
+        explication: `${lib.court} en m : convertie en mm.`,
+      });
+  }
   // déjà présentes : non proposées
   const deja = new Set(e.colonnes.map((c) => libelleColonne(c).court));
   return out.filter((c) => !deja.has(c.nom));

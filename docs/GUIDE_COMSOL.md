@@ -560,6 +560,10 @@ Sous « Colonne calculée », **« Grandeurs dérivées »** propose ce que les 
 | τmax (x-z) | sqrt((0.5*(sxx−szz))^2 + sxz^2) | sxx, szz, sxz |
 | σVM | von Mises (six composantes) | sxx … sxz |
 
+Conversions d'unité (1.40.0) : une grandeur exportée sans facteur est proposée convertie — εzz sans unité →
+« εzz (µdef) » (1e6*ezz), σ en Pa → MPa, w en m → mm — pour la mettre à l'unité des autres fichiers quand
+« Vérifier » signale des unités différentes.
+
 Un clic ajoute la colonne (unité de la première composante), à ce fichier ou, case cochée, à **tous les
 fichiers d'origine** qui ont les colonnes. Comme toute colonne calculée, elle est gardée dans l'étude et
 rejouée à la relecture. Les grandeurs déjà présentes ne sont pas proposées.

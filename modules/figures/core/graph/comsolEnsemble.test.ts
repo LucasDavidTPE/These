@@ -81,3 +81,31 @@ describe("grandeurs dérivées proposées", () => {
     ).toBe(true);
   });
 });
+
+describe("conversions d'unité proposées", () => {
+  it("εzz sans facteur → µdef, σ en Pa → MPa, w en m → mm", () => {
+    const brut = readFileSync(
+      new URL("./fixtures/grille_XZ_EL_het.txt", import.meta.url),
+      "utf8",
+    )
+      .replace(/1e6\*solid\.eZZ/g, "solid.eZZ")
+      .replace(/1e3\*w/g, "w");
+    const e = lireComsol(brut, "c.txt");
+    const p = colonnesProposees(e);
+    expect(p.find((x) => x.nom === "εzz (µdef)")).toMatchObject({
+      formule: "1e6*ezz",
+      unite: "µdef",
+    });
+    expect(p.find((x) => x.nom === "uz (mm)")).toMatchObject({
+      formule: "1e3*w",
+      unite: "mm",
+    });
+    const r = ajouterColonne(e, {
+      formule: "1e6*ezz",
+      nom: "εzz (µdef)",
+      unite: "µdef",
+    });
+    // (les valeurs du fichier d'exemple ne changent pas : seul le facteur de conversion est vérifié)
+    expect(r.valeurs.at(-1)![0]).toBeCloseTo(-129e6, 0);
+  });
+});

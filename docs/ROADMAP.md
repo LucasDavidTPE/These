@@ -253,6 +253,7 @@ lancent tous les tests automatiques sous Windows.
       **grandeurs dérivées** en un clic (principales dans le plan, γmax, εvol, σVM…) pour tous les fichiers (1.38.0)
 - [x] COMSOL : aperçus mémorisés (gros exports fluides) (1.38.1) ; **pistes** proposées d'après les fichiers ouverts, tuiles
       compactes (1.39.0)
+- [x] COMSOL : conversions d'unité proposées (sans facteur → µdef, Pa → MPa, m → mm) (1.40.0)
 - [x] Manuscrits : anciens fichiers **.doc** acceptés (parties, dossiers, corrections reçues), convertis en `.docx` par Word
       à côté de l'original (1.26.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),
