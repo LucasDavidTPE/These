@@ -31,6 +31,7 @@ import {
 } from "../../core/graph";
 import { useNavigation } from "../navigation";
 import { usePlanche } from "../planche/usePlanche";
+import { AnimationInstants } from "./Animation";
 import { AtelierApercu } from "./AtelierApercu";
 import { calculer } from "./atelierCalcul";
 import { Declinaison } from "./Declinaison";
@@ -202,6 +203,14 @@ export function ModeCarte() {
           />
           Vraies proportions (1 m = 1 m)
         </label>
+        <label className="field">
+          <span>Lissage (nœuds interpolés entre ceux de la grille)</span>
+          <select value={t.lissage} onChange={(e) => maj({ lissage: Number(e.target.value) })}>
+            <option value={1}>aucun : une cellule par nœud exporté</option>
+            <option value={2}>× 2</option>
+            <option value={4}>× 4 (rendu lisse, fichier pgfplots plus lourd)</option>
+          </select>
+        </label>
         <fieldset className="atelier-champ">
           <legend>Valeurs épinglées (clic sur la carte)</legend>
           {t.epingles.length ? (
@@ -270,6 +279,7 @@ export function ModeCarte() {
               .filter((e) => parametresVariables(e).length)}
           />
         ) : null}
+        {p && instants.length ? <AnimationInstants key={`a-${p.nom}`} t={t} plan={p} /> : null}
       </div>
       <section className="atelier-colonne atelier-resultat">
         <h3>

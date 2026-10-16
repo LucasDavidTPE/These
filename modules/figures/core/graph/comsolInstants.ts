@@ -368,3 +368,16 @@ export function sonder(
     }
   });
 }
+
+/**
+ * Carte affinée : `k` − 1 nœuds interpolés (bilinéaire) entre deux nœuds de la grille, dans chaque direction —
+ * un rendu plus lisse qu'avec une cellule par nœud. Les valeurs aux nœuds d'origine ne changent pas.
+ */
+export function affinerCarte<C extends Pick<Grille, "x" | "y" | "v">>(c: C, k: number): C {
+  const n = Math.max(1, Math.min(8, Math.round(k)));
+  if (n === 1 || c.x.length < 2 || c.y.length < 2) return c;
+  const fin = (t: readonly number[]) => t.flatMap((v, i) => (i + 1 < t.length ? Array.from({ length: n }, (_, j) => Number((v + ((t[i + 1]! - v) * j) / n).toPrecision(12))) : [v]));
+  const x = fin(c.x);
+  const y = fin(c.y);
+  return { ...c, x, y, v: y.map((yy) => x.map((xx) => valeurCarte(c, xx, yy))) };
+}

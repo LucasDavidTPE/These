@@ -982,3 +982,10 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
       dans Graphes ; régénérer après un nouveau calcul.
 - [ ] Ouvrir `…_EL_het` et `…_EL-fin_het` : paire trouvée, écarts (pic, pire point, L2) ; ajouter une paire à la main.
 - [ ] Rapport LaTeX : sections bassin et maillage, compilation.
+
+## COMSOL : segments, lissage, animation (1.35.0)
+
+- [ ] Profils dans une coupe → Segments quelconques : deux clics, profil cohérent avec la carte ; Continuer, régénérer.
+- [ ] Carte : lissage × 4 ; Continuer dans Graphes, Enregistrer ; compilation pgfplots (taille du fichier acceptable).
+- [ ] Export VE à tous les instants → « Animer les instants » : GIF lu dans PowerPoint (lecture en boucle), couleurs fidèles ;
+      archive Beamer : `\input` du .tex avec `animate`, animation dans Adobe Reader.

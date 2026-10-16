@@ -137,6 +137,16 @@ varie de +50 % pour VE het… », « … le nombre de cycles admissibles du crit
 
 Les deux vont aussi dans le **rapport LaTeX** (sections et phrases chiffrées). Détails : § 5.6 et § 5.7.
 
+### Segments, lissage, animation (1.35.0)
+
+- **Profils le long de segments quelconques** (« Profils dans une coupe » → « Segments quelconques ») : deux
+  clics sur la carte, A puis B ; le profil est tracé en fonction de la distance depuis A (obliques sous le
+  bord du pneu, diagonales dans une couche).
+- **Lissage de la carte** (× 2, × 4) : nœuds interpolés entre ceux de la grille, rendu plus lisse.
+- **Animer les instants** (carte d'un export à plusieurs instants) : **GIF animé** (PowerPoint, Word,
+  courriel) ou **images PNG + code `\animategraphics`** pour Beamer (archive .zip), même échelle de couleurs,
+  instant écrit sous l'axe. Détails : § 4.4.
+
 Les sections suivantes détaillent les données attendues et chaque calcul.
 
 ---
@@ -445,6 +455,28 @@ gardé dans l'étude (recalculé à l'ouverture).
 **Décliner sur les instants** (sous la carte d'un fichier à plusieurs instants) : cocher jusqu'à 6 instants
 et les cas comparables (une ligne chacun) → une figure par cas et par instant (recette gardée), et une
 **planche** cas × instants, titres de colonnes « t = 9 », « t = 10 »…, **même échelle de couleurs**.
+
+### 4.4 Segments, lissage, animation (1.35.0)
+
+**Segments quelconques** (« Profils dans une coupe », troisième choix) : cliquer **A** puis **B** sur la carte
+(le consigne rappelle A en attente ; « annuler A »). Chaque segment est tracé en noir sur la carte (a, b, c…)
+et son profil, interpolé dans la maille (200 pas), en fonction de la **distance parcourue depuis A** ; la
+légende rappelle les extrémités, « (754 ; −279) → (862 ; −64) ». Un segment hors de la carte est refusé.
+Gardés dans la recette, régénérables.
+
+**Lissage** (« Carte d'une coupe ») : × 2 ou × 4 nœuds interpolés (bilinéaire) entre deux nœuds de la grille :
+les paliers de couleur suivent mieux les variations, les valeurs aux nœuds exportés ne changent pas. Le
+fichier pgfplots grossit d'autant (× 16 points avec × 4).
+
+**Animer les instants** (« Carte d'une coupe », fichier à plusieurs instants) :
+
+- une image par instant (« un instant sur k » pour alléger), la carte telle que réglée (palette, isolignes,
+  épingles, lissage), **même échelle de couleurs** pour toutes, l'instant écrit sous l'axe horizontal ;
+- **« GIF animé… »** : boucle infinie, durée d'une image réglable (400 ms par défaut), résolution 80 à
+  160 dpi ; 256 couleurs (suffisant pour une carte à 24 teintes et du texte) ;
+- **« Images + LaTeX (Beamer, .zip)… »** : les images en PNG 200 dpi et un `.tex` à `\input`
+  (`\usepackage{animate}` ; `\animategraphics[controls, loop, autoplay, width=\linewidth]{2,5}{nom-}{0}{n−1}`),
+  lisible dans Adobe Reader (pas dans tous les lecteurs PDF).
 
 ---
 

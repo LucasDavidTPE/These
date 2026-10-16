@@ -27,7 +27,8 @@ import {
 } from "./comsol";
 import { ajouterColonne, changerRepere, combiner, grapheBarres, grapheTemporel, motsDuNom, pic, profilsInterpoles, synthese, type LigneSynthese, type ModePic, type Operation, type Statistique } from "./comsolCalcul";
 import { grapheCriteres, tableauCriteres, type AffichageCriteres, type Critere, type TableauCriteres } from "./comsolCriteres";
-import { parametresDesExports, signalAuPoint, titreEtape, valeurCarte, vueEtape, type Etape } from "./comsolInstants";
+import { affinerCarte, parametresDesExports, signalAuPoint, titreEtape, valeurCarte, vueEtape, type Etape } from "./comsolInstants";
+import { grapheSegments, type Segment } from "./comsolSegments";
 import { bassin, ecartMesure, expressionDeflexion, grapheBassins, ligneSurface, type Bassin, type Mesure } from "./comsolBassin";
 import { comparerMaillages, grapheMaillage, pairesMaillage, type LigneMaillage, type PaireMaillage } from "./comsolMaillage";
 import { hauteurEgale } from "./layout";
@@ -96,14 +97,19 @@ export interface TraceCarte extends AvecEtape {
   egalite: boolean;
   /** Points épinglés (unité de tracé) : leur valeur est écrite sur la carte, recalculée à chaque régénération. */
   epingles: { x: number; y: number }[];
+  /** Lissage : nœuds interpolés entre deux nœuds de la grille (1 : la grille telle quelle ; 2, 4). */
+  lissage: number;
 }
 export interface TraceCoupeProfils extends AvecEtape {
   mode: "coupe-profils";
   plan: string | null;
   expression: string | null;
-  sens: "verticales" | "horizontales";
+  /** Lignes verticales, horizontales, ou segments quelconques (de A à B, deux clics). */
+  sens: "verticales" | "horizontales" | "segments";
   /** Positions des lignes, dans l'unité de tracé. */
   valeurs: number[];
+  /** Segments (unité de tracé), pour le sens « segments ». */
+  segments: Segment[];
   profondeur: boolean;
 }
 export type Reference = { genre: "aucune" } | { genre: "valeur"; valeur: number; texte: string } | { genre: "fichier"; fichier: string; texte: string };
@@ -199,9 +205,9 @@ export function traceVide(mode: ModeTrace): Trace {
     case "profils":
       return { mode, fichiers: null, expressions: [], orientation: "auto", profondeur: true };
     case "carte":
-      return { mode, plan: null, expression: null, palette: "auto", isolignes: [], egalite: false, epingles: [] };
+      return { mode, plan: null, expression: null, palette: "auto", isolignes: [], egalite: false, epingles: [], lissage: 1 };
     case "coupe-profils":
-      return { mode, plan: null, expression: null, sens: "verticales", valeurs: [], profondeur: true };
+      return { mode, plan: null, expression: null, sens: "verticales", valeurs: [], segments: [], profondeur: true };
     case "temps":
       return { mode, fichiers: null, expressions: [], reference: { genre: "aucune" }, instant: 10, pic: "abs" };
     case "comparer":
@@ -367,6 +373,12 @@ export function carteDeSelection(t0: TraceCoupeProfils, c: ContexteTrace): Graph
   if (!p || !t.expression) return null;
   const doc = grapheCarte(p, t.expression, c.cadre.longueur, { interfaces: interfacesSi(c) });
   const lettre = (i: number) => String.fromCharCode(97 + (i % 26));
+  if (t.sens === "segments")
+    return {
+      ...doc,
+      series: [...doc.series, ...t.segments.map((s, i) => ({ name: lettre(i), type: "line" as const, x: [s.x0, s.x1], y: [s.y0, s.y1], legend: false, color: "#000000" }))],
+      annotations: [...(doc.annotations ?? []), ...t.segments.map((s, i) => ({ x: s.x0, y: s.y0, texte: lettre(i), position: "north east" as const }))],
+    };
   return { ...doc, reperes: [...(doc.reperes ?? []), ...t.valeurs.map((v, i) => ({ axe: t.sens === "verticales" ? ("x" as const) : ("y" as const), valeur: v, texte: lettre(i), trait: "solid" as const }))] };
 }
 
@@ -417,10 +429,15 @@ function executerVue(t0: Trace, c: ContexteTrace): ResultatTrace | null {
       doc = { ...doc, carte: { ...doc.carte!, ...(t.palette !== "auto" ? { palette: t.palette } : {}), ...(t.isolignes.length ? { isolignes: [...t.isolignes] } : {}) } };
       if (t.egalite) doc = { ...doc, egalite: true, height: hauteurEgale({ ...doc, egalite: true }) };
       if (t.epingles.length) doc = { ...doc, annotations: annotationsEpingles(doc, p, t.expression, L, t.epingles) };
+      if (t.lissage > 1) doc = { ...doc, carte: affinerCarte(doc.carte!, t.lissage) };
       return { doc, titre: `${legende(p)} — ${courtDe(p, t.expression)}` };
     }
     case "coupe-profils": {
       const p = parNom(c.exports, t.plan);
+      if (t.sens === "segments") {
+        if (!p || !t.expression || !t.segments.length) return null;
+        return { doc: grapheSegments(p, t.expression, t.segments, L), titre: `${courtDe(p, t.expression)} le long ${t.segments.length > 1 ? `de ${t.segments.length} segments` : "d'un segment"} — ${legende(p)}` };
+      }
       if (!p || !t.expression || !t.valeurs.length) return null;
       const [kx, ky] = geometrie(p).varient as [number, number];
       const fixe = t.sens === "verticales" ? kx : ky;
@@ -663,9 +680,18 @@ function lireTraceSeule(v: unknown): Trace | null {
         isolignes: nombres(v.isolignes),
         egalite: v.egalite === true,
         epingles: (Array.isArray(v.epingles) ? v.epingles : []).filter(estObjet).flatMap((p) => (typeof p.x === "number" && typeof p.y === "number" ? [{ x: p.x, y: p.y }] : [])),
+        lissage: typeof v.lissage === "number" && v.lissage >= 1 && v.lissage <= 8 ? Math.round(v.lissage) : 1,
       };
     case "coupe-profils":
-      return { ...base, plan: ch("plan"), expression: ch("expression"), sens: v.sens === "horizontales" ? "horizontales" : "verticales", valeurs: nombres(v.valeurs), profondeur: v.profondeur !== false };
+      return {
+        ...base,
+        plan: ch("plan"),
+        expression: ch("expression"),
+        sens: v.sens === "horizontales" || v.sens === "segments" ? v.sens : "verticales",
+        valeurs: nombres(v.valeurs),
+        segments: (Array.isArray(v.segments) ? v.segments : []).filter(estObjet).flatMap((x) => (["x0", "y0", "x1", "y1"].every((k) => typeof x[k] === "number") ? [{ x0: x.x0 as number, y0: x.y0 as number, x1: x.x1 as number, y1: x.y1 as number }] : [])),
+        profondeur: v.profondeur !== false,
+      };
     case "temps": {
       const r = estObjet(v.reference) ? v.reference : {};
       const reference: Reference =

@@ -400,6 +400,11 @@ Ajouts permis par l'intégration :
   communs, sinon interpolation du fin aux points du grossier), `grapheMaillage`, `maillageLatex`. Rapport :
   `phrasesBassins`, `phrasesMaillage`, sections « bassin » et « maillage ». `legendes` : si couper aux tirets
   ne distingue pas les fichiers, coupe seulement aux « _ » (« EL » / « EL-fin »).
+- **segments, lissage, animation** (1.35.0) : `comsolSegments.ts` (`profilSegment`, `grapheSegments` ; recette
+  coupe-profils `sens: "segments"`, `segments` {x0, y0, x1, y1}) ; `affinerCarte` (nœuds bilinéaires, recette carte
+  `lissage`) ; `comsolAnimation.ts` (`imagesInstants` : une carte par instant, bornes communes ; `animationBeamer`) ;
+  `@noyau/formats/gif` (`gifAnime` : GIF89a, palette commune par coupe médiane sur 5 bits, LZW avec remise à zéro
+  à 4096 codes, boucle NETSCAPE2.0) ; rendu RVBA `svgToRgba` ; enregistrement par `plateforme.enregistrerSous`.
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,
