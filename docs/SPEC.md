@@ -383,6 +383,14 @@ Ajouts permis par l'intégration :
   régénération : `rafraichirDonnees` distingue annotations et repères calculés). Dérivé `signal` : table au
   cours du paramètre en un point (`signalAuPoint`, interpolé sur une coupe régulière, nœud le plus proche
   sinon). Décliner sur les instants : planche cas × instants (`ecrireDeclinaison`, clés `plan|instant`).
+- **rapport LaTeX d'une étude** (1.33.0, `core/graph/comsolRapport.ts`, `comsolLatex.ts`, `ui/comsol/RapportEtude.tsx`) :
+  `rapportLatex(donnees, options)` → section `\input`-able (cas, figures de l'étude en `\input{\cheminFigures/
+  <dossier>/export.tex}`, extrema `syntheseLatex`, critères `criteresLatex`, étiquettes `sec:`/`tab:`/`fig:`) ;
+  `phrasesExtrema` (étendue du pic en valeur absolue, position, écarts au cas de référence, < 0,5 % = même valeur)
+  et `phrasesCriteres` (critère dimensionnant, rapport des N admissibles, dommage de Miner), en français ou en
+  anglais ; `texteLatex` (grec, µ, −, ·, exposants pour pdflatex) et `nombreLatex` (virgule `{,}`, puissances de
+  10) partagés par les tableaux. Figures : `figuresDeEtude` (graph.json dont `origine.etude` est l'étude, et
+  planches qui en contiennent).
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,

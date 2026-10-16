@@ -965,3 +965,11 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
       le signal est recalculé.
 - [ ] Décliner sur les instants (EL et VE, 4 instants) → planche, même échelle, compilation LaTeX.
 - [ ] Critères de dimensionnement sur l'enveloppe |max| d'une charge roulante.
+
+## COMSOL : rapport LaTeX (1.33.0)
+
+- [ ] Étude de l'article enregistrée, figures déclinées ; « Rapport LaTeX… » : figures listées, cas de référence EL ;
+      phrases justes au regard des tableaux (relire chaque chiffre une fois).
+- [ ] Exporter .tex, `\input` dans l'article (préambule booktabs + figurine, `\cheminFigures` adapté) : compilation
+      pdflatex sans erreur (grec, µ, signe moins), figures trouvées, `\ref{tab:…}` et `\ref{fig:FIG-…}` résolus.
+- [ ] Version anglaise : en-têtes, phrases, point décimal.

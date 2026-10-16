@@ -14,6 +14,7 @@ import { ModeCarte } from "./ModeCarte";
 import { regenererEtude } from "./lot";
 import { ModeCriteres } from "./ModeCriteres";
 import { ReglagesPartages } from "./Outils";
+import { RapportEtude } from "./RapportEtude";
 import { useAtelier } from "./useAtelier";
 
 const ICONES: Record<ModeAtelier, string> = { profils: "⫼", carte: "▦", "coupe-profils": "▥", temps: "∿", comparer: "÷", synthese: "▤", criteres: "⚖" };
@@ -139,6 +140,7 @@ export function AtelierComsol() {
   const a = useAtelier();
   const reg = useReglagesComsol();
   const [reglages, setReglages] = useState(false);
+  const [rapport, setRapport] = useState(false);
   const dispo = modesDisponibles(a.exports);
   // mode choisi, ou le premier possible
   const mode = a.mode && !dispo[a.mode] ? a.mode : (MODES.find((m) => !dispo[m.id])?.id ?? null);
@@ -172,7 +174,11 @@ export function AtelierComsol() {
         <button type="button" aria-expanded={reglages} onClick={() => setReglages(!reglages)} title="Correspondances de légende (lc=1 → Rectangulaire…) et cotes des couches, pour toute la bibliothèque">
           Correspondances et couches…
         </button>
+        <button type="button" aria-expanded={rapport} disabled={!a.exports.length} onClick={() => setRapport(!rapport)} title="Premier jet LaTeX de la partie résultats : cas, figures de l'étude, extrema et critères (booktabs), phrases chiffrées comparatives">
+          Rapport LaTeX…
+        </button>
       </header>
+      {rapport && a.exports.length ? <RapportEtude /> : null}
       {reglages ? (
         <div className="atelier-reglages-partages">
           <ReglagesPartages ouvertParDefaut />

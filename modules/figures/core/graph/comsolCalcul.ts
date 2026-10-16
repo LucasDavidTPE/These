@@ -20,6 +20,7 @@ import {
 import { criteresDefaut, lireCriteres, type Critere } from "./comsolCriteres";
 import { evaluerFormule } from "./formule";
 import { GRAPH_FORMAT, type Annotation, type GraphDoc, type Repere, type Series } from "./model";
+import { texteLatex } from "./comsolLatex";
 
 const nomCourt = (n: string) => n.replace(/\.(txt|csv|dat)$/i, "");
 
@@ -341,14 +342,15 @@ export function synthese(exports: readonly ExportComsol[], expressions: readonly
 }
 
 /** Tableau LaTeX booktabs (paquet booktabs) : une ligne par fichier × grandeur, max et min avec leur position. */
-export function syntheseLatex(lignes: readonly LigneSynthese[], o: { longueur?: string; virgule?: boolean; chiffres?: number; legende?: string } = {}): string {
+export function syntheseLatex(lignes: readonly LigneSynthese[], o: { longueur?: string; virgule?: boolean; chiffres?: number; legende?: string; anglais?: boolean } = {}): string {
+  const en = o.anglais === true;
   if (!lignes.length) return "";
   const coords = Object.keys(lignes[0]!.posMax);
   const num = (v: number, ch = o.chiffres ?? 4) => {
     const t = String(Number(v.toPrecision(ch)));
     return `$${(o.virgule ? t.replace(".", "{,}") : t).replace("e", "\\mathrm{e}")}$`;
   };
-  const esc = (t: string) => (t.includes("$") ? t : t.replace(/([&%#_{}])/g, "\\$1"));
+  const esc = texteLatex;
   const u = o.longueur ? ` (${o.longueur})` : "";
   const out = [
     "% Tableau généré par Thèse (synthèse d'exports COMSOL). Nécessite \\usepackage{booktabs}.",
@@ -359,7 +361,7 @@ export function syntheseLatex(lignes: readonly LigneSynthese[], o: { longueur?: 
     "\\toprule",
     ` & & \\multicolumn{${coords.length + 1}}{c}{Maximum} & \\multicolumn{${coords.length + 1}}{c}{Minimum} \\\\`,
     `\\cmidrule(lr){3-${3 + coords.length}} \\cmidrule(lr){${4 + coords.length}-${4 + 2 * coords.length}}`,
-    `Cas & Grandeur & Valeur & ${coords.map((c) => `$${c.toLowerCase()}$${u}`).join(" & ")} & Valeur & ${coords.map((c) => `$${c.toLowerCase()}$${u}`).join(" & ")} \\\\`,
+    `${en ? "Case & Quantity & Value" : "Cas & Grandeur & Valeur"} & ${coords.map((c) => `$${c.toLowerCase()}$${u}`).join(" & ")} & ${en ? "Value" : "Valeur"} & ${coords.map((c) => `$${c.toLowerCase()}$${u}`).join(" & ")} \\\\`,
     "\\midrule",
   ];
   let precedent = "";

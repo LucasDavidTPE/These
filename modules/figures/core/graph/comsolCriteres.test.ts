@@ -144,7 +144,8 @@ describe("évaluation sur les exports", () => {
     expect(r.series[0]!.y[0]).toBe(100);
     expect(r.series[0]!.y[1]).toBeCloseTo(100 * 1.5 ** -5, 3);
     const tex = criteresLatex(t, { virgule: true });
-    expect(tex).toContain("\\multicolumn{2}{c}{εt base GB}");
+    // lettres grecques converties pour pdflatex
+    expect(tex).toContain("\\multicolumn{2}{c}{\\ensuremath{\\varepsilon_{t}} base GB}");
     expect(tex).toContain("\\cmidrule(lr){2-3} \\cmidrule(lr){4-5}");
     expect(tex).toMatch(/EL & \$98\$ & \$1\{,\}11 \\times 10\^\{6\}\$/);
   });

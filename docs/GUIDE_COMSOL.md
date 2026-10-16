@@ -117,6 +117,15 @@ absolue sur tous les instants, point par point). Sur la carte : **sonde** au sur
 dans tous les plans comparables), **épingles** (un clic écrit la valeur sur la carte), **signal au cours du
 temps** au point épinglé, **déclinaison sur les instants** (planche cas × instants). Détails : § 4.3.
 
+### Rapport LaTeX de l'étude (1.33.0)
+
+**« Rapport LaTeX… »** (barre du haut) : un **premier jet de la partie résultats**, à `\input` dans l'article
+ou la thèse — tableau des cas, figures de l'étude (`\input` des exports pgfplots de la bibliothèque, légende
+= titre de la figure, `\label{fig:FIG-…}`), valeurs extrêmes et critères de dimensionnement en **booktabs**, et
+**phrases chiffrées** qui comparent les cas au cas de référence (« Rapportée au cas EL het (−193 µdef), elle
+varie de +50 % pour VE het… », « … le nombre de cycles admissibles du critère dimensionnant est divisé par
+7,59 pour VE het »), en **français ou en anglais**. Détails : § 9.1.
+
 Les sections suivantes détaillent les données attendues et chaque calcul.
 
 ---
@@ -589,6 +598,38 @@ Une fois tracé, un profil ou une carte est un graphe normal de la page Graphes.
 > Dans ce cas, réexporter de COMSOL sur une grille plus lâche, ou utiliser le PNG.
 
 ---
+
+### 9.1 Rapport LaTeX de l'étude (1.33.0)
+
+Bouton **« Rapport LaTeX… »** de l'atelier (dès qu'un fichier est ouvert). À gauche les réglages, à droite le
+LaTeX, mis à jour en direct ; **« Copier le LaTeX »** ou **« Exporter .tex… »**.
+
+- **Langue** : français ou English (titres de sections, phrases, en-têtes des tableaux) ; le passage en
+  anglais met le point décimal (la case « Virgule décimale » reste modifiable).
+- **Cas de référence** : le cas élastique par défaut (mot « el » dans le nom), ou aucun. Les écarts sont
+  donnés en valeur absolue du pic ; un écart de moins de 0,5 % est dit « reste la même ».
+- **Sections** : cas étudiés, figures, valeurs extrêmes, critères de dimensionnement.
+- **Grandeurs des valeurs extrêmes** : celles communes aux fichiers (εzz par défaut).
+- **Fichiers à plusieurs instants** : enveloppe (|max| par défaut, max, min) ou un instant donné ; écrit en
+  commentaire dans le rapport.
+- **Trafic de calcul** : repris de la recette « critères » de l'étude s'il y en a une ; donne la phrase sur le
+  dommage de Miner.
+- **Figures de l'étude** : celles de la bibliothèque tracées depuis l'étude enregistrée (graphes et planches
+  qui les contiennent), à cocher.
+
+Ce que contient le fichier :
+
+- en tête, `\providecommand{\cheminFigures}{figures}` : **dossier de la bibliothèque de figures vu depuis le
+  document LaTeX** ; le redéfinir avant l'`\input` (`\newcommand{\cheminFigures}{../Figures}`), ou
+  modifier la ligne ;
+- `\section{Résultats COMSOL : <titre de l'étude>}` et ses `\subsection` ; étiquettes `sec:<étude>`,
+  `tab:<étude>-cas`, `tab:<étude>-extrema`, `tab:<étude>-criteres`, `fig:FIG-0007`… ;
+- texte compatible **pdflatex** : lettres grecques en `\ensuremath{\varepsilon_{zz}}`, µ en `\textmu{}`,
+  signe moins et exposants convertis ;
+- préambule à prévoir : `\usepackage{booktabs}` et, pour les figures, `\usepackage{figurine}`.
+
+Les phrases sont **exactes mais mécaniques** : elles donnent les chiffres et les comparaisons ; le
+commentaire physique reste à écrire.
 
 ## 10. Assembler plusieurs graphes : les planches
 

@@ -18,6 +18,7 @@ import {
 } from "./comsol";
 import { nomsColonnes, profilsInterpoles } from "./comsolCalcul";
 import { GRAPH_FORMAT, type GraphDoc, type Series } from "./model";
+import { texteLatex } from "./comsolLatex";
 
 export type GenreCritere = "traction" | "compression";
 
@@ -416,24 +417,25 @@ const fmt = (v: number, ch = 3) => {
 /** Tableau LaTeX booktabs : par cas, déformation critique et cycles admissibles de chaque critère, et le critère dimensionnant. */
 export function criteresLatex(
   t: TableauCriteres,
-  o: { virgule?: boolean; trafic?: number | null } = {},
+  o: { virgule?: boolean; trafic?: number | null; legende?: string; anglais?: boolean } = {},
 ): string {
+  const en = o.anglais === true;
   const v = (s: string) =>
     o.virgule ? s.replace(/(\d)\.(\d)/g, "$1{,}$2") : s;
-  const esc = (s: string) =>
-    s.includes("$") ? s : s.replace(/([&%#_{}])/g, "\\$1");
+  const esc = texteLatex;
   const n = t.criteres.length;
   const out = [
     "% Critères de dimensionnement (Thèse, exports COMSOL). Nécessite \\usepackage{booktabs}.",
     "\\begin{table}[htbp]",
     "\\centering",
+    ...(o.legende ? [`\\caption{${esc(o.legende)}}`] : []),
     `\\begin{tabular}{l${"rr".repeat(n)}l}`,
     "\\toprule",
     ` & ${t.criteres.map((c) => `\\multicolumn{2}{c}{${esc(c.nom)}}`).join(" & ")} & \\\\`,
     t.criteres
       .map((_, k) => `\\cmidrule(lr){${2 + 2 * k}-${3 + 2 * k}}`)
       .join(" "),
-    `Cas & ${t.criteres.map(() => `$\\varepsilon$ (µdef) & $N_{\\mathrm{adm}}$`).join(" & ")} & Dimensionnant \\\\`,
+    `${en ? "Case" : "Cas"} & ${t.criteres.map(() => `$\\varepsilon$ (\\textmu{}def) & $N_{\\mathrm{adm}}$`).join(" & ")} & ${en ? "Governing" : "Dimensionnant"} \\\\`,
     "\\midrule",
   ];
   for (const l of t.lignes) {

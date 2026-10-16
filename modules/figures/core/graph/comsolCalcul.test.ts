@@ -177,7 +177,8 @@ describe("tableau de synthèse", () => {
     const tex = syntheseLatex(s, { longueur: "mm", virgule: true });
     expect(tex).toContain("\\toprule");
     expect(tex).toContain("\\cmidrule(lr){3-6} \\cmidrule(lr){7-10}");
-    expect(tex).toContain("$\\varepsilon_{zz}$ (µdef) & $-127$ & $900$ & $6500$ & $-320$ & $-193$");
+    // µ écrit \textmu{} : compile avec pdflatex comme avec LuaLaTeX
+    expect(tex).toContain("$\\varepsilon_{zz}$ (\\textmu{}def) & $-127$ & $900$ & $6500$ & $-320$ & $-193$");
     expect(tex).toContain("\\bottomrule");
     const b = grapheBarres(s, { expression: "1e6*solid.eZZ", categorie: 3, groupe: 2, statistique: "abs", correspondances: corr });
     expect(b.x.categories).toEqual(["Hétérogène", "rect"]);

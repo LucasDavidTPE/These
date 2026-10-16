@@ -199,3 +199,33 @@ export async function regenererEtude(etude: string, env: EnvAtelier, progression
   await useLibrary.getState().rescan();
   return bilan;
 }
+
+/** Figures de la bibliothèque tracées depuis l'étude, puis les planches qui en contiennent (pour le rapport). */
+export async function figuresDeEtude(etude: string): Promise<{ id: string; dossier: string; titre: string; planche: boolean }[]> {
+  await useLibrary.getState().rescan();
+  const { fs } = await bibliotheque();
+  const index = useLibrary.getState().index;
+  const out: { id: string; dossier: string; titre: string; planche: boolean }[] = [];
+  const dossiers = new Set<string>();
+  for (const f of index?.figures ?? []) {
+    if (f.meta?.kind !== "graph" || !f.files.includes("graph.json")) continue;
+    try {
+      const v = validateGraph(JSON.parse(await fs.readText(joinPath(f.folder, "graph.json"))));
+      if (!v.ok || v.doc.origine?.etude !== etude) continue;
+    } catch {
+      continue;
+    }
+    dossiers.add(f.folder);
+    out.push({ id: f.id, dossier: f.folder, titre: f.meta?.title ?? f.folder, planche: false });
+  }
+  for (const f of index?.figures ?? []) {
+    if (f.meta?.kind !== "planche" || !f.files.includes("planche.json")) continue;
+    try {
+      const p = lirePlanche(JSON.parse(await fs.readText(joinPath(f.folder, "planche.json"))));
+      if (p.panneaux.some((x) => dossiers.has(x.dossier))) out.push({ id: f.id, dossier: f.folder, titre: f.meta?.title ?? f.folder, planche: true });
+    } catch {
+      continue;
+    }
+  }
+  return out.sort((a, b) => a.id.localeCompare(b.id, "fr", { numeric: true }));
+}

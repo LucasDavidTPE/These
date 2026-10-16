@@ -19,3 +19,5 @@ export * from "./comsolEtude";
 export * from "./comsolLot";
 export * from "./comsolCriteres";
 export * from "./comsolInstants";
+export * from "./comsolRapport";
+export * from "./comsolLatex";

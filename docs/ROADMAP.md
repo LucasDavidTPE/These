@@ -239,6 +239,8 @@ lancent tous les tests automatiques sous Windows.
       N admissibles, dommage pour un trafic, critère dimensionnant, booktabs, barres log / relatives) (1.31.0)
 - [x] COMSOL : **exports à plusieurs instants** (curseur, lecture ▶, enveloppes max / min / |max|), **sonde** multi-cas au survol,
       **épingles** de valeurs sur la carte, **signal au cours du temps** en un point, planche **cas × instants** (1.32.0)
+- [x] COMSOL : **rapport LaTeX** de l'étude (cas, figures en `\input`, extrema et critères booktabs, phrases chiffrées
+      comparatives FR / EN, texte compatible pdflatex) (1.33.0)
 - [x] Manuscrits : anciens fichiers **.doc** acceptés (parties, dossiers, corrections reçues), convertis en `.docx` par Word
       à côté de l'original (1.26.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),
