@@ -1015,3 +1015,8 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
 
 - [ ] Ouvrir un vrai export de plusieurs dizaines de Mo (plan de coupe fin, tous les instants) : lecture en moins de
       quelques secondes ; survol de la carte (sonde) fluide ; changer d'instant avec le curseur sans attente pénible.
+
+## COMSOL : pistes (1.39.0)
+
+- [ ] Ouvrir les fichiers de l'article : les pistes proposées ont du sens ; chacune mène au bon endroit ; « masquer ».
+- [ ] Les tuiles restent lisibles sur l'écran du PC portable (3 colonnes) comme sur le grand écran (4 colonnes).

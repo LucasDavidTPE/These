@@ -176,6 +176,15 @@ Les deux vont aussi dans le **rapport LaTeX** (sections et phrases chiffrées). 
   (y-z, x-y), εvol, εh max, |εzz|, τmax, σVM selon les colonnes présentes — ajoutées comme colonnes calculées,
   **à tous les fichiers** qui ont les colonnes nécessaires (case cochée par défaut).
 
+### Pistes (1.39.0)
+
+Sous les tuiles, **« Pistes pour ces fichiers »** : ce que l'atelier peut faire des fichiers ouverts, dit en
+clair, chaque piste menant à sa tuile ou à son panneau — « 3 coupes (EL / EL-fin / VE) : toutes d'un coup »
+→ vue d'ensemble ; « fichiers à plusieurs valeurs de t » → carte avec curseur ; « 1 paire maillage grossier /
+fin » → convergence ; « déflexion w en surface » → bassin ; « 2 points d'attention » → Vérifier ; « premier jet
+LaTeX » → rapport. Les trois premières sont affichées (« + N autres »), « masquer » les cache. Les tuiles
+tiennent sur 3 ou 4 colonnes, explications abrégées (le détail est dans l'infobulle).
+
 Les sections suivantes détaillent les données attendues et chaque calcul.
 
 ---

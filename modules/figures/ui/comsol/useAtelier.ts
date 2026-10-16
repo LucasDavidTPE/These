@@ -68,8 +68,12 @@ interface EtatAtelier {
   modifiee: boolean;
   avis: Avis | null;
   env: EnvAtelier;
+  /** Panneaux de l'interface ouverts depuis les pistes (non enregistrés). */
+  verifier: boolean;
+  ensemble: boolean;
+  rapport: boolean;
 
-  set(p: Partial<Pick<EtatAtelier, "mode" | "noms" | "avis" | "titre">>): void;
+  set(p: Partial<Pick<EtatAtelier, "mode" | "noms" | "avis" | "titre" | "verifier" | "ensemble" | "rapport">>): void;
   setCadre(p: Partial<Cadre>): void;
   setEnv(env: EnvAtelier): void;
   majTrace(mode: ModeTrace, t: Trace): void;
@@ -205,6 +209,9 @@ export const useAtelier = create<EtatAtelier>((set, get) => {
     modifiee: false,
     avis: null,
     env: { espace: null, racines: {} },
+    verifier: false,
+    ensemble: false,
+    rapport: false,
 
     set: (p) => set(p),
     setCadre: (p) => set({ cadre: { ...get().cadre, ...p }, modifiee: true }),

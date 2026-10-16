@@ -426,6 +426,10 @@ Ajouts permis par l'intégration :
 - **aperçus mémorisés** (1.38.1) : `useResultat` (ui/comsol/hooks.ts) ne réexécute une recette que si la recette
   (sérialisée), les fichiers ou les réglages changent — pas à chaque rendu (sonde au survol, saisie). Mesuré :
   export de 59 Mo (17 000 nœuds × 252 colonnes) lu en 0,5 s, carte à un instant en 0,1 s.
+- **pistes** (1.39.0, `core/graph/comsolPistes.ts`) : `pistes(exports)` → libellé, texte et action (tuile, vue
+  d'ensemble, vérification, rapport) d'après les fichiers ouverts (coupes ou lignes en nombre, instants,
+  paires de maillage, surface avec w, cote z, paramètre d'en-tête, tables, points d'attention de `diagnostiquer`) ;
+  panneaux « vérifier », « ensemble », « rapport » dans l'état de l'atelier (non enregistrés).
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,

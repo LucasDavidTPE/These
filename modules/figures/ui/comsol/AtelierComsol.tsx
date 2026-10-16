@@ -5,7 +5,7 @@
  */
 import { useEffect, useState } from "react";
 import { useContexte } from "@interface/contexte";
-import { MODES, modesDisponibles, type ModeAtelier, type SourceLegende, type UniteLongueur } from "../../core/graph";
+import { MODES, modesDisponibles, pistes, type ActionPiste, type ModeAtelier, type SourceLegende, type UniteLongueur } from "../../core/graph";
 import { useReglagesComsol } from "../graph/useReglagesComsol";
 import { getBackend } from "../platform/backend";
 import { AtelierFichiers } from "./AtelierFichiers";
@@ -17,6 +17,7 @@ import { ModeCriteres } from "./ModeCriteres";
 import { ModeBassin, ModeMaillage, ModeSensibilite } from "./ModesIngenierie";
 import { ReglagesPartages } from "./Outils";
 import { RapportEtude } from "./RapportEtude";
+import { useLegende } from "./hooks";
 import { useAtelier } from "./useAtelier";
 
 const ICONES: Record<ModeAtelier, string> = { profils: "⫼", carte: "▦", "coupe-profils": "▥", temps: "∿", comparer: "÷", synthese: "▤", criteres: "⚖", bassin: "◡", maillage: "⊞", sensibilite: "↗" };
@@ -117,6 +118,43 @@ function RegenererTout({ id, titre }: { id: string; titre: string }) {
   );
 }
 
+/** Ce que l'atelier peut faire des fichiers ouverts, en clair, chaque piste menant à sa tuile. */
+function Pistes() {
+  const a = useAtelier();
+  const legende = useLegende();
+  const [masquees, setMasquees] = useState(false);
+  const [toutes, setToutes] = useState(false);
+  const p = pistes(a.exports, { legende, longueur: a.cadre.longueur });
+  if (!p.length || masquees) return null;
+  const vues = toutes ? p : p.slice(0, 3);
+  const agir = (x: ActionPiste) => {
+    if (x.genre === "mode") a.set({ mode: x.mode, ensemble: false });
+    else if (x.genre === "ensemble") a.set({ ensemble: true });
+    else if (x.genre === "verifier") a.set({ verifier: true });
+    else a.set({ rapport: true });
+  };
+  return (
+    <div className="atelier-pistes">
+      <span className="muted small">
+        Pistes pour ces fichiers{" "}
+        <button type="button" className="lien" onClick={() => setMasquees(true)}>
+          masquer
+        </button>
+      </span>
+      {vues.map((x, i) => (
+        <button key={i} type="button" className="atelier-piste" onClick={() => agir(x.action)} title={x.texte}>
+          <strong>{x.libelle}</strong> <span className="small">{x.texte}</span>
+        </button>
+      ))}
+      {p.length > vues.length ? (
+        <button type="button" className="lien small" onClick={() => setToutes(true)}>
+          + {p.length - vues.length} autre{p.length - vues.length > 1 ? "s" : ""}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function Recettes() {
   const a = useAtelier();
   if (!a.recettes.length) return null;
@@ -142,8 +180,10 @@ export function AtelierComsol() {
   const a = useAtelier();
   const reg = useReglagesComsol();
   const [reglages, setReglages] = useState(false);
-  const [rapport, setRapport] = useState(false);
-  const [ensemble, setEnsemble] = useState(false);
+  const rapport = a.rapport;
+  const setRapport = (v: boolean) => a.set({ rapport: v });
+  const ensemble = a.ensemble;
+  const setEnsemble = (v: boolean) => a.set({ ensemble: v });
   const dispo = modesDisponibles(a.exports);
   // mode choisi, ou le premier possible
   const mode = a.mode && !dispo[a.mode] ? a.mode : (MODES.find((m) => !dispo[m.id])?.id ?? null);
@@ -217,6 +257,7 @@ export function AtelierComsol() {
                 </button>
               ))}
             </div>
+            <Pistes />
             <Recettes />
           </section>
           {ensemble && a.exports.length ? <VueEnsemble fermer={() => setEnsemble(false)} /> : null}

@@ -30,3 +30,4 @@ export * from "./comsolExcel";
 export * from "./comsolMesures";
 export * from "./comsolDiagnostic";
 export * from "./comsolEnsemble";
+export * from "./comsolPistes";

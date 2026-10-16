@@ -54,7 +54,8 @@ export function AtelierFichiers() {
   const a = useAtelier();
   const legende = useLegende();
   const [ouvert, setOuvert] = useState<{ nom: string; quoi: "lecture" | "outils" } | null>(null);
-  const [verifier, setVerifier] = useState(false);
+  const verifier = a.verifier;
+  const setVerifier = (v: boolean) => a.set({ verifier: v });
   const suivi = (nom: string) => a.fichiers.find((f) => f.nom === nom);
   const derive = (nom: string) => a.derives.find((d) => d.nom === nom);
   return (
