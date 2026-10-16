@@ -1744,3 +1744,23 @@ button.lien {
   white-space: pre;
   resize: none;
 }
+
+/* Vérification des fichiers COMSOL */
+.atelier-constats {
+  margin: 6px 0;
+  padding-left: 0;
+  list-style: none;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.atelier-constats li {
+  border-left: 3px solid var(--border, #ccc);
+  padding-left: 6px;
+}
+
+.atelier-constats li.atelier-avert {
+  border-left-color: #d98400;
+}

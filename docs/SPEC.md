@@ -412,6 +412,12 @@ Ajouts permis par l'intégration :
   pas de vue à l'instant appliquée d'avance pour un balayage interne). `comsolExcel.ts` : `feuillesGraphe`
   (courbes, grille), `feuilleSynthese`, `feuilleCriteres`, `feuilleBassins`, `feuilleMaillage`,
   `feuilleSensibilite` → `ecrireClasseur` (noyau) ; `nomDeFichier` (sans accents ni grec).
+- **mesures et vérification** (1.37.0) : `comsolMesures.ts` (`lireMesures` : colonnes collées, séparateurs et
+  virgule décimale reconnus, facteur et signe ; `comparerMesure` : interpolation du calcul aux abscisses mesurées,
+  RMS, écart sur le pic, recalage des pics ; recettes profils et temps `mesures`, temps `aligner`, écarts dans
+  `ResultatTrace.ecartsMesures`). `comsolDiagnostic.ts` (`diagnostiquer` : unités d'une même grandeur, NaN,
+  légendes en double, cases manquantes d'un plan 2 × N tiré des noms, pics au bord latéral ou bas de la zone
+  exportée, grilles différentes).
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,

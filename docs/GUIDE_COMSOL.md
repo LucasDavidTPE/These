@@ -157,6 +157,15 @@ Les deux vont aussi dans le **rapport LaTeX** (sections et phrases chiffrées). 
 - **« Excel… »** sous chaque aperçu : les données du graphe (x et y de chaque courbe, ou la grille de la carte)
   et les tableaux calculés (synthèse, critères, bassins, maillage, sensibilité) dans un classeur .xlsx.
 
+### Mesures superposées, vérification des fichiers (1.37.0)
+
+- **Mesures superposées** (« Signal dans le temps », « Comparer des profils ») : coller les colonnes d'Excel
+  (jauges, capteurs, profil mesuré) ; tracées en noir, comparées à chaque courbe calculée (pic, écart sur le
+  pic, RMS) ; pour un signal, **recalage des pics** dans le temps (décalage donné). Détails : § 6.1.
+- **« Vérifier »** (liste des fichiers) : même grandeur dans des unités différentes, valeurs absentes, deux
+  fichiers à la même légende, **cas manquants** du plan tiré des noms (« il manque VE × rect »), **pic au bord
+  de la zone exportée** (zone trop petite ?), grilles différentes entre plans comparables.
+
 Les sections suivantes détaillent les données attendues et chaque calcul.
 
 ---
@@ -650,6 +659,25 @@ Tuile **« Signal dans le temps »**, dès qu'une table est ouverte :
 - **Pic annoté** : plus grande valeur absolue, maximum ou minimum de chaque courbe ; le point est marqué et
   commenté « −150 µdef à 11 s ; Δt = +1 s » (décalage par rapport à l'instant repère). Le texte se place
   vers l'intérieur du graphe et se déplace ou se corrige dans « Repères et annotations ».
+
+### 6.1 Mesures superposées (1.37.0)
+
+Cadre **« Mesures superposées »** sous les réglages de « Signal dans le temps » et de « Comparer des profils » :
+
+1. coller les colonnes copiées dans Excel (ou un fichier texte) : la **première colonne** est l'abscisse (le
+   temps en s ; pour un profil, la position **telle qu'elle apparaît sur l'axe**, profondeur positive comprise),
+   chacune des suivantes est une mesure ; une première ligne de titres donne les noms (« Jauge T1 ») ;
+   tabulations ou « ; » avec virgule décimale, blancs, ou CSV à l'anglaise ;
+2. **valeurs ×** : pour passer dans l'unité du calcul (1e6 : m/m → µdef ; 1e-3 : µm → mm) ; **changer le signe**
+   si les jauges comptent la compression positive ;
+3. **Ajouter** : chaque mesure est tracée en noir (points, ou trait pointillé au-delà de 60 points) ; son nom se
+   corrige dans la liste.
+
+Sous l'aperçu, pour chaque mesure et chaque courbe calculée : **pic mesuré**, **pic calculé**, **écart sur le
+pic** (orange au-delà de 10 %), **RMS** (écart quadratique moyen sur les points mesurés dans l'étendue du calcul,
+et rapporté au pic mesuré). **Recaler les pics dans le temps** : la mesure est décalée pour que son pic tombe sur
+celui du calcul (le décalage est affiché) — utile quand l'instant de passage de la roue n'est pas connu.
+Les mesures sont gardées dans la recette (elles restent sur la figure régénérée).
 
 ---
 

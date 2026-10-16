@@ -32,6 +32,7 @@ import { affinerCarte, parametresDesExports, parametresVariables, signalAuPoint,
 import { grapheSegments, type Segment } from "./comsolSegments";
 import { bassin, ecartMesure, expressionDeflexion, grapheBassins, ligneSurface, type Bassin, type Mesure } from "./comsolBassin";
 import { comparerMaillages, grapheMaillage, pairesMaillage, type LigneMaillage, type PaireMaillage } from "./comsolMaillage";
+import { comparerMesure, lireMesuresRecette, type EcartMesure, type MesureCollee } from "./comsolMesures";
 import { grapheSensibilite, libelleDe, parametresFichiers, sensibiliteFichiers, sensibiliteInterne, type SerieSensibilite, type StatSensibilite } from "./comsolSensibilite";
 import { hauteurEgale } from "./layout";
 import type { GraphDoc, Series } from "./model";
@@ -89,6 +90,8 @@ export interface TraceProfils extends AvecEtape {
   expressions: string[];
   orientation: "auto" | "verticale" | "horizontale";
   profondeur: boolean;
+  /** Profils mesurés superposés (coordonnée telle qu'elle apparaît sur l'axe, valeur). */
+  mesures: MesureCollee[];
 }
 export interface TraceCarte extends AvecEtape {
   mode: "carte";
@@ -122,6 +125,9 @@ export interface TraceTemps extends AvecEtape {
   reference: Reference;
   instant: number | null;
   pic: ModePic | null;
+  /** Signaux mesurés superposés (jauges, capteurs), et recalage de leurs pics sur ceux du calcul. */
+  mesures: MesureCollee[];
+  aligner: boolean;
 }
 export interface TraceComparer extends AvecEtape {
   mode: "comparer";
@@ -217,13 +223,13 @@ export interface EtudeComsol {
 export function traceVide(mode: ModeTrace): Trace {
   switch (mode) {
     case "profils":
-      return { mode, fichiers: null, expressions: [], orientation: "auto", profondeur: true };
+      return { mode, fichiers: null, expressions: [], orientation: "auto", profondeur: true, mesures: [] };
     case "carte":
       return { mode, plan: null, expression: null, palette: "auto", isolignes: [], egalite: false, epingles: [], lissage: 1 };
     case "coupe-profils":
       return { mode, plan: null, expression: null, sens: "verticales", valeurs: [], segments: [], profondeur: true };
     case "temps":
-      return { mode, fichiers: null, expressions: [], reference: { genre: "aucune" }, instant: 10, pic: "abs" };
+      return { mode, fichiers: null, expressions: [], reference: { genre: "aucune" }, instant: 10, pic: "abs", mesures: [], aligner: false };
     case "comparer":
       return { mode, a: null, b: null, op: "rapport", expression: null };
     case "synthese":
@@ -405,6 +411,28 @@ export interface ResultatTrace {
   problemes?: string[];
   /** Séries de la sensibilité (mode sensibilité). */
   sensibilite?: SerieSensibilite[];
+  /** Écarts de chaque courbe calculée à chaque mesure collée (profils, signaux). */
+  ecartsMesures?: { mesure: string; calcul: string; ecart: EcartMesure }[];
+}
+
+/** Mesures ajoutées au graphe (points noirs, ou trait noir pointillé si elles sont denses) et leurs écarts au calcul. */
+function avecMesures(doc: GraphDoc, mesures: readonly MesureCollee[], o: { vertical: boolean; aligner: boolean }): Pick<ResultatTrace, "doc" | "ecartsMesures"> {
+  if (!mesures.length) return { doc };
+  const calculs = doc.series.map((s) => ({ nom: s.name, x: o.vertical ? s.y : s.x, y: o.vertical ? s.x : s.y }));
+  const ecartsMesures: NonNullable<ResultatTrace["ecartsMesures"]> = [];
+  const series: Series[] = mesures.map((m) => {
+    const decalages = calculs.map((c) => {
+      const e = comparerMesure(c, m, { aligner: o.aligner });
+      if (e) ecartsMesures.push({ mesure: m.nom, calcul: c.nom, ecart: e });
+      return e?.decalage ?? 0;
+    });
+    // recalage dessiné : celui de la première courbe calculée
+    const dx = o.aligner ? (decalages[0] ?? 0) : 0;
+    const xs = m.x.map((x) => Number((x + dx).toPrecision(12)));
+    const dense = m.x.length > 60;
+    return { name: m.nom, type: dense ? "line" : "points", x: o.vertical ? [...m.y] : xs, y: o.vertical ? xs : [...m.y], legend: true, color: "#000000", ...(dense ? { dash: "dashed" as const } : { mark: "o" as const }) };
+  });
+  return { doc: { ...doc, series: [...doc.series, ...series] }, ecartsMesures };
 }
 
 const interfacesSi = (c: ContexteTrace) => (c.cadre.couches ? c.interfaces : undefined);
@@ -468,7 +496,7 @@ function executerVue(t0: Trace, c: ContexteTrace): ResultatTrace | null {
       const enZ = l.every((e) => /^z$/i.test(e.coordonnees[geometrie(e).varient[0]!]!));
       const doc = grapheProfils(l, { expressions: t.expressions, longueur: L, profondeur: enZ && t.orientation !== "horizontale" && t.profondeur, orientation: t.orientation, noms: l.map(legende), interfaces: interfacesSi(c) });
       const titre = t.expressions.length === 1 ? `${courtDe(l[0], t.expressions[0]!)} — ${l.length} profil(s) COMSOL` : `Profils COMSOL — ${l.map(legende).join(", ")}`;
-      return { doc, titre };
+      return { ...avecMesures(doc, t.mesures, { vertical: t.orientation === "verticale" || (t.orientation !== "horizontale" && enZ), aligner: false }), titre };
     }
     case "carte": {
       const p = parNom(c.exports, t.plan);
@@ -516,7 +544,7 @@ function executerVue(t0: Trace, c: ContexteTrace): ResultatTrace | null {
         if (pk) reference = { valeur: Number(pk.y.toPrecision(6)), texte: t.reference.texte || legende(e) };
       }
       return {
-        doc: grapheTemporel(l, { expressions: t.expressions, noms: l.map(legende), reference, instant: t.instant, pic: t.pic }),
+        ...avecMesures(grapheTemporel(l, { expressions: t.expressions, noms: l.map(legende), reference, instant: t.instant, pic: t.pic }), t.mesures, { vertical: false, aligner: t.aligner }),
         titre: `${courtDe(l[0], t.expressions[0]!)} au cours du temps — ${l.map(legende).join(", ")}`,
       };
     }
@@ -734,7 +762,14 @@ function lireTraceSeule(v: unknown): Trace | null {
   const liste = (k: string) => (v[k] === null ? null : Array.isArray(v[k]) ? chaines(v[k]) : null);
   switch (base.mode) {
     case "profils":
-      return { ...base, fichiers: liste("fichiers"), expressions: chaines(v.expressions), orientation: v.orientation === "verticale" || v.orientation === "horizontale" ? v.orientation : "auto", profondeur: v.profondeur !== false };
+      return {
+        ...base,
+        fichiers: liste("fichiers"),
+        expressions: chaines(v.expressions),
+        orientation: v.orientation === "verticale" || v.orientation === "horizontale" ? v.orientation : "auto",
+        profondeur: v.profondeur !== false,
+        mesures: lireMesuresRecette(v.mesures),
+      };
     case "carte":
       return {
         ...base,
@@ -764,7 +799,16 @@ function lireTraceSeule(v: unknown): Trace | null {
           : r.genre === "fichier" && typeof r.fichier === "string"
             ? { genre: "fichier", fichier: r.fichier, texte: typeof r.texte === "string" ? r.texte : "" }
             : { genre: "aucune" };
-      return { ...base, fichiers: liste("fichiers"), expressions: chaines(v.expressions), reference, instant: typeof v.instant === "number" ? v.instant : null, pic: v.pic === "max" || v.pic === "min" || v.pic === "abs" ? v.pic : null };
+      return {
+        ...base,
+        fichiers: liste("fichiers"),
+        expressions: chaines(v.expressions),
+        reference,
+        instant: typeof v.instant === "number" ? v.instant : null,
+        pic: v.pic === "max" || v.pic === "min" || v.pic === "abs" ? v.pic : null,
+        mesures: lireMesuresRecette(v.mesures),
+        aligner: v.aligner === true,
+      };
     }
     case "comparer":
       return { ...base, a: ch("a"), b: ch("b"), op: v.op === "difference" || v.op === "ecart" ? v.op : "rapport", expression: ch("expression") };

@@ -996,3 +996,10 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
       en un point d'une coupe.
 - [ ] Trois fichiers lc=1, 2, 3 (EL et VE) : « d'un fichier à l'autre », deux courbes VE=0 / VE=1.
 - [ ] « Excel… » sur une carte, des profils, une synthèse, des critères : classeur lisible dans Excel, valeurs justes.
+
+## COMSOL : mesures superposées, vérification (1.37.0)
+
+- [ ] Coller depuis Excel le signal d'une jauge (temps, µε) sous « Signal dans le temps » : tracé en noir, écarts plausibles ;
+      recaler les pics ; Continuer, régénérer : la mesure reste.
+- [ ] Profil vertical mesuré (profondeur positive en mm, valeur) superposé aux profils COMSOL.
+- [ ] « Vérifier » sur l'ensemble des fichiers de l'article : constats justes (unités, cas manquants, pics au bord).

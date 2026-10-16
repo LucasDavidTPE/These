@@ -4,7 +4,7 @@
  * « carte : x à l'horizontale, z à la verticale ») ; ƒ transforme le fichier (colonne calculée, repère).
  */
 import { useState } from "react";
-import { decrireExport, geometrie, type Description, type ExportComsol } from "../../core/graph";
+import { decrireExport, diagnostiquer, geometrie, type Description, type ExportComsol } from "../../core/graph";
 import { useLegende } from "./hooks";
 import { OutilsFichier } from "./Outils";
 import { useAtelier } from "./useAtelier";
@@ -54,6 +54,7 @@ export function AtelierFichiers() {
   const a = useAtelier();
   const legende = useLegende();
   const [ouvert, setOuvert] = useState<{ nom: string; quoi: "lecture" | "outils" } | null>(null);
+  const [verifier, setVerifier] = useState(false);
   const suivi = (nom: string) => a.fichiers.find((f) => f.nom === nom);
   const derive = (nom: string) => a.derives.find((d) => d.nom === nom);
   return (
@@ -70,7 +71,22 @@ export function AtelierFichiers() {
             ↻ Relire
           </button>
         ) : null}
+        {a.exports.length ? (
+          <button type="button" aria-expanded={verifier} onClick={() => setVerifier(!verifier)} title="Unités incohérentes, valeurs absentes, cas manquants, pics au bord de la zone exportée…">
+            Vérifier
+          </button>
+        ) : null}
       </div>
+      {verifier && a.exports.length ? (
+        <ul className="atelier-constats">
+          {diagnostiquer(a.exports, { legende, longueur: a.cadre.longueur }).map((x, i) => (
+            <li key={i} className={x.niveau === "attention" ? "atelier-avert" : undefined}>
+              {x.niveau === "attention" ? "⚠ " : "ℹ "}
+              {x.texte}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <p className="muted small">Exports « Données » (une ligne ou un plan de coupe) ou « Table » (un point au cours du temps). Plusieurs d'un coup : Ctrl + clic, ou glissez-les sur cette page.</p>
       {!a.exports.length ? (
         <div className="atelier-vide">

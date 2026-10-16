@@ -33,6 +33,7 @@ import { AtelierApercu } from "./AtelierApercu";
 import { calculer } from "./atelierCalcul";
 import { Declinaison } from "./Declinaison";
 import { ChoixEtape } from "./Instants";
+import { ApercuMesures, MesuresCollees } from "./Mesures";
 import { useContexteTrace, useLegende, useTrace } from "./hooks";
 import { useAtelier } from "./useAtelier";
 
@@ -261,10 +262,15 @@ export function ModeProfils() {
               </label>
             ) : null}
           </fieldset>
+          <MesuresCollees
+            mesures={t.mesures}
+            set={(mesures) => maj({ mesures })}
+            abscisse="position telle que sur l'axe (mm…)"
+          />
         </>
       }
       apercu={
-        <AtelierApercu
+        <ApercuMesures
           resultat={calculer(() => executerTrace(t, c))}
           trace={t}
           aide={!choisies.length ? "Cochez au moins une ligne." : undefined}
@@ -642,10 +648,17 @@ export function ModeTemps() {
               <option value="min">Minimum</option>
             </select>
           </label>
+          <MesuresCollees
+            mesures={t.mesures}
+            set={(mesures) => maj({ mesures })}
+            aligner={t.aligner}
+            setAligner={(aligner) => maj({ aligner })}
+            abscisse="temps (s)"
+          />
         </>
       }
       apercu={
-        <AtelierApercu
+        <ApercuMesures
           resultat={calculer(() => executerTrace(t, c))}
           trace={t}
         />
