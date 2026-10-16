@@ -418,6 +418,11 @@ Ajouts permis par l'intégration :
   `ResultatTrace.ecartsMesures`). `comsolDiagnostic.ts` (`diagnostiquer` : unités d'une même grandeur, NaN,
   légendes en double, cases manquantes d'un plan 2 × N tiré des noms, pics au bord latéral ou bas de la zone
   exportée, grilles différentes).
+- **vue d'ensemble et grandeurs dérivées** (1.38.0, `core/graph/comsolEnsemble.ts`) : `vueEnsemble` (cas d'un genre
+  ayant la grandeur, matrice `ranger` sur deux mots variables, petites cartes à bornes de couleurs communes ou
+  petits profils à axes communs, pic par `statistique`) ; `colonnesProposees` (ε1, ε3, γmax par plan, εvol,
+  εh max, |εzz|, τmax, σVM selon `nomsColonnes`), ajoutées comme transformations « colonne » à un fichier ou à
+  tous les fichiers d'origine qui les permettent.
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,

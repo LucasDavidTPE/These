@@ -3,8 +3,9 @@
  * partagés par toute la bibliothèque (correspondances de légende, interfaces de couches).
  */
 import { useState } from "react";
-import { ajouterColonne, expressionParDefaut, libelleColonne, nomsColonnes, positionExtremum, type ExportComsol, type Transformation } from "../../core/graph";
+import { ajouterColonne, colonnesProposees, expressionParDefaut, libelleColonne, nomsColonnes, positionExtremum, type ColonneProposee, type ExportComsol, type Transformation } from "../../core/graph";
 import { useReglagesComsol } from "../graph/useReglagesComsol";
+import { useAtelier } from "./useAtelier";
 
 const nombre = (t: string) => Number(t.trim().replace(",", ".").replace("−", "-"));
 
@@ -19,6 +20,15 @@ export function OutilsFichier({ e, transformer, repereOrigine }: { e: ExportComs
   const [unite, setUnite] = useState("");
   const [k, setK] = useState(Math.max(0, e.coordonnees.findIndex((c) => /^z$/i.test(c))));
   const [signe, setSigne] = useState(false);
+  const [partout, setPartout] = useState(true);
+  const proposees = colonnesProposees(e);
+  // une grandeur dérivée usuelle, ici ou dans tous les fichiers d'origine qui ont les colonnes nécessaires
+  const ajouterProposee = (p: ColonneProposee) => {
+    const t: Transformation = { genre: "colonne", formule: p.formule, nom: p.nom, unite: p.unite };
+    if (!partout) return transformer(t);
+    const a = useAtelier.getState();
+    for (const x of a.exports) if (a.fichiers.some((f) => f.nom === x.nom) && colonnesProposees(x).some((q) => q.nom === p.nom)) a.transformer(x.nom, t);
+  };
   const [origine, setOrigine] = useState("0");
   const [centre, setCentre] = useState(expressionParDefaut(e.colonnes.map((c) => c.expression)) ?? "");
   const disponibles = [...nomsColonnes(e).keys()].filter((n) => !/^c\d+$/.test(n));
@@ -61,6 +71,24 @@ export function OutilsFichier({ e, transformer, repereOrigine }: { e: ExportComs
       >
         Ajouter la colonne
       </button>
+      <h5>Grandeurs dérivées</h5>
+      {proposees.length ? (
+        <>
+          <div className="atelier-grandeurs">
+            {proposees.map((p) => (
+              <button key={p.nom} type="button" className="small-btn" title={`${p.explication}\n${p.formule}`} onClick={() => ajouterProposee(p)}>
+                + {p.nom}
+              </button>
+            ))}
+          </div>
+          <label className="chip">
+            <input type="checkbox" checked={partout} onChange={(x) => setPartout(x.target.checked)} />
+            à tous les fichiers qui ont ces colonnes
+          </label>
+        </>
+      ) : (
+        <p className="muted small">Aucune proposée (il faut par exemple exx, ezz et exz pour les déformations principales dans le plan x-z).</p>
+      )}
       {e.nature !== "table" ? (
         <>
           <h5>Repère</h5>

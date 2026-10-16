@@ -10,6 +10,7 @@ import { useReglagesComsol } from "../graph/useReglagesComsol";
 import { getBackend } from "../platform/backend";
 import { AtelierFichiers } from "./AtelierFichiers";
 import { ModeComparer, ModeCoupeProfils, ModeProfils, ModeSynthese, ModeTemps } from "./AtelierModes";
+import { VueEnsemble } from "./Ensemble";
 import { ModeCarte } from "./ModeCarte";
 import { regenererEtude } from "./lot";
 import { ModeCriteres } from "./ModeCriteres";
@@ -142,6 +143,7 @@ export function AtelierComsol() {
   const reg = useReglagesComsol();
   const [reglages, setReglages] = useState(false);
   const [rapport, setRapport] = useState(false);
+  const [ensemble, setEnsemble] = useState(false);
   const dispo = modesDisponibles(a.exports);
   // mode choisi, ou le premier possible
   const mode = a.mode && !dispo[a.mode] ? a.mode : (MODES.find((m) => !dispo[m.id])?.id ?? null);
@@ -199,6 +201,10 @@ export function AtelierComsol() {
           <section className="atelier-colonne atelier-modes">
             <h3>
               <span className="atelier-etape">2</span> Que voulez-vous tracer ?
+              <span className="grow" />
+              <button type="button" className="small-btn" aria-pressed={ensemble} disabled={!a.exports.length} onClick={() => setEnsemble(!ensemble)} title="Tous les cas d'un coup : petites cartes ou petits profils à la même échelle, rangés en matrice">
+                ▦▦ Vue d'ensemble
+              </button>
             </h3>
             <div className="atelier-tuiles">
               {MODES.map((m) => (
@@ -213,7 +219,8 @@ export function AtelierComsol() {
             </div>
             <Recettes />
           </section>
-          <div className="atelier-mode">
+          {ensemble && a.exports.length ? <VueEnsemble fermer={() => setEnsemble(false)} /> : null}
+          <div className="atelier-mode" style={ensemble && a.exports.length > 0 ? { display: "none" } : undefined}>
             {mode === "profils" ? <ModeProfils /> : null}
             {mode === "carte" ? <ModeCarte /> : null}
             {mode === "coupe-profils" ? <ModeCoupeProfils /> : null}

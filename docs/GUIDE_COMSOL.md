@@ -166,6 +166,16 @@ Les deux vont aussi dans le **rapport LaTeX** (sections et phrases chiffrées). 
   fichiers à la même légende, **cas manquants** du plan tiré des noms (« il manque VE × rect »), **pic au bord
   de la zone exportée** (zone trop petite ?), grilles différentes entre plans comparables.
 
+### Vue d'ensemble, grandeurs dérivées (1.38.0)
+
+- **« ▦▦ Vue d'ensemble »** (en tête des tuiles) : tous les cas d'un coup, en **petites cartes** (ou petits
+  profils) à la **même échelle**, rangés en matrice d'après les mots des noms (lignes = matériau, colonnes =
+  empreinte), le pic sous chaque case ; un clic ouvre le cas en grand (« Carte d'une coupe », « Comparer des
+  profils »).
+- **Grandeurs dérivées** (« Transformer (ƒ)… » d'un fichier) : en un clic, ε1 / ε3 / γmax dans le plan x-z
+  (y-z, x-y), εvol, εh max, |εzz|, τmax, σVM selon les colonnes présentes — ajoutées comme colonnes calculées,
+  **à tous les fichiers** qui ont les colonnes nécessaires (case cochée par défaut).
+
 Les sections suivantes détaillent les données attendues et chaque calcul.
 
 ---
@@ -475,6 +485,17 @@ gardé dans l'étude (recalculé à l'ouverture).
 et les cas comparables (une ligne chacun) → une figure par cas et par instant (recette gardée), et une
 **planche** cas × instants, titres de colonnes « t = 9 », « t = 10 »…, **même échelle de couleurs**.
 
+### 4.5 Vue d'ensemble (1.38.0)
+
+Bouton **« ▦▦ Vue d'ensemble »** à droite de « Que voulez-vous tracer ? » : à la place du tracé en cours,
+
+- **Coupes** ou **Lignes**, et la **grandeur** (communes à tous les cas) ;
+- **lignes** et **colonnes** de la matrice : deux mots qui varient dans les noms (par défaut les deux premiers) ;
+- une petite carte par cas (même échelle de couleurs pour toutes), ou un petit profil (mêmes axes), avec la
+  légende du cas et son **pic** (valeur de plus grande valeur absolue) ; « — » : combinaison absente ;
+- **clic** sur une case : le cas s'ouvre en grand dans « Carte d'une coupe » (ou « Comparer des profils »),
+  avec la même grandeur. « Fermer » revient au tracé.
+
 ### 4.4 Segments, lissage, animation (1.35.0)
 
 **Segments quelconques** (« Profils dans une coupe », troisième choix) : cliquer **A** puis **B** sur la carte
@@ -514,6 +535,25 @@ fichier et se trace, se cartographie ou se synthétise comme les autres.
 - **Exemples** : `abs(ezz)`, `max(e1, 0)` (traction seule), `0.5*(exx + eyy)`, `-ezz` (changement de signe),
   `1e-3*ezz` (µdef → ‰), `e1 - e3`.
 - **Nom** et **unité** de la colonne : ce qui s'affiche sur l'axe et dans les listes.
+
+### 5.1 bis Grandeurs dérivées proposées (1.38.0)
+
+Sous « Colonne calculée », **« Grandeurs dérivées »** propose ce que les colonnes du fichier permettent :
+
+| Proposée | Formule (noms courts des colonnes) | Il faut |
+|---|---|---|
+| ε1 (x-z), ε3 (x-z) | 0.5*(exx+ezz) ± sqrt((0.5*(exx−ezz))^2 + exz^2) | exx, ezz, exz (tensoriel, comme `solid.eXZ`) |
+| γmax (x-z) | 2*sqrt((0.5*(exx−ezz))^2 + exz^2) = ε1 − ε3 | idem |
+| mêmes en y-z, x-y | avec eyy, eyz / exx, eyy, exy | |
+| εvol | exx + eyy + ezz | les trois |
+| εh max | max(exx, eyy) | exx, eyy |
+| \|εzz\| | abs(ezz) | ezz |
+| τmax (x-z) | sqrt((0.5*(sxx−szz))^2 + sxz^2) | sxx, szz, sxz |
+| σVM | von Mises (six composantes) | sxx … sxz |
+
+Un clic ajoute la colonne (unité de la première composante), à ce fichier ou, case cochée, à **tous les
+fichiers d'origine** qui ont les colonnes. Comme toute colonne calculée, elle est gardée dans l'étude et
+rejouée à la relecture. Les grandeurs déjà présentes ne sont pas proposées.
 
 ### 5.2 Changement de repère (« Transformer (ƒ)… » sur un fichier)
 

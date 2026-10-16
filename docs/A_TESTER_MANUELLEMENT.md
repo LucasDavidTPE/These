@@ -1003,3 +1003,10 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
       recaler les pics ; Continuer, régénérer : la mesure reste.
 - [ ] Profil vertical mesuré (profondeur positive en mm, valeur) superposé aux profils COMSOL.
 - [ ] « Vérifier » sur l'ensemble des fichiers de l'article : constats justes (unités, cas manquants, pics au bord).
+
+## COMSOL : vue d'ensemble, grandeurs dérivées (1.38.0)
+
+- [ ] Les 12 coupes de l'article : « Vue d'ensemble » εzz, matrice matériau × empreinte, même échelle ; clic → carte en grand.
+- [ ] Lignes verticales : petits profils aux mêmes axes.
+- [ ] « Transformer » d'une coupe avec exx, ezz, exz : « + ε1 (x-z) » pour tous les fichiers ; valeur vérifiée à la main en un
+      point ; rouvrir l'étude : la colonne est rejouée.

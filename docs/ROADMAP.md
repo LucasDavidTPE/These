@@ -249,6 +249,8 @@ lancent tous les tests automatiques sous Windows.
       extremum ou valeur en un point) et **export Excel** des données de chaque tracé et des tableaux (1.36.0)
 - [x] COMSOL : **mesures superposées** (jauges, capteurs, profils mesurés ; écarts, recalage des pics) et **vérification des
       fichiers** (unités, NaN, cas manquants, pics au bord de la zone exportée) (1.37.0)
+- [x] COMSOL : **vue d'ensemble** de tous les cas (petites cartes ou profils à la même échelle, en matrice, clic pour ouvrir) et
+      **grandeurs dérivées** en un clic (principales dans le plan, γmax, εvol, σVM…) pour tous les fichiers (1.38.0)
 - [x] Manuscrits : anciens fichiers **.doc** acceptés (parties, dossiers, corrections reçues), convertis en `.docx` par Word
       à côté de l'original (1.26.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),
