@@ -24,6 +24,7 @@ import {
   type UniteLongueur,
 } from "./comsol";
 import { ajouterColonne, changerRepere, combiner, grapheBarres, grapheTemporel, motsDuNom, pic, profilsInterpoles, synthese, type LigneSynthese, type ModePic, type Operation, type Statistique } from "./comsolCalcul";
+import { grapheCriteres, tableauCriteres, type AffichageCriteres, type Critere, type TableauCriteres } from "./comsolCriteres";
 import { hauteurEgale } from "./layout";
 import type { GraphDoc, Series } from "./model";
 
@@ -57,7 +58,7 @@ export interface Derive {
 
 // ---- Recettes (tracés de l'atelier) ----
 
-export type ModeTrace = "profils" | "carte" | "coupe-profils" | "temps" | "comparer" | "synthese";
+export type ModeTrace = "profils" | "carte" | "coupe-profils" | "temps" | "comparer" | "synthese" | "criteres";
 
 export interface TraceProfils {
   mode: "profils";
@@ -108,7 +109,20 @@ export interface TraceSynthese {
   virgule: boolean;
   barres: { expression: string | null; categorie: number | null; groupe: number | null; statistique: Statistique };
 }
-export type Trace = TraceProfils | TraceCarte | TraceCoupeProfils | TraceTemps | TraceComparer | TraceSynthese;
+export interface TraceCriteres {
+  mode: "criteres";
+  /** Cas évalués ; null : tous ceux qui ont une cote z (coupes et profils verticaux). */
+  fichiers: string[] | null;
+  /** Critères (ids des réglages) ; null : tous. */
+  criteres: string[] | null;
+  /** Trafic de calcul (cycles) : déformations admissibles et dommage ; null : sans. */
+  trafic: number | null;
+  affichage: AffichageCriteres;
+  /** Cas de référence pour l'affichage relatif. */
+  reference: string | null;
+  virgule: boolean;
+}
+export type Trace = TraceProfils | TraceCarte | TraceCoupeProfils | TraceTemps | TraceComparer | TraceSynthese | TraceCriteres;
 
 /** Réglages de l'atelier au moment du tracé (gardés avec la recette). */
 export interface Cadre {
@@ -149,6 +163,8 @@ export function traceVide(mode: ModeTrace): Trace {
       return { mode, a: null, b: null, op: "rapport", expression: null };
     case "synthese":
       return { mode, fichiers: null, expressions: [], virgule: true, barres: { expression: null, categorie: null, groupe: null, statistique: "abs" } };
+    case "criteres":
+      return { mode, fichiers: null, criteres: null, trafic: null, affichage: "cycles", reference: null, virgule: true };
   }
 }
 
@@ -161,6 +177,8 @@ export interface ContexteTrace {
   noms: Readonly<Record<string, string>>;
   correspondances: readonly Correspondance[];
   interfaces: readonly Interface[];
+  /** Critères de dimensionnement réglés (pour le mode « critères »). */
+  criteres?: readonly Critere[];
 }
 
 /** Légende de chaque fichier : saisie, sinon calculée entre fichiers de même forme (correspondances comprises). */
@@ -183,6 +201,13 @@ export const courtDe = (e: ExportComsol | undefined, x: string) => {
 };
 const fr = (x: number) => String(Number(x.toPrecision(5))).replace(".", ",").replace("-", "−");
 
+/** Exports qui ont une cote z exploitable (coupe régulière qui la contient, profil vertical). */
+export const avecCote = (es: readonly ExportComsol[]) =>
+  es.filter((e) => {
+    const g = geometrie(e);
+    const kz = e.coordonnees.findIndex((x) => /^z$/i.test(x));
+    return kz >= 0 && ((g.genre === "coupe" && g.reguliere && g.varient.includes(kz)) || (g.genre === "profil" && g.varient[0] === kz));
+  });
 const lignesDe = (es: readonly ExportComsol[]) => es.filter((e) => geometrie(e).genre === "profil");
 const plansDe = (es: readonly ExportComsol[]) => es.filter((e) => geometrie(e).genre === "coupe" && geometrie(e).reguliere);
 const tablesDe = (es: readonly ExportComsol[]) => es.filter((e) => e.nature === "table");
@@ -223,6 +248,10 @@ export function normaliser(t: Trace, exports: readonly ExportComsol[]): Trace {
       const dispo = a && b ? expressionsCommunes([a, b]) : [];
       return { ...t, a: a?.nom ?? null, b: b?.nom ?? null, expression: t.expression && dispo.includes(t.expression) ? t.expression : expressionParDefaut(dispo) };
     }
+    case "criteres": {
+      const avecZ = avecCote(exports);
+      return { ...t, fichiers: t.fichiers ? t.fichiers.filter((n) => avecZ.some((e) => e.nom === n)) : null, reference: t.reference && avecZ.some((e) => e.nom === t.reference) ? t.reference : (avecZ[0]?.nom ?? null) };
+    }
     case "synthese": {
       const l = t.fichiers ? choisis(exports, t.fichiers) : exports.filter((e) => !e.legende && e.nature !== "table" && geometrie(e).genre !== "point");
       const dispo = expressionsCommunes(l);
@@ -250,6 +279,8 @@ export interface ResultatTrace {
   lignes?: LigneSynthese[];
   /** Fichier calculé (mode comparer), à garder dans la liste si on le souhaite. */
   calcule?: ExportComsol;
+  /** Tableau des critères (mode critères). */
+  tableau?: TableauCriteres;
 }
 
 const interfacesSi = (c: ContexteTrace) => (c.cadre.couches ? c.interfaces : undefined);
@@ -337,6 +368,14 @@ export function executerTrace(t0: Trace, c: ContexteTrace): ResultatTrace | null
       if (g === "profil") return { doc: grapheProfils([res], { expressions: [t.expression], longueur: L, profondeur: true, noms: [res.legende!], interfaces: interfacesSi(c) }), titre, calcule: res };
       if (g === "serie") return { doc: grapheTemporel([res], { expressions: [t.expression], noms: [res.legende!] }), titre, calcule: res };
       throw new Error("Ce genre de fichier ne se trace pas directement ; le résultat peut aller dans la synthèse.");
+    }
+    case "criteres": {
+      const l = choisis(avecCote(c.exports), t.fichiers);
+      const tous = c.criteres ?? [];
+      const cr = t.criteres ? tous.filter((x) => t.criteres!.includes(x.id)) : tous;
+      if (!l.length || !cr.length) return null;
+      const tableau = tableauCriteres(l, cr, { longueur: L, trafic: t.trafic, legende });
+      return { doc: grapheCriteres(tableau, { affichage: t.affichage, reference: t.reference }), titre: `Critères de dimensionnement — ${l.map(legende).join(", ")}`, tableau };
     }
     case "synthese": {
       const l = choisis(c.exports, t.fichiers);
@@ -430,7 +469,7 @@ export const memesBornes = (a: GraphDoc, b: GraphDoc) => !a.carte || !b.carte ||
 const estObjet = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 const chaines = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 const nombres = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is number => typeof x === "number" && Number.isFinite(x)) : []);
-const MODES: ModeTrace[] = ["profils", "carte", "coupe-profils", "temps", "comparer", "synthese"];
+const MODES: ModeTrace[] = ["profils", "carte", "coupe-profils", "temps", "comparer", "synthese", "criteres"];
 
 export function lireCadre(v: unknown): Cadre {
   const c = estObjet(v) ? v : {};
@@ -466,6 +505,16 @@ export function lireTrace(v: unknown): Trace | null {
     }
     case "comparer":
       return { ...base, a: ch("a"), b: ch("b"), op: v.op === "difference" || v.op === "ecart" ? v.op : "rapport", expression: ch("expression") };
+    case "criteres":
+      return {
+        ...base,
+        fichiers: liste("fichiers"),
+        criteres: liste("criteres"),
+        trafic: typeof v.trafic === "number" && v.trafic > 0 ? v.trafic : null,
+        affichage: v.affichage === "deformation" || v.affichage === "relatif" ? v.affichage : "cycles",
+        reference: ch("reference"),
+        virgule: v.virgule !== false,
+      };
     case "synthese": {
       const b = estObjet(v.barres) ? v.barres : {};
       return {

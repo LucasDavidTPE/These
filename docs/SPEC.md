@@ -364,6 +364,16 @@ Ajouts permis par l'intégration :
   Écriture en série : `ecrireGraphe` / `ecrirePlanche` (même contenu que « Enregistrer »), recettes gardées d'un
   coup (`sauverRecettes`, une écriture d'étude). `regenererEtude` : chaque graph.json dont `origine.etude` est
   l'étude (verrous de l'autre PC respectés) est régénéré et réécrit, puis chaque planche qui en contient un.
+- **critères de dimensionnement** (1.31.0, `core/graph/comsolCriteres.ts`, mode d'atelier « criteres ») : `Critere`
+  {nom, genre traction|compression, z (m, repère COMSOL), côté dessus|dessous, décalage, variables, loi}, lois
+  `fatigue` (εt,adm = ε6·k·(N/10⁶)^b) et `sol` (εz,adm = A·N^(−e)), réglées dans `_comsol/reglages.json`
+  (`criteres`, valeurs de départ indicatives). `evaluer` : ligne à la cote (coupe régulière contenant z :
+  `profilsInterpoles` ; profil vertical : interpolation linéaire), repère du fichier respecté (profondeur
+  positive), bord du fichier accepté à 1 % de l'étendue du côté demandé seulement ; extremum de traction ou de
+  compression parmi les variables, converti en µdef (`versMicrodef`) ; N admissible, déformation admissible et
+  dommage de Miner pour un trafic. `tableauCriteres`, `critereDimensionnant` (le moins de cycles),
+  `grapheCriteres` (barres : cycles en log, déformations, ou % d'un cas de référence avec repère à 100 %),
+  `criteresLatex` (booktabs). Recette `TraceCriteres` dans l'étude, régénérable.
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,

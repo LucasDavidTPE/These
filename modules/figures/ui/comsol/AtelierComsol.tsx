@@ -11,10 +11,11 @@ import { getBackend } from "../platform/backend";
 import { AtelierFichiers } from "./AtelierFichiers";
 import { ModeCarte, ModeComparer, ModeCoupeProfils, ModeProfils, ModeSynthese, ModeTemps } from "./AtelierModes";
 import { regenererEtude } from "./lot";
+import { ModeCriteres } from "./ModeCriteres";
 import { ReglagesPartages } from "./Outils";
 import { useAtelier } from "./useAtelier";
 
-const ICONES: Record<ModeAtelier, string> = { profils: "⫼", carte: "▦", "coupe-profils": "▥", temps: "∿", comparer: "÷", synthese: "▤" };
+const ICONES: Record<ModeAtelier, string> = { profils: "⫼", carte: "▦", "coupe-profils": "▥", temps: "∿", comparer: "÷", synthese: "▤", criteres: "⚖" };
 
 /** Racines du poste et surveillance des dossiers pour l'atelier ; glisser-déposer des fichiers sur la page. */
 function useBranchements() {
@@ -211,6 +212,7 @@ export function AtelierComsol() {
             {mode === "temps" ? <ModeTemps /> : null}
             {mode === "comparer" ? <ModeComparer /> : null}
             {mode === "synthese" ? <ModeSynthese /> : null}
+            {mode === "criteres" ? <ModeCriteres /> : null}
             {!mode ? <p className="muted atelier-attente">Ouvrez des fichiers (à gauche) : les tracés possibles s'allument.</p> : null}
           </div>
         </div>

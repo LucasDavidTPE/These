@@ -200,6 +200,7 @@ describe("légendes depuis l'en-tête COMSOL", () => {
       format: "these-comsol/1",
       correspondances: [{ de: "lc=1", vers: "Rect" }],
       interfaces: [{ z: -0.08, texte: "BB/GB" }],
+      criteres: expect.any(Array),
     });
   });
 });

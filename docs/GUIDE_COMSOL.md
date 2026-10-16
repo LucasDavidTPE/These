@@ -101,6 +101,12 @@ fichiers et refait **toutes les figures de l'étude** dans la bibliothèque (don
 puis **toutes les planches** qui en contiennent (exports SVG, PNG, pgfplots réécrits). Une figure ouverte sur
 l'autre PC (verrou) est laissée telle quelle et signalée.
 
+### Critères de dimensionnement (1.31.0)
+
+Tuile **« Critères de dimensionnement »** (⚖) : pour chaque cas, la déformation qui dimensionne et le nombre de
+cycles qu'elle permet — **εt à la base des couches liées** (fatigue) et **εz au sommet du sol** (orniérage),
+façon méthode rationnelle. Tableau booktabs, barres, dommage pour un trafic : voir la section 5.5.
+
 Les sections suivantes détaillent les données attendues et chaque calcul.
 
 ---
@@ -431,6 +437,41 @@ table), une ligne par fichier × grandeur, avec la légende du cas (correspondan
   autre mot (le matériau : mot n° 3). Les correspondances s'appliquent (« het » → « Hétérogène »). Le
   graphe a des catégories nommées en abscisse (modifiables : axe x → « Catégories »).
 
+### 5.5 Critères de dimensionnement (tuile « Critères de dimensionnement »)
+
+**Cas évalués** : les coupes régulières qui contiennent z (plan x-z, y-z) et les profils verticaux (ligne le
+long de z). Pour chaque cas et chaque **critère** coché :
+
+1. la ligne à la **cote de l'interface** est prise dans le fichier (interpolée dans une coupe ; interpolée
+   entre deux points d'un profil vertical), du côté demandé (« au-dessus de » pour la base d'une couche liée,
+   « en dessous de » pour le sommet du sol), avec un **décalage** dans la couche si besoin. Si l'export
+   s'arrête juste avant l'interface (−0,3199 pour −0,32 m), le bord du fichier est pris, à condition d'être
+   à moins de 1 % de l'étendue en z et **du bon côté** (jamais de l'autre côté de l'interface) ;
+2. sur cette ligne, la plus forte **traction** (valeur maxi) ou **compression** (valeur mini, comptée
+   positive) parmi les **variables** du critère (`exx, eyy` pour εt ; `ezz` pour εz ; on peut mettre `e1`,
+   `e3`…). Unités converties en µdef (µε, ‰, sans unité = m/m) ;
+3. les **cycles admissibles** par la loi du critère :
+   - fatigue des couches liées : εt,adm = ε6 · k · (N/10⁶)^b, donc N = 10⁶ · (εt / (ε6·k))^(1/b)
+     (b négatif ; k regroupe kc, kr, ks, kθ) ;
+   - sol : εz,adm = A · N^(−e), donc N = (εz / A)^(−1/e) (A = 0,012 ou 0,016 ; e = 0,222).
+
+Le tableau donne, par cas et par critère, la déformation, **N admissible** et, si un **trafic de calcul** est
+saisi, le **dommage** D = trafic / N (Miner ; en orange au-delà de 1) ; la survol d'une case montre la
+position du maximum, la variable retenue et la cote évaluée. La case **surlignée** est le **critère
+dimensionnant** du cas (le moins de cycles), rappelé dans la dernière colonne. « pas de traction » : la
+déformation la plus forte est de signe contraire (la couche est comprimée à cette cote).
+
+- **Régler les critères et les lois…** (pour toute la bibliothèque, comme les interfaces) : nom, traction ou
+  compression, cote z (m, négative vers le bas), côté, décalage, variables, et ε6, b, k ou A, e. Les trois
+  critères de départ (εt base BB à −0,08 m, εt base GB et εz sommet GRH à −0,32 m) ont des **valeurs
+  indicatives** : les remplacer par celles des matériaux de l'étude.
+- **Diagramme** : cycles admissibles (échelle log), déformations critiques, ou **cycles rapportés à un cas de
+  référence** (en %, trait à 100 % : « le VE tient 12 % des cycles de l'EL »). Une série par critère, les
+  cas en abscisse ; graphe modifiable comme les autres (« Continuer dans Graphes »), recette gardée dans
+  l'étude.
+- **Copier le tableau LaTeX (booktabs)** / **Exporter .tex…** : µdef et N par critère, critère dimensionnant,
+  trafic en légende.
+
 ---
 
 ## 6. Séries temporelles (exports de tables)
@@ -459,8 +500,8 @@ Tuile **« Signal dans le temps »**, dès qu'une table est ouverte :
 - **Interpolation lisse** de la carte : non faite. La carte est en cellules (paliers), comme `matrix plot`
   de pgfplots ; les isolignes sont linéaires par maille.
 - **Opérations entre plus de deux fichiers** en une fois : les enchaîner (le résultat est un fichier).
-- La **liste des fichiers ouverts** (et les colonnes calculées) n'est pas enregistrée : seul le graphe tracé
-  l'est. Pour refaire un tracé d'un autre fichier, il faut le rouvrir.
+- La liste des fichiers ouverts, les colonnes calculées et les recettes ne sont gardées que dans une
+  **étude enregistrée** (barre du haut) ; sans étude, seul le graphe tracé l'est.
 
 ---
 

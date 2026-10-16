@@ -8,7 +8,7 @@ export function useContexteTrace(): ContexteTrace {
   const cadre = useAtelier((s) => s.cadre);
   const noms = useAtelier((s) => s.noms);
   const reglages = useReglagesComsol((s) => s.reglages);
-  return { exports, cadre, noms, correspondances: reglages.correspondances, interfaces: reglages.interfaces };
+  return { exports, cadre, noms, correspondances: reglages.correspondances, interfaces: reglages.interfaces, criteres: reglages.criteres };
 }
 
 export function useLegende(): (e: ExportComsol) => string {

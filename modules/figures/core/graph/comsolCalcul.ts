@@ -17,6 +17,7 @@ import {
   type LibelleColonne,
   type UniteLongueur,
 } from "./comsol";
+import { criteresDefaut, lireCriteres, type Critere } from "./comsolCriteres";
 import { evaluerFormule } from "./formule";
 import { GRAPH_FORMAT, type Annotation, type GraphDoc, type Repere, type Series } from "./model";
 
@@ -453,6 +454,8 @@ export interface ReglagesComsol {
   correspondances: Correspondance[];
   /** Interfaces de couches (cote z en unité des fichiers, m). */
   interfaces: Interface[];
+  /** Critères de dimensionnement (εt, εz) et leurs lois. */
+  criteres: Critere[];
 }
 
 export function reglagesComsolDefaut(): ReglagesComsol {
@@ -469,6 +472,7 @@ export function reglagesComsolDefaut(): ReglagesComsol {
       { z: -0.08, texte: "BB/GB" },
       { z: -0.32, texte: "GB/GRH" },
     ],
+    criteres: criteresDefaut(),
   };
 }
 
@@ -484,5 +488,6 @@ export function lireReglagesComsol(raw: unknown): ReglagesComsol {
     interfaces: liste(r.interfaces)
       .filter((i) => typeof i.z === "number" && Number.isFinite(i.z))
       .map((i) => ({ z: i.z as number, texte: typeof i.texte === "string" ? i.texte : "" })),
+    criteres: lireCriteres(r.criteres),
   };
 }

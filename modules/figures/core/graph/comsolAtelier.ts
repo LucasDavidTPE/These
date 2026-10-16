@@ -5,6 +5,7 @@
  */
 import { FACTEUR_LONGUEUR, geometrie, libelleColonne, parametresDe, type ExportComsol, type UniteLongueur } from "./comsol";
 import { combiner } from "./comsolCalcul";
+import { avecCote } from "./comsolEtude";
 import type { GraphLayout } from "./layout";
 import type { GraphDoc } from "./model";
 import { project, unproject } from "./ticks";
@@ -80,7 +81,7 @@ export function decrireExport(e: ExportComsol, longueur: UniteLongueur): Descrip
   return { forme: "point", titre: "Un seul point", detail: `${e.lignes} ligne(s)`, grandeurs, etude, avertissement: "Aucune coordonnée ne varie : rien à tracer en courbe." };
 }
 
-export type ModeAtelier = "profils" | "carte" | "coupe-profils" | "temps" | "comparer" | "synthese";
+export type ModeAtelier = "profils" | "carte" | "coupe-profils" | "temps" | "comparer" | "synthese" | "criteres";
 
 export const MODES: { id: ModeAtelier; titre: string; explication: string }[] = [
   { id: "profils", titre: "Comparer des profils", explication: "Des courbes le long d'une ligne (εzz en profondeur…), un fichier ou une grandeur par courbe." },
@@ -89,6 +90,7 @@ export const MODES: { id: ModeAtelier; titre: string; explication: string }[] = 
   { id: "temps", titre: "Signal dans le temps", explication: "Courbes au cours du temps (tables), référence élastique, pic et décalage." },
   { id: "comparer", titre: "Comparer deux cas", explication: "A / B, A − B ou écart en % point à point (VE / EL, het / circ…)." },
   { id: "synthese", titre: "Tableau de synthèse", explication: "Max, min et positions de chaque cas ; LaTeX booktabs ; barres groupées." },
+  { id: "criteres", titre: "Critères de dimensionnement", explication: "εt à la base des couches liées, εz au sommet du sol : cycles admissibles, dommage, cas dimensionnant." },
 ];
 
 /** Pour chaque tracé : null s'il est possible avec les fichiers ouverts, sinon ce qu'il manque. */
@@ -105,6 +107,7 @@ export function modesDisponibles(exports: readonly ExportComsol[]): Record<ModeA
     temps: tables ? null : exports.length ? "Aucune table (signal en un point au cours du temps)." : aucun,
     comparer: exports.length >= 2 ? null : "Il faut au moins deux fichiers de même grille.",
     synthese: exports.some((_, i) => genres[i]!.genre !== "point") ? null : aucun,
+    criteres: avecCote(exports).length ? null : exports.length ? "Aucune coupe contenant z ni profil vertical." : aucun,
   };
 }
 

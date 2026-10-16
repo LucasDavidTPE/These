@@ -54,7 +54,7 @@ export async function regenerer(doc: GraphDoc, env: EnvAtelier = useAtelier.getS
   const d = construireDerives(base, etude.derives);
   avertissements.push(...d.erreurs);
   const noms = Object.fromEntries(etude.fichiers.filter((f) => f.legende).map((f) => [f.nom, f.legende!]));
-  const neuf = executerTrace(recette.trace, { exports: d.exports, cadre: recette.cadre, noms, correspondances: reg.correspondances, interfaces: reg.interfaces });
+  const neuf = executerTrace(recette.trace, { exports: d.exports, cadre: recette.cadre, noms, correspondances: reg.correspondances, interfaces: reg.interfaces, criteres: reg.criteres });
   if (!neuf) throw new Error(`La recette « ${recette.nom} » ne trace plus rien : fichiers manquants ?\n${avertissements.join("\n")}`);
   return { doc: { ...rafraichirDonnees(doc, neuf.doc, { annotationsCalculees: recette.trace.mode === "temps" }), origine: o }, relus, avertissements };
 }

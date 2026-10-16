@@ -943,3 +943,13 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
       « ↻ Régénérer toute l'étude » → figures et planche à jour, retouche gardée ; une figure ouverte sur l'autre PC est
       signalée et non touchée.
 
+## COMSOL : critères de dimensionnement (1.31.0)
+
+- [ ] Ouvrir les coupes x-z (EL, VE) et un profil vertical ; tuile « Critères de dimensionnement » : εt et εz cohérents avec
+      les valeurs lues sur la carte à la cote de l'interface (survol d'une case : position, variable, cote).
+- [ ] « Régler les critères et les lois… » : mettre les cotes, ε6, b, k et A, e de l'étude ; Enregistrer ; sur l'autre PC,
+      les mêmes critères sont proposés.
+- [ ] Trafic 2e6 : dommage D affiché (orange > 1) ; vérifier un N à la main (fatigue et sol).
+- [ ] Diagramme « rapporté à un cas de référence » (EL) ; Continuer dans Graphes, Enregistrer ; « ↻ Régénérer » après un
+      nouvel export.
+- [ ] Copier le tableau LaTeX (booktabs) et compiler.

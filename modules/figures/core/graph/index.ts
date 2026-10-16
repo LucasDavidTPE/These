@@ -17,3 +17,4 @@ export * from "./formule";
 export * from "./comsolAtelier";
 export * from "./comsolEtude";
 export * from "./comsolLot";
+export * from "./comsolCriteres";
