@@ -259,3 +259,9 @@ describe("rapport : bassin et maillage", () => {
     expect(tex).toContain("\\label{tab:t-maillage}");
   });
 });
+
+describe("paires de maillage : mot « fin » séparé", () => {
+  it("« c_EL_fin_het » va avec « c_EL_het »", () => {
+    expect(pairesMaillage([surface(0.02, "c_EL_het.txt"), surface(0.02, "c_EL_fin_het.txt"), surface(0.02, "c_VE_het.txt")])).toEqual([{ grossier: "c_EL_het.txt", fin: "c_EL_fin_het.txt" }]);
+  });
+});

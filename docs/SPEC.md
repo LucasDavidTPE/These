@@ -396,7 +396,7 @@ Ajouts permis par l'intégration :
   contenant z), `bassin` (centre au pic ou imposé, déflexion positive vers le bas, moyenne des deux côtés,
   D aux géophones, SCI, BDI, BCI, AREA métrique, R = r²/(2(D0 − Dr))), `lireMesure` / `ecartMesure` (RMS
   relatif, écart sur D0), `grapheBassins`, `bassinsLatex` ; `pairesMaillage` (mot « …fin » ↔ même mot sans le
-  suffixe), `comparerMaillages` (pics, écart sur le pic, plus grand écart et position, L2 relative ; points
+  suffixe ; mot « fin » seul ↔ même nom sans ce mot, 1.40.1), `comparerMaillages` (pics, écart sur le pic, plus grand écart et position, L2 relative ; points
   communs, sinon interpolation du fin aux points du grossier), `grapheMaillage`, `maillageLatex`. Rapport :
   `phrasesBassins`, `phrasesMaillage`, sections « bassin » et « maillage ». `legendes` : si couper aux tirets
   ne distingue pas les fichiers, coupe seulement aux « _ » (« EL » / « EL-fin »).

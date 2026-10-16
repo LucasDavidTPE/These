@@ -40,9 +40,14 @@ export function pairesMaillage(
     const mots = motsDuNom(e.nom);
     mots.forEach((m, k) => {
       const f = FIN.exec(m);
-      if (!f || !f[1]) return;
-      const g = parCle.get(cle(mots.map((x, i) => (i === k ? f[1]! : x))));
-      if (g && g !== e.nom) out.push({ grossier: g, fin: e.nom });
+      if (!f) return;
+      // « EL-fin » ↔ « EL » ; mot « fin » seul (« coupe_EL_fin_het ») ↔ le même nom sans ce mot
+      const grossier = f[1]
+        ? mots.map((x, i) => (i === k ? f[1]! : x))
+        : mots.filter((_, i) => i !== k);
+      const g = grossier.length ? parCle.get(cle(grossier)) : undefined;
+      if (g && g !== e.nom && !out.some((p) => p.fin === e.nom))
+        out.push({ grossier: g, fin: e.nom });
     });
   }
   return out;

@@ -668,7 +668,8 @@ déformation la plus forte est de signe contraire (la couche est comprimée à c
 ### 5.7 Convergence du maillage (tuile « Convergence du maillage »)
 
 Le même cas calculé sur deux maillages. **Paires** : trouvées d'après les noms (un mot terminé par « fin »,
-« fine », « raffine » : `coupeXZ_R1_EL-fin_het` va avec `coupeXZ_R1_EL_het`), ou ajoutées à la main
+« fine », « raffine » : `coupeXZ_R1_EL-fin_het` va avec `coupeXZ_R1_EL_het` ; un mot « fin » seul aussi :
+`coupe_EL_fin_het` avec `coupe_EL_het`), ou ajoutées à la main
 (grossier… / fin… / + Paire). Le maillage **fin sert de référence**.
 
 Pour chaque paire et chaque grandeur cochée : **pic** des deux maillages (valeur de plus grande valeur
