@@ -80,7 +80,8 @@ export function plateformeTauri(): Plateforme {
       return { nom: chemin.split(/[\\/]/).pop() ?? chemin, octets, chemin };
     },
     verifierMiseAJour: async () => {
-      const maj = await check();
+      // délai borné : derrière un pare-feu qui ne répond pas, la vérification échoue au lieu de rester pendue
+      const maj = await check({ timeout: 20000 });
       if (!maj) return null;
       return {
         version: maj.version,

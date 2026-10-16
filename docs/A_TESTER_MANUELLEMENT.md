@@ -902,4 +902,5 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
       « Sens inversé » ; zoom sur une zone et gomme corrects avec un axe inversé.
 - [ ] **Planche** de deux cartes : « Même échelle de couleurs » → barres de couleurs identiques ; une carte à échelles égales
       garde ses proportions.
-
+- [ ] (1.27.1) Diagnostic → Mises à jour → « Vérifier maintenant » : sur chaque PC et chaque réseau (maison, ENTPE),
+      noter le résultat (à jour / disponible / message d'erreur) ; « Télécharger l'installeur à la main… » ouvre la page.
