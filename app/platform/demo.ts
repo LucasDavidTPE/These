@@ -473,6 +473,12 @@ export function plateformeDemo(scenario: string | null): Plateforme {
       scenario === "maj"
         ? { version: "9.9.9", notes: "Démonstration.", installer: async () => window.alert("Démonstration : l'application se mettrait à jour puis redémarrerait.") }
         : null,
+    convertirDoc: async () => {
+      throw new Error("Démonstration : la conversion d'un .doc passe par Microsoft Word, dans l'application installée.");
+    },
+    lireDoc: async () => {
+      throw new Error("Démonstration : la lecture d'un .doc passe par Microsoft Word, dans l'application installée.");
+    },
     ouvrirVSCode: async (chemin) => {
       window.alert(`Démonstration : VS Code s'ouvrirait sur\n${chemin}`);
     },

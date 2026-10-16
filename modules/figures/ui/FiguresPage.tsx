@@ -12,6 +12,7 @@ import { CropPage } from "./crop/CropPage";
 import { CutoutPage } from "./cutout/CutoutPage";
 import { EditorPage } from "./editor/EditorPage";
 import { GraphPage } from "./graph/GraphPage";
+import { PlanchePage } from "./planche/PlanchePage";
 import { LibraryPage } from "./library/LibraryPage";
 import { useLibrary } from "./library/useLibrary";
 import { PAGES, useNavigation } from "./navigation";
@@ -73,6 +74,8 @@ export function FiguresPage() {
           <CropPage />
         ) : page === "graphs" ? (
           <GraphPage />
+        ) : page === "planches" ? (
+          <PlanchePage />
         ) : (
           <AboutPage />
         )}

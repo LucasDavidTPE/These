@@ -8,6 +8,7 @@ import type { Primitive } from "../schema/geometry";
 import type { Theme } from "../schema/theme";
 import type { Pt } from "../schema/types";
 import { fitCorner, fitLabel, fitPoints, fitSample, fitSeries, type FitResult } from "./fit";
+import { bordCellule, bornesCarte, couleursCarte, palier } from "./carte";
 import type { GraphDoc, Series } from "./model";
 import { graphTheme } from "./style";
 import { formatTick, linearScale, logScale, project, type AxisScale } from "./ticks";
@@ -26,8 +27,13 @@ export const MARGINS = { left: 16, right: 3, top: 3, bottom: 12 };
 /** Marges d'un graphe : elles suivent la taille du texte de son style. */
 export function marginsOf(doc: GraphDoc): typeof MARGINS {
   const k = doc.style?.fontScale ?? 1;
-  return { left: MARGINS.left * k, right: MARGINS.right, top: MARGINS.top, bottom: MARGINS.bottom * k };
+  // une carte a sa barre de couleurs à droite : barre, graduations, titre
+  const right = doc.carte ? MARGINS.right + BARRE.ecart + BARRE.largeur + 11 * k + (doc.carte.legende ? 5 * k : 0) : MARGINS.right;
+  return { left: MARGINS.left * k, right, top: MARGINS.top, bottom: MARGINS.bottom * k };
 }
+
+/** Barre de couleurs d'une carte (mm). */
+export const BARRE = { ecart: 3, largeur: 3.5 };
 
 function dashOf(d: "dashed" | "dotted" | null): boolean | "dotted" | undefined {
   return d === "dotted" ? "dotted" : d === "dashed" ? true : undefined;
@@ -39,8 +45,11 @@ function extent(values: number[]): [number, number] {
 }
 
 export function scales(doc: GraphDoc): { xs: AxisScale; ys: AxisScale } {
-  const [x0, x1] = extent(doc.series.flatMap((s) => s.x));
-  let [y0, y1] = extent(doc.series.flatMap((s) => s.y));
+  // la carte compte dans l'étendue des axes (bords de ses cellules)
+  const cx = doc.carte ? [doc.carte.x[0]!, doc.carte.x.at(-1)!] : [];
+  const cy = doc.carte ? [doc.carte.y[0]!, doc.carte.y.at(-1)!] : [];
+  const [x0, x1] = extent([...doc.series.flatMap((s) => s.x), ...cx]);
+  let [y0, y1] = extent([...doc.series.flatMap((s) => s.y), ...cy]);
   // Les barres partent de 0 : on l'inclut en échelle linéaire.
   if (!doc.y.log && doc.series.some((s) => s.type === "bar")) {
     y0 = Math.min(y0, 0);
@@ -140,6 +149,9 @@ export function graphLayout(doc: GraphDoc): GraphLayout {
     ...extra,
   });
 
+  // Carte en couleurs (sous la grille et les courbes).
+  if (doc.carte) out.push(...carte(doc, X, Y, box));
+
   // Grille.
   if (doc.grid) {
     for (const t of xs.ticks) out.push(line([[X(t), box.y], [X(t), box.y + box.h]], { color: theme.graph.gridSvg }));
@@ -224,6 +236,54 @@ export function graphLayout(doc: GraphDoc): GraphLayout {
   const labels = fits.filter((f) => f.label);
   if (labels.length > 0) out.push(...fitBox(doc, theme, box, labels));
   return { box, xs, ys, primitives: out };
+}
+
+/**
+ * Cellules de la carte (plages contiguës de même palier fusionnées, coupées à la boîte des axes) et barre
+ * de couleurs graduée à droite de la boîte.
+ */
+function carte(doc: GraphDoc, X: (v: number) => number, Y: (v: number) => number, box: GraphLayout["box"]): Primitive[] {
+  const c = doc.carte!;
+  const out: Primitive[] = [];
+  const bornes = bornesCarte(c);
+  const couleurs = couleursCarte(c);
+  const clipX = (v: number) => Math.max(box.x, Math.min(box.x + box.w, v));
+  const clipY = (v: number) => Math.max(box.y, Math.min(box.y + box.h, v));
+  c.y.forEach((_, j) => {
+    const [ya, yb] = bordCellule(c.y, j);
+    const y0 = clipY(Y(yb));
+    const y1 = clipY(Y(ya));
+    if (y1 - y0 <= 1e-9) return;
+    let i = 0;
+    while (i < c.x.length) {
+      const v = c.v[j]![i];
+      if (v === null || v === undefined) {
+        i++;
+        continue;
+      }
+      const k = palier(c, bornes, v);
+      let fin = i;
+      while (fin + 1 < c.x.length && c.v[j]![fin + 1] !== null && palier(c, bornes, c.v[j]![fin + 1]!) === k) fin++;
+      const x0 = clipX(X(bordCellule(c.x, i)[0]));
+      const x1 = clipX(X(bordCellule(c.x, fin)[1]));
+      // léger recouvrement : pas de liseré blanc entre cellules
+      if (x1 - x0 > 1e-9) out.push({ kind: "rect", x: x0, y: y0, w: x1 - x0 + 0.05, h: y1 - y0 + 0.05, stroke: null, fill: "none", fillColor: couleurs[k] });
+      i = fin + 1;
+    }
+  });
+  // barre de couleurs
+  const bx = box.x + box.w + BARRE.ecart;
+  const h = box.h / c.niveaux;
+  couleurs.forEach((col, k) => out.push({ kind: "rect", x: bx, y: box.y + box.h - (k + 1) * h, w: BARRE.largeur, h: h + 0.05, stroke: null, fill: "none", fillColor: col }));
+  out.push({ kind: "rect", x: bx, y: box.y, w: BARRE.largeur, h: box.h, stroke: "trait fin", fill: "none" });
+  const s = linearScale(bornes[0], bornes[1], { min: bornes[0], max: bornes[1] }, 5);
+  s.ticks.forEach((t, i) => {
+    const y = box.y + box.h - ((t - bornes[0]) / (bornes[1] - bornes[0] || 1)) * box.h;
+    out.push({ kind: "path", segs: [{ op: "M", p: [bx + BARRE.largeur, y] }, { op: "L", p: [bx + BARRE.largeur + 0.8, y] }], stroke: "trait fin", fill: "none" });
+    out.push({ kind: "text", at: [bx + BARRE.largeur + 1.2, y], text: s.labels[i]!, anchor: "west", halo: false });
+  });
+  if (c.legende) out.push({ kind: "text", at: [doc.width - 0.5, box.y + box.h / 2], text: c.legende, anchor: "south", halo: false, rotate: 90 });
+  return out;
 }
 
 export interface GraphFit {

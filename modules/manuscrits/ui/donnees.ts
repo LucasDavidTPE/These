@@ -2,6 +2,7 @@
 import { joindre, Introuvable, type Fichiers } from "@noyau/stockage";
 import { dossierManuscrit, dossierVersions, empreinte, lireVersion, nomVersion, type Version } from "../core/versions";
 import { DOSSIER_MANUSCRITS, ecrireManuscrit, FICHIER_PLAN, fichierPlan, dossierProjet, lireManuscrit, TYPES_DOCUMENT, type Manuscrit, type TypeDocument } from "../core/plan";
+import { estWord, sansDoublonsDoc } from "../core/word";
 import { dossierRetour, dossierRetours, ecrireRetour, FICHIER_RETOUR, lireRetour, type Retour } from "../core/retours";
 
 export interface Projet {
@@ -38,18 +39,21 @@ export async function ecrirePlan(espace: Fichiers, projet: string, m: Manuscrit)
   await espace.writeTextAtomic(`${dossierProjet(projet)}/${FICHIER_PLAN}`, ecrireManuscrit(m));
 }
 
-/** Les `.docx` d'un dossier et de ses sous-dossiers (jusqu'à `profondeur`), chemins relatifs, sans les « ~$… » de Word. */
+/**
+ * Les fichiers Word (`.docx`, et `.doc` pas encore convertis) d'un dossier et de ses sous-dossiers (jusqu'à
+ * `profondeur`), chemins relatifs, sans les « ~$… » de Word.
+ */
 export async function listerDocx(fs: Fichiers, profondeur = 3): Promise<string[]> {
   const r: string[] = [];
   const parcourir = async (dossier: string, niveau: number) => {
     for (const e of await fs.listDir(dossier).catch(() => [])) {
       const chemin = joindre(dossier, e.name);
-      if (e.kind === "file" && /\.docx$/i.test(e.name) && !e.name.startsWith("~$")) r.push(chemin);
+      if (e.kind === "file" && estWord(e.name)) r.push(chemin);
       else if (e.kind === "dir" && !e.name.startsWith(".") && niveau < profondeur) await parcourir(chemin, niveau + 1);
     }
   };
   await parcourir("", 1);
-  return r;
+  return sansDoublonsDoc(r);
 }
 
 export interface VersionLue extends Version {

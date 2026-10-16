@@ -59,7 +59,7 @@ export function Apercu() {
   const rendu = useMemo(() => {
     const v = validateGraph(s.doc);
     if (!v.ok) return { svg: "", error: v.errors.map((e) => `${e.path} : ${e.message}`).join("\n"), doc: null };
-    if (v.doc.series.length === 0) return { svg: "", error: "", doc: null };
+    if (v.doc.series.length === 0 && !v.doc.carte) return { svg: "", error: "", doc: null };
     try {
       return { svg: exportGraphSvg(v.doc).replace(/<\?xml[^>]*>/, ""), error: "", doc: v.doc };
     } catch (e) {

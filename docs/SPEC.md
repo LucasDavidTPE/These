@@ -291,9 +291,24 @@ Ajouts permis par l'intégration :
   surface au point le plus bas ; longueurs en mm, cm ou m ; libellés pgfplots (`1e6*solid.eZZ` →
   « $\varepsilon_{zz}$ (µdef) », ×1e-6 Pa → MPa, principales ε1 ε3, σ, u) ; légende placée dans le coin le moins
   chargé. **Coupe** : profil extrait le long de la ligne de grille choisie (ajouté à la liste, tracé avec les
-  autres) ; **carte** en couleurs (échelle divergente rouge-bleu centrée sur 0 si les valeurs changent de signe,
-  sinon viridis ; 24 niveaux ; barre de couleurs ; exagération verticale réglable), en SVG ou enregistrée dans la
-  bibliothèque (image SVG + PNG 300 dpi).
+  autres) ; **carte** en couleurs tracée comme un **graphe modifiable** (1.25.0, voir ci-dessous). **Lecture
+  forcée** (1.25.0) : si la détection se trompe, chaque fichier se relit en « profil selon X/Y/Z » ou « coupe XY,
+  XZ, YZ… » ; le tracé des profils s'oriente (auto, valeur en abscisse ou position en abscisse).
+- **carte en couleurs** d'un graphe (1.25.0, champ facultatif `carte` de `graph.json` : nœuds `x`, `y`
+  croissants, valeurs `v[ligne y][colonne x]` ou null, `palette`, `min`/`max`, `niveaux` 2 à 64, `legende`,
+  `inverser`) : dessinée sous les courbes (cellules centrées sur les nœuds), barre de couleurs à droite de
+  l'axe ; palettes rouge-bleu centrée sur 0, viridis, inferno, turbo, gris ; bornes des couleurs imposées ou
+  automatiques ; échange des axes (transposition) ; retrait. Axes, taille, police, courbes superposées comme
+  tout graphe. pgfplots : `matrix plot*` (`mesh/cols`, `mesh/rows`, `nan` pour les trous), colormap
+  explicite `rgb255` en paliers (`colormap access=piecewise constant`), `colorbar` ;
+- **planches** (1.25.0, page Planches) : plusieurs graphes de la bibliothèque assemblés en une figure,
+  `planche.json` (kind `planche`, format `these-planche/1` : `colonnes` 1 à 6, `espacement` mm, `etiquettes`
+  « (a) », « a) », « (A) » ou aucune, `taille` commune ou null, `panneaux` = dossiers des graphes, par
+  référence). Grille : largeur de colonne = plus large graphe de la colonne, hauteur de ligne = plus haut.
+  « Relire les graphes » refait la planche après modification d'un graphe. Exports : SVG, PNG 300/600 dpi,
+  pgfplots (une `tikzpicture`, un `axis` par graphe placé par `at`/`anchor=north west` au millimètre du SVG,
+  étiquettes en gras) ; enregistrée avec `export.svg`, `export.tex`, `export.png`. Bibliothèque : « Ouvrir
+  dans Planches » et, sur un graphe, « Ajouter à une planche ».
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,
@@ -458,6 +473,13 @@ L'appli **lit** le `.docx` sans Word (zip + XML, `core/ooxml.ts`) : plan des tit
 mots (hors consignes et mini-sommaires), consignes « À rédiger » restantes, figures, tableaux, notes,
 commentaires (résolus ou non) et modifications suivies, citations Zotero, date de modification ; relu
 au retour dans la fenêtre. Elle n'écrit jamais dans un fichier Word.
+**Anciens `.doc`** (Word 97-2003, 1.26.0) : acceptés partout où l'on choisit un fichier Word (« Ajouter une partie… »,
+« Ajouter un dossier… », « Pointer le fichier… », Retours). Le format binaire n'est pas lu tel quel : **Microsoft
+Word** le convertit (automatisation COM par PowerShell, invisible, sur le geste de l'utilisateur ; `src-tauri/src/word.rs`)
+en un `.docx` du même nom **à côté** — le `.doc` reste intact, un `.docx` existant n'est jamais écrasé ni
+reconverti — et la partie suit ce `.docx` (on continue la rédaction dans celui-ci). Un Word déjà ouvert n'est jamais
+fermé. Un `.doc` reçu en correction est converti dans le dossier temporaire du poste, lu, et rangé en `.docx`.
+Sans Word (ou document protégé par mot de passe, délai de 3 min dépassé) : message explicite, rien n'est ajouté.
 **Numérotation** : la numérotation automatique de Word est lue (`numbering.xml`, listes à plusieurs niveaux
 liées aux styles de titre ou portées par le paragraphe, héritage de style, `startOverride`, chiffres,
 lettres, romains) : le plan affiche « 1.2 Modèles rhéologiques » comme Word ; des numéros tapés restent du texte.

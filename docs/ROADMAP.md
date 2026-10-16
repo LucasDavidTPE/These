@@ -221,5 +221,10 @@ lancent tous les tests automatiques sous Windows.
       vue « Essais TSRST » toutes campagnes (tri, filtres, moyennes ± écart-type, superposition σ(T), export Excel, figure) (1.23.0)
 - [x] Figures → Graphes : **exports COMSOL** — profils superposés (fichiers ou expressions, légendes automatiques, cote en mm),
       profil extrait d'une coupe, carte en couleurs d'une coupe (SVG, bibliothèque) (1.24.0)
+- [x] Figures : cartes 2D = graphes modifiables (palette, bornes, niveaux, titre de barre, échange des axes, pgfplots `matrix plot`),
+      lecture COMSOL forcée (profil selon X/Y/Z, coupe) et orientation des profils, **planches** de plusieurs graphes
+      ((a), (b)…, taille commune, SVG/PNG/pgfplots, enregistrées et rouvrables) (1.25.0)
+- [x] Manuscrits : anciens fichiers **.doc** acceptés (parties, dossiers, corrections reçues), convertis en `.docx` par Word
+      à côté de l'original (1.26.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),
       remarques extraites avec état (à traiter / traitée / refusée), compteur par partie, rangés avec les versions

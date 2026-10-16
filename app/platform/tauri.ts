@@ -100,6 +100,8 @@ export function plateformeTauri(): Plateforme {
       };
     },
     ouvrirVSCode: (chemin) => appel<void>("poste_ouvrir_vscode", { chemin }, chemin),
+    convertirDoc: (chemin) => appel<string>("word_convertir_doc", { source: chemin }, chemin),
+    lireDoc: async (chemin) => new Uint8Array(await appel<ArrayBuffer>("word_lire_doc", { source: chemin }, chemin)),
     ouvrirDossier: (chemin) => openPath(chemin),
     ouvrirLien: async (url) => {
       try {
