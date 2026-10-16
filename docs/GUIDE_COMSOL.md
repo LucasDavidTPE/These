@@ -18,6 +18,28 @@ En bref :
 
 ---
 
+## Pour découvrir : jeu d'exemple et visite guidée (1.41.0)
+
+Sans rien exporter de COMSOL : dans l'atelier vide, **« Essayer avec le jeu d'exemple »** (ou bouton **« Visite
+guidée »** de la barre, puis « Charger le jeu d'exemple »). L'atelier charge 16 fichiers **synthétiques** au
+format COMSOL — formes analytiques vraisemblables, pas un calcul mécanique :
+
+| Fichiers | Pour essayer |
+|---|---|
+| `coupeXZ_R1_{EL,VE}_{het,rect,circ}.txt` (coupes x-z 41 × 41, εxx, εzz, εxz, w) | vue d'ensemble, cartes, critères, comparer, synthèse, rapport |
+| `coupeXZ_R1_EL-fin_het.txt` (le même cas « raffiné ») | convergence du maillage |
+| `coupeXZ_R1_VE-roulant_het.txt` (charge roulante, 9 instants de 8 à 12 s) | curseur, ▶, enveloppe, sonde, épingles, signal en un point, animation |
+| `surface_{EL,VE}_het.txt` (ligne de surface, w) | bassin de déflexion |
+| `verticale_{EL,VE}_het.txt` | profils, critères sur profil vertical |
+| `sensib_EGB{9,11,13}_EL_het.txt` (en-tête `E_GB=… MPa`) | sensibilité d'un fichier à l'autre |
+| `signal_VE_het.txt` (table : εxx à la base de la GB au passage de la roue) | signal dans le temps, mesures |
+
+La **visite guidée** (9 étapes) dit quoi regarder dans chaque tuile, et son bouton « Essayer → » ouvre la tuile
+réglée sur les bons fichiers. Deux étapes donnent de quoi coller : **« Copier le bassin HWD d'exemple »**
+(à coller dans « Bassin mesuré ») et **« Copier la mesure de jauge d'exemple »** (à coller dans « Mesures
+superposées »). Une fois essayé, « × » sur chaque fichier, ou « Nouvelle étude », avant d'ouvrir les vrais
+exports.
+
 ## 0. L'atelier COMSOL (1.28.0)
 
 Tout se fait dans l'onglet **Figures → COMSOL**, en trois colonnes numérotées :

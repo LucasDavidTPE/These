@@ -7,6 +7,7 @@ import { useState } from "react";
 import { decrireExport, diagnostiquer, geometrie, type Description, type ExportComsol } from "../../core/graph";
 import { useLegende } from "./hooks";
 import { OutilsFichier } from "./Outils";
+import { chargerExemple } from "./exemple";
 import { useAtelier } from "./useAtelier";
 
 /** Petite figure : ligne verticale / horizontale, plan avec ses axes, signal temporel. */
@@ -100,6 +101,12 @@ export function AtelierFichiers() {
             <li>L'aperçu se met à jour à droite ; « Continuer dans Graphes » pour les retouches et l'enregistrement.</li>
           </ol>
           <p className="muted small">Tout se garde dans une <strong>étude</strong> (en haut) : fichiers, transformations, tracés. Elle se rouvre sur l'autre PC, et les figures se régénèrent quand COMSOL réexporte.</p>
+          <p>
+            <button type="button" className="primary" onClick={chargerExemple}>
+              Essayer avec le jeu d'exemple
+            </button>
+          </p>
+          <p className="muted small">16 fichiers synthétiques au format COMSOL (coupes EL / VE × 3 empreintes, maillage fin, charge roulante, surface, profils, balayage, signal) et une visite guidée de toutes les tuiles.</p>
         </div>
       ) : null}
       <ul className="atelier-cartes">

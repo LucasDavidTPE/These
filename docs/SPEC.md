@@ -430,6 +430,10 @@ Ajouts permis par l'intégration :
   d'ensemble, vérification, rapport) d'après les fichiers ouverts (coupes ou lignes en nombre, instants,
   paires de maillage, surface avec w, cote z, paramètre d'en-tête, tables, points d'attention de `diagnostiquer`) ;
   panneaux « vérifier », « ensemble », « rapport » dans l'état de l'atelier (non enregistrés).
+- **jeu d'exemple et visite** (1.41.0, `core/graph/comsolExemple.ts`, `ui/comsol/Visite.tsx`, `exemple.ts`) :
+  `jeuExemple()` → 16 exports synthétiques au format COMSOL (champs analytiques d'une chaussée BB/GB/GRH, roue
+  en x = 0,9 m), `mesureExemple()` et `bassinExemple()` (textes à coller) ; test : toutes les tuiles tracent, aucun
+  point d'attention. Visite : étapes qui posent la recette d'une tuile (`majTrace`) et l'ouvrent.
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,

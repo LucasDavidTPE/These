@@ -1025,3 +1025,9 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
 
 - [ ] Un export où εzz est sans facteur 1e6 : « Vérifier » le signale ; « Transformer » → « + εzz (µdef) » pour ce fichier ;
       la courbe se superpose aux autres.
+
+## COMSOL : jeu d'exemple et visite guidée (1.41.0)
+
+- [ ] Atelier vide → « Essayer avec le jeu d'exemple » : 16 fichiers, visite guidée ouverte ; chaque « Essayer → » ouvre une
+      tuile qui trace quelque chose ; « Copier le bassin HWD d'exemple » puis coller : écart au calcul affiché.
+- [ ] « Nouvelle étude » : l'exemple disparaît, les vrais exports s'ouvrent normalement.

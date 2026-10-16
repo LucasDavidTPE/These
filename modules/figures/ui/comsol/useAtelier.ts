@@ -72,8 +72,9 @@ interface EtatAtelier {
   verifier: boolean;
   ensemble: boolean;
   rapport: boolean;
+  visite: boolean;
 
-  set(p: Partial<Pick<EtatAtelier, "mode" | "noms" | "avis" | "titre" | "verifier" | "ensemble" | "rapport">>): void;
+  set(p: Partial<Pick<EtatAtelier, "mode" | "noms" | "avis" | "titre" | "verifier" | "ensemble" | "rapport" | "visite">>): void;
   setCadre(p: Partial<Cadre>): void;
   setEnv(env: EnvAtelier): void;
   majTrace(mode: ModeTrace, t: Trace): void;
@@ -212,6 +213,7 @@ export const useAtelier = create<EtatAtelier>((set, get) => {
     verifier: false,
     ensemble: false,
     rapport: false,
+    visite: false,
 
     set: (p) => set(p),
     setCadre: (p) => set({ cadre: { ...get().cadre, ...p }, modifiee: true }),

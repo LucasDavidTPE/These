@@ -17,6 +17,7 @@ import { ModeCriteres } from "./ModeCriteres";
 import { ModeBassin, ModeMaillage, ModeSensibilite } from "./ModesIngenierie";
 import { ReglagesPartages } from "./Outils";
 import { RapportEtude } from "./RapportEtude";
+import { VisiteGuidee } from "./Visite";
 import { useLegende } from "./hooks";
 import { useAtelier } from "./useAtelier";
 
@@ -217,10 +218,14 @@ export function AtelierComsol() {
         <button type="button" aria-expanded={reglages} onClick={() => setReglages(!reglages)} title="Correspondances de légende (lc=1 → Rectangulaire…) et cotes des couches, pour toute la bibliothèque">
           Correspondances et couches…
         </button>
+        <button type="button" aria-expanded={a.visite} onClick={() => a.set({ visite: !a.visite })} title="Découvrir l'atelier pas à pas, sur un jeu d'exemple intégré">
+          Visite guidée
+        </button>
         <button type="button" aria-expanded={rapport} disabled={!a.exports.length} onClick={() => setRapport(!rapport)} title="Premier jet LaTeX de la partie résultats : cas, figures de l'étude, extrema et critères (booktabs), phrases chiffrées comparatives">
           Rapport LaTeX…
         </button>
       </header>
+      {a.visite ? <VisiteGuidee /> : null}
       {rapport && a.exports.length ? <RapportEtude /> : null}
       {reglages ? (
         <div className="atelier-reglages-partages">
