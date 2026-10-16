@@ -1,20 +1,60 @@
 # Tracer des exports COMSOL dans Thèse
 
 Guide d'utilisation de tout ce que **Figures → Graphes** sait faire avec les fichiers exportés de COMSOL
-(versions 1.24.0 à 1.27.0) : les données attendues, ce que l'appli en comprend, les tracés possibles, les
+(versions 1.24.0 à 1.28.0) : les données attendues, ce que l'appli en comprend, les tracés possibles, les
 calculs avant tracé, les réglages après coup, l'enregistrement, les exports LaTeX et l'assemblage en planches.
 
 En bref :
 
 1. Dans COMSOL, exporter des **Données** (profil le long d'une ligne, ou coupe sur un plan) ou une **Table**
    (signal en un point au cours du temps) en `.txt`.
-2. Dans Thèse, *Figures → Graphes → « Ouvrir des exports COMSOL… »*, en choisissant un ou plusieurs fichiers.
+2. Dans Thèse, *Figures → **COMSOL*** (l'atelier, § 0) → « Ouvrir des fichiers .txt… », un ou plusieurs fichiers.
 3. **Calculer** si besoin : colonne calculée, changement de repère, A − B / A / B / écart relatif entre deux
    cas, profils interpolés dans une coupe, tableau de synthèse.
 4. **Tracer** : profils superposés, carte en couleurs, séries temporelles, barres groupées.
 5. **Retoucher** à droite (axes, légendes, couleurs, palette, isolignes, repères, annotations, taille), puis
    **Enregistrer** dans la bibliothèque.
 6. **Exporter** en pgfplots, SVG ou PNG, ou **assembler** plusieurs graphes dans une planche (a), (b)…
+
+---
+
+## 0. L'atelier COMSOL (1.28.0)
+
+Tout se fait dans l'onglet **Figures → COMSOL**, en trois colonnes numérotées :
+
+1. **Fichiers COMSOL** (à gauche) : chaque fichier ouvert est une carte qui dit **en clair** ce qu'il contient,
+   avec une petite figure : « Ligne verticale (le long de z) — z de −320 à 0 mm, 161 points », « Plan y–z
+   (coupe) — y de 4300 à 6920 mm ; z de −320 à 0 mm ; grille 263 × 65 », « Signal au cours du temps — 41
+   instants, au point (0,848 ; 6,5 ; −0,08) », puis ses grandeurs (εxz, εzz…) et les paramètres de l'étude.
+   - La **légende** (en gras) se modifie directement sur la carte ;
+   - **« Pas la bonne forme ? »** corrige la lecture en mots : « c'est une **ligne**, le long de z », ou
+     « c'est un **plan** : carte avec y à l'horizontale et z à la verticale » ;
+   - **« Transformer (ƒ)… »** : colonne calculée (§ 5.1) et changement de repère (§ 5.2) ;
+   - un fichier inutilisable le dit (« points du maillage, pas une grille régulière : pas de carte… »).
+2. **Que voulez-vous tracer ?** (au centre) : six tuiles, allumées seulement si les fichiers ouverts le
+   permettent (sinon, le survol dit ce qu'il manque) — *Comparer des profils*, *Carte d'une coupe*, *Profils
+   dans une coupe*, *Signal dans le temps*, *Comparer deux cas*, *Tableau de synthèse*. Les réglages du tracé
+   choisi s'affichent dessous, en phrases (« Lignes verticales : à y fixé, profils le long de z »).
+3. **Aperçu** (à droite) : le graphe tel qu'il sera, **mis à jour à chaque réglage**. Titre modifiable, puis
+   **« Continuer dans Graphes → »** : le graphe s'ouvre dans Graphes pour les retouches (axes, couleurs,
+   isolignes, contour d'empreinte, annotations, taille) et « Enregistrer ».
+
+En haut : unité des longueurs, origine des légendes (mots du nom, paramètres lc / VE…, les deux), case
+**Couches** (lignes aux interfaces BB/GB, GB/GRH) et **« Correspondances et couches… »** (réglés une fois pour
+toute la bibliothèque, § 3.3 et 3.5).
+
+**Profils dans une coupe** : la carte du plan s'affiche ; **un clic sur la carte place une ligne** (a, b, c…)
+à l'endroit cliqué — verticale (à y fixé, profil le long de z) ou horizontale (à z fixé) selon le choix — ;
+les valeurs peuvent aussi se taper (« 700 ; 848 ; 900 »). Les profils, interpolés, se superposent dessous.
+
+**Comparer deux cas** : dans la liste B, ✓ = même grille que A (comparables), ✗ = grille différente (le
+survol de l'aperçu explique pourquoi). « Garder le résultat dans la liste des fichiers » pour s'en servir
+ensuite (synthèse, profils dans une coupe…).
+
+Dans **Graphes**, le panneau « Exports COMSOL » ne garde qu'un bouton « Ouvrir l'atelier COMSOL » ; un export
+COMSOL ouvert par « Ouvrir des données… » rejoint aussi l'atelier.
+
+Les sections suivantes détaillent les données attendues et chaque calcul.
 
 ---
 
@@ -68,7 +108,7 @@ Ce que l'appli lit :
 | Élément | Règle de lecture |
 |---|---|
 | **Reconnaissance** | Une des 2 000 premières lignes commence par `% Model:`, `% Version:`, `% Dimension:` ou `% Nodes:` (« Modèle » accepté). Le fichier est alors reconnu comme export COMSOL, y compris par le bouton général « Ouvrir des données… ». |
-| **Métadonnées** | Lignes `% Clé: valeur` avant les données (modèle, date, version…). Elles sont affichées au survol du fichier dans le panneau. |
+| **Métadonnées** | Lignes `% Clé: valeur` avant les données (modèle, date, version…). Elles sont affichées au survol de la carte du fichier dans l'atelier. |
 | **Unité de longueur** | `% Length unit:` (`m` si absent). Les coordonnées sont converties dans l'unité de tracé choisie (mm, cm ou m). |
 | **Coordonnées** | Leur nombre est donné par `% Dimension:` (1, 2 ou 3), sinon déduit de la ligne de titres (X, Y, Z, R). |
 | **Ligne de titres** | La dernière ligne `%` qui commence par une coordonnée. Chaque expression s'y écrit `expression (unité) @ solution: param=valeur, …`. |
@@ -126,16 +166,16 @@ texte est reconnue, avec ou sans les lignes `% Model:`… :
 
 ## 2. Ouvrir les fichiers
 
-*Figures → Graphes*, panneau **« Exports COMSOL »** (colonne de gauche) → **« Ouvrir des exports COMSOL… »**.
+*Figures → COMSOL* (l'atelier), colonne 1 → **« Ouvrir des fichiers .txt… »**.
 
 - On peut en choisir **plusieurs d'un coup** (Ctrl+clic) ; d'autres s'ajoutent ensuite à la liste.
 - Chaque fichier est listé avec ce que l'appli a détecté : « profil vertical (Z), 161 points », « coupe YZ,
   263 × 65 points », « nuage 3D… ». Le survol affiche le modèle, la date et les paramètres de l'étude.
 - **×** retire un fichier de la liste. Les fichiers sont lus, jamais modifiés.
-- **ƒ** ouvre les outils du fichier : colonne calculée et changement de repère (§ 5).
-- La **case à cocher** devant un profil dit s'il est tracé avec les autres (pour n'en superposer que certains).
+- **« Transformer (ƒ)… »** ouvre les outils du fichier : colonne calculée et changement de repère (§ 5).
+- Les lignes à superposer se cochent dans le tracé « Comparer des profils » (pour n'en garder que certaines).
 - « Ouvrir des données… », le bouton général de Graphes, reconnaît aussi un export COMSOL et l'envoie dans ce
-  panneau.
+  l'atelier.
 - Lecture rapide : une coupe de 7 Mo s'ouvre en quelques secondes au plus.
 
 ### Détection automatique de la géométrie
@@ -152,21 +192,20 @@ Pour chaque fichier, l'appli regarde quelles coordonnées **varient** :
 
 ### Corriger la lecture si la détection se trompe
 
-Sous chaque fichier, le menu **« Lecture »** :
+Sur la carte du fichier, **« Pas la bonne forme ? »** :
 
-- **Auto : …** : la détection automatique (rappelle ce qui a été trouvé) ;
-- **Profil selon X / Y / Z** : impose la coordonnée qui sert d'abscisse du profil. C'est utile pour une
-  ligne oblique, où plusieurs coordonnées varient un peu, ou pour forcer un profil selon Y ;
-- **Coupe X (horizontal) × Z (vertical)**, etc. : impose les deux coordonnées d'une coupe **et leur sens**.
-  La première est à l'horizontale de la carte, la seconde à la verticale.
+- « C'est une **ligne**, le long de x / y / z » : impose la coordonnée le long de laquelle se trace le profil
+  (une ligne oblique, où plusieurs coordonnées varient un peu, ou un profil selon y) ;
+- « C'est un **plan** : carte avec … à l'horizontale et … à la verticale » : impose les deux coordonnées d'une
+  coupe **et leur place sur la carte**.
 
-La description sous le menu se met à jour. « Détection automatique » revient au réglage de départ.
+« Appliquer » ; la description du fichier se met à jour. « Revenir à la détection automatique » annule.
 
 ---
 
 ## 3. Profils superposés
 
-Disponible dès qu'au moins un fichier est un profil (section **« Profils »** du panneau).
+Tuile **« Comparer des profils »**, dès qu'au moins un fichier est une ligne.
 
 ### 3.1 Choix des grandeurs
 
@@ -216,31 +255,32 @@ légende du graphe est placée dans le **coin le moins chargé** en points.
 
 ### 3.4 Tracer
 
-**« Tracer le profil »** ou **« Tracer les N profils »** remplace le graphe en cours, après confirmation
-s'il y en a un. Le résultat est un **graphe ordinaire**, modifiable entièrement (§ 8) :
+L'aperçu montre le graphe ; **« Continuer dans Graphes → »** l'ouvre dans Graphes (confirmation si un graphe non
+enregistré y est ouvert). Le résultat est un **graphe ordinaire**, modifiable entièrement (§ 8) :
 
 - titre proposé : « εzz — 3 profil(s) COMSOL » ;
 - taille de départ : 90 × 110 mm pour un profil vertical, 130 × 80 mm pour un profil horizontal ;
 - quadrillage, thème « these », courbes en traits continus ;
-- **« Repères des couches »** coché : une ligne en tirets à chaque interface de couches (§ 3.5).
+- case **Couches** cochée (en haut) : une ligne en tirets à chaque interface de couches (§ 3.5).
 
 ### 3.5 Repères des couches
 
 Les **interfaces de couches** (cote z dans les coordonnées des fichiers, en m, z = 0 en surface) se règlent
 une fois pour toute la bibliothèque, avec les correspondances : par défaut z = −0,08 « BB/GB » et z = −0,32
 « GB/GRH ». La case « Repères des couches » les ajoute aux profils verticaux et aux cartes dont un axe est z,
-converties dans l'unité de tracé et dans le repère choisi (profondeur positive comprise). Sur n'importe quel
+converties dans l'unité de tracé et dans le repère choisi (profondeur positive comprise). Dans l'atelier,
+c'est la case **Couches** de la barre du haut. Sur n'importe quel
 graphe, le bloc « Repères et annotations » → « Interfaces de couches » les ajoute aussi (axe, unité, sens).
 
 ---
 
 ## 4. Coupes : carte en couleurs
 
-Disponible pour une coupe sur **grille régulière** (section **« Coupe »** du panneau). S'il y a plusieurs
-coupes, on choisit laquelle.
+Tuile **« Carte d'une coupe »**, pour un plan sur **grille régulière** ; s'il y en a plusieurs, on choisit
+lequel. L'atelier propose aussi la palette, des isolignes et les vraies proportions (1 m = 1 m).
 
 1. **« Grandeur »** : l'expression à cartographier (εzz par défaut).
-2. **« Tracer la carte »** : la carte devient le graphe en cours. Comme tout graphe, elle se modifie,
+2. **« Continuer dans Graphes → »** : la carte devient le graphe en cours. Comme tout graphe, elle se modifie,
    s'enregistre et s'exporte.
 
 Ce qui est fait automatiquement :
@@ -280,18 +320,18 @@ En plus (1.27.0) :
 
 ### 4.2 Profils extraits d'une coupe (interpolés, plusieurs d'un coup)
 
-Sous « Profils extraits » : choisir la **coordonnée fixe** (X = …, Y = … ou Z = …, unité du fichier) et taper
-une ou **plusieurs valeurs** (« 0,70 ; 0,848 ; 0,90 ; 0,967 »), puis **« Ajouter les N profils »**. Une valeur
+Tuile **« Profils dans une coupe »** : choisir des lignes **verticales** (à y fixé) ou **horizontales** (à z fixé),
+puis **cliquer sur la carte** pour en placer une, ou taper une ou **plusieurs valeurs** dans l'unité de tracé
+(« 700 ; 848 ; 900 ; 967 »). Une valeur
 entre deux lignes de la grille est **interpolée linéairement** (exacte sur une ligne de la grille) ; une valeur
-hors de la coupe est refusée. Les profils rejoignent la liste, cochés, légendés « $x$ = 0,848 m », et se
-tracent ensemble (« Tracer les 4 profils »), avec orientation, profondeur et repères des couches. Décocher
-les autres profils de la liste pour ne superposer que ceux-là.
+hors de la coupe est refusée. Les lignes sont nommées a, b, c… sur la carte, les profils légendés « a. $y$ = 848
+mm » et superposés dans l'aperçu, avec profondeur et repères des couches.
 
 ---
 
 ## 5. Calculs avant le tracé
 
-### 5.1 Colonnes calculées (bouton ƒ d'un fichier)
+### 5.1 Colonnes calculées (« Transformer (ƒ)… » sur un fichier)
 
 Une **formule** sur les colonnes du fichier, évaluée point par point ; la nouvelle colonne s'ajoute au
 fichier et se trace, se cartographie ou se synthétise comme les autres.
@@ -305,7 +345,7 @@ fichier et se trace, se cartographie ou se synthétise comme les autres.
   `1e-3*ezz` (µdef → ‰), `e1 - e3`.
 - **Nom** et **unité** de la colonne : ce qui s'affiche sur l'axe et dans les listes.
 
-### 5.2 Changement de repère (bouton ƒ d'un fichier)
+### 5.2 Changement de repère (« Transformer (ƒ)… » sur un fichier)
 
 Nouvelle coordonnée = ± (ancienne − origine), sur X, Y ou Z, dans l'unité du fichier :
 
@@ -316,7 +356,7 @@ Nouvelle coordonnée = ± (ancienne − origine), sur X, Y ou Z, dans l'unité d
 Les changements se composent ; « Repère d'origine » revient aux coordonnées du fichier. Les interfaces de
 couches suivent le repère.
 
-### 5.3 Opérations entre deux fichiers (« Opérations entre fichiers »)
+### 5.3 Opérations entre deux fichiers (tuile « Comparer deux cas »)
 
 **A − B**, **A / B** ou **écart relatif (A − B) / |B|** en %, point à point, sur les expressions communes aux
 deux fichiers (VE / EL, het / circ…). Les deux fichiers doivent avoir **les mêmes points** (dans n'importe quel
@@ -330,7 +370,7 @@ profils extraits ou synthèse, puis « Enregistrer » comme tout graphe. Les lib
 > l'EL donne un écart **négatif**. Pour comparer des amplitudes, prendre le rapport, ou une colonne `abs(ezz)`
 > avant l'opération.
 
-### 5.4 Tableau de synthèse (« Tableau de synthèse »)
+### 5.4 Tableau de synthèse (tuile « Tableau de synthèse »)
 
 Pour une sélection de fichiers (par défaut : les fichiers d'origine, ni tables ni résultats de calcul) et de
 grandeurs : le **max**, le **min** et leur **position** (x, y, z dans l'unité de tracé ; l'instant pour une
@@ -348,7 +388,7 @@ table), une ligne par fichier × grandeur, avec la légende du cas (correspondan
 
 ## 6. Séries temporelles (exports de tables)
 
-Section **« Séries temporelles »** dès qu'une table est ouverte :
+Tuile **« Signal dans le temps »**, dès qu'une table est ouverte :
 
 - **Colonnes** à tracer (communes aux tables) ; plusieurs fichiers = courbes superposées, légendes comme
   pour les profils.
@@ -448,29 +488,30 @@ alors à jour.
 ## 11. Recettes rapides
 
 **Comparer élastique et viscoélastique sur la verticale sous la charge**
-Ouvrir `verticale_…_el_….txt` et `verticale_…_ve_….txt` → cocher εzz → « Tracer les 2 profils » → renommer
-les légendes « Élastique » / « Viscoélastique » si besoin → Enregistrer.
+Ouvrir `verticale_…_el_….txt` et `verticale_…_ve_….txt` → tuile « Comparer des profils », εzz → renommer les
+légendes sur les cartes des fichiers si besoin → « Continuer dans Graphes » → Enregistrer.
 
 **Les trois composantes de déformation sur un même profil**
 Ouvrir un seul fichier → cocher εxx, εyy, εzz → Tracer.
 
 **Carte εzz sous la roue, zoomée**
-Ouvrir la coupe YZ → Grandeur εzz → « Tracer la carte » → bornes de l'axe y resserrées autour de la charge
+Ouvrir la coupe YZ → tuile « Carte d'une coupe », εzz → « Continuer dans Graphes » → bornes de l'axe y resserrées autour de la charge
 → « Min / Max couleurs » symétriques (−200 / 200, par exemple) → Enregistrer.
 
 **Profil extrait d'une coupe, comparé à un profil exporté**
-Ouvrir la coupe et le profil → « à Y = … » → « Ajouter ce profil » → cocher la grandeur → « Tracer les 2
-profils ».
+Ouvrir la coupe → tuile « Profils dans une coupe » → cliquer sur la carte aux endroits voulus.
 
 **Article : 3 empreintes × EL / EL-fin / VE (fichiers `coupeXZ_R1_VE_het.txt`…)**
 1. Ouvrir toutes les coupes. Dans « Correspondances et couches » : `het` → Hétérogène, `circ` → Circulaire,
    `rect` → Rectangulaire, `VE` → Viscoélastique, `EL` → Élastique, `EL-fin`… (Enregistrer, une fois).
-2. Pour chaque coupe : ƒ → repère Z, origine 0, « Changer le sens » (profondeur), puis repère X, origine x0.
-3. Cartes εzz : Tracer la carte, isolignes, contour d'empreinte, « Échelles égales », Enregistrer ; puis une
+2. Pour chaque coupe : « Transformer (ƒ)… » → repère Z, origine 0, « Changer le sens » (profondeur), puis
+   repère X, origine x0.
+3. Cartes εzz : tuile « Carte d'une coupe », isolignes, vraies proportions → Graphes : contour d'empreinte,
+   Enregistrer ; puis une
    planche des trois empreintes avec « Même échelle de couleurs ».
-4. Écarts : Opérations → A = VE het, B = EL het, « A / B » → carte du rapport ; idem het / circ.
-5. Profils : sur une coupe, « Profils extraits » X = 0,70 ; 0,848 ; 0,90 ; 0,967 → décocher les autres →
-   Tracer, « Repères des couches ».
+4. Écarts : tuile « Comparer deux cas » → A = VE het, B = EL het, « A / B » → carte du rapport ; idem het / circ.
+5. Profils : tuile « Profils dans une coupe », lignes verticales, taper 700 ; 848 ; 900 ; 967 (mm) ou cliquer,
+   case Couches.
 6. Synthèse : toutes les coupes, εzz, ε1, εeq → « Copier LaTeX (booktabs) » ; barres : catégories mot 4
    (empreinte), séries mot 3 (matériau).
 7. Signal en un point : ouvrir les tables VE et EL → Référence « Extremum de EL… », instant 10 s, pic → Tracer.
@@ -487,11 +528,11 @@ si on veut des boîtes alignées → Enregistrer → « Copier pgfplots » ou PN
 |---|---|---|
 | « Pas des exports COMSOL (en-tête « % Model: … » attendu) » | fichier retouché, ou export d'un autre type | réexporter depuis COMSOL *Export → Données* sans retirer les lignes `%` |
 | « … : aucune valeur (export COMSOL vide ?) » | export sans points (ligne de coupe hors du domaine…) | vérifier le jeu de données dans COMSOL |
-| Fichier vu comme « coupe » au lieu de « profil » | ligne légèrement oblique | « Lecture » → « Profil selon Z » |
+| Fichier vu comme « coupe » au lieu de « profil » | ligne légèrement oblique | « Pas la bonne forme ? » → « c'est une ligne, le long de z » |
 | Carte refusée (« grille régulière ») | plan exporté aux nœuds du maillage | réexporter sur une grille régulière, ou extraire / forcer un profil |
-| Carte « couchée » ou axes inversés | ordre des coordonnées | « Lecture » → « Coupe Y × Z » dans l'ordre voulu, ou « Échanger les axes » |
+| Carte « couchée » ou axes inversés | ordre des coordonnées | « Pas la bonne forme ? » → « c'est un plan : y à l'horizontale, z à la verticale », ou « Échanger les axes » dans Graphes |
 | Libellé ou unité faux | expression non reconnue (§ 1.3) | corriger le libellé de l'axe ou le titre de la barre à la main |
-| Légendes peu parlantes (préfixes, mots en trop) | noms de fichiers | renommer les légendes dans le panneau avant de tracer, ou plus tard dans les séries |
+| Légendes peu parlantes (préfixes, mots en trop) | noms de fichiers | renommer les légendes sur les cartes des fichiers (atelier), ou plus tard dans les séries |
 | Trous blancs dans la carte | valeurs `NaN` (hors domaine) | normal ; ajuster les bornes des axes pour cadrer la zone utile |
 | « Grilles différentes : … » | les deux cas n'ont pas été exportés sur les mêmes points | réexporter les deux sur la même grille régulière (même jeu de données de coupe) |
 | « Formule : « … » ne désigne aucune colonne » | nom inconnu ou ambigu | utiliser un nom de la liste sous la formule, ou `c3` |

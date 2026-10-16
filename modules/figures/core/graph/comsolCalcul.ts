@@ -5,6 +5,7 @@
  * Chaque résultat est un export (il rejoint la liste et se trace comme les autres) ou un graphe modifiable.
  */
 import {
+  FACTEUR_LONGUEUR,
   geometrie,
   libelleColonne,
   legendes,
@@ -20,7 +21,7 @@ import { evaluerFormule } from "./formule";
 import { GRAPH_FORMAT, type Annotation, type GraphDoc, type Repere, type Series } from "./model";
 
 const nomCourt = (n: string) => n.replace(/\.(txt|csv|dat)$/i, "");
-const FACTEUR_LONGUEUR: Record<string, number> = { m: 1, cm: 100, mm: 1000, km: 1e-3 };
+
 /** Nombre en français, sans bruit (« 0,848 »). */
 export const fr = (v: number, chiffres = 4) => String(Number(v.toPrecision(chiffres))).replace(".", ",").replace("-", "−");
 

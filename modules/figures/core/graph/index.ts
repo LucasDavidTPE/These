@@ -14,3 +14,4 @@ export * from "./carte";
 export * from "./planche";
 export * from "./comsolCalcul";
 export * from "./formule";
+export * from "./comsolAtelier";

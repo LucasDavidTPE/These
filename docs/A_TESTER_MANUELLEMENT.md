@@ -904,3 +904,20 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
       garde ses proportions.
 - [ ] (1.27.1) Diagnostic → Mises à jour → « Vérifier maintenant » : sur chaque PC et chaque réseau (maison, ENTPE),
       noter le résultat (à jour / disponible / message d'erreur) ; « Télécharger l'installeur à la main… » ouvre la page.
+
+## Figures : atelier COMSOL (1.28.0)
+
+- [ ] Figures → **COMSOL** : sans fichier, les trois étapes sont expliquées et toutes les tuiles sont éteintes (survol : raison).
+- [ ] Ouvrir les vrais exports (verticales, coupe YZ, tables) : chaque carte dit la forme en clair (« Ligne verticale (le long
+      de z) », « Plan y–z (coupe) », « Signal au cours du temps »), l'étendue en mm, les grandeurs, l'étude ; légende
+      modifiable sur place.
+- [ ] « Pas la bonne forme ? » : passer la coupe en « plan : z à l'horizontale, y à la verticale » → description et carte suivent ;
+      « Revenir à la détection automatique ».
+- [ ] Chaque tuile : l'aperçu suit chaque réglage sans délai gênant (coupe de 7 Mo comprise) ; « Continuer dans Graphes »
+      ouvre le même graphe dans Graphes, enregistrable.
+- [ ] Profils dans une coupe : clics sur la carte → lignes a, b, c au bon endroit (vérifier une valeur) ; valeurs tapées ;
+      profils superposés en profondeur positive avec les couches.
+- [ ] Comparer deux cas : ✓ / ✗ cohérents ; aperçu du rapport VE / EL ; « Garder le résultat dans la liste ».
+- [ ] Graphes : le panneau COMSOL n'a plus qu'un bouton vers l'atelier ; « Ouvrir des données… » sur un export COMSOL l'envoie
+      dans l'atelier.
+

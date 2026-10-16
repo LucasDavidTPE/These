@@ -222,7 +222,7 @@ export const useGraph = create<GraphState>()((set, get) => {
         if (!f) return;
         const texte = /\.(txt|csv|dat)$/i.test(f.name) ? decodeText(f.bytes) : "";
         if (texte && estComsol(texte)) {
-          set({ comsol: [...get().comsol, lireComsol(texte, f.name)], message: { kind: "info", text: `${f.name} : export COMSOL reconnu, à tracer depuis le panneau « Exports COMSOL ».` } });
+          set({ comsol: [...get().comsol, lireComsol(texte, f.name)], message: { kind: "info", text: `${f.name} : export COMSOL reconnu : il vous attend dans l'atelier COMSOL (onglet COMSOL).` } });
           return;
         }
         const sheets = readDataFile(f.name, f.bytes);

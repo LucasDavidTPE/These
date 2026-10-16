@@ -228,6 +228,8 @@ lancent tous les tests automatiques sous Windows.
       grille (A − B, A / B, écart %), colonnes calculées et changement de repère, profils interpolés multiples, synthèse
       (booktabs, barres groupées), correspondances de légende et interfaces de couches partagées, isolignes, échelles égales,
       contour d'empreinte, repères et annotations, axes inversés, même échelle de couleurs dans une planche
+- [x] Figures : **atelier COMSOL** (onglet dédié) — fichiers décrits en clair, tracés guidés en tuiles, aperçu en direct, profils
+      placés d'un clic sur la carte, cas comparables signalés (1.28.0)
 - [x] Manuscrits : anciens fichiers **.doc** acceptés (parties, dossiers, corrections reçues), convertis en `.docx` par Word
       à côté de l'original (1.26.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),

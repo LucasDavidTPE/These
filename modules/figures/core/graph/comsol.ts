@@ -345,7 +345,7 @@ export function coinLibre(series: readonly { x: number[]; y: number[] }[]): "nor
 // ---- Profils → graphe ----
 
 export type UniteLongueur = "m" | "cm" | "mm";
-const FACTEUR_LONGUEUR: Record<string, number> = { m: 1, cm: 100, mm: 1000, km: 1e-3 };
+export const FACTEUR_LONGUEUR: Record<string, number> = { m: 1, cm: 100, mm: 1000, km: 1e-3 };
 
 export interface OptionsProfils {
   /** Expressions à tracer (texte brut). */
@@ -401,13 +401,17 @@ export function grapheProfils(exports: readonly ExportComsol[], o: OptionsProfil
   const noms = o.noms ?? legendes(exports);
   const estZ = profils.every((e) => /^z$/i.test(e.coordonnees[geometrie(e).varient[0]!]!));
   const vertical = o.orientation === "verticale" || (o.orientation !== "horizontale" && estZ);
+  // z déjà passé en profondeur positive par un changement de repère : ne pas le retourner une seconde fois
+  const retourne = estZ && profils.every((e) => (e.repere?.[geometrie(e).varient[0]!]?.facteur ?? 1) < 0);
+  const prof = !!o.profondeur || retourne;
+  const signe = vertical && o.profondeur && !retourne ? -1 : 1;
   const series: Series[] = [];
   const unites = new Set<string>();
   const grandeurs = new Set<string>();
   for (const e of profils) {
     const k = geometrie(e).varient[0]!;
     const f = FACTEUR_LONGUEUR[o.longueur]! / (FACTEUR_LONGUEUR[e.uniteLongueur] ?? 1);
-    const coord = [...e.valeurs[k]!].map((v) => v * f * (vertical && o.profondeur ? -1 : 1));
+    const coord = [...e.valeurs[k]!].map((v) => v * f * signe);
     for (const expr of o.expressions) {
       const j = e.colonnes.findIndex((c) => c.expression === expr);
       if (j < 0) continue;
@@ -425,25 +429,25 @@ export function grapheProfils(exports: readonly ExportComsol[], o: OptionsProfil
   const g = [...grandeurs];
   const valeur = `${g.length === 1 ? g[0] : g.length <= 3 ? g.join(", ") : "Valeur"} (${[...unites].join(", ")})`;
   const nomCoord = titreCoordonnee(profils[0]!, geometrie(profils[0]!).varient[0]!);
-  const coordNom = vertical && estZ ? (o.profondeur ? "Profondeur" : "$z$") : nomCoord;
+  const coordNom = vertical && estZ ? (o.profondeur ? "Profondeur" : retourne ? nomCoord : "$z$") : nomCoord;
   const coord = `${coordNom} (${o.longueur})`;
   // cote : de la surface (0) au point le plus bas, arrondi
   const toutes = series.flatMap((s) => (vertical ? s.y : s.x));
-  const extreme = vertical && o.profondeur ? Math.max(...toutes) : Math.min(...toutes);
+  const extreme = vertical && prof ? Math.max(...toutes) : Math.min(...toutes);
   const pas = 10 ** Math.floor(Math.log10(Math.abs(extreme) || 1) - 1);
-  const borne = vertical && o.profondeur ? Math.ceil(extreme / pas - 1e-9) * pas : Math.floor(extreme / pas + 1e-9) * pas;
+  const borne = vertical && prof ? Math.ceil(extreme / pas - 1e-9) * pas : Math.floor(extreme / pas + 1e-9) * pas;
   const p0 = profils[0]!;
   const k0 = geometrie(p0).varient[0]!;
-  const lignes = estZ ? reperesInterfaces(p0, o.interfaces, k0, vertical ? "y" : "x", (FACTEUR_LONGUEUR[o.longueur]! / (FACTEUR_LONGUEUR[p0.uniteLongueur] ?? 1)) * (vertical && o.profondeur ? -1 : 1)) : undefined;
+  const lignes = estZ ? reperesInterfaces(p0, o.interfaces, k0, vertical ? "y" : "x", (FACTEUR_LONGUEUR[o.longueur]! / (FACTEUR_LONGUEUR[p0.uniteLongueur] ?? 1)) * signe) : undefined;
   // profondeur positive : vers le bas (axe inversé), de la surface (0) au point le plus bas
-  const profond = vertical && estZ && !!o.profondeur;
+  const profond = vertical && estZ && prof;
   return {
     format: GRAPH_FORMAT,
     width: vertical ? 90 : 130,
     height: vertical ? 110 : 80,
     theme: "these",
     x: { label: vertical ? valeur : coord, log: false },
-    y: { label: vertical ? coord : valeur, log: false, ...(vertical && estZ && !o.profondeur && extreme < 0 ? { min: borne, max: 0 } : profond && extreme > 0 ? { min: 0, max: borne } : {}), ...(profond ? { inverse: true } : {}) },
+    y: { label: vertical ? coord : valeur, log: false, ...(vertical && estZ && !prof && extreme < 0 ? { min: borne, max: 0 } : profond && extreme > 0 ? { min: 0, max: borne } : {}), ...(profond ? { inverse: true } : {}) },
     legend: coinLibre(series),
     grid: true,
     bar_width: 3,

@@ -333,6 +333,15 @@ Ajouts permis par l'intégration :
     cols tranchés par la moyenne de la maille, polylignes chaînées ; `\addplot coordinates` + valeur en
     `\node`) ; contour d'empreinte = une série noire hors légende (cercle, rectangle, courbe collée) ;
   - planche : `memeEchelle` (bornes de couleurs communes aux cartes, symétriques si toutes en rouge-bleu).
+- **atelier COMSOL** (1.28.0, onglet Figures → COMSOL ; le panneau de Graphes n'en garde que le lancement) :
+  trois colonnes numérotées — 1. fichiers décrits en clair (`decrireExport` : forme, étendue dans l'unité de
+  tracé, grandeurs, étude, avertissement s'il est inutilisable), légende modifiable sur place, lecture corrigée
+  en mots (ligne le long de… / plan avec axes horizontal et vertical), transformations ; 2. tracés possibles
+  (`modesDisponibles` : tuiles éteintes avec la raison) et leurs réglages en phrases ; 3. aperçu SVG en direct
+  (le `GraphDoc` qui partira), « Continuer dans Graphes » (nouvelle figure, confirmation si un graphe non
+  enregistré y est ouvert). Profils dans une coupe : clic sur la carte → valeur (`versDonnees`, axes inversés
+  compris, arrondie à 3 chiffres de l'étendue), lignes a, b, c en repères. Comparer : B marqué ✓ / ✗ selon
+  `comparables`. Les repères comptent dans l'étendue des axes (une référence reste visible).
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,

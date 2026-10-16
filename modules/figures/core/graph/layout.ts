@@ -48,8 +48,11 @@ export function scales(doc: GraphDoc): { xs: AxisScale; ys: AxisScale } {
   // la carte compte dans l'étendue des axes (bords de ses cellules)
   const cx = doc.carte ? [doc.carte.x[0]!, doc.carte.x.at(-1)!] : [];
   const cy = doc.carte ? [doc.carte.y[0]!, doc.carte.y.at(-1)!] : [];
-  const [x0, x1] = extent([...doc.series.flatMap((s) => s.x), ...cx]);
-  let [y0, y1] = extent([...doc.series.flatMap((s) => s.y), ...cy]);
+  // les repères (valeur de référence…) restent visibles : ils comptent dans l'étendue
+  const rx = (doc.reperes ?? []).filter((r) => r.axe === "x").map((r) => r.valeur);
+  const ry = (doc.reperes ?? []).filter((r) => r.axe === "y").map((r) => r.valeur);
+  const [x0, x1] = extent([...doc.series.flatMap((s) => s.x), ...cx, ...(!doc.x.log && (doc.series.length || doc.carte) ? rx : [])]);
+  let [y0, y1] = extent([...doc.series.flatMap((s) => s.y), ...cy, ...(!doc.y.log && (doc.series.length || doc.carte) ? ry : [])]);
   // Les barres partent de 0 : on l'inclut en échelle linéaire.
   if (!doc.y.log && doc.series.some((s) => s.type === "bar")) {
     y0 = Math.min(y0, 0);

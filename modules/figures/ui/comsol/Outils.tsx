@@ -1,0 +1,182 @@
+/**
+ * Outils communs de l'atelier COMSOL : transformer un fichier (colonne calculée, changement de repère) et réglages
+ * partagés par toute la bibliothèque (correspondances de légende, interfaces de couches).
+ */
+import { useState } from "react";
+import { ajouterColonne, changerRepere, nomsColonnes, type ExportComsol } from "../../core/graph";
+import { useReglagesComsol } from "../graph/useReglagesComsol";
+
+const nombre = (t: string) => Number(t.trim().replace(",", ".").replace("−", "-"));
+
+function alerte(e: unknown) {
+  window.alert(e instanceof Error ? e.message : String(e));
+}
+
+/** Colonne calculée et changement de repère d'un fichier. */
+export function OutilsFichier({ e, remplacer }: { e: ExportComsol; remplacer: (n: ExportComsol) => void }) {
+  const [formule, setFormule] = useState("");
+  const [nom, setNom] = useState("");
+  const [unite, setUnite] = useState("");
+  const [k, setK] = useState(Math.max(0, e.coordonnees.findIndex((c) => /^z$/i.test(c))));
+  const [signe, setSigne] = useState(false);
+  const [origine, setOrigine] = useState("0");
+  const disponibles = [...nomsColonnes(e).keys()].filter((n) => !/^c\d+$/.test(n));
+  return (
+    <div className="comsol-outils">
+      <h5>Colonne calculée</h5>
+      <label className="field">
+        <span>Formule</span>
+        <input value={formule} onChange={(x) => setFormule(x.target.value)} placeholder="abs(ezz) · max(e1, 0) · 0.5*(exx + eyy) · -1e-3*w" />
+      </label>
+      <p className="muted small">
+        Noms : {disponibles.join(", ")} (ou c1, c2… par n° de colonne). Fonctions : abs, max, min, sqrt, exp, ln, log10, sign. Point décimal.
+      </p>
+      <div className="grid2">
+        <label className="field">
+          <span>Nom</span>
+          <input value={nom} onChange={(x) => setNom(x.target.value)} placeholder="|εzz|" />
+        </label>
+        <label className="field">
+          <span>Unité</span>
+          <input value={unite} onChange={(x) => setUnite(x.target.value)} placeholder="µdef" />
+        </label>
+      </div>
+      <button
+        type="button"
+        disabled={!formule.trim()}
+        onClick={() => {
+          try {
+            remplacer(ajouterColonne(e, { formule, nom, unite }));
+            setFormule("");
+            setNom("");
+          } catch (x) {
+            alerte(x);
+          }
+        }}
+      >
+        Ajouter la colonne
+      </button>
+      {e.nature !== "table" ? (
+        <>
+          <h5>Repère</h5>
+          <div className="grid2">
+            <label className="field">
+              <span>Coordonnée</span>
+              <select value={k} onChange={(x) => setK(Number(x.target.value))}>
+                {e.coordonnees.map((c, j) => (
+                  <option key={c} value={j}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>Origine ({e.uniteLongueur})</span>
+              <input value={origine} onChange={(x) => setOrigine(x.target.value)} title="Nouvelle coordonnée = ± (ancienne − origine) : y0 de la roue pour centrer" />
+            </label>
+          </div>
+          <label className="chip">
+            <input type="checkbox" checked={signe} onChange={(x) => setSigne(x.target.checked)} />
+            Changer le sens (z → profondeur positive)
+          </label>
+          <div className="rangee-boutons">
+            <button
+              type="button"
+              onClick={() => {
+                const o = nombre(origine);
+                if (!Number.isFinite(o)) return alerte("Origine : un nombre.");
+                remplacer(changerRepere(e, k, { facteur: signe ? -1 : 1, origine: o }));
+              }}
+            >
+              Appliquer
+            </button>
+            {e.repere ? (
+              <button
+                type="button"
+                title="Revenir aux coordonnées du fichier"
+                onClick={() => {
+                  let r = e;
+                  // inverse de nouvelle = f (v − o) : v = (1/f) (nouvelle + f o)
+                  for (const [j, t] of Object.entries(e.repere ?? {})) r = changerRepere(r, Number(j), { facteur: 1 / t.facteur, origine: -t.facteur * t.origine });
+                  remplacer({ ...r, repere: undefined });
+                }}
+              >
+                Repère d'origine
+              </button>
+            ) : null}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+/** Correspondances de légende et interfaces de couches, partagées par toute la bibliothèque. */
+export function ReglagesPartages({ ouvertParDefaut = false }: { ouvertParDefaut?: boolean } = {}) {
+  const reg = useReglagesComsol();
+  const [ouvert, setOuvert] = useState(ouvertParDefaut);
+  const [brouillon, setBrouillon] = useState(reg.reglages);
+  const [vu, setVu] = useState(reg.reglages);
+  if (vu !== reg.reglages) {
+    setVu(reg.reglages);
+    setBrouillon(reg.reglages);
+  }
+  const modifie = JSON.stringify(brouillon) !== JSON.stringify(reg.reglages);
+  return (
+    <div className="comsol-reglages">
+      <button type="button" className="small-btn" aria-expanded={ouvert} onClick={() => setOuvert(!ouvert)}>
+        {ouvert ? "▾" : "▸"} Correspondances et couches (toute la bibliothèque)
+      </button>
+      {ouvert ? (
+        <>
+          <p className="muted small">Un mot du nom de fichier (« het ») ou un paramètre de l'en-tête (« lc=1 », « VE=0 ») → le texte de la légende.</p>
+          {brouillon.correspondances.map((c, k) => (
+            <div key={k} className="comsol-ligne">
+              <input value={c.de} onChange={(x) => setBrouillon({ ...brouillon, correspondances: brouillon.correspondances.map((y, j) => (j === k ? { ...y, de: x.target.value } : y)) })} aria-label="De" placeholder="lc=1" />
+              <span>→</span>
+              <input value={c.vers} onChange={(x) => setBrouillon({ ...brouillon, correspondances: brouillon.correspondances.map((y, j) => (j === k ? { ...y, vers: x.target.value } : y)) })} aria-label="Vers" placeholder="Rectangulaire" />
+              <button type="button" className="small-btn" aria-label="Retirer" onClick={() => setBrouillon({ ...brouillon, correspondances: brouillon.correspondances.filter((_, j) => j !== k) })}>
+                ×
+              </button>
+            </div>
+          ))}
+          <button type="button" className="small-btn" onClick={() => setBrouillon({ ...brouillon, correspondances: [...brouillon.correspondances, { de: "", vers: "" }] })}>
+            + Correspondance
+          </button>
+          <p className="muted small">Interfaces de couches : cote z dans les coordonnées des fichiers (m, z = 0 en surface).</p>
+          {brouillon.interfaces.map((c, k) => (
+            <div key={k} className="comsol-ligne">
+              <input
+                defaultValue={String(c.z).replace(".", ",")}
+                onBlur={(x) => {
+                  const z = nombre(x.target.value);
+                  if (Number.isFinite(z)) setBrouillon({ ...brouillon, interfaces: brouillon.interfaces.map((y, j) => (j === k ? { ...y, z } : y)) });
+                }}
+                aria-label="Cote z (m)"
+              />
+              <input value={c.texte} onChange={(x) => setBrouillon({ ...brouillon, interfaces: brouillon.interfaces.map((y, j) => (j === k ? { ...y, texte: x.target.value } : y)) })} aria-label="Nom" placeholder="BB/GB" />
+              <button type="button" className="small-btn" aria-label="Retirer" onClick={() => setBrouillon({ ...brouillon, interfaces: brouillon.interfaces.filter((_, j) => j !== k) })}>
+                ×
+              </button>
+            </div>
+          ))}
+          <button type="button" className="small-btn" onClick={() => setBrouillon({ ...brouillon, interfaces: [...brouillon.interfaces, { z: -0.1, texte: "" }] })}>
+            + Interface
+          </button>
+          <div className="rangee-boutons">
+            <button type="button" className="primary" disabled={!modifie} onClick={() => void reg.enregistrer({ ...brouillon, correspondances: brouillon.correspondances.filter((c) => c.de.trim()) })}>
+              Enregistrer
+            </button>
+            {modifie ? (
+              <button type="button" onClick={() => setBrouillon(reg.reglages)}>
+                Annuler
+              </button>
+            ) : null}
+          </div>
+          {reg.erreur ? <p className="banner error">{reg.erreur}</p> : null}
+        </>
+      ) : null}
+    </div>
+  );
+}
+
