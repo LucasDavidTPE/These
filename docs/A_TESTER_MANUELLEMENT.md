@@ -921,3 +921,16 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
 - [ ] Graphes : le panneau COMSOL n'a plus qu'un bouton vers l'atelier ; « Ouvrir des données… » sur un export COMSOL l'envoie
       dans l'atelier.
 
+## COMSOL : études reproductibles (1.29.0)
+
+- [ ] Ouvrir les exports (dans OneDrive) : chaque carte dit « ✓ retrouvé sur les deux PC (onedrive) ». Un fichier sur le bureau :
+      « hors OneDrive ».
+- [ ] ƒ → « z → profondeur », « Centrer y sur l'extremum de εzz » ; tracer une carte ; titre d'étude ; Enregistrer →
+      `_comsol/etudes/<titre>.json` dans la bibliothèque.
+- [ ] « Continuer dans Graphes » → bouton « ↻ Régénérer depuis COMSOL » ; retoucher (palette, titres), Enregistrer.
+- [ ] Relancer un calcul COMSOL et réexporter le même fichier : l'atelier le relit tout seul (bandeau « relu ») ; dans Graphes,
+      « Régénérer » : nouvelles valeurs, retouches gardées.
+- [ ] Sur **l'autre PC** : rouvrir l'étude → fichiers retrouvés, transformations rejouées, recettes listées ; régénérer la figure.
+- [ ] Glisser des `.txt` depuis l'Explorateur sur la page COMSOL : ils s'ajoutent.
+- [ ] Manuscrits : rien n'a changé pour les sources communes (espace:, onedrive:) après le déplacement du code dans le noyau.
+

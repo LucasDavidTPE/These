@@ -118,6 +118,9 @@ async function demoSegment(image: Uint8Array): Promise<ArrayBuffer> {
   return out;
 }
 
+/** Fichiers de données ouverts dans la démonstration, par faux chemin. */
+const fichiersDemo = new Map<string, Uint8Array>();
+
 export function demoBackend(): Backend {
   const fs = seed();
   const blobs = new Map<string, string>();
@@ -213,9 +216,24 @@ export function demoBackend(): Backend {
         input.type = "file";
         input.multiple = true;
         input.accept = ".txt,.csv,.dat";
-        input.onchange = async () => resolve(await Promise.all([...(input.files ?? [])].map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) }))));
+        // démonstration : un faux chemin, relu depuis la mémoire (« Relire », régénération)
+        input.onchange = async () =>
+          resolve(
+            await Promise.all(
+              [...(input.files ?? [])].map(async (f) => {
+                const bytes = new Uint8Array(await f.arrayBuffer());
+                fichiersDemo.set(`/demo/${f.name}`, bytes);
+                return { name: f.name, bytes, path: `/demo/${f.name}` };
+              }),
+            ),
+          );
         input.click();
       }),
+    readDataPath: async (path) => {
+      const b = fichiersDemo.get(path);
+      if (!b) throw new Error(`Démonstration : pas d'accès au disque (${path}).`);
+      return b;
+    },
     readDroppedFile: async () => {
       throw new Error("Glisser-déposer par chemin : seulement dans l'appli.");
     },

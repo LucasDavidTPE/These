@@ -1,7 +1,7 @@
 # Tracer des exports COMSOL dans Thèse
 
 Guide d'utilisation de tout ce que **Figures → Graphes** sait faire avec les fichiers exportés de COMSOL
-(versions 1.24.0 à 1.28.0) : les données attendues, ce que l'appli en comprend, les tracés possibles, les
+(versions 1.24.0 à 1.29.0) : les données attendues, ce que l'appli en comprend, les tracés possibles, les
 calculs avant tracé, les réglages après coup, l'enregistrement, les exports LaTeX et l'assemblage en planches.
 
 En bref :
@@ -53,6 +53,32 @@ ensuite (synthèse, profils dans une coupe…).
 
 Dans **Graphes**, le panneau « Exports COMSOL » ne garde qu'un bouton « Ouvrir l'atelier COMSOL » ; un export
 COMSOL ouvert par « Ouvrir des données… » rejoint aussi l'atelier.
+
+### Études : tout refaire en un clic (1.29.0)
+
+Une **étude** garde l'analyse entière : les fichiers (retrouvés sur les **deux PC** : un fichier rangé dans
+OneDrive ou dans l'espace est noté `onedrive:Thèse/COMSOL/coupeXZ_R1_VE_het.txt`, pas par son chemin
+`C:\Users\…`), leur lecture corrigée, leurs **transformations** (colonnes calculées, repères), les légendes
+saisies, les fichiers calculés (A / B…) et les **recettes** (chaque tracé envoyé dans Graphes).
+
+- **Barre du haut** : « Étude » (liste des études de la bibliothèque, ou nouvelle), titre, **Enregistrer** (● =
+  changements non enregistrés). Rangée dans la bibliothèque de figures : `_comsol/etudes/<titre>.json`.
+- **Rouvrir** une étude relit ses fichiers là où ils sont sur ce PC, rejoue les transformations dans l'ordre et
+  recalcule les fichiers dérivés ; ce qui manque est listé.
+- **Fichiers suivis** : chaque carte dit « ✓ retrouvé sur les deux PC » ou « hors OneDrive : à rouvrir sur l'autre
+  PC ». **↻** relit un fichier (ou tous, « ↻ Relire » en haut de la colonne) ; un fichier **réexporté par COMSOL
+  est relu tout seul** (le dossier est surveillé) ; rouvrir un fichier déjà ouvert le relit en gardant ses
+  transformations.
+- **Glisser-déposer** : des `.txt` lâchés sur la page s'ajoutent.
+- **Recettes** : « Continuer dans Graphes » garde le tracé dans l'étude (créée au besoin) ; elles s'affichent sous
+  les tuiles (un clic : on retrouve le tracé et ses réglages). La figure enregistrée retient sa recette
+  (`origine` dans graph.json).
+- **Régénérer** : dans Graphes, une figure issue d'une recette a un bouton **« ↻ Régénérer depuis COMSOL »** :
+  les fichiers sont relus, la recette rejouée, et les **nouvelles données** remplacent les anciennes en gardant
+  les retouches (titres, couleurs, noms de séries, taille, palette, isolignes, repères ajoutés). « Enregistrer »
+  pour garder. C'est le geste à faire après un nouveau calcul COMSOL.
+- **Transformer (ƒ)** a deux raccourcis : **« z → profondeur »** et **« Centrer x (ou y) sur l'extremum de
+  εzz »** (l'origine se met au point le plus sollicité : la roue au centre, sans chercher sa coordonnée).
 
 Les sections suivantes détaillent les données attendues et chaque calcul.
 

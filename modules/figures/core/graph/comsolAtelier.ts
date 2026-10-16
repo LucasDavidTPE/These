@@ -144,3 +144,13 @@ export function arrondirClic(v: number, etendue: number): number {
   const pas = 10 ** (Math.floor(Math.log10(Math.abs(etendue) || 1)) - 2);
   return Number((Math.round(v / pas) * pas).toPrecision(10));
 }
+
+/** Point où une grandeur est la plus forte en valeur absolue : valeur et coordonnées (unité du fichier). */
+export function positionExtremum(e: ExportComsol, expression: string): { valeur: number; coordonnees: number[] } | null {
+  const j = e.colonnes.findIndex((c) => c.expression === expression);
+  if (j < 0) return null;
+  const v = e.valeurs[e.coordonnees.length + j]!;
+  let best = -1;
+  for (let i = 0; i < e.lignes; i++) if (Number.isFinite(v[i]!) && (best < 0 || Math.abs(v[i]!) > Math.abs(v[best]!))) best = i;
+  return best < 0 ? null : { valeur: v[best]!, coordonnees: e.coordonnees.map((_, k) => e.valeurs[k]![best]!) };
+}

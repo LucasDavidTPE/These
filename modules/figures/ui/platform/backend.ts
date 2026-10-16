@@ -51,7 +51,9 @@ export interface Backend {
   /** Boîte « Ouvrir des données » (.xlsx, .csv, .txt) ; nom et contenu du fichier. */
   openDataFile(): Promise<{ name: string; bytes: Uint8Array } | null>;
   /** Idem, plusieurs fichiers d'un coup (exports COMSOL) ; liste vide si annulé. */
-  openDataFiles(): Promise<{ name: string; bytes: Uint8Array }[]>;
+  openDataFiles(): Promise<{ name: string; bytes: Uint8Array; path?: string }[]>;
+  /** Relit un fichier de données par son chemin absolu (exports COMSOL suivis) ; seulement dans l'appli. */
+  readDataPath(path: string): Promise<Uint8Array>;
   /** Contenu d'un fichier déposé par glisser-déposer (chemin fourni par Tauri). */
   readDroppedFile(path: string): Promise<Uint8Array>;
   /** Abonnement aux fichiers déposés sur la fenêtre (Tauri) ; renvoie le désabonnement. */

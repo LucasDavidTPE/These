@@ -1569,3 +1569,32 @@ button.lien {
   max-width: 100%;
   min-width: 0;
 }
+
+/* Atelier COMSOL : étude, recettes, suivi des fichiers */
+.atelier-etude {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.atelier-titre-etude {
+  width: 240px;
+}
+
+.atelier-recettes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.atelier-recette {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.atelier-suivi {
+  color: #2c7a3f;
+}

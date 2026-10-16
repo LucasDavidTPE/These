@@ -342,6 +342,19 @@ Ajouts permis par l'intégration :
   enregistré y est ouvert). Profils dans une coupe : clic sur la carte → valeur (`versDonnees`, axes inversés
   compris, arrondie à 3 chiffres de l'étendue), lignes a, b, c en repères. Comparer : B marqué ✓ / ✗ selon
   `comparables`. Les repères comptent dans l'étendue des axes (une référence reste visible).
+- **études COMSOL** (1.29.0, `core/graph/comsolEtude.ts`) : `_comsol/etudes/<id>.json` dans la bibliothèque
+  (format `these-comsol-etude/1`) : `cadre` (longueur, couches, source des légendes), `fichiers` (nom = clé,
+  `source` racine:chemin commune aux deux PC — `espace:`, `onedrive:` partagées via `@noyau/poste/partage`,
+  sinon racine du poste —, `absolu` de secours, `forcer`, `legende`, `transformations` rejouées dans l'ordre :
+  colonne {formule, nom, unite} | repere {k, facteur, origine}), `derives` (opérations A∘B, recalculées),
+  `recettes` ({id, nom, trace, cadre}). Une **recette** (`Trace`, une par mode : profils, carte, coupe-profils,
+  temps, comparer, synthese ; `null` = choix par défaut) est exécutée par `executerTrace` (pure) après
+  `normaliser` (défauts, choix devenus impossibles remplacés). « Continuer dans Graphes » garde la recette
+  (identique : réutilisée) et pose `origine` {etude, recette} dans graph.json ; « Régénérer depuis COMSOL »
+  relit, rejoue et applique `rafraichirDonnees` (données neuves, retouches gardées ; bornes d'axes calées sur
+  l'ancienne grille suivent la nouvelle ; pics et références recalculés pour un signal temporel). Fichiers
+  relus par `readDataPath` (Tauri : `file_read_data`), dossiers surveillés (`plateforme.surveiller`), glisser-
+  déposer (`onFileDrop`).
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,

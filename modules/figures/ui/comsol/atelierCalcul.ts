@@ -1,12 +1,12 @@
 /** Résultat d'un tracé de l'atelier COMSOL et envoi vers la page Graphes. */
-import type { GraphDoc } from "../../core/graph";
+import type { GraphDoc, OrigineComsol, ResultatTrace } from "../../core/graph";
 import { useGraph } from "../graph/useGraph";
 import { useNavigation } from "../navigation";
 
-export type Resultat = { doc: GraphDoc; titre: string } | { erreur: string } | null;
+export type Resultat = ResultatTrace | { erreur: string } | null;
 
 /** Calcule un tracé ; une erreur (fichier incompatible, formule…) devient un message, pas une exception. */
-export function calculer(f: () => { doc: GraphDoc; titre: string } | null): Resultat {
+export function calculer(f: () => ResultatTrace | null): Resultat {
   try {
     return f();
   } catch (e) {
@@ -15,10 +15,9 @@ export function calculer(f: () => { doc: GraphDoc; titre: string } | null): Resu
 }
 
 /** Envoie le graphe dans la page Graphes (nouvelle figure), après confirmation si un graphe non enregistré y est ouvert. */
-export function envoyerVersGraphes(doc: GraphDoc, titre: string) {
+export function envoyerVersGraphes(doc: GraphDoc, titre: string, origine?: OrigineComsol | null) {
   const g = useGraph.getState();
   if ((g.doc.series.length || g.doc.carte) && !g.folder && !window.confirm("Le graphe ouvert dans Graphes n'est pas enregistré. Le remplacer ?")) return;
-  g.tracerComsol(doc, titre);
+  g.tracerComsol(origine ? { ...doc, origine } : doc, titre);
   useNavigation.getState().goTo("graphs");
 }
-

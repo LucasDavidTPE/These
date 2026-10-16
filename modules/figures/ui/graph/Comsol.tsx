@@ -1,9 +1,9 @@
 /** Rappel, dans la page Graphes, que les exports COMSOL se traitent dans l'atelier dédié (onglet COMSOL). */
 import { useNavigation } from "../navigation";
-import { useGraph } from "./useGraph";
+import { useAtelier } from "../comsol/useAtelier";
 
 export function Comsol() {
-  const n = useGraph((s) => s.comsol.length);
+  const n = useAtelier((s) => s.exports.length);
   return (
     <section className="comsol-panneau">
       <h3>Exports COMSOL</h3>
