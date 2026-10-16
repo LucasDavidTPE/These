@@ -1,7 +1,7 @@
 # Tracer des exports COMSOL dans Thèse
 
 Guide d'utilisation de tout ce que **Figures → Graphes** sait faire avec les fichiers exportés de COMSOL
-(versions 1.24.0 à 1.29.0) : les données attendues, ce que l'appli en comprend, les tracés possibles, les
+(versions 1.24.0 à 1.30.0) : les données attendues, ce que l'appli en comprend, les tracés possibles, les
 calculs avant tracé, les réglages après coup, l'enregistrement, les exports LaTeX et l'assemblage en planches.
 
 En bref :
@@ -79,6 +79,27 @@ saisies, les fichiers calculés (A / B…) et les **recettes** (chaque tracé en
   pour garder. C'est le geste à faire après un nouveau calcul COMSOL.
 - **Transformer (ƒ)** a deux raccourcis : **« z → profondeur »** et **« Centrer x (ou y) sur l'extremum de
   εzz »** (l'origine se met au point le plus sollicité : la roue au centre, sans chercher sa coordonnée).
+
+### Décliner une recette sur tous les cas, et tout régénérer (1.30.0)
+
+Dans **Carte d'une coupe** (et **Profils dans une coupe**, une fois des lignes placées), le cadre **« Décliner
+pour tous les plans »** fait d'un réglage une série complète :
+
+1. cocher les plans à traiter (tous ceux qui ont la grandeur, par défaut) ;
+2. choisir les **lignes** et les **colonnes** de la planche parmi les mots qui varient dans les noms de fichiers
+   (`coupeXZ_R1_EL-fin_het.txt` : mot 3 = matériau, mot 4 = empreinte ; les mots sont séparés par « _ », un
+   « - » reste dans le mot) ; l'aperçu de la matrice montre où ira chaque cas (— = case vide) ; deux fichiers
+   dans la même case : message, choisir d'autres mots ;
+3. **même échelle de couleurs**, **même taille**, style d'étiquettes ;
+4. **« Créer N figures + la planche »** : une figure par plan dans la bibliothèque (titre « EL het — εzz »,
+   tags `comsol` et le titre de l'étude), chacune avec sa recette, puis une **planche en matrice** avec les
+   titres de lignes et de colonnes (traduits par les correspondances : « het » → « Hétérogène »), cases vides
+   gardées. « Ouvrir la planche → » pour la voir.
+
+**« ↻ Régénérer toute l'étude »** (barre du haut, étude enregistrée) : après un nouveau calcul COMSOL, relit les
+fichiers et refait **toutes les figures de l'étude** dans la bibliothèque (données neuves, retouches gardées),
+puis **toutes les planches** qui en contiennent (exports SVG, PNG, pgfplots réécrits). Une figure ouverte sur
+l'autre PC (verrou) est laissée telle quelle et signalée.
 
 Les sections suivantes détaillent les données attendues et chaque calcul.
 

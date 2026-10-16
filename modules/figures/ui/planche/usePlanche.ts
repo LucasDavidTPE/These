@@ -31,7 +31,7 @@ interface PlancheState {
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
-async function lireGraphe(dossier: string): Promise<{ titre: string; doc: GraphDoc }> {
+export async function lireGraphe(dossier: string): Promise<{ titre: string; doc: GraphDoc }> {
   const { backend, root } = useLibrary.getState();
   if (!backend || !root) throw new Error("Bibliothèque non ouverte.");
   const fs = backend.fs(root);
@@ -52,8 +52,8 @@ export const usePlanche = create<PlancheState>()((set, get) => {
       set({ busy: false });
     }
   };
-  /** Graphes de la planche, dans l'ordre (ceux qui n'ont pas pu être lus sont omis). */
-  const docs = () => get().doc.panneaux.map((p) => get().graphes[p.dossier]?.doc).filter((d): d is GraphDoc => !!d);
+  /** Graphes de la planche, dans l'ordre ; null : case vide (matrice incomplète) ou graphe illisible. */
+  const docs = (): (GraphDoc | null)[] => get().doc.panneaux.map((p) => (p.dossier ? (get().graphes[p.dossier]?.doc ?? null) : null));
   const svg = () => plancheSvg(get().doc, docs());
   const png = async (dpi = 300) => {
     const s = svg();
@@ -88,6 +88,7 @@ export const usePlanche = create<PlancheState>()((set, get) => {
         const graphes: PlancheState["graphes"] = {};
         const manquants: string[] = [];
         for (const p of get().doc.panneaux) {
+          if (!p.dossier) continue;
           try {
             graphes[p.dossier] = await lireGraphe(p.dossier);
           } catch {

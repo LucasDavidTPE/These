@@ -28,7 +28,7 @@ describe("planches", () => {
     expect([m.largeur, m.hauteur]).toEqual([195, 145]);
     // taille commune imposée, sans étiquettes
     const t = miseEnPage({ ...p, taille: { largeur: 70, hauteur: 40 }, etiquettes: "aucune" }, [g(80, 60), g(100, 50)]);
-    expect(t.cases.map((c) => [c.x, c.y, c.doc.width, c.doc.height])).toEqual([
+    expect(t.cases.map((c) => [c.x, c.y, c.doc!.width, c.doc!.height])).toEqual([
       [0, 0, 70, 40],
       [75, 0, 70, 40],
     ]);

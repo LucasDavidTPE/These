@@ -1598,3 +1598,23 @@ button.lien {
 .atelier-suivi {
   color: #2c7a3f;
 }
+
+.atelier-declinaison summary {
+  cursor: pointer;
+}
+
+.atelier-matrice {
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.atelier-matrice th,
+.atelier-matrice td {
+  border: 1px solid var(--border, #ddd);
+  padding: 2px 6px;
+  text-align: center;
+}
+
+.atelier-matrice td.vide {
+  color: var(--muted, #999);
+}

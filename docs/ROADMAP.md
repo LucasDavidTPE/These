@@ -233,6 +233,8 @@ lancent tous les tests automatiques sous Windows.
 - [x] COMSOL : **études** enregistrées et reproductibles (fichiers suivis sur les deux PC, transformations et recettes rejouées,
       relecture automatique des fichiers réexportés, glisser-déposer, « Régénérer depuis COMSOL » dans Graphes, centrage sur
       l'extremum) (1.29.0)
+- [x] COMSOL : **décliner** une recette sur tous les plans (N figures + planche en matrice matériau × empreinte, titres, échelle
+      commune) et **« Régénérer toute l'étude »** (figures et planches) (1.30.0)
 - [x] Manuscrits : anciens fichiers **.doc** acceptés (parties, dossiers, corrections reçues), convertis en `.docx` par Word
       à côté de l'original (1.26.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),

@@ -20,9 +20,10 @@ export function PlanchePage() {
 
   const graphes = (index?.figures ?? []).filter((f) => f.meta?.kind === "graph" && f.files.includes("graph.json"));
   const visibles = graphes.filter((f) => !q.trim() || `${f.id} ${f.meta?.title ?? ""} ${(f.meta?.tags ?? []).join(" ")}`.toLowerCase().includes(q.trim().toLowerCase()));
-  const docs = s.doc.panneaux.map((p) => s.graphes[p.dossier]?.doc).filter((d): d is GraphDoc => !!d);
+  const docs = s.doc.panneaux.map((p) => (p.dossier ? (s.graphes[p.dossier]?.doc ?? null) : null));
+  const presents = docs.filter((d): d is GraphDoc => !!d);
   const apercu = useMemo(() => {
-    if (!docs.length) return null;
+    if (!presents.length) return null;
     try {
       return { svg: plancheSvg(s.doc, docs).replace(/<\?xml[^>]*>/, ""), erreur: "" };
     } catch (e) {
@@ -38,26 +39,26 @@ export function PlanchePage() {
         <button type="button" onClick={() => s.nouvelle()}>
           Nouvelle
         </button>
-        <button type="button" className="primary" onClick={() => void s.enregistrer()} disabled={s.busy || !docs.length}>
+        <button type="button" className="primary" onClick={() => void s.enregistrer()} disabled={s.busy || !presents.length}>
           Enregistrer
         </button>
         <button type="button" onClick={() => void s.relire()} disabled={s.busy || !s.doc.panneaux.length} title="Relit chaque graphe dans la bibliothèque (après l'avoir modifié dans Graphes)">
           Relire les graphes
         </button>
         <span className="grow" />
-        <button type="button" onClick={() => void s.copier("tex")} disabled={s.busy || !docs.length}>
+        <button type="button" onClick={() => void s.copier("tex")} disabled={s.busy || !presents.length}>
           Copier pgfplots
         </button>
-        <button type="button" onClick={() => void s.copier("svg")} disabled={s.busy || !docs.length}>
+        <button type="button" onClick={() => void s.copier("svg")} disabled={s.busy || !presents.length}>
           Copier SVG
         </button>
-        <button type="button" onClick={() => void s.copier("png")} disabled={s.busy || !docs.length}>
+        <button type="button" onClick={() => void s.copier("png")} disabled={s.busy || !presents.length}>
           Copier PNG
         </button>
         <select
           value=""
           aria-label="Exporter"
-          disabled={!docs.length}
+          disabled={!presents.length}
           onChange={(e) => {
             const v = e.target.value as "tex" | "svg" | "png";
             e.target.value = "";
@@ -124,14 +125,14 @@ export function PlanchePage() {
               ))}
             </select>
           </label>
-          {docs.filter((d) => d.carte).length >= 2 ? (
+          {presents.filter((d) => d.carte).length >= 2 ? (
             <label className="chip" title="Bornes de couleurs communes à toutes les cartes (symétriques autour de 0 en rouge-bleu) : les cartes se comparent d'un coup d'œil">
               <input type="checkbox" checked={!!s.doc.memeEchelle} onChange={(e) => s.set({ memeEchelle: e.target.checked || undefined })} />
               Même échelle de couleurs pour toutes les cartes
             </label>
           ) : null}
           <label className="chip">
-            <input type="checkbox" checked={!!s.doc.taille} onChange={(e) => s.set({ taille: e.target.checked ? { largeur: docs[0]?.width ?? 80, hauteur: docs[0]?.height ?? 60 } : null })} />
+            <input type="checkbox" checked={!!s.doc.taille} onChange={(e) => s.set({ taille: e.target.checked ? { largeur: presents[0]?.width ?? 80, hauteur: presents[0]?.height ?? 60 } : null })} />
             Même taille pour tous les graphes
           </label>
           {s.doc.taille ? (
@@ -150,7 +151,7 @@ export function PlanchePage() {
           {s.doc.panneaux.map((p, i) => (
             <div key={`${p.dossier}-${i}`} className="planche-ligne">
               <span className="planche-nom" title={p.dossier}>
-                {String.fromCharCode(97 + (i % 26))}. {s.graphes[p.dossier]?.titre ?? <em className="muted">{p.dossier} (introuvable)</em>}
+                {String.fromCharCode(97 + (i % 26))}. {!p.dossier ? <em className="muted">(case vide)</em> : (s.graphes[p.dossier]?.titre ?? <em className="muted">{p.dossier} (introuvable)</em>)}
               </span>
               <button type="button" className="small-btn" disabled={i === 0} onClick={() => s.deplacer(i, -1)} aria-label="Monter">
                 ↑

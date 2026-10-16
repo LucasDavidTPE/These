@@ -60,13 +60,15 @@ interface EtatAtelier {
   /** Fichiers tels que l'étude les veut (transformés, dérivés compris) : ce que tracent les modes. */
   exports: ExportComsol[];
   etude: { id: string; titre: string } | null;
+  /** Titre saisi dans la barre (pris à l'enregistrement, même déclenché par une recette). */
+  titre: string;
   recettes: Recette[];
   /** Modifiée depuis le dernier enregistrement. */
   modifiee: boolean;
   avis: Avis | null;
   env: EnvAtelier;
 
-  set(p: Partial<Pick<EtatAtelier, "mode" | "noms" | "avis">>): void;
+  set(p: Partial<Pick<EtatAtelier, "mode" | "noms" | "avis" | "titre">>): void;
   setCadre(p: Partial<Cadre>): void;
   setEnv(env: EnvAtelier): void;
   majTrace(mode: ModeTrace, t: Trace): void;
@@ -89,6 +91,8 @@ interface EtatAtelier {
   ouvrirEtude(id: string): Promise<void>;
   /** Garde la recette (identique : réutilisée) et renvoie son id ; crée l'étude au besoin. */
   sauverRecette(nom: string, trace: Trace): Promise<{ etude: string; recette: string } | null>;
+  /** Garde plusieurs recettes d'un coup (déclinaison) et enregistre l'étude une fois ; renvoie l'étude et les ids. */
+  sauverRecettes(liste: { nom: string; trace: Trace }[]): Promise<{ etude: string; recettes: string[] } | null>;
   chargerRecette(id: string): void;
   supprimerRecette(id: string): void;
 }
@@ -195,6 +199,7 @@ export const useAtelier = create<EtatAtelier>((set, get) => {
     derives: [],
     exports: [],
     etude: null,
+    titre: "",
     recettes: [],
     modifiee: false,
     avis: null,
@@ -336,17 +341,17 @@ export const useAtelier = create<EtatAtelier>((set, get) => {
     nouvelleEtude: () => {
       for (const a of arretsSurveillance) a();
       arretsSurveillance = [];
-      set({ etude: null, recettes: [], fichiers: [], bruts: {}, derives: [], exports: [], noms: {}, traces: {}, modifiee: false, avis: null, cadre: CADRE_DEFAUT });
+      set({ etude: null, titre: "", recettes: [], fichiers: [], bruts: {}, derives: [], exports: [], noms: {}, traces: {}, modifiee: false, avis: null, cadre: CADRE_DEFAUT });
     },
 
     enregistrerEtude: async (titre) => {
       const s = get();
-      const t = (titre ?? s.etude?.titre ?? "").trim() || `Étude COMSOL du ${new Date().toLocaleDateString("fr-FR")}`;
+      const t = (titre ?? (s.titre || s.etude?.titre) ?? "").trim() || `Étude COMSOL du ${new Date().toLocaleDateString("fr-FR")}`;
       try {
         const pris = new Set((await get().listerEtudes()).map((x) => x.id));
         const id = s.etude?.id ?? identifiant(t, pris);
         await ecrire(instantane(id, t));
-        set({ etude: { id, titre: t }, modifiee: false, avis: { niveau: "info", texte: `Étude « ${t} » enregistrée (bibliothèque, ${fichierEtude(id)}).` } });
+        set({ etude: { id, titre: t }, titre: t, modifiee: false, avis: { niveau: "info", texte: `Étude « ${t} » enregistrée (bibliothèque, ${fichierEtude(id)}).` } });
         return id;
       } catch (e) {
         set({ avis: { niveau: "erreur", texte: e instanceof Error ? e.message : String(e) } });
@@ -375,7 +380,7 @@ export const useAtelier = create<EtatAtelier>((set, get) => {
           }
         }
         const noms = Object.fromEntries(e.fichiers.filter((f) => f.legende).map((f) => [f.nom, f.legende!]));
-        reconstruire({ etude: { id: e.id, titre: e.titre }, recettes: e.recettes, fichiers, bruts, derives: e.derives, noms, cadre: e.cadre }, false);
+        reconstruire({ etude: { id: e.id, titre: e.titre }, titre: e.titre, recettes: e.recettes, fichiers, bruts, derives: e.derives, noms, cadre: e.cadre }, false);
         set({
           modifiee: false,
           avis: manquants.length
@@ -395,6 +400,23 @@ export const useAtelier = create<EtatAtelier>((set, get) => {
       if (!meme) set({ recettes: [...s.recettes, recette] });
       const etude = await get().enregistrerEtude();
       return etude ? { etude, recette: recette.id } : null;
+    },
+
+    sauverRecettes: async (liste) => {
+      const recettes = [...get().recettes];
+      const ids: string[] = [];
+      for (const { nom, trace } of liste) {
+        const meme = recettes.find((r) => JSON.stringify(r.trace) === JSON.stringify(trace) && JSON.stringify(r.cadre) === JSON.stringify(get().cadre));
+        if (meme) ids.push(meme.id);
+        else {
+          const r: Recette = { id: identifiant(nom, new Set(recettes.map((x) => x.id))), nom, trace, cadre: get().cadre };
+          recettes.push(r);
+          ids.push(r.id);
+        }
+      }
+      set({ recettes });
+      const etude = await get().enregistrerEtude();
+      return etude ? { etude, recettes: ids } : null;
     },
 
     chargerRecette: (id) => {

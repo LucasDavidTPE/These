@@ -373,8 +373,8 @@ export function syntheseLatex(lignes: readonly LigneSynthese[], o: { longueur?: 
   return out.join("\n");
 }
 
-/** Mots d'un nom de fichier (« coupeXZ_R1_VE_het.txt » → coupeXZ, R1, VE, het). */
-export const motsDuNom = (nom: string) => nomCourt(nom).split(/[_\-\s]+/).filter(Boolean);
+/** Mots d'un nom de fichier, séparés par « _ » (« coupeXZ_R1_EL-fin_het.txt » → coupeXZ, R1, EL-fin, het). */
+export const motsDuNom = (nom: string) => nomCourt(nom).split(/[_\s]+/).filter(Boolean);
 
 export type Statistique = "max" | "min" | "abs";
 

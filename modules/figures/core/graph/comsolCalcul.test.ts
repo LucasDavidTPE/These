@@ -234,7 +234,7 @@ describe("cartes : isolignes, aspect réel, échelle commune, contour d'empreint
     const b = { ...base, carte: { ...carte, palette: "divergente" as const, v: carte.v.map((l) => l.map((v) => (v === null ? null : -2 * v))) } };
     expect(echelleCommune([a, b])).toEqual([-8, 8]);
     const m = miseEnPage({ ...plancheVide(), memeEchelle: true }, [a, b]);
-    expect(m.cases.map((c) => [c.doc.carte!.min, c.doc.carte!.max])).toEqual([
+    expect(m.cases.map((c) => [c.doc!.carte!.min, c.doc!.carte!.max])).toEqual([
       [-8, 8],
       [-8, 8],
     ]);

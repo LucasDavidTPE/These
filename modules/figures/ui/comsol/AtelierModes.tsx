@@ -34,6 +34,7 @@ import {
 import { getBackend } from "../platform/backend";
 import { AtelierApercu } from "./AtelierApercu";
 import { calculer } from "./atelierCalcul";
+import { Declinaison } from "./Declinaison";
 import { useContexteTrace, useLegende, useTrace } from "./hooks";
 import { useAtelier } from "./useAtelier";
 
@@ -207,6 +208,7 @@ export function ModeCarte() {
             Vraies proportions (1 m = 1 m)
           </label>
           <p className="muted small">Bornes des couleurs, contour d'empreinte, annotations, taille : dans Graphes, après « Continuer ».</p>
+          <Declinaison t={t} />
         </>
       }
       apercu={<AtelierApercu resultat={calculer(() => executerTrace(t, c))} trace={t} />}
@@ -285,6 +287,7 @@ export function ModeCoupeProfils() {
               Profondeur positive, de la surface vers le bas
             </label>
           ) : null}
+          {t.valeurs.length ? <Declinaison t={t} /> : null}
         </>
       }
       apercu={

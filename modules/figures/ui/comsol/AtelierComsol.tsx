@@ -10,6 +10,7 @@ import { useReglagesComsol } from "../graph/useReglagesComsol";
 import { getBackend } from "../platform/backend";
 import { AtelierFichiers } from "./AtelierFichiers";
 import { ModeCarte, ModeComparer, ModeCoupeProfils, ModeProfils, ModeSynthese, ModeTemps } from "./AtelierModes";
+import { regenererEtude } from "./lot";
 import { ReglagesPartages } from "./Outils";
 import { useAtelier } from "./useAtelier";
 
@@ -42,12 +43,6 @@ function useBranchements() {
 function BarreEtude() {
   const a = useAtelier();
   const [etudes, setEtudes] = useState<{ id: string; titre: string; modifie: string }[]>([]);
-  const [titre, setTitre] = useState<string | null>(null);
-  const [vu, setVu] = useState(a.etude?.id ?? "");
-  if (vu !== (a.etude?.id ?? "")) {
-    setVu(a.etude?.id ?? "");
-    setTitre(null);
-  }
   const rafraichir = () => void useAtelier.getState().listerEtudes().then(setEtudes);
   const id = a.etude?.id;
   // la liste se relit à l'ouverture de la page et quand l'étude change (pas à chaque réglage)
@@ -75,11 +70,45 @@ function BarreEtude() {
           ))}
         </select>
       </label>
-      <input className="atelier-titre-etude" value={titre ?? a.etude?.titre ?? ""} onChange={(e) => setTitre(e.target.value)} placeholder="Titre de l'étude (ex. Article empreintes)" aria-label="Titre de l'étude" />
-      <button type="button" className={a.modifiee ? "primary" : undefined} onClick={() => void a.enregistrerEtude(titre ?? undefined).then(rafraichir)} title="Range l'étude dans la bibliothèque de figures (_comsol/etudes)">
+      <input className="atelier-titre-etude" value={a.titre} onChange={(e) => a.set({ titre: e.target.value })} placeholder="Titre de l'étude (ex. Article empreintes)" aria-label="Titre de l'étude" />
+      <button type="button" className={a.modifiee ? "primary" : undefined} onClick={() => void a.enregistrerEtude().then(rafraichir)} title="Range l'étude dans la bibliothèque de figures (_comsol/etudes)">
         Enregistrer{a.modifiee ? " ●" : ""}
       </button>
+      {a.etude ? <RegenererTout id={a.etude.id} titre={a.etude.titre} /> : null}
     </div>
+  );
+}
+
+/** Après un nouveau calcul COMSOL : toutes les figures de l'étude, puis leurs planches, refaites d'un coup. */
+function RegenererTout({ id, titre }: { id: string; titre: string }) {
+  const [occupe, setOccupe] = useState(false);
+  return (
+    <button
+      type="button"
+      disabled={occupe}
+      title="Relit les fichiers et refait toutes les figures tracées depuis cette étude (retouches gardées), puis les planches qui les contiennent"
+      onClick={async () => {
+        if (!window.confirm(`Régénérer toutes les figures de l'étude « ${titre} » depuis les fichiers COMSOL actuels ?`)) return;
+        setOccupe(true);
+        const a = useAtelier.getState();
+        try {
+          const b = await regenererEtude(id, a.env, (texte) => a.set({ avis: { niveau: "info", texte } }));
+          const lignes = [
+            `${b.figures.length} figure(s) régénérée(s)${b.figures.length ? ` (${b.figures.join(", ")})` : ""}, ${b.planches.length} planche(s) mise(s) à jour${b.planches.length ? ` (${b.planches.join(", ")})` : ""}.`,
+            b.verrouillees.length ? `Laissées telles quelles (ouvertes sur l'autre PC) : ${b.verrouillees.join(", ")}.` : "",
+            b.erreurs.length ? `Problèmes :\n${b.erreurs.join("\n")}` : "",
+            !b.figures.length ? "Aucune figure de cette étude dans la bibliothèque : « Continuer dans Graphes » puis « Enregistrer », ou « Décliner pour tous les plans »." : "",
+          ].filter(Boolean);
+          a.set({ avis: { niveau: b.erreurs.length ? "erreur" : "info", texte: lignes.join("\n") } });
+        } catch (e) {
+          a.set({ avis: { niveau: "erreur", texte: e instanceof Error ? e.message : String(e) } });
+        } finally {
+          setOccupe(false);
+        }
+      }}
+    >
+      ↻ Régénérer toute l'étude
+    </button>
   );
 }
 

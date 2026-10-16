@@ -355,6 +355,15 @@ Ajouts permis par l'intégration :
   l'ancienne grille suivent la nouvelle ; pics et références recalculés pour un signal temporel). Fichiers
   relus par `readDataPath` (Tauri : `file_read_data`), dossiers surveillés (`plateforme.surveiller`), glisser-
   déposer (`onFileDrop`).
+- **déclinaison et régénération en série** (1.30.0, `core/graph/comsolLot.ts`, `ui/comsol/lot.ts`) : une recette
+  carte ou coupe-profils déclinée sur les plans réguliers qui ont la grandeur (`ciblesDeclinaison`, `decliner`) ;
+  rangement en matrice par deux mots du nom de fichier (`motsDuNom` sépare par « _ » et les blancs ; `ranger`,
+  erreur si deux fichiers dans une case ; `motsVariables` propose les mots qui varient) ; `plancheMatrice` →
+  planche avec `entetes` {lignes, colonnes} (titres traduits par les correspondances ; place de 6 mm, titres de
+  lignes tournés) et cases vides (`dossier: ""`, gardées dans la mise en page, sautées dans les étiquettes).
+  Écriture en série : `ecrireGraphe` / `ecrirePlanche` (même contenu que « Enregistrer »), recettes gardées d'un
+  coup (`sauverRecettes`, une écriture d'étude). `regenererEtude` : chaque graph.json dont `origine.etude` est
+  l'étude (verrous de l'autre PC respectés) est régénéré et réécrit, puis chaque planche qui en contient un.
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,

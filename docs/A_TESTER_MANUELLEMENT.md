@@ -934,3 +934,12 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
 - [ ] Glisser des `.txt` depuis l'Explorateur sur la page COMSOL : ils s'ajoutent.
 - [ ] Manuscrits : rien n'a changé pour les sources communes (espace:, onedrive:) après le déplacement du code dans le noyau.
 
+## COMSOL : déclinaison et régénération en série (1.30.0)
+
+- [ ] Ouvrir les 9 à 12 coupes de l'article ; Carte d'une coupe (εzz, isolignes) → « Décliner pour tous les plans » : lignes =
+      matériau, colonnes = empreinte ; matrice d'aperçu juste ; « Créer » → N figures + planche ; titres de lignes / colonnes
+      traduits ; même échelle de couleurs ; compilation LaTeX de la planche (titres tournés à gauche).
+- [ ] Retoucher une des figures dans Graphes (titre d'axe, palette), Enregistrer ; réexporter un cas dans COMSOL ;
+      « ↻ Régénérer toute l'étude » → figures et planche à jour, retouche gardée ; une figure ouverte sur l'autre PC est
+      signalée et non touchée.
+
