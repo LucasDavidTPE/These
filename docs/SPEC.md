@@ -473,6 +473,13 @@ L'appli **lit** le `.docx` sans Word (zip + XML, `core/ooxml.ts`) : plan des tit
 mots (hors consignes et mini-sommaires), consignes « À rédiger » restantes, figures, tableaux, notes,
 commentaires (résolus ou non) et modifications suivies, citations Zotero, date de modification ; relu
 au retour dans la fenêtre. Elle n'écrit jamais dans un fichier Word.
+**Anciens `.doc`** (Word 97-2003, 1.26.0) : acceptés partout où l'on choisit un fichier Word (« Ajouter une partie… »,
+« Ajouter un dossier… », « Pointer le fichier… », Retours). Le format binaire n'est pas lu tel quel : **Microsoft
+Word** le convertit (automatisation COM par PowerShell, invisible, sur le geste de l'utilisateur ; `src-tauri/src/word.rs`)
+en un `.docx` du même nom **à côté** — le `.doc` reste intact, un `.docx` existant n'est jamais écrasé ni
+reconverti — et la partie suit ce `.docx` (on continue la rédaction dans celui-ci). Un Word déjà ouvert n'est jamais
+fermé. Un `.doc` reçu en correction est converti dans le dossier temporaire du poste, lu, et rangé en `.docx`.
+Sans Word (ou document protégé par mot de passe, délai de 3 min dépassé) : message explicite, rien n'est ajouté.
 **Numérotation** : la numérotation automatique de Word est lue (`numbering.xml`, listes à plusieurs niveaux
 liées aux styles de titre ou portées par le paragraphe, héritage de style, `startOverride`, chiffres,
 lettres, romains) : le plan affiche « 1.2 Modèles rhéologiques » comme Word ; des numéros tapés restent du texte.

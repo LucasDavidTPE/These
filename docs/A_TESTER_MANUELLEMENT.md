@@ -862,3 +862,15 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] Exports de la planche : SVG (navigateur), PNG 600 dpi, pgfplots compilé dans LaTeX (axes aux mêmes positions que le
       SVG, étiquettes en gras). Bibliothèque → sur un graphe « Ajouter à une planche ».
 
+## Manuscrits : anciens fichiers .doc (1.26.0)
+
+- [ ] Plan → « Ajouter une partie… » : le filtre propose les .doc ; en choisir un → Word travaille quelques secondes sans
+      fenêtre visible, un `.docx` du même nom apparaît à côté, le `.doc` est inchangé ; la partie est ajoutée et lue
+      (titres, mots, commentaires, modifications suivies du .doc d'origine).
+- [ ] Même chose avec Word **déjà ouvert** sur un autre document : il reste ouvert, rien n'y change (pas d'alertes coupées).
+- [ ] « Ajouter un dossier… » sur un dossier avec des .doc et des .docx : les .doc sont marqués « (.doc → .docx) » ; un .doc
+      qui a déjà son .docx n'est pas proposé ; après « Ajouter », message « N anciens .doc convertis ».
+- [ ] Rechoisir un .doc dont le .docx existe déjà : pas de nouvelle conversion, la partie suit le .docx existant.
+- [ ] .doc protégé par mot de passe : message d'erreur en moins de 3 min, rien d'ajouté, aucun WINWORD.EXE qui traîne
+      (Gestionnaire des tâches).
+- [ ] Retours → choisir un .doc relu : remarques lues, rangé sous le nom `….docx` ; aucun fichier créé à côté du .doc.

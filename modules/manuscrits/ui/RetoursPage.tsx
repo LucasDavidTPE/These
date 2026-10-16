@@ -10,6 +10,7 @@ import { isoAvecDecalage } from "@noyau/dates";
 import { absolu } from "@noyau/stockage";
 import { remarquesDocx, auteursDe, bilan, dossierRetour, ETATS_REMARQUE, idRetour, LIBELLE_GENRE, modifierRemarque, nomFichierSur, partieProbable, remarquesPdf, typeDe, type EtatRemarque, type Remarque, type Retour } from "../core/retours";
 import { empreinte } from "../core/versions";
+import { estDoc, EXTENSIONS_WORD, versDocx } from "../core/word";
 import { chargerVersions, enregistrerRetour, majRetour, retirerRetour, type VersionLue } from "./donnees";
 import { annotationsPdf } from "./extrairePdf";
 import type { ManuscritCourant } from "./useManuscrit";
@@ -68,12 +69,20 @@ export function RetoursPage({ ms, retours, setRetours, partieInitiale }: { ms: M
 
   async function choisir() {
     setMessage(null);
-    const f = await ctx.plateforme.ouvrirFichier("Corrections reçues (.docx relu ou PDF annoté)", ["docx", "pdf"]);
-    if (!f) return;
-    const type = typeDe(f.nom);
-    if (!type) return setMessage({ niveau: "erreur", texte: "Seuls les fichiers .docx et .pdf sont lus." });
+    const choisi = await ctx.plateforme.ouvrirFichier("Corrections reçues (Word relu ou PDF annoté)", [...EXTENSIONS_WORD, "pdf"]);
+    if (!choisi) return;
+    if (!typeDe(choisi.nom) && !estDoc(choisi.nom)) return setMessage({ niveau: "erreur", texte: "Seuls les fichiers Word (.docx, .doc) et PDF sont lus." });
     setOccupe(true);
     try {
+      // un ancien .doc est lu (et rangé) sous sa forme .docx, convertie par Word sans rien écrire à côté
+      let f = choisi;
+      if (estDoc(choisi.nom)) {
+        if (!choisi.chemin) throw new Error("la lecture d'un .doc passe par Word, dans l'application installée.");
+        setMessage({ niveau: "info", texte: `Conversion de ${choisi.nom} par Word…` });
+        f = { ...choisi, nom: versDocx(choisi.nom), octets: await ctx.plateforme.lireDoc(choisi.chemin) };
+        setMessage(null);
+      }
+      const type = typeDe(f.nom)!;
       const remarques = type === "docx" ? remarquesDocx(f.octets).remarques : remarquesPdf(await annotationsPdf(f.octets));
       const auteurs = auteursDe(remarques);
       setBrouillon({

@@ -27,6 +27,7 @@ import {
 } from "../core/plan";
 import { chercherFichier, dossierOneDrive, estIntrouvable, partagerSources, RACINES_PARTAGEES, rattacher, relierFichier, resoudreSource, scinder } from "../core/sources";
 import { empreinte, type Etat } from "../core/versions";
+import { estDoc, EXTENSIONS_WORD, versDocx } from "../core/word";
 import { aTraiterParPartie, type Retour } from "../core/retours";
 import { chargerVersions, enregistrerVersion, listerDocx, type VersionLue } from "./donnees";
 import type { ManuscritCourant } from "./useManuscrit";
@@ -168,11 +169,49 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
     await relier(liens);
   }
 
+  /**
+   * Chemin du `.docx` à suivre pour un fichier choisi : lui-même, ou pour un ancien `.doc` le `.docx` du même nom
+   * (déjà là, sinon créé par Word à côté) ; null si la conversion échoue (message affiché).
+   */
+  async function enDocx(chemin: string): Promise<string | null> {
+    if (!estDoc(chemin)) return chemin;
+    const { dossier, nom } = scinder(chemin);
+    if (await ctx.plateforme.fichiers(dossier).exists(versDocx(nom)).catch(() => false)) return versDocx(chemin);
+    try {
+      return await ctx.plateforme.convertirDoc(chemin);
+    } catch (e) {
+      setMessage({ niveau: "erreur", texte: `${nom} : conversion en .docx impossible. ${e instanceof Error ? e.message : String(e)}` });
+      return null;
+    }
+  }
+
+  /** Convertit les `.doc` d'une liste (un par un, Word étant lent) ; garde les `.docx` tels quels. */
+  async function convertirTous(chemins: string[]): Promise<{ docx: string[]; convertis: number; echecs: string[] }> {
+    const docx: string[] = [];
+    const echecs: string[] = [];
+    let convertis = 0;
+    const aConvertir = chemins.filter(estDoc).length;
+    for (const c of chemins) {
+      if (!estDoc(c)) {
+        docx.push(c);
+        continue;
+      }
+      setMessage({ niveau: "info", texte: `Conversion par Word des anciens .doc en .docx (${convertis + echecs.length + 1}/${aConvertir})…` });
+      const d = await enDocx(c);
+      if (d) {
+        docx.push(d);
+        convertis++;
+      } else echecs.push(scinder(c).nom);
+    }
+    return { docx, convertis, echecs };
+  }
+
   async function pointerFichier(p: Partie) {
-    const f = await ctx.plateforme.ouvrirFichier(`Fichier Word de « ${p.nom} »`, ["docx"]);
+    const f = await ctx.plateforme.ouvrirFichier(`Fichier Word de « ${p.nom} »`, EXTENSIONS_WORD);
     if (!f) return;
     if (!f.chemin) return setMessage({ niveau: "erreur", texte: "Le chemin du fichier n'est connu que dans l'application installée." });
-    await relier([{ id: p.id, chemin: f.chemin }]);
+    const chemin = await enDocx(f.chemin);
+    if (chemin) await relier([{ id: p.id, chemin }]);
   }
 
   async function creer(titre: string, type: TypeDocument) {
@@ -180,8 +219,10 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
   }
 
   /** Ajoute des fichiers (chemins absolus) : leurs dossiers deviennent des racines de ce PC si besoin. */
-  async function ajouter(chemins: string[]) {
-    if (!m || !chemins.length) return;
+  async function ajouter(choisis: string[]) {
+    if (!m || !choisis.length) return;
+    const { docx: chemins, convertis, echecs } = await convertirTous(choisis);
+    if (!chemins.length) return;
     const r = rattacher(chemins, espace.racine, ctx.reglages.racines);
     if (Object.keys(r.nouvellesRacines).length) await ctx.enregistrerReglages({ ...ctx.reglages, racines: { ...ctx.reglages.racines, ...r.nouvellesRacines } });
     const avant = m.parties.length;
@@ -193,25 +234,27 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
     const nb = suivant.parties.length - avant;
     const racines = Object.entries(r.nouvellesRacines);
     setMessage({
-      niveau: "info",
+      niveau: echecs.length ? "erreur" : "info",
       texte: `${pluriel(nb, "partie ajoutée", "parties ajoutées")}${nb < chemins.length ? " (les autres y étaient déjà)" : ""}.${
+        convertis ? ` ${pluriel(convertis, "ancien .doc converti", "anciens .doc convertis")} en .docx à côté de l'original : c'est le .docx qui est suivi, continuez dans celui-ci.` : ""
+      }${echecs.length ? ` Non converti${echecs.length > 1 ? "s" : ""} (ouvrir dans Word puis « Enregistrer sous » .docx) : ${echecs.join(", ")}.` : ""}${
         racines.length ? ` Dossier${racines.length > 1 ? "s" : ""} enregistré${racines.length > 1 ? "s" : ""} sur ce PC : ${racines.map(([n, d]) => `« ${n} » = ${d}`).join(" ; ")}. À régler aussi sur l'autre PC (Réglages du poste).` : ""
       }`,
     });
   }
 
   async function ajouterFichier() {
-    const f = await ctx.plateforme.ouvrirFichier("Une partie du document (.docx)", ["docx"]);
+    const f = await ctx.plateforme.ouvrirFichier("Une partie du document (Word .docx ou .doc)", EXTENSIONS_WORD);
     if (!f) return;
     if (!f.chemin) return setMessage({ niveau: "erreur", texte: "Le chemin du fichier n'est connu que dans l'application installée." });
     await ajouter([f.chemin]);
   }
 
   async function ouvrirDossier() {
-    const dossier = await ctx.plateforme.choisirDossier("Dossier contenant des parties du document (.docx)");
+    const dossier = await ctx.plateforme.choisirDossier("Dossier contenant des parties du document (Word)");
     if (!dossier) return;
     const trouves = (await listerDocx(ctx.plateforme.fichiers(dossier))).sort(ordreNaturel);
-    if (!trouves.length) return setMessage({ niveau: "info", texte: "Aucun fichier .docx dans ce dossier (ni dans ses sous-dossiers)." });
+    if (!trouves.length) return setMessage({ niveau: "info", texte: "Aucun fichier Word (.docx, .doc) dans ce dossier (ni dans ses sous-dossiers)." });
     setChoix({ dossier, fichiers: trouves.map((chemin) => ({ chemin, coche: !/fusionn|trame_complete|~\$/i.test(chemin) })) });
   }
 
@@ -302,7 +345,7 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
         <button type="button" onClick={() => void ajouterFichier()}>
           Ajouter une partie…
         </button>
-        <button type="button" onClick={() => void ouvrirDossier()} title="Choisit un dossier et propose tous les .docx qu'il contient">
+        <button type="button" onClick={() => void ouvrirDossier()} title="Choisit un dossier et propose tous les fichiers Word (.docx, .doc) qu'il contient">
           Ajouter un dossier…
         </button>
         <button type="button" onClick={() => setTour((t) => t + 1)} title="Relit les fichiers Word (fait aussi au retour dans la fenêtre)">
@@ -320,13 +363,15 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
       {choix ? (
         <div className="carte">
           <p>
-            <strong>{choix.fichiers.length}</strong> fichiers .docx dans <code>{choix.dossier}</code> : cochez les parties du document, dans l'ordre du nom.
+            <strong>{choix.fichiers.length}</strong> fichiers Word dans <code>{choix.dossier}</code> : cochez les parties du document, dans l'ordre du nom.
+            {choix.fichiers.some((f) => estDoc(f.chemin)) ? " Les anciens .doc seront convertis par Word en .docx à côté (l'original reste intact)." : ""}
           </p>
           <ul className="ms-choix">
             {choix.fichiers.map((f, i) => (
               <li key={f.chemin}>
                 <label>
                   <input type="checkbox" checked={f.coche} onChange={(e) => setChoix({ ...choix, fichiers: choix.fichiers.map((x, j) => (j === i ? { ...x, coche: e.target.checked } : x)) })} /> {f.chemin}
+                  {estDoc(f.chemin) ? <span className="discret"> (.doc → .docx)</span> : null}
                 </label>
               </li>
             ))}
@@ -344,7 +389,7 @@ export function PlanPage({ ms, retours, voirRetours }: { ms: ManuscritCourant; r
 
       {m.parties.length === 0 ? (
         <div className="carte">
-          <p>Aucune partie. « Ajouter un dossier… » propose tous les .docx d'un dossier (par exemple le dossier des chapitres) ; « Ajouter une partie… » en prend un seul.</p>
+          <p>Aucune partie. « Ajouter un dossier… » propose tous les fichiers Word d'un dossier (par exemple le dossier des chapitres) ; « Ajouter une partie… » en prend un seul.</p>
         </div>
       ) : (
         <>
