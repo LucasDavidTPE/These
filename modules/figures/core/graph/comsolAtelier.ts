@@ -6,6 +6,7 @@
 import { FACTEUR_LONGUEUR, geometrie, libelleColonne, parametresDe, type ExportComsol, type UniteLongueur } from "./comsol";
 import { combiner } from "./comsolCalcul";
 import { avecCote } from "./comsolEtude";
+import { parametresVariables } from "./comsolInstants";
 import type { GraphLayout } from "./layout";
 import type { GraphDoc } from "./model";
 import { project, unproject } from "./ticks";
@@ -26,16 +27,34 @@ export interface Description {
   axes?: [string, string];
   /** Ce qui ne marchera pas avec ce fichier, et pourquoi. */
   avertissement?: string;
+  /** Export à plusieurs instants (ou valeurs d'un balayage) : « 3 valeurs de t, de 9 à 11 ». */
+  instants?: string;
 }
 
 const fr = (v: number) => String(Number(v.toPrecision(4))).replace(".", ",").replace("-", "−");
 
 /** Description en clair d'un export, longueurs dans l'unité de tracé. */
 export function decrireExport(e: ExportComsol, longueur: UniteLongueur): Description {
+  const d = decrireForme(e, longueur);
+  const params = parametresVariables(e);
+  if (!params.length) return d;
+  const instants = params
+    .map((p) => {
+      const a = p.valeurs[0]!;
+      const b = p.valeurs.at(-1)!;
+      const u = p.unite ? ` ${p.unite}` : "";
+      return `${p.valeurs.length} valeurs de ${p.nom}, de ${Number.isFinite(a.nombre) ? fr(a.nombre) : a.texte} à ${Number.isFinite(b.nombre) ? fr(b.nombre) : b.texte}${u}`;
+    })
+    .join(" ; ");
+  return { ...d, instants };
+}
+
+function decrireForme(e: ExportComsol, longueur: UniteLongueur): Description {
   const g = geometrie(e);
-  const grandeurs = e.colonnes.map((c) => libelleColonne(c).court);
+  const params = parametresVariables(e);
+  const grandeurs = [...new Set(e.colonnes.map((c) => libelleColonne(c).court))];
   const etude = Object.entries(parametresDe(e))
-    .filter(([k]) => k !== "Point")
+    .filter(([k]) => k !== "Point" && !params.some((p) => p.nom === k))
     .map(([k, v]) => `${k}=${v}`)
     .join(", ");
   const f = FACTEUR_LONGUEUR[longueur]! / (FACTEUR_LONGUEUR[e.uniteLongueur] ?? 1);

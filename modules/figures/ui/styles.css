@@ -1493,6 +1493,12 @@ button.lien {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  /* un fieldset prend sinon la largeur de son contenu le plus large et déborde de la colonne */
+  min-width: 0;
+}
+
+.atelier-champ select {
+  max-width: 100%;
 }
 
 .atelier-champ legend {
@@ -1651,4 +1657,56 @@ button.lien {
 .atelier-critere .comsol-ligne input[aria-label="Variables"] {
   flex: 1;
   width: auto;
+}
+
+/* Exports à plusieurs instants : curseur, sonde, épingles */
+.atelier-curseur {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.atelier-curseur select {
+  flex: 1 1 100%;
+}
+
+.atelier-curseur input[type="range"] {
+  flex: 1;
+  min-width: 60px;
+}
+
+.atelier-instant {
+  font-variant-numeric: tabular-nums;
+  min-width: 70px;
+}
+
+.atelier-sonde {
+  flex-shrink: 0;
+  min-height: 64px;
+  background: var(--panel, #fff);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.atelier-sonde table {
+  border-collapse: collapse;
+  margin-top: 2px;
+}
+
+.atelier-sonde td {
+  padding: 1px 10px 1px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.atelier-sonde tr.actif td {
+  font-weight: 600;
+}
+
+.atelier-epingles {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }

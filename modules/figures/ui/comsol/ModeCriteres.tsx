@@ -19,6 +19,7 @@ import { useReglagesComsol } from "../graph/useReglagesComsol";
 import { getBackend } from "../platform/backend";
 import { AtelierApercu } from "./AtelierApercu";
 import { calculer } from "./atelierCalcul";
+import { ChoixEtape } from "./Instants";
 import { useContexteTrace, useLegende, useTrace } from "./hooks";
 
 const fr = (x: number, ch = 3) =>
@@ -70,6 +71,7 @@ export function ModeCriteres() {
   return (
     <>
       <div className="atelier-reglages">
+        <ChoixEtape mode="criteres" />
         <fieldset className="atelier-champ">
           <legend>Cas évalués (coupes contenant z, profils verticaux)</legend>
           {cas.map((e) => (

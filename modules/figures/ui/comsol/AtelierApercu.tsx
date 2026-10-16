@@ -8,7 +8,22 @@ import { exportGraphSvg, graphLayout, versDonnees, type GraphDoc, type Trace } f
 import { envoyerVersGraphes, type Resultat } from "./atelierCalcul";
 import { useAtelier } from "./useAtelier";
 
-export function AtelierApercu({ resultat, trace, onClic, aide, petit }: { resultat: Resultat | { doc: GraphDoc; titre: string }; trace?: Trace; onClic?: (x: number, y: number) => void; aide?: string; petit?: boolean }) {
+export function AtelierApercu({
+  resultat,
+  trace,
+  onClic,
+  onSurvol,
+  aide,
+  petit,
+}: {
+  resultat: Resultat | { doc: GraphDoc; titre: string };
+  trace?: Trace;
+  onClic?: (x: number, y: number) => void;
+  /** Position survolée, dans les unités des axes (null : hors des axes, ou souris sortie). */
+  onSurvol?: (p: { x: number; y: number } | null) => void;
+  aide?: string;
+  petit?: boolean;
+}) {
   const [titre, setTitre] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
   // le titre saisi tient tant que le titre proposé ne change pas (autre grandeur, autres fichiers…)
@@ -30,13 +45,21 @@ export function AtelierApercu({ resultat, trace, onClic, aide, petit }: { result
   if (!resultat) return <div className="atelier-apercu vide">{aide ?? "Choisissez ce qu'il faut tracer : l'aperçu apparaît ici."}</div>;
   if ("erreur" in resultat) return <div className="atelier-apercu vide erreur">{resultat.erreur}</div>;
   const doc = resultat.doc;
-  const clic = (ev: React.MouseEvent<HTMLDivElement>) => {
-    if (!onClic || !rendu?.layout) return;
+  const position = (ev: React.MouseEvent<HTMLDivElement>) => {
     const svg = ev.currentTarget.querySelector("svg");
-    if (!svg) return;
+    if (!svg || !rendu?.layout) return null;
     const r = svg.getBoundingClientRect();
     const p = versDonnees(doc, rendu.layout, ((ev.clientX - r.left) / r.width) * doc.width, ((ev.clientY - r.top) / r.height) * doc.height);
-    if (p.dedans) onClic(p.x, p.y);
+    return p.dedans ? p : null;
+  };
+  const clic = (ev: React.MouseEvent<HTMLDivElement>) => {
+    const p = onClic ? position(ev) : null;
+    if (p) onClic!(p.x, p.y);
+  };
+  const survol = (ev: React.MouseEvent<HTMLDivElement>) => {
+    if (!onSurvol) return;
+    const p = position(ev);
+    onSurvol(p ? { x: p.x, y: p.y } : null);
   };
   const continuer = async () => {
     const t = titre ?? resultat.titre;
@@ -50,7 +73,9 @@ export function AtelierApercu({ resultat, trace, onClic, aide, petit }: { result
     <div className={`atelier-apercu${petit ? " petit" : ""}`}>
       {aide ? <p className="muted small">{aide}</p> : null}
       {rendu?.erreur ? <p className="banner error">{rendu.erreur}</p> : null}
-      {rendu?.svg ? <div className={`atelier-svg${onClic ? " cliquable" : ""}`} onClick={clic} dangerouslySetInnerHTML={{ __html: rendu.svg }} /> : null}
+      {rendu?.svg ? (
+        <div className={`atelier-svg${onClic ? " cliquable" : ""}`} onClick={clic} onMouseMove={onSurvol ? survol : undefined} onMouseLeave={onSurvol ? () => onSurvol(null) : undefined} dangerouslySetInnerHTML={{ __html: rendu.svg }} />
+      ) : null}
       {trace ? (
         <div className="atelier-envoi">
           <input value={titre ?? resultat.titre} onChange={(e) => setTitre(e.target.value)} aria-label="Titre du graphe" title="Titre dans la bibliothèque" />

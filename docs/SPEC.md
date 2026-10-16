@@ -374,6 +374,15 @@ Ajouts permis par l'intégration :
   dommage de Miner pour un trafic. `tableauCriteres`, `critereDimensionnant` (le moins de cycles),
   `grapheCriteres` (barres : cycles en log, déformations, ou % d'un cas de référence avec repère à 100 %),
   `criteresLatex` (booktabs). Recette `TraceCriteres` dans l'étude, régénérable.
+- **exports à plusieurs instants** (1.32.0, `core/graph/comsolInstants.ts`) : en-têtes `@ t=9` lus (étiquette de
+  solution facultative) ; `parametresVariables` = paramètres qui changent entre colonnes de même grandeur
+  (valeurs triées) ; `vueEtape(e, etape)` = une colonne par grandeur, à l'instant choisi (premier par défaut) ou
+  en enveloppe point par point (max, min, |max| signé) ; champ commun `etape` de toutes les recettes, appliqué
+  par `executerTrace` à tous les exports (titre complété par `titreEtape`). `valeurCarte` (bilinéaire dans la
+  maille) pour la sonde (`sonder`) et les épingles (`TraceCarte.epingles`, annotations recalculées à la
+  régénération : `rafraichirDonnees` distingue annotations et repères calculés). Dérivé `signal` : table au
+  cours du paramètre en un point (`signalAuPoint`, interpolé sur une coupe régulière, nœud le plus proche
+  sinon). Décliner sur les instants : planche cas × instants (`ecrireDeclinaison`, clés `plan|instant`).
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,

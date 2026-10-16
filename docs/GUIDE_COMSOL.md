@@ -107,6 +107,16 @@ Tuile **« Critères de dimensionnement »** (⚖) : pour chaque cas, la déform
 cycles qu'elle permet — **εt à la base des couches liées** (fatigue) et **εz au sommet du sol** (orniérage),
 façon méthode rationnelle. Tableau booktabs, barres, dommage pour un trafic : voir la section 5.5.
 
+### Exports à plusieurs instants, sonde et épingles (1.32.0)
+
+Un export « Données » fait **à tous les instants** (ou pour toutes les valeurs d'un balayage) a une colonne
+par grandeur **et par instant** (`1e6*solid.eZZ (1) @ t=9`, `… @ t=10`…). La fiche du fichier l'annonce
+(« ⏱ 21 valeurs de t, de 0 à 20 ») et chaque tracé reçoit un **curseur d'instant** : glisser pour changer
+d'instant, ▶ pour faire défiler la carte dans le temps, ou **enveloppe** (maximum, minimum, plus grande valeur
+absolue sur tous les instants, point par point). Sur la carte : **sonde** au survol (la valeur au même point
+dans tous les plans comparables), **épingles** (un clic écrit la valeur sur la carte), **signal au cours du
+temps** au point épinglé, **déclinaison sur les instants** (planche cas × instants). Détails : § 4.3.
+
 Les sections suivantes détaillent les données attendues et chaque calcul.
 
 ---
@@ -134,6 +144,10 @@ Conseils pour l'export :
   traçables, mais la carte sera refusée.
 - **Un fichier par cas de calcul** (élastique / viscoélastique, cas de charge, géométrie…) : c'est la
   manière la plus simple d'obtenir ensuite des courbes superposées avec des légendes automatiques.
+- **Plusieurs instants dans un même fichier** (étude temporelle, charge roulante) : dans *Export → Données*,
+  garder « Temps : tous » (ou une liste d'instants). COMSOL écrit une colonne par grandeur et par instant
+  (`… @ t=9`, `… @ t=10`, ou `… @ 3: Temps=10 s, lc=3`) ; Thèse les regroupe et propose un curseur (§ 4.3).
+  Même chose pour un balayage paramétrique (`@ lc=1`, `@ lc=2`…).
 - **Nommer les fichiers avec des mots séparés par `_`**, comme `verticale_max_std_el_lc3_het.txt` ou
   `verticale_max_std_ve_lc1_rect.txt` : les légendes sont tirées des mots qui diffèrent d'un nom à l'autre
   (§ 3.3).
@@ -379,6 +393,38 @@ puis **cliquer sur la carte** pour en placer une, ou taper une ou **plusieurs va
 entre deux lignes de la grille est **interpolée linéairement** (exacte sur une ligne de la grille) ; une valeur
 hors de la coupe est refusée. Les lignes sont nommées a, b, c… sur la carte, les profils légendés « a. $y$ = 848
 mm » et superposés dans l'aperçu, avec profondeur et repères des couches.
+
+### 4.3 Instants, sonde, épingles (1.32.0)
+
+**Instant tracé.** Dès qu'un fichier ouvert a plusieurs instants (ou plusieurs valeurs d'un paramètre), un cadre
+« Instant tracé » apparaît en tête des réglages de chaque tracé (sauf « Signal dans le temps ») :
+
+- **À un instant** : le curseur choisit l'instant (« t = 10 (11 / 21) ») ; ▶ fait défiler les instants en
+  boucle (0,7 s chacun), ⏸ arrête. Les fichiers sans instants (le cas élastique) sont tracés tels quels.
+- **Enveloppe** : pour chaque point, le **maximum**, le **minimum** ou la **plus grande valeur absolue**
+  (avec son signe) sur tous les instants. C'est la carte « pire cas » d'une charge roulante, et ce qu'il faut
+  pour les **critères de dimensionnement** (§ 5.5) quand la charge se déplace.
+
+Le choix fait partie de la recette : la figure se régénère au même instant, et son titre le dit
+(« VE het — εzz (µdef) (t = 10) », « … (|max| sur t) »).
+
+**Sonde.** Au survol de la carte, sous l'aperçu : la position et la valeur au même point **dans tous les plans
+comparables** (mêmes axes, même grandeur : EL, VE, autres empreintes), interpolée dans la maille, à l'instant
+choisi. Le plan affiché est en gras.
+
+**Épingles.** Un **clic** sur la carte épingle le point : sa valeur est écrite sur la carte (point noir et texte
+tourné vers l'intérieur) et listée à gauche (a, b, c…). Les valeurs sont **recalculées** à chaque
+régénération (nouveau calcul COMSOL, autre instant) ; × retire une épingle.
+
+**Signal au cours du temps.** Pour un fichier à plusieurs instants, « ∿ signal » sur une épingle crée, pour
+chaque plan comparable qui a des instants, un **fichier calculé** : la valeur au point (interpolée dans la
+maille) à chaque instant, comme une table COMSOL. Il apparaît dans la liste (« Signal au cours de t, tiré
+de … »), se trace dans **« Signal dans le temps »** (pic annoté, instant repère, référence élastique) et est
+gardé dans l'étude (recalculé à l'ouverture).
+
+**Décliner sur les instants** (sous la carte d'un fichier à plusieurs instants) : cocher jusqu'à 6 instants
+et les cas comparables (une ligne chacun) → une figure par cas et par instant (recette gardée), et une
+**planche** cas × instants, titres de colonnes « t = 9 », « t = 10 »…, **même échelle de couleurs**.
 
 ---
 

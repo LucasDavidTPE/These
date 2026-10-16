@@ -237,6 +237,8 @@ lancent tous les tests automatiques sous Windows.
       commune) et **« Régénérer toute l'étude »** (figures et planches) (1.30.0)
 - [x] COMSOL : **critères de dimensionnement** (εt base des couches liées, εz sommet du sol, lois de fatigue et de sol réglables,
       N admissibles, dommage pour un trafic, critère dimensionnant, booktabs, barres log / relatives) (1.31.0)
+- [x] COMSOL : **exports à plusieurs instants** (curseur, lecture ▶, enveloppes max / min / |max|), **sonde** multi-cas au survol,
+      **épingles** de valeurs sur la carte, **signal au cours du temps** en un point, planche **cas × instants** (1.32.0)
 - [x] Manuscrits : anciens fichiers **.doc** acceptés (parties, dossiers, corrections reçues), convertis en `.docx` par Word
       à côté de l'original (1.26.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),

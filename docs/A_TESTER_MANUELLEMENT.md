@@ -953,3 +953,15 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
 - [ ] Diagramme « rapporté à un cas de référence » (EL) ; Continuer dans Graphes, Enregistrer ; « ↻ Régénérer » après un
       nouvel export.
 - [ ] Copier le tableau LaTeX (booktabs) et compiler.
+
+## COMSOL : instants, sonde, épingles (1.32.0)
+
+- [ ] Exporter un plan de coupe VE **à tous les instants** (Résultats → Export → Données, Temps : tous) ; l'ouvrir : fiche
+      « ⏱ N valeurs de t » ; vérifier l'en-tête réel de COMSOL 6.4 en français (`@ t=…` ou `@ n: Temps=… s`).
+- [ ] Carte : curseur, ▶ (défilement), enveloppe |max| ; comparer une valeur à celle lue dans COMSOL au même instant.
+- [ ] Sonde au survol avec EL et VE ouverts : mêmes points, valeurs plausibles ; clic → épingle écrite sur la carte ;
+      Continuer dans Graphes, Enregistrer ; réexporter, « ↻ Régénérer » → valeur épinglée mise à jour.
+- [ ] « ∿ signal » sur une épingle → tuile « Signal dans le temps » : pic et décalage ; rouvrir l'étude sur l'autre PC,
+      le signal est recalculé.
+- [ ] Décliner sur les instants (EL et VE, 4 instants) → planche, même échelle, compilation LaTeX.
+- [ ] Critères de dimensionnement sur l'enveloppe |max| d'une charge roulante.

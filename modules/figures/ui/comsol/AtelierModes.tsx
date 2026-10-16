@@ -5,9 +5,7 @@
  */
 import { useState } from "react";
 import {
-  LIBELLES_PALETTES,
   OPERATIONS,
-  PALETTES_CARTE,
   arrondirClic,
   carteDeSelection,
   comparables,
@@ -15,6 +13,7 @@ import {
   decrireExport,
   executerTrace,
   expressionsCommunes,
+  expressionsDe,
   geometrie,
   lireValeurs,
   motsDuNom,
@@ -22,9 +21,7 @@ import {
   type ExportComsol,
   type ModePic,
   type Operation,
-  type PaletteCarte,
   type Statistique,
-  type TraceCarte,
   type TraceComparer,
   type TraceCoupeProfils,
   type TraceProfils,
@@ -35,6 +32,7 @@ import { getBackend } from "../platform/backend";
 import { AtelierApercu } from "./AtelierApercu";
 import { calculer } from "./atelierCalcul";
 import { Declinaison } from "./Declinaison";
+import { ChoixEtape } from "./Instants";
 import { useContexteTrace, useLegende, useTrace } from "./hooks";
 import { useAtelier } from "./useAtelier";
 
@@ -144,6 +142,7 @@ export function ModeProfils() {
     <Colonnes
       options={
         <>
+          <ChoixEtape mode="profils" />
           <Fichiers titre="Lignes à superposer (une courbe chacune)" liste={lignes} choisis={t.fichiers} set={(fichiers) => maj({ fichiers })} />
           <Grandeurs e={choisies[0]} liste={expressionsCommunes(choisies.length ? choisies : lignes)} actives={t.expressions} set={(expressions) => maj({ expressions })} />
           <fieldset className="atelier-champ">
@@ -170,48 +169,6 @@ export function ModeProfils() {
         </>
       }
       apercu={<AtelierApercu resultat={calculer(() => executerTrace(t, c))} trace={t} aide={!choisies.length ? "Cochez au moins une ligne." : undefined} />}
-    />
-  );
-}
-
-// ---- Carte d'une coupe ----
-
-export function ModeCarte() {
-  const c = useContexteTrace();
-  const [t, maj] = useTrace<TraceCarte>("carte");
-  const plans = plansDe(c.exports);
-  const p = plans.find((e) => e.nom === t.plan);
-  const [iso, setIso] = useState(t.isolignes.map(fr).join(" ; "));
-  return (
-    <Colonnes
-      options={
-        <>
-          <ChoixFichier libelle="Plan de coupe" liste={plans} valeur={t.plan} set={(plan) => maj({ plan, expression: null })} />
-          <Grandeurs e={p} liste={p ? p.colonnes.map((k) => k.expression) : []} actives={t.expression ? [t.expression] : []} set={(v) => maj({ expression: v[0] ?? null })} seule />
-          <label className="field">
-            <span>Couleurs</span>
-            <select value={t.palette} onChange={(e) => maj({ palette: e.target.value as PaletteCarte | "auto" })}>
-              <option value="auto">Automatique (rouge-bleu si le signe change, sinon viridis)</option>
-              {PALETTES_CARTE.map((x) => (
-                <option key={x} value={x}>
-                  {LIBELLES_PALETTES[x]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            <span>Isolignes (valeurs séparées par ;, facultatif)</span>
-            <input value={iso} onChange={(e) => setIso(e.target.value)} onBlur={() => maj({ isolignes: lireValeurs(iso.replace(/−/g, "-")) })} placeholder="−200 ; −100 ; 0" />
-          </label>
-          <label className="chip">
-            <input type="checkbox" checked={t.egalite} onChange={(e) => maj({ egalite: e.target.checked })} />
-            Vraies proportions (1 m = 1 m)
-          </label>
-          <p className="muted small">Bornes des couleurs, contour d'empreinte, annotations, taille : dans Graphes, après « Continuer ».</p>
-          <Declinaison t={t} />
-        </>
-      }
-      apercu={<AtelierApercu resultat={calculer(() => executerTrace(t, c))} trace={t} />}
     />
   );
 }
@@ -244,8 +201,9 @@ export function ModeCoupeProfils() {
     <Colonnes
       options={
         <>
+          <ChoixEtape mode="coupe-profils" />
           <ChoixFichier libelle="Plan de coupe" liste={plans} valeur={t.plan} set={(plan) => maj({ plan, expression: null, valeurs: [] })} />
-          <Grandeurs e={p} liste={p ? p.colonnes.map((k) => k.expression) : []} actives={t.expression ? [t.expression] : []} set={(v) => maj({ expression: v[0] ?? null })} seule />
+          <Grandeurs e={p} liste={expressionsDe(p)} actives={t.expression ? [t.expression] : []} set={(v) => maj({ expression: v[0] ?? null })} seule />
           <fieldset className="atelier-champ">
             <legend>Lignes à placer</legend>
             <label className="chip">
@@ -402,6 +360,7 @@ export function ModeComparer() {
     <Colonnes
       options={
         <>
+          <ChoixEtape mode="comparer" />
           {choixFichier("Cas A", t.a, (a) => maj({ a }))}
           {choixFichier("Cas B (✓ = même grille que A)", t.b, (b) => maj({ b }), A)}
           <fieldset className="atelier-champ">
@@ -446,6 +405,7 @@ export function ModeSynthese() {
     <Colonnes
       options={
         <>
+          <ChoixEtape mode="synthese" />
           <fieldset className="atelier-champ">
             <legend>Cas (une ligne du tableau chacun)</legend>
             {c.exports.map((e) => (

@@ -19,6 +19,7 @@ import {
   lireEtude,
   traceVide,
   type Cadre,
+  sourcesDerive,
   type Derive,
   type EtudeComsol,
   type ExportComsol,
@@ -302,7 +303,7 @@ export const useAtelier = create<EtatAtelier>((set, get) => {
     retirer: (nom) =>
       reconstruire({
         fichiers: get().fichiers.filter((f) => f.nom !== nom),
-        derives: get().derives.filter((d) => d.nom !== nom && d.a !== nom && d.b !== nom),
+        derives: get().derives.filter((d) => d.nom !== nom && !sourcesDerive(d).includes(nom)),
       }),
     forcer: (nom, forcer) =>
       reconstruire({

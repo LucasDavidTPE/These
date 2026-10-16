@@ -116,8 +116,14 @@ export function AtelierFichiers() {
                 ))}
                 {d.grandeurs.length > 8 ? <span className="muted small">+{d.grandeurs.length - 8}</span> : null}
               </div>
+              {d.instants ? <div className="small atelier-suivi">⏱ {d.instants} (curseur dans les tracés)</div> : null}
               {d.etude ? <div className="muted small">Étude : {d.etude}</div> : null}
-              {calc ? <div className="muted small">Calculé : {calc.legendeA} {calc.op === "rapport" ? "/" : calc.op === "difference" ? "−" : "écart"} {calc.legendeB}</div> : null}
+              {calc?.genre === "operation" ? <div className="muted small">Calculé : {calc.legendeA} {calc.op === "rapport" ? "/" : calc.op === "difference" ? "−" : "écart"} {calc.legendeB}</div> : null}
+              {calc?.genre === "signal" ? (
+                <div className="muted small">
+                  Signal au cours de {calc.parametre}, tiré de {calc.fichier.replace(/\.(txt|csv|dat)$/i, "")}
+                </div>
+              ) : null}
               {f ? (
                 <div className={`small ${f.source ? "atelier-suivi" : "atelier-avert"}`}>
                   {f.source ? `✓ retrouvé sur les deux PC (${f.source.split(":")[0]})` : f.absolu ? "Hors OneDrive : à rouvrir sur l'autre PC" : "Ouvert sans chemin : non relisible"}

@@ -9,7 +9,8 @@ import { MODES, modesDisponibles, type ModeAtelier, type SourceLegende, type Uni
 import { useReglagesComsol } from "../graph/useReglagesComsol";
 import { getBackend } from "../platform/backend";
 import { AtelierFichiers } from "./AtelierFichiers";
-import { ModeCarte, ModeComparer, ModeCoupeProfils, ModeProfils, ModeSynthese, ModeTemps } from "./AtelierModes";
+import { ModeComparer, ModeCoupeProfils, ModeProfils, ModeSynthese, ModeTemps } from "./AtelierModes";
+import { ModeCarte } from "./ModeCarte";
 import { regenererEtude } from "./lot";
 import { ModeCriteres } from "./ModeCriteres";
 import { ReglagesPartages } from "./Outils";

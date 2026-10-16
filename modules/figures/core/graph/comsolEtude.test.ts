@@ -16,6 +16,8 @@ import {
   type ContexteTrace,
   type FichierEtude,
   type ModeTrace,
+  type TraceCriteres,
+  type TraceTemps,
 } from "./comsolEtude";
 import { validateGraph } from "./model";
 
@@ -126,5 +128,42 @@ describe("régénération d'une figure", () => {
     const p2 = rafraichirDonnees(renomme, { ...p, series: p.series.map((s) => ({ ...s, x: s.x.map((v) => v * 2) })) });
     expect(p2.series[0]).toMatchObject({ name: "Cas 0", color: "#ff0000" });
     expect(p2.series[0]!.x[0]).toBe(p.series[0]!.x[0]! * 2);
+  });
+});
+
+describe("exports à plusieurs instants dans les recettes", () => {
+  const inst = () => ctx([lire("grille_XZ_EL_het.txt"), lire("grille_XZ_VE_instants.txt")]);
+
+  it("carte à un instant, en enveloppe ; titre avec l'instant ; points épinglés annotés", () => {
+    const c = inst();
+    const base = { ...(traceVide("carte") as Extract<ReturnType<typeof traceVide>, { mode: "carte" }>), plan: "grille_XZ_VE_instants.txt", expression: "1e6*solid.eXX" };
+    const r10 = executerTrace({ ...base, etape: { t: { valeur: "10" } } }, c)!;
+    expect(r10.titre).toMatch(/\(t = 10\)$/);
+    expect(r10.doc.carte!.v[0]![2]).toBeCloseTo(106, 6);
+    const r11 = executerTrace({ ...base, etape: { t: { valeur: "11" } } }, c)!;
+    expect(r11.doc.carte!.v[0]![2]).toBeCloseTo(-84.8, 6);
+    const env = executerTrace({ ...base, etape: { t: { enveloppe: "abs" } } }, c)!;
+    expect(env.doc.carte!.v[0]![2]).toBeCloseTo(106, 6);
+    expect(env.titre).toMatch(/\|max\| sur t/);
+    const ep = executerTrace({ ...base, etape: { t: { valeur: "10" } }, epingles: [{ x: 850, y: -100 }, { x: 5000, y: 0 }] }, c)!;
+    expect(ep.doc.annotations).toEqual([{ x: 850, y: -100, texte: "90 µdef", position: "south west" }]); // texte vers l'intérieur de la carte
+    expect(validateGraph(ep.doc).ok).toBe(true);
+  });
+
+  it("critères sur l'enveloppe ; signal en un point gardé comme dérivé, relu avec l'étude", () => {
+    const c = inst();
+    const cr = { id: "et", nom: "εt", genre: "traction" as const, z: -0.32, cote: "dessus" as const, decalage: 0, variables: ["exx"], loi: { genre: "fatigue" as const, epsilon6: 100, b: -0.2, k: 1 } };
+    const r = executerTrace({ ...(traceVide("criteres") as TraceCriteres), fichiers: ["grille_XZ_VE_instants.txt"], etape: { t: { enveloppe: "max" } } }, { ...c, criteres: [cr] })!;
+    expect(r.tableau!.lignes[0]!.cases[0]).toMatchObject({ valeur: 106 });
+    const d = construireDerives(c.exports, [{ nom: "signal.txt", genre: "signal", fichier: "grille_XZ_VE_instants.txt", point: [0.9, null, -0.32], parametre: "t", etape: null, legende: "VE, x = 0,9 m" }]);
+    expect(d.erreurs).toEqual([]);
+    const s = d.exports.at(-1)!;
+    expect(s.nature).toBe("table");
+    const temps = executerTrace({ ...(traceVide("temps") as TraceTemps), fichiers: ["signal.txt"] }, { ...c, exports: d.exports })!;
+    expect(temps.doc.series[0]!.y.map((v) => Number(v.toFixed(3)))).toEqual([53, 106, -84.8]);
+    const e = lireEtude({ derives: [{ nom: "signal.txt", genre: "signal", fichier: "a.txt", point: [0.9, "x", -0.32], parametre: "t", etape: { t: { enveloppe: "abs" }, faux: 3 }, legende: "L" }] });
+    expect(e.derives).toEqual([{ nom: "signal.txt", genre: "signal", fichier: "a.txt", point: [0.9, null, -0.32], parametre: "t", etape: { t: { enveloppe: "abs" } }, legende: "L" }]);
+    expect(lireTrace({ mode: "carte", etape: { t: { valeur: "10" } }, epingles: [{ x: 1, y: 2 }, { x: "a" }] })).toMatchObject({ etape: { t: { valeur: "10" } }, epingles: [{ x: 1, y: 2 }] });
+    expect(lireTrace({ mode: "carte" })).not.toHaveProperty("etape");
   });
 });

@@ -141,7 +141,7 @@ export function lireTitreTable(t: string): ColonneComsol {
   const parametres: Record<string, string> = {};
   const point = /Point\s*:\s*(\([^)]*\)|\S+)/i.exec(reste);
   if (point) parametres.Point = point[1]!;
-  const at = /@\s*([^:]*):\s*(.*)$/.exec(reste);
+  const at = /@\s*(?:([^:=,]*):\s*)?(.*)$/.exec(reste);
   for (const p of (at?.[2] ?? "").split(/,\s*/)) {
     const i = p.indexOf("=");
     if (i > 0) parametres[p.slice(0, i).trim()] = p.slice(i + 1).trim();
@@ -160,7 +160,8 @@ export function lireTitres(texte: string, n: number): ColonneComsol[] {
   }
   return trouves.map((t, k) => {
     const suite = texte.slice(t.fin, trouves[k + 1]?.debut ?? texte.length).trim();
-    const m = /^@\s*([^:]*):\s*(.*)$/.exec(suite);
+    // « @ 303: Temps=10 s, lc=3 » (solution numérotée) ou « @ t=9 » (export à plusieurs instants)
+    const m = /^@\s*(?:([^:=,]*):\s*)?(.*)$/.exec(suite);
     const parametres: Record<string, string> = {};
     for (const p of (m?.[2] ?? "").split(/,\s*/)) {
       const i = p.indexOf("=");

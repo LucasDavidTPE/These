@@ -3,7 +3,8 @@
  * réexporté ses fichiers. Une étude (`_comsol/etudes/<id>.json` dans la bibliothèque de figures) garde :
  *  - les fichiers, par référence commune aux deux PC (`onedrive:Thèse/COMSOL/x.txt`), avec leur lecture
  *    corrigée, leur légende et leurs transformations (colonnes calculées, repères), rejouées dans l'ordre ;
- *  - les fichiers dérivés (A / B, A − B…), recalculés à l'ouverture ;
+ *  - les fichiers dérivés (A / B, A − B…, signal en un point d'un export à plusieurs instants), recalculés à
+ *    l'ouverture ;
  *  - des **recettes** : un tracé de l'atelier (mode et réglages), sérialisable, exécuté par une fonction pure.
  * Un graphe issu d'une recette porte `origine` dans son graph.json : il se régénère depuis les fichiers, en
  * gardant ses retouches (couleurs, titres, tailles).
@@ -14,6 +15,7 @@ import {
   geometrie,
   grapheCarte,
   grapheProfils,
+  grilleCoupe,
   legendes,
   libelleColonne,
   lireComsol,
@@ -25,6 +27,7 @@ import {
 } from "./comsol";
 import { ajouterColonne, changerRepere, combiner, grapheBarres, grapheTemporel, motsDuNom, pic, profilsInterpoles, synthese, type LigneSynthese, type ModePic, type Operation, type Statistique } from "./comsolCalcul";
 import { grapheCriteres, tableauCriteres, type AffichageCriteres, type Critere, type TableauCriteres } from "./comsolCriteres";
+import { parametresDesExports, signalAuPoint, titreEtape, valeurCarte, vueEtape, type Etape } from "./comsolInstants";
 import { hauteurEgale } from "./layout";
 import type { GraphDoc, Series } from "./model";
 
@@ -45,22 +48,35 @@ export interface FichierEtude {
   transformations: Transformation[];
 }
 
-/** Fichier calculé à partir d'autres (rejoué à l'ouverture). */
-export interface Derive {
-  nom: string;
-  genre: "operation";
-  a: string;
-  b: string;
-  op: Operation;
-  legendeA: string;
-  legendeB: string;
-}
+/** Fichier calculé à partir d'autres (rejoué à l'ouverture) : opération entre deux fichiers, ou signal en un point. */
+export type Derive =
+  | { nom: string; genre: "operation"; a: string; b: string; op: Operation; legendeA: string; legendeB: string }
+  | {
+      nom: string;
+      genre: "signal";
+      /** Fichier à plusieurs instants d'où vient le signal. */
+      fichier: string;
+      /** Point (coordonnées du fichier ; null = coordonnée ignorée) : le nœud le plus proche est pris. */
+      point: (number | null)[];
+      parametre: string;
+      etape: Etape | null;
+      legende: string;
+    };
+/** Fichiers dont dépend un dérivé. */
+export const sourcesDerive = (d: Derive) => (d.genre === "operation" ? [d.a, d.b] : [d.fichier]);
 
 // ---- Recettes (tracés de l'atelier) ----
 
 export type ModeTrace = "profils" | "carte" | "coupe-profils" | "temps" | "comparer" | "synthese" | "criteres";
 
-export interface TraceProfils {
+/**
+ * Instant (ou enveloppe) choisi pour les exports à plusieurs instants ; absent : le premier instant. Commun à
+ * toutes les recettes.
+ */
+interface AvecEtape {
+  etape?: Etape | null;
+}
+export interface TraceProfils extends AvecEtape {
   mode: "profils";
   /** Lignes tracées (noms de fichiers) ; null : toutes. */
   fichiers: string[] | null;
@@ -69,15 +85,17 @@ export interface TraceProfils {
   orientation: "auto" | "verticale" | "horizontale";
   profondeur: boolean;
 }
-export interface TraceCarte {
+export interface TraceCarte extends AvecEtape {
   mode: "carte";
   plan: string | null;
   expression: string | null;
   palette: PaletteCarte | "auto";
   isolignes: number[];
   egalite: boolean;
+  /** Points épinglés (unité de tracé) : leur valeur est écrite sur la carte, recalculée à chaque régénération. */
+  epingles: { x: number; y: number }[];
 }
-export interface TraceCoupeProfils {
+export interface TraceCoupeProfils extends AvecEtape {
   mode: "coupe-profils";
   plan: string | null;
   expression: string | null;
@@ -87,7 +105,7 @@ export interface TraceCoupeProfils {
   profondeur: boolean;
 }
 export type Reference = { genre: "aucune" } | { genre: "valeur"; valeur: number; texte: string } | { genre: "fichier"; fichier: string; texte: string };
-export interface TraceTemps {
+export interface TraceTemps extends AvecEtape {
   mode: "temps";
   fichiers: string[] | null;
   expressions: string[];
@@ -95,21 +113,21 @@ export interface TraceTemps {
   instant: number | null;
   pic: ModePic | null;
 }
-export interface TraceComparer {
+export interface TraceComparer extends AvecEtape {
   mode: "comparer";
   a: string | null;
   b: string | null;
   op: Operation;
   expression: string | null;
 }
-export interface TraceSynthese {
+export interface TraceSynthese extends AvecEtape {
   mode: "synthese";
   fichiers: string[] | null;
   expressions: string[];
   virgule: boolean;
   barres: { expression: string | null; categorie: number | null; groupe: number | null; statistique: Statistique };
 }
-export interface TraceCriteres {
+export interface TraceCriteres extends AvecEtape {
   mode: "criteres";
   /** Cas évalués ; null : tous ceux qui ont une cote z (coupes et profils verticaux). */
   fichiers: string[] | null;
@@ -154,7 +172,7 @@ export function traceVide(mode: ModeTrace): Trace {
     case "profils":
       return { mode, fichiers: null, expressions: [], orientation: "auto", profondeur: true };
     case "carte":
-      return { mode, plan: null, expression: null, palette: "auto", isolignes: [], egalite: false };
+      return { mode, plan: null, expression: null, palette: "auto", isolignes: [], egalite: false, epingles: [] };
     case "coupe-profils":
       return { mode, plan: null, expression: null, sens: "verticales", valeurs: [], profondeur: true };
     case "temps":
@@ -192,7 +210,9 @@ export function legendesDe(c: Pick<ContexteTrace, "exports" | "noms" | "correspo
 }
 
 /** Expressions communes à des exports (dans l'ordre du premier). */
-export const expressionsCommunes = (es: readonly ExportComsol[]) => (es.length ? es[0]!.colonnes.map((c) => c.expression).filter((x) => es.every((e) => e.colonnes.some((c) => c.expression === x))) : []);
+/** Expressions d'un export, sans doublon (un export à plusieurs instants répète chaque expression). */
+export const expressionsDe = (e: ExportComsol | undefined) => (e ? [...new Set(e.colonnes.map((c) => c.expression))] : []);
+export const expressionsCommunes = (es: readonly ExportComsol[]) => (es.length ? expressionsDe(es[0]).filter((x) => es.every((e) => e.colonnes.some((c) => c.expression === x))) : []);
 /** εzz si elle existe, sinon la première. */
 export const expressionParDefaut = (xs: readonly string[]) => xs.find((x) => /ezz$/i.test(x)) ?? xs[0] ?? null;
 export const courtDe = (e: ExportComsol | undefined, x: string) => {
@@ -233,7 +253,7 @@ export function normaliser(t: Trace, exports: readonly ExportComsol[]): Trace {
     case "coupe-profils": {
       const plans = plansDe(exports);
       const p = parNom(plans, t.plan) ?? plans[0];
-      const dispo = p ? p.colonnes.map((c) => c.expression) : [];
+      const dispo = expressionsDe(p);
       const x = t.expression && dispo.includes(t.expression) ? t.expression : expressionParDefaut(dispo);
       return { ...t, plan: p?.nom ?? null, expression: x };
     }
@@ -299,7 +319,33 @@ export function carteDeSelection(t0: TraceCoupeProfils, c: ContexteTrace): Graph
 }
 
 /** Exécute une recette : le graphe (et le tableau, pour une synthèse) ; null s'il manque de quoi tracer. */
-export function executerTrace(t0: Trace, c: ContexteTrace): ResultatTrace | null {
+export function executerTrace(t0: Trace, c0: ContexteTrace): ResultatTrace | null {
+  // exports à plusieurs instants : vus à l'instant choisi (ou en enveloppe) ; les autres passent tels quels
+  const params = parametresDesExports(c0.exports);
+  const c = params.length ? { ...c0, exports: c0.exports.map((e) => vueEtape(e, t0.etape)) } : c0;
+  const r = executerVue(t0, c);
+  return r && params.length && t0.mode !== "temps" ? { ...r, titre: `${r.titre} (${titreEtape(t0.etape, params)})` } : r;
+}
+
+/** Valeur des points épinglés sur la carte : annotations (texte vers l'intérieur de la carte). */
+function annotationsEpingles(doc: GraphDoc, p: ExportComsol, expression: string, L: UniteLongueur, epingles: readonly { x: number; y: number }[]): GraphDoc["annotations"] {
+  if (!epingles.length || !doc.carte) return doc.annotations;
+  const g = grilleCoupe(p, expression, L);
+  const unite = libelleColonne(p.colonnes.find((k) => k.expression === expression)!).unite;
+  const [x0, x1] = [Math.min(...g.x), Math.max(...g.x)];
+  const [y0, y1] = [Math.min(...g.y), Math.max(...g.y)];
+  const out = [...(doc.annotations ?? [])];
+  for (const e of epingles) {
+    const v = valeurCarte(g, e.x, e.y);
+    if (v === null) continue;
+    const est = e.x < (x0 + x1) / 2;
+    const nord = e.y < (y0 + y1) / 2 !== (doc.y.inverse === true);
+    out.push({ x: e.x, y: e.y, texte: `${fr(v)}${unite === "-" ? "" : ` ${unite}`}`, position: `${nord ? "north" : "south"} ${est ? "east" : "west"}` as const });
+  }
+  return out;
+}
+
+function executerVue(t0: Trace, c: ContexteTrace): ResultatTrace | null {
   const t = normaliser(t0, c.exports);
   const legende = legendesDe(c);
   const L = c.cadre.longueur;
@@ -318,6 +364,7 @@ export function executerTrace(t0: Trace, c: ContexteTrace): ResultatTrace | null
       let doc = grapheCarte(p, t.expression, L, { interfaces: interfacesSi(c) });
       doc = { ...doc, carte: { ...doc.carte!, ...(t.palette !== "auto" ? { palette: t.palette } : {}), ...(t.isolignes.length ? { isolignes: [...t.isolignes] } : {}) } };
       if (t.egalite) doc = { ...doc, egalite: true, height: hauteurEgale({ ...doc, egalite: true }) };
+      if (t.epingles.length) doc = { ...doc, annotations: annotationsEpingles(doc, p, t.expression, L, t.epingles) };
       return { doc, titre: `${legende(p)} — ${courtDe(p, t.expression)}` };
     }
     case "coupe-profils": {
@@ -414,6 +461,19 @@ export function construireDerives(base: readonly ExportComsol[], derives: readon
   const out = [...base];
   const erreurs: string[] = [];
   for (const d of derives) {
+    if (d.genre === "signal") {
+      const e = out.find((x) => x.nom === d.fichier);
+      if (!e) {
+        erreurs.push(`${d.nom} : ${d.fichier} manque.`);
+        continue;
+      }
+      try {
+        out.push(signalAuPoint(e, d.point, { parametre: d.parametre, etape: d.etape, nom: d.nom, legende: d.legende }));
+      } catch (x) {
+        erreurs.push(`${d.nom} : ${x instanceof Error ? x.message : String(x)}`);
+      }
+      continue;
+    }
     const a = out.find((e) => e.nom === d.a);
     const b = out.find((e) => e.nom === d.b);
     if (!a || !b) {
@@ -436,7 +496,7 @@ export function construireDerives(base: readonly ExportComsol[], derives: readon
  * styles, titres d'axes, noms des séries, taille, repères ajoutés à la main, palette et bornes de la carte. Les
  * bornes d'axes égales à l'ancienne grille suivent la nouvelle ; les annotations calculées (pics) sont refaites.
  */
-export function rafraichirDonnees(ancien: GraphDoc, neuf: GraphDoc, o: { annotationsCalculees?: boolean } = {}): GraphDoc {
+export function rafraichirDonnees(ancien: GraphDoc, neuf: GraphDoc, o: { annotationsCalculees?: boolean; reperesCalcules?: boolean } = {}): GraphDoc {
   const series: Series[] = neuf.series.map((s, i) => {
     const a = ancien.series[i];
     return a ? { ...a, x: [...s.x], y: [...s.y] } : s;
@@ -454,9 +514,9 @@ export function rafraichirDonnees(ancien: GraphDoc, neuf: GraphDoc, o: { annotat
   if (o.annotationsCalculees) {
     if (neuf.annotations) out.annotations = neuf.annotations;
     else delete out.annotations;
-    // références et instants recalculés aussi (la référence peut venir d'un fichier)
-    out.reperes = [...(neuf.reperes ?? [])];
   }
+  // références et instants recalculés aussi (la référence peut venir d'un fichier)
+  if (o.reperesCalcules ?? o.annotationsCalculees) out.reperes = [...(neuf.reperes ?? [])];
   if (neuf.x.categories) out.x = { ...out.x, categories: neuf.x.categories };
   return out;
 }
@@ -481,7 +541,25 @@ export function lireCadre(v: unknown): Cadre {
 }
 
 /** Recette lue avec tolérance : un champ inconnu ou abîmé reprend sa valeur par défaut. */
+export function lireEtape(v: unknown): Etape | null {
+  if (!estObjet(v)) return null;
+  const out: Etape = {};
+  for (const [k, c] of Object.entries(v)) {
+    if (!estObjet(c)) continue;
+    if (typeof c.valeur === "string") out[k] = { valeur: c.valeur };
+    else if (c.enveloppe === "max" || c.enveloppe === "min" || c.enveloppe === "abs") out[k] = { enveloppe: c.enveloppe };
+  }
+  return Object.keys(out).length ? out : null;
+}
+
 export function lireTrace(v: unknown): Trace | null {
+  const t = lireTraceSeule(v);
+  if (!t || !estObjet(v)) return t;
+  const etape = lireEtape(v.etape);
+  return etape ? { ...t, etape } : t;
+}
+
+function lireTraceSeule(v: unknown): Trace | null {
   if (!estObjet(v) || !MODES.includes(v.mode as ModeTrace)) return null;
   const base = traceVide(v.mode as ModeTrace);
   const ch = (k: string) => (typeof v[k] === "string" ? (v[k] as string) : null);
@@ -490,7 +568,15 @@ export function lireTrace(v: unknown): Trace | null {
     case "profils":
       return { ...base, fichiers: liste("fichiers"), expressions: chaines(v.expressions), orientation: v.orientation === "verticale" || v.orientation === "horizontale" ? v.orientation : "auto", profondeur: v.profondeur !== false };
     case "carte":
-      return { ...base, plan: ch("plan"), expression: ch("expression"), palette: typeof v.palette === "string" ? (v.palette as PaletteCarte) : "auto", isolignes: nombres(v.isolignes), egalite: v.egalite === true };
+      return {
+        ...base,
+        plan: ch("plan"),
+        expression: ch("expression"),
+        palette: typeof v.palette === "string" ? (v.palette as PaletteCarte) : "auto",
+        isolignes: nombres(v.isolignes),
+        egalite: v.egalite === true,
+        epingles: (Array.isArray(v.epingles) ? v.epingles : []).filter(estObjet).flatMap((p) => (typeof p.x === "number" && typeof p.y === "number" ? [{ x: p.x, y: p.y }] : [])),
+      };
     case "coupe-profils":
       return { ...base, plan: ch("plan"), expression: ch("expression"), sens: v.sens === "horizontales" ? "horizontales" : "verticales", valeurs: nombres(v.valeurs), profondeur: v.profondeur !== false };
     case "temps": {
@@ -553,11 +639,16 @@ export function lireEtude(raw: unknown): EtudeComsol {
       },
     ];
   });
-  const derives: Derive[] = (Array.isArray(r.derives) ? r.derives : []).filter(estObjet).flatMap((d): Derive[] =>
-    typeof d.nom === "string" && typeof d.a === "string" && typeof d.b === "string"
+  const derives: Derive[] = (Array.isArray(r.derives) ? r.derives : []).filter(estObjet).flatMap((d): Derive[] => {
+    if (typeof d.nom !== "string") return [];
+    if (d.genre === "signal")
+      return typeof d.fichier === "string" && typeof d.parametre === "string" && Array.isArray(d.point)
+        ? [{ nom: d.nom, genre: "signal", fichier: d.fichier, point: d.point.map((x) => (typeof x === "number" ? x : null)), parametre: d.parametre, etape: lireEtape(d.etape), legende: typeof d.legende === "string" ? d.legende : d.nom }]
+        : [];
+    return typeof d.a === "string" && typeof d.b === "string"
       ? [{ nom: d.nom, genre: "operation", a: d.a, b: d.b, op: d.op === "difference" || d.op === "ecart" ? d.op : "rapport", legendeA: typeof d.legendeA === "string" ? d.legendeA : d.a, legendeB: typeof d.legendeB === "string" ? d.legendeB : d.b }]
-      : [],
-  );
+      : [];
+  });
   const recettes: Recette[] = (Array.isArray(r.recettes) ? r.recettes : []).filter(estObjet).flatMap((x): Recette[] => {
     const trace = lireTrace(x.trace);
     return trace && typeof x.id === "string" ? [{ id: x.id, nom: typeof x.nom === "string" ? x.nom : x.id, trace, cadre: lireCadre(x.cadre) }] : [];
