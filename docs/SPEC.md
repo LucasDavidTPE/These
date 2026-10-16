@@ -133,6 +133,16 @@ les classe (`noyau/recherche.ts`). Un résultat ouvre son élément par une acti
 quand le module en offre une (`chausspec.ouvrir-cas`, `bibliotheque.ouvrir`, `etudes.ouvrir`, `campagnes.ouvrir`, `figures.ouvrir`), sinon la page du module. La palette
 propose aussi les pages (Réglages, Diagnostic…). Rien n'est lu tant qu'elle n'est pas ouverte.
 
+### 3.0 bis Quoi de neuf (1.42.0)
+`noyau/nouveautes.ts` tient la liste des nouveautés (version, module, titre, une phrase, et de quoi
+l'essayer : une destination ou une action du registre, par exemple `figures.aller { page: "comsol",
+exemple: true }` qui ouvre l'atelier COMSOL sur son jeu d'exemple avec la visite guidée). Au démarrage de
+Thèse, la coquille montre celles qui sont postérieures à la dernière version vue sur ce poste (mémorisée
+dans le stockage local de la fenêtre, comme les sections repliées du menu ; aucune la première fois →
+toutes) et limitées aux modules de l'installeur ; « Nouveautés » en bas de la barre (point bleu tant que
+non vues) et Ctrl+K « quoi de neuf » les rouvrent toutes. Chaque version qui ajoute une fonction visible
+ajoute sa ligne (le test vérifie l'ordre et que la liste ne dépasse pas la version de l'application).
+
 ### 3.1 Installeurs
 
 Le même code produit plusieurs installeurs. Le produit est choisi à la compilation par

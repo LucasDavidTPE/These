@@ -7,14 +7,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { problemesRacine } from "@noyau/espace/espace";
 import { DANS_L_ESPACE, dossierFigures, horsEspace, racinesEffectives } from "@noyau/poste/racines";
 import type { ReglagesPoste } from "@noyau/poste/reglages";
+import { NOUVEAUTES, nouveautesDepuis, type Nouveaute } from "@noyau/nouveautes";
 import type { Produit } from "@noyau/produits";
 import { Registre } from "@noyau/registre";
 import { ContexteReact, type Contexte, type Destination, type ProblemeSitue } from "@interface/contexte";
-import { IconeDiagnostic, IconeReglages } from "@interface/icones";
+import { IconeDiagnostic, IconeNouveautes, IconeReglages } from "@interface/icones";
 import type { Manifeste } from "@interface/manifeste";
 import type { Plateforme } from "@interface/plateforme";
 import { BandeauMiseAJour } from "./BandeauMiseAJour";
 import { DiagnosticPage } from "./DiagnosticPage";
+import { marquerVue, versionVue } from "./memoireNouveautes";
+import { Nouveautes } from "./Nouveautes";
 import { Palette } from "./Palette";
 import { MenuModules } from "./MenuModules";
 import { ReglagesPage } from "./ReglagesPage";
@@ -37,6 +40,20 @@ export function Coquille({ produit, manifestes, plateforme, poste, reglages, enr
   const [revision, setRevision] = useState(0);
   const [problemes, setProblemes] = useState<ProblemeSitue[]>([]);
   const [palette, setPalette] = useState(false);
+  // « Quoi de neuf » : montré seul après une mise à jour de Thèse (ce qui est postérieur à la dernière version vue).
+  const [nouveautes, setNouveautes] = useState<{ liste: Nouveaute[]; depuis: string | null } | null>(() => {
+    if (produit.id !== "these") return null;
+    const vue = versionVue();
+    const liste = nouveautesDepuis(NOUVEAUTES, vue, __APP_VERSION__, manifestes.map((m) => m.id));
+    return liste.length ? { liste, depuis: vue } : null;
+  });
+  const [nonVues, setNonVues] = useState(nouveautes !== null);
+  const fermerNouveautes = useCallback(() => {
+    marquerVue(__APP_VERSION__);
+    setNouveautes(null);
+    setNonVues(false);
+  }, []);
+  const toutesNouveautes = useCallback(() => setNouveautes({ liste: nouveautesDepuis(NOUVEAUTES, null, __APP_VERSION__, manifestes.map((m) => m.id)), depuis: null }), [manifestes]);
 
   // Ctrl+K (ou Cmd+K) ouvre et ferme la recherche globale.
   useEffect(() => {
@@ -158,8 +175,16 @@ export function Coquille({ produit, manifestes, plateforme, poste, reglages, enr
               <kbd>Ctrl K</kbd>
             </button>
             <MenuModules manifestes={manifestes} page={page} ouvrir={setPage} />
-            {produit.espace ? (
-              <ul className="barre-bas">
+            <ul className="barre-bas">
+              <li>
+                <button type="button" onClick={toutesNouveautes} title="Ce que les dernières versions ont ajouté, avec de quoi l'essayer">
+                  <IconeNouveautes />
+                  Nouveautés
+                  {nonVues ? <span className="pastille-nouveau" aria-label="non vues" /> : null}
+                </button>
+              </li>
+              {produit.espace ? (
+                <>
                 <li>
                   <button type="button" className={page === "reglages" ? "actif" : undefined} onClick={() => setPage("reglages")}>
                     <IconeReglages />
@@ -172,8 +197,9 @@ export function Coquille({ produit, manifestes, plateforme, poste, reglages, enr
                     Diagnostic
                   </button>
                 </li>
-              </ul>
-            ) : null}
+                </>
+              ) : null}
+            </ul>
           </nav>
         )}
         <main className="contenu">
@@ -181,7 +207,8 @@ export function Coquille({ produit, manifestes, plateforme, poste, reglages, enr
           {produit.id === "these" ? <BandeauMiseAJour plateforme={plateforme} version={__APP_VERSION__} /> : null}
           {page === "reglages" ? <ReglagesPage /> : page === "diagnostic" ? <DiagnosticPage /> : courant ? <courant.Page /> : null}
         </main>
-        {palette ? <Palette manifestes={manifestes} fermer={() => setPalette(false)} /> : null}
+        {palette ? <Palette manifestes={manifestes} fermer={() => setPalette(false)} nouveautes={toutesNouveautes} /> : null}
+        {nouveautes ? <Nouveautes liste={nouveautes.liste} depuis={nouveautes.depuis} fermer={fermerNouveautes} /> : null}
       </div>
     </ContexteReact.Provider>
   );

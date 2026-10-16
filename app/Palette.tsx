@@ -11,13 +11,15 @@ import type { Manifeste } from "@interface/manifeste";
 interface Props {
   manifestes: Manifeste[];
   fermer(): void;
+  /** Ouvre « Quoi de neuf ». */
+  nouveautes?: () => void;
 }
 
-type Ligne = { type: "entree"; entree: EntreeRecherche; libelleModule: string } | { type: "commande"; commande: Commande; vers: Destination };
+type Ligne = { type: "entree"; entree: EntreeRecherche; libelleModule: string } | { type: "commande"; commande: Commande; vers: Destination | "nouveautes" };
 
 const MAX = 40;
 
-export function Palette({ manifestes, fermer }: Props) {
+export function Palette({ manifestes, fermer, nouveautes }: Props) {
   const ctx = useContexte();
   const [requete, setRequete] = useState("");
   const [index, setIndex] = useState<EntreeRecherche[] | null>(null);
@@ -44,7 +46,7 @@ export function Palette({ manifestes, fermer }: Props) {
   const titres = useMemo(() => Object.fromEntries(manifestes.map((m) => [m.id, m.titre])), [manifestes]);
 
   const lignes = useMemo<Ligne[]>(() => {
-    const destinations: { commande: Commande; vers: Destination }[] = [
+    const destinations: { commande: Commande; vers: Destination | "nouveautes" }[] = [
       ...manifestes.map((m) => ({ commande: { id: m.id, titre: `Aller à ${m.titre}`, detail: m.resume, mots: m.id } as Commande, vers: m.id as Destination })),
       ...(ctx.produit.espace
         ? [
@@ -52,6 +54,7 @@ export function Palette({ manifestes, fermer }: Props) {
             { commande: { id: "diagnostic", titre: "Diagnostic", detail: "État de l'espace et du poste", mots: "diagnostic problemes" } as Commande, vers: "diagnostic" as Destination },
           ]
         : []),
+      ...(nouveautes ? [{ commande: { id: "nouveautes", titre: "Quoi de neuf", detail: "Les nouveautés des dernières versions, avec de quoi les essayer", mots: "nouveautes nouveau version mise a jour visite exemple decouvrir" } as Commande, vers: "nouveautes" as const }] : []),
     ];
     const cmds = chercherCommandes(
       destinations.map((d) => d.commande),
@@ -59,7 +62,7 @@ export function Palette({ manifestes, fermer }: Props) {
     ).map((c) => ({ type: "commande" as const, commande: c, vers: destinations.find((d) => d.commande.id === c.id)!.vers }));
     const trouves = index ? chercher(index, requete, MAX).map((entree) => ({ type: "entree" as const, entree, libelleModule: titres[entree.module] ?? entree.module })) : [];
     return requete.trim() ? [...trouves, ...cmds.slice(0, 5)] : cmds;
-  }, [requete, index, manifestes, titres, ctx.produit.espace]);
+  }, [requete, index, manifestes, titres, ctx.produit.espace, nouveautes]);
 
   useEffect(() => {
     liste.current?.children[curseur]?.scrollIntoView?.({ block: "nearest" });
@@ -68,7 +71,7 @@ export function Palette({ manifestes, fermer }: Props) {
   async function choisir(l: Ligne | undefined) {
     if (!l) return;
     fermer();
-    if (l.type === "commande") return ctx.naviguer(l.vers);
+    if (l.type === "commande") return l.vers === "nouveautes" ? nouveautes?.() : ctx.naviguer(l.vers);
     const { entree } = l;
     if (entree.ouvrir && ctx.registre.aAction(entree.ouvrir.action)) {
       try {

@@ -20,7 +20,8 @@ En bref :
 
 ## Pour découvrir : jeu d'exemple et visite guidée (1.41.0)
 
-Sans rien exporter de COMSOL : dans l'atelier vide, **« Essayer avec le jeu d'exemple »** (ou bouton **« Visite
+Sans rien exporter de COMSOL : « Nouveautés » en bas de la barre de Thèse → **« Lancer la visite → »** (1.42.0),
+ou, dans l'atelier vide, **« Essayer avec le jeu d'exemple »** (ou bouton **« Visite
 guidée »** de la barre, puis « Charger le jeu d'exemple »). L'atelier charge 16 fichiers **synthétiques** au
 format COMSOL — formes analytiques vraisemblables, pas un calcul mécanique :
 

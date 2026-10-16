@@ -1031,3 +1031,10 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
 - [ ] Atelier vide → « Essayer avec le jeu d'exemple » : 16 fichiers, visite guidée ouverte ; chaque « Essayer → » ouvre une
       tuile qui trace quelque chose ; « Copier le bassin HWD d'exemple » puis coller : écart au calcul affiché.
 - [ ] « Nouvelle étude » : l'exemple disparaît, les vrais exports s'ouvrent normalement.
+
+## Quoi de neuf (1.42.0)
+
+- [ ] Après la mise à jour vers 1.42.0 : le panneau « Quoi de neuf » s'ouvre au démarrage, avec toutes les nouveautés
+      depuis 1.25 ; « Lancer la visite → » ouvre Figures → COMSOL avec le jeu d'exemple et la visite guidée.
+- [ ] Relancer Thèse : le panneau ne revient pas ; « Nouveautés » (en bas de la barre) et Ctrl+K « nouveautés » le rouvrent.
+- [ ] Sur l'autre PC : le panneau s'ouvre une fois aussi (mémoire propre à chaque poste).
