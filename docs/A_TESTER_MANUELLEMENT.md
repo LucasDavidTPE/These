@@ -874,3 +874,50 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] .doc protégé par mot de passe : message d'erreur en moins de 3 min, rien d'ajouté, aucun WINWORD.EXE qui traîne
       (Gestionnaire des tâches).
 - [ ] Retours → choisir un .doc relu : remarques lues, rangé sous le nom `….docx` ; aucun fichier créé à côté du .doc.
+- [ ] (1.26.1) Sur le PC de l'ENTPE (PowerShell verrouillé, « mode de langage restreint ») : convertir
+      `paper_template_maireinfra27.doc` → le `.docx` apparaît à côté, sans message d'erreur ; avec ce même `.doc` déjà ouvert
+      dans Word, il reste ouvert après la conversion.
+
+## Figures : COMSOL, calculs, repères (1.27.0)
+
+Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `table_temps_*.txt` ; puis les vrais.
+
+- [ ] Ouvrir une **table** COMSOL (Temps + colonnes) : « série (Temps en s), N instants » ; avec les tables VE et EL :
+      référence « Extremum de EL… », instant 10 s, pic → courbes, trait horizontal « Élastique », trait « t = 10 s »,
+      points annotés « … à … s ; Δt = … » lisibles (pas sur les graduations). Compiler le pgfplots.
+- [ ] **Opérations** : VE / EL sur deux coupes de même grille → le résultat s'ajoute, se cartographie, s'enregistre ;
+      deux grilles différentes → message « Grilles différentes : … » et rien d'ajouté.
+- [ ] **ƒ → Colonne calculée** `abs(ezz)`, `max(e1, 0)`, `0.5*(exx + eyy)` ; formule fausse → message clair.
+- [ ] **ƒ → Repère** : Z « Changer le sens » → carte « Profondeur (mm) » avec la surface en haut ; Y origine 6,5 →
+      « $y - y_0$ » ; « Repère d'origine » revient au fichier.
+- [ ] **Profils extraits** « 0,70 ; 0,848 ; 0,90 ; 0,967 » → 4 profils interpolés, légendés, tracés seuls (autres décochés),
+      avec « Repères des couches » (BB/GB, GB/GRH) en profondeur positive.
+- [ ] **Synthèse** : tableau max/min/positions, « Copier LaTeX (booktabs) » collé et compilé ; barres groupées
+      empreinte × matériau avec les noms traduits.
+- [ ] **Correspondances et couches** : modifier, Enregistrer → `_comsol/reglages.json` dans la bibliothèque ; relancer
+      l'appli (ou l'autre PC) : réglages retrouvés ; légendes « Hétérogène », « Viscoélastique ».
+- [ ] **Carte** : isolignes (valeurs, « 7 niveaux réguliers »), contour d'empreinte (cercle, rectangle), « Échelles égales
+      (1 m = 1 m) » ; pgfplots compilé (isolignes et valeurs, `y dir=reverse`).
+- [ ] **Repères et annotations** sur un graphe quelconque : ajouter, modifier, retirer ; « Ajouter les interfaces » ;
+      « Sens inversé » ; zoom sur une zone et gomme corrects avec un axe inversé.
+- [ ] **Planche** de deux cartes : « Même échelle de couleurs » → barres de couleurs identiques ; une carte à échelles égales
+      garde ses proportions.
+- [ ] (1.27.1) Diagnostic → Mises à jour → « Vérifier maintenant » : sur chaque PC et chaque réseau (maison, ENTPE),
+      noter le résultat (à jour / disponible / message d'erreur) ; « Télécharger l'installeur à la main… » ouvre la page.
+
+## Figures : atelier COMSOL (1.28.0)
+
+- [ ] Figures → **COMSOL** : sans fichier, les trois étapes sont expliquées et toutes les tuiles sont éteintes (survol : raison).
+- [ ] Ouvrir les vrais exports (verticales, coupe YZ, tables) : chaque carte dit la forme en clair (« Ligne verticale (le long
+      de z) », « Plan y–z (coupe) », « Signal au cours du temps »), l'étendue en mm, les grandeurs, l'étude ; légende
+      modifiable sur place.
+- [ ] « Pas la bonne forme ? » : passer la coupe en « plan : z à l'horizontale, y à la verticale » → description et carte suivent ;
+      « Revenir à la détection automatique ».
+- [ ] Chaque tuile : l'aperçu suit chaque réglage sans délai gênant (coupe de 7 Mo comprise) ; « Continuer dans Graphes »
+      ouvre le même graphe dans Graphes, enregistrable.
+- [ ] Profils dans une coupe : clics sur la carte → lignes a, b, c au bon endroit (vérifier une valeur) ; valeurs tapées ;
+      profils superposés en profondeur positive avec les couches.
+- [ ] Comparer deux cas : ✓ / ✗ cohérents ; aperçu du rapport VE / EL ; « Garder le résultat dans la liste ».
+- [ ] Graphes : le panneau COMSOL n'a plus qu'un bouton vers l'atelier ; « Ouvrir des données… » sur un export COMSOL l'envoie
+      dans l'atelier.
+

@@ -7,12 +7,12 @@ import { escapeXml, primitiveSvg } from "../schema/export/svg";
 import { THEMES } from "../schema/theme";
 import { latexText } from "../schema/export/tikz";
 import { generateSty } from "../schema/export/sty";
-import { bornesCarte, couleursCarte } from "./carte";
+import { bornesCarte, couleursCarte, isoligne, placeEtiquette } from "./carte";
 import { fitCorner } from "./fit";
-import { fitRows, graphFits, graphLayout, legendRow } from "./layout";
+import { decimales, fitRows, graphFits, graphLayout, legendRow } from "./layout";
 import { GRAPH_FORMAT, validateGraph, type GraphDoc, type GraphError } from "./model";
 import { graphTheme, isPlain } from "./style";
-import type { AxisScale } from "./ticks";
+import { formatTick, type AxisScale } from "./ticks";
 
 const n = (v: number) => formatNumber(v, 2);
 
@@ -51,17 +51,20 @@ export function formatData(v: number): string {
 /** Libellé de graduation pour LaTeX : « −12 500,5 » → « $-12\,500{,}5$ ». */
 export function texTickLabel(label: string): string {
   if (label.startsWith("$")) return label;
+  // nom de catégorie (diagramme en barres) : du texte, pas un nombre
+  if (/[A-Za-zÀ-ÿ]/.test(label)) return latexText(label);
   // Virgule décimale d'abord (sinon on casserait le « \, » des milliers).
   return `$${label.replace(/,/g, "{,}").replace(/\u2212/g, "-").replace(/\u2009/g, "\\,")}$`;
 }
 
-function axisOptions(axis: "x" | "y", s: AxisScale, label: string): string[] {
+function axisOptions(axis: "x" | "y", s: AxisScale, label: string, inverse = false): string[] {
   const o = [
     `${axis}min=${formatData(s.min)}, ${axis}max=${formatData(s.max)}`,
     `${axis}tick={${s.ticks.map(formatData).join(",")}}`,
     `${axis}ticklabels={${s.labels.map((l) => `{${texTickLabel(l)}}`).join(",")}}`,
   ];
   if (s.log) o.push(`${axis}mode=log`);
+  if (inverse) o.push(`${axis} dir=reverse`);
   if (label) o.push(`${axis}label={${latexText(label)}}`);
   return o;
 }
@@ -126,7 +129,7 @@ export function exportPgfplots(raw: unknown, options: PgfplotsOptions = {}): Pgf
     "% Nécessite \\usepackage{figurine} (charge pgfplots). Taille de la zone des axes imposée.",
     "\\begin{tikzpicture}",
     `\\begin{axis}[fig/graphe, width=${n(box.w)}mm, height=${n(box.h)}mm,`,
-    `  ${[...axisOptions("x", xs, doc.x.label), ...axisOptions("y", ys, doc.y.label)].join(",\n  ")},`,
+    `  ${[...axisOptions("x", xs, doc.x.label, doc.x.inverse), ...axisOptions("y", ys, doc.y.label, doc.y.inverse)].join(",\n  ")},`,
     `  legend pos=${doc.legend === "none" ? "north east" : doc.legend}${doc.grid ? ", grid=major" : ""}${extraAxis.length ? `,\n  ${extraAxis.join(",\n  ")}` : ""}]`,
   ];
   if (c) {
@@ -173,6 +176,43 @@ export function exportPgfplots(raw: unknown, options: PgfplotsOptions = {}): Pgf
     }
     if (s.legend && doc.legend !== "none") lines.push(`\\addlegendentry{${latexText(s.name)}}`);
   });
+  // Isolignes de la carte : polylignes calculées comme pour le SVG, valeur au milieu de la plus longue.
+  if (c?.isolignes?.length) {
+    const fin = n(theme.strokes["trait fin"].width);
+    for (const niveau of c.isolignes) {
+      const polys = isoligne(c, niveau);
+      if (!polys.length) continue;
+      lines.push("");
+      lines.push(`% Isoligne ${formatData(niveau)}`);
+      for (const l of polys) lines.push(`\\addplot[black, line width=${fin}mm, mark=none, forget plot] coordinates {${l.map(([x, y]) => `(${formatData(x)},${formatData(y)})`).join(" ")}};`);
+      const at = placeEtiquette(polys);
+      if (at) lines.push(`\\node[fill=white, inner sep=0.4pt, font=\\scriptsize] at (axis cs:${formatData(at[0])},${formatData(at[1])}) {${texTickLabel(formatTick(niveau, decimales(niveau), false))}};`);
+    }
+  }
+  // Repères et annotations.
+  const encre = n(theme.strokes["trait fin"].width);
+  for (const r of doc.reperes ?? []) {
+    const ax = r.axe === "x" ? xs : ys;
+    if (!(r.valeur >= Math.min(ax.min, ax.max) && r.valeur <= Math.max(ax.min, ax.max))) continue;
+    const v = formatData(r.valeur);
+    const de = r.axe === "y" ? `${formatData(xs.min)},${v}` : `${v},${formatData(ys.min)}`;
+    const a = r.axe === "y" ? `${formatData(xs.max)},${v}` : `${v},${formatData(ys.max)}`;
+    const etiquette = r.texte
+      ? r.axe === "y"
+        ? ` node[pos=${doc.x.inverse ? 0 : 1}, anchor=south east, font=\\scriptsize, fill=white, fill opacity=0.8, text opacity=1, inner sep=0.5pt] {${latexText(r.texte)}}`
+        : ` node[pos=${doc.y.inverse ? 0 : 1}, anchor=north west, font=\\scriptsize, fill=white, fill opacity=0.8, text opacity=1, inner sep=0.5pt, xshift=0.5mm, yshift=-0.5mm] {${latexText(r.texte)}}`
+      : "";
+    lines.push(`\\draw[line width=${encre}mm, ${r.trait}] (axis cs:${de}) -- (axis cs:${a})${etiquette};`);
+  }
+  for (const an of doc.annotations ?? []) {
+    const p = `(axis cs:${formatData(an.x)},${formatData(an.y)})`;
+    lines.push(`\\fill ${p} circle[radius=0.6mm];`);
+    if (an.texte) {
+      const est = an.position.includes("east");
+      const nord = an.position.includes("north");
+      lines.push(`\\node[anchor=${nord ? "south" : "north"} ${est ? "west" : "east"}, xshift=${est ? "" : "-"}1.2mm, yshift=${nord ? "" : "-"}1.2mm, font=\\scriptsize, fill=white, fill opacity=0.8, text opacity=1, inner sep=0.5pt] at ${p} {${latexText(an.texte)}};`);
+    }
+  }
   // Régressions : mêmes points que le SVG, puis l'encadré des équations.
   const fits = graphFits(doc, xs, ys);
   const fitDraw = (i: number) => {

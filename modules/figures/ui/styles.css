@@ -1173,3 +1173,399 @@ button.small-btn.actif {
   padding: 4px 0;
   border-bottom: 1px dashed var(--border, #ddd);
 }
+
+/* COMSOL : outils par fichier, réglages partagés, synthèse */
+.comsol-outils,
+.comsol-reglages {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 6px;
+  border: 1px dashed var(--border, #ccc);
+  border-radius: 4px;
+}
+
+.comsol-outils h5,
+.comsol-panneau h5 {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+
+.comsol-ligne,
+.repere-ligne {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.comsol-ligne input,
+.repere-ligne input,
+.repere-ligne select {
+  min-width: 0;
+  flex: 1;
+}
+
+.repere-ligne select {
+  flex: 0 0 auto;
+  max-width: 90px;
+}
+
+.rangee-boutons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.comsol-synthese {
+  max-height: 260px;
+  overflow: auto;
+  font-size: 11.5px;
+}
+
+.comsol-synthese table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.comsol-synthese th,
+.comsol-synthese td {
+  padding: 2px 4px;
+  border-bottom: 1px solid var(--border, #e2e2e2);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.carte-contour summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  margin: 4px 0;
+}
+
+/* Atelier COMSOL */
+.atelier {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.atelier-barre {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.atelier-reglage {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.atelier-reglages-partages {
+  padding: 8px 16px;
+  max-width: 640px;
+}
+
+.atelier-corps {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 0;
+}
+
+.atelier-colonne {
+  padding: 10px 14px;
+  overflow: auto;
+  min-height: 0;
+}
+
+.atelier-colonne h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.atelier-etape {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent, #2f5d8a);
+  color: #fff;
+  font-size: 12px;
+}
+
+.atelier-fichiers {
+  border-right: 1px solid var(--border, #ddd);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.atelier-vide ol {
+  padding-left: 18px;
+  margin: 4px 0;
+  font-size: 13px;
+}
+
+.atelier-cartes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.atelier-fichier {
+  border: 1px solid var(--border, #ddd);
+  border-radius: 6px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--surface, #fff);
+}
+
+.atelier-fichier.alerte {
+  border-color: #d9a400;
+}
+
+.atelier-fichier-tete {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.atelier-vignette {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  color: var(--accent, #2f5d8a);
+}
+
+.atelier-fichier-texte {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.atelier-legende {
+  font-weight: 600;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 1px 3px;
+  width: 100%;
+}
+
+.atelier-legende:hover,
+.atelier-legende:focus {
+  border-color: var(--border, #ccc);
+  background: #fff;
+}
+
+.atelier-forme {
+  font-size: 12px;
+  color: var(--accent, #2f5d8a);
+}
+
+.atelier-grandeurs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.atelier-puce {
+  font-size: 11.5px;
+  padding: 1px 6px;
+  border-radius: 9px;
+  background: var(--chip, #eef2f7);
+}
+
+.atelier-avert {
+  font-size: 12px;
+  color: #8a6100;
+}
+
+.atelier-fichier-actions {
+  display: flex;
+  gap: 10px;
+}
+
+button.lien {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent, #2f5d8a);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.atelier-lecture {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border: 1px dashed var(--border, #ccc);
+  border-radius: 4px;
+}
+
+.atelier-lecture .chip {
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.atelier-centre {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 0;
+}
+
+.atelier-tuiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.atelier-tuile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  text-align: left;
+  padding: 8px;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 6px;
+  background: var(--surface, #fff);
+}
+
+.atelier-tuile .atelier-icone {
+  grid-row: span 2;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--accent, #2f5d8a);
+}
+
+.atelier-tuile.actif {
+  border-color: var(--accent, #2f5d8a);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent, #2f5d8a) 30%, transparent);
+}
+
+.atelier-tuile:disabled {
+  opacity: 0.45;
+}
+
+.atelier-mode {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  min-height: 0;
+  border-top: 1px solid var(--border, #ddd);
+}
+
+.atelier-attente {
+  padding: 16px;
+}
+
+.atelier-reglages {
+  padding: 10px 14px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-right: 1px solid var(--border, #ddd);
+}
+
+.atelier-champ {
+  border: 1px solid var(--border, #ddd);
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.atelier-champ legend {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 4px;
+}
+
+.atelier-consigne {
+  margin: 0;
+  font-size: 13px;
+}
+
+.atelier-resultat {
+  background: repeating-conic-gradient(#f2f2f2 0% 25%, #fafafa 0% 50%) 0 0 / 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.atelier-apercu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.atelier-apercu.vide {
+  padding: 24px;
+  color: var(--muted, #777);
+  background: #fff;
+  border-radius: 6px;
+}
+
+.atelier-apercu.vide.erreur {
+  color: #a32020;
+}
+
+.atelier-svg {
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
+  max-width: 760px;
+}
+
+.atelier-apercu.petit .atelier-svg {
+  max-width: 560px;
+}
+
+.atelier-svg svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 64vh;
+}
+
+.atelier-apercu.petit .atelier-svg svg {
+  max-height: 34vh;
+}
+
+.atelier-svg.cliquable {
+  cursor: crosshair;
+}
+
+.atelier-envoi {
+  display: flex;
+  gap: 6px;
+  max-width: 760px;
+}
+
+.atelier-envoi input {
+  flex: 1;
+  min-width: 0;
+}
+
+.atelier-champ select,
+.atelier-champ input:not([type]) {
+  max-width: 100%;
+  min-width: 0;
+}

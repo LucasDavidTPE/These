@@ -1,6 +1,6 @@
 [package]
 name = "these"
-version = "1.26.0"
+version = "1.28.0"
 description = "Application de bureau de la thèse"
 authors = ["Lucas David"]
 edition = "2021"
@@ -35,6 +35,8 @@ zip = { version = "4", default-features = false, features = ["deflate-flate2-zli
 
 [target.'cfg(windows)'.dependencies]
 clipboard-win = { version = "5", optional = true }
+# Conversion des anciens .doc par Word (COM) ; déjà dans l'arbre via tao.
+windows = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Com", "Win32_System_Ole", "Win32_System_Variant"] }
 
 [features]
 default = ["figures"]

@@ -4,6 +4,8 @@
  * varie : ligne verticale ou horizontale), une coupe (deux coordonnées : plan) ou un nuage. On en tire des
  * graphes propres : profils superposés (une série par fichier ou par expression), profil extrait d'une
  * coupe, ou carte en couleurs d'une coupe.
+ * Exports de **tables** (évaluation en un point au cours du temps) : en-tête `% Temps (s)  colonne (unité)…`,
+ * une ligne par instant ; ils se lisent comme une « série » (première colonne en abscisse).
  */
 import { GRAPH_FORMAT, type GraphDoc, type Series } from "./model";
 
@@ -15,6 +17,16 @@ export interface ColonneComsol {
   /** Solution (« 303 ») et paramètres (« lc » → « 3 », « VE » → « 0 », « Temps » → « 10 s »). */
   solution: string;
   parametres: Record<string, string>;
+  /** Libellé imposé (colonne calculée, opération entre fichiers) ; sinon déduit de l'expression. */
+  libelle?: LibelleColonne;
+}
+
+export interface LibelleColonne {
+  /** Grandeur pour les axes, notation pgfplots (« $\varepsilon_{zz}$ »). */
+  grandeur: string;
+  unite: string;
+  /** Nom court pour les listes (« εzz »). */
+  court: string;
 }
 
 export interface ExportComsol {
@@ -34,9 +46,21 @@ export interface ExportComsol {
    * dans l'ordre du tracé ([k] : profil selon k ; [kx, ky] : coupe, kx à l'horizontale).
    */
   forcer?: number[];
+  /** « donnees » (coordonnées X, Y, Z) ou « table » (série : la première colonne, le temps, en abscisse). */
+  nature?: "donnees" | "table";
+  /** Unité de la première colonne d'une table (« s »). */
+  uniteArgument?: string;
+  /** Légende imposée (profil extrait, résultat d'une opération) ; sinon calculée. */
+  legende?: string;
+  /** Changements de repère appliqués aux coordonnées (k → nouvelle = facteur × (ancienne − origine)). */
+  repere?: Record<number, { facteur: number; origine: number }>;
 }
 
-export const estComsol = (texte: string) => /^\uFEFF?%\s*(Model|Modèle|Version|Dimension|Nodes)\s*:/m.test(texte.slice(0, 2000));
+export const estComsol = (texte: string) =>
+  /^\uFEFF?%\s*(Model|Modèle|Version|Dimension|Nodes|Table|Tableau)\s*:/m.test(texte.slice(0, 2000)) || /^\uFEFF?%\s*(Temps|Time|Fréquence|Frequency|freq|t)\s*\([^)]*\)/im.test(texte.slice(0, 2000));
+
+/** Première colonne d'une table COMSOL (temps, fréquence, paramètre) : « Temps (s) ». */
+const ARGUMENT_TABLE = /^(Temps|Time|Fréquence|Frequency|freq|t|[A-Za-zÀ-ÿ_][\wÀ-ÿ]*)\s*\(([^()]*)\)/i;
 
 /** Lit un export COMSOL (séparateurs : espaces, tabulations, virgules ou points-virgules). */
 export function lireComsol(texte: string, nom: string): ExportComsol {
@@ -52,6 +76,9 @@ export function lireComsol(texte: string, nom: string): ExportComsol {
     } else if (l.trim()) donnees.push(l.trim());
   }
   if (!donnees.length) throw new Error(`${nom} : aucune valeur (export COMSOL vide ?).`);
+  // table : la dernière ligne d'en-tête ne commence pas par une coordonnée mais par « Temps (s) »…
+  const derniere = entetes.at(-1) ?? "";
+  if (!/^[XYZxyzRr]\b/.test(derniere) && ARGUMENT_TABLE.test(derniere)) return lireTable(meta, derniere, donnees, nom);
   const virgules = !/\s/.test(donnees[0]!.replace(/,\s+/g, ",")) && donnees[0]!.includes(",");
   const decouper = (l: string) => (virgules ? l.split(/\s*[,;]\s*/) : l.split(/[\s;]+/));
   const n = decouper(donnees[0]!).length;
@@ -72,6 +99,54 @@ export function lireComsol(texte: string, nom: string): ExportComsol {
     }
   });
   return { nom, meta, coordonnees, uniteLongueur: meta["Length unit"] || meta["Unité de longueur"] || "m", colonnes, valeurs, lignes: donnees.length };
+}
+
+/**
+ * Table COMSOL : titres séparés par des tabulations ou au moins deux espaces (« Temps (s)   Déformation,
+ * composante zz (1), Point: (0.9, 6.5, -0.08) »), valeurs séparées par des blancs.
+ */
+function lireTable(meta: Record<string, string>, titres: string, donnees: string[], nom: string): ExportComsol {
+  const decouper = (l: string) => l.split(/[\s;]+|,(?=\s*[-+\d.])/).filter(Boolean);
+  const n = decouper(donnees[0]!).length;
+  const morceaux = titres.split(/\t+|\s{2,}/).map((t) => t.trim()).filter(Boolean);
+  const arg = ARGUMENT_TABLE.exec(morceaux[0] ?? "");
+  const colonnes: ColonneComsol[] =
+    morceaux.length === n
+      ? morceaux.slice(1).map(lireTitreTable)
+      : Array.from({ length: n - 1 }, (_, k) => ({ expression: `Colonne ${k + 1}`, unite: "", solution: "", parametres: {} }));
+  const valeurs = Array.from({ length: n }, () => new Float64Array(donnees.length));
+  donnees.forEach((l, i) => {
+    const c = decouper(l);
+    for (let j = 0; j < n; j++) valeurs[j]![i] = c[j] === undefined || /^nan$/i.test(c[j]!) ? NaN : Number(c[j]);
+  });
+  return {
+    nom,
+    meta,
+    coordonnees: [arg?.[1] ?? "t"],
+    uniteLongueur: meta["Length unit"] || "m",
+    colonnes,
+    valeurs,
+    lignes: donnees.length,
+    nature: "table",
+    uniteArgument: arg?.[2]?.trim() ?? "",
+  };
+}
+
+/** « Déformation, composante zz (1), Point: (0.9, 6.5, -0.08) » ou « 1e6*solid.eZZ (1) @ 3: lc=1 ». */
+export function lireTitreTable(t: string): ColonneComsol {
+  // l'unité est la première parenthèse sans virgule (celle d'un point en a)
+  const m = /^(.*?)\s*\(([^(),]*)\)\s*(.*)$/.exec(t);
+  if (!m) return { expression: t, unite: "", solution: "", parametres: {} };
+  const reste = m[3]!.replace(/^,\s*/, "");
+  const parametres: Record<string, string> = {};
+  const point = /Point\s*:\s*(\([^)]*\)|\S+)/i.exec(reste);
+  if (point) parametres.Point = point[1]!;
+  const at = /@\s*([^:]*):\s*(.*)$/.exec(reste);
+  for (const p of (at?.[2] ?? "").split(/,\s*/)) {
+    const i = p.indexOf("=");
+    if (i > 0) parametres[p.slice(0, i).trim()] = p.slice(i + 1).trim();
+  }
+  return { expression: m[1]!.trim(), unite: m[2]!.trim(), solution: at?.[1]?.trim() ?? "", parametres };
 }
 
 /** « 1e6*solid.eXZ (1) @ 303: Temps=10 s, lc=3, VE=0 1e6*solid.eYZ (1) @ … » → colonnes. */
@@ -103,23 +178,35 @@ const UNITES_FACTEUR: Record<string, Record<string, string>> = {
   m: { "1e6": "µm", "1e3": "mm", "100": "cm", "1": "m" },
 };
 
+/** Libellé d'une colonne : imposé, sinon déduit de son expression. */
+export function libelleColonne(c: ColonneComsol): LibelleColonne {
+  return c.libelle ?? libelleExpression(c);
+}
+
 /** Libellé lisible d'une expression, en notation pgfplots (« $\varepsilon_{zz}$ (µdef) »). */
-export function libelleExpression(c: Pick<ColonneComsol, "expression" | "unite">): { grandeur: string; unite: string; court: string } {
+export function libelleExpression(c: Pick<ColonneComsol, "expression" | "unite">): LibelleColonne {
   const m = /^\s*([0-9.eE+-]+)\s*\*\s*(.+)$/.exec(c.expression);
   const facteur = m ? String(Number(m[1])) : "1";
   const base = (m ? m[2]! : c.expression).trim();
   const nomVar = base.split(".").pop()!;
   let grandeur = base;
   let court = nomVar;
-  const tenseur = /^([es])([XYZxyz])([XYZxyz])$/.exec(nomVar);
-  const princ = /^([es])p([123])$/.exec(nomVar);
+  // titres descriptifs des tables : « Déformation, composante zz », « Contrainte, composante xz »
+  const decrit = /^(Déformation|Strain|Contrainte|Stress)[^,]*,\s*(?:composante|component)\s*([xyz])([xyz])$/i.exec(base);
+  const brut = /^([es])([XYZxyz])([XYZxyz])$/.exec(nomVar);
+  const tenseur: [string, string, string] | null = brut ? [brut[1]!, brut[2]!, brut[3]!] : decrit ? [/^(Déf|Str)/i.test(decrit[1]!) ? "e" : "s", decrit[2]!, decrit[3]!] : null;
+  const princ = /^([es])p?([123])$/.exec(nomVar);
+  const equiv = /^([es])eq$/i.exec(nomVar);
   if (tenseur) {
-    const i = `${tenseur[2]}${tenseur[3]}`.toLowerCase();
-    grandeur = `$${tenseur[1] === "e" ? "\\varepsilon" : "\\sigma"}_{${i}}$`;
-    court = `${tenseur[1] === "e" ? "ε" : "σ"}${i}`;
+    const i = `${tenseur[1]}${tenseur[2]}`.toLowerCase();
+    grandeur = `$${tenseur[0] === "e" ? "\\varepsilon" : "\\sigma"}_{${i}}$`;
+    court = `${tenseur[0] === "e" ? "ε" : "σ"}${i}`;
   } else if (princ) {
     grandeur = `$${princ[1] === "e" ? "\\varepsilon" : "\\sigma"}_{${princ[2]}}$`;
     court = `${princ[1] === "e" ? "ε" : "σ"}${princ[2]}`;
+  } else if (equiv) {
+    grandeur = `$${equiv[1]!.toLowerCase() === "e" ? "\\varepsilon" : "\\sigma"}_{eq}$`;
+    court = `${equiv[1]!.toLowerCase() === "e" ? "ε" : "σ"}eq`;
   } else if (/^(mises|vonmises)$/i.test(nomVar)) {
     grandeur = "$\\sigma_{VM}$";
     court = "σVM";
@@ -138,7 +225,8 @@ export function libelleExpression(c: Pick<ColonneComsol, "expression" | "unite">
 export interface Geometrie {
   /** Coordonnées qui varient (indices dans `coordonnees`). */
   varient: number[];
-  genre: "point" | "profil" | "coupe" | "volume";
+  /** « serie » : table COMSOL (une valeur par instant). */
+  genre: "point" | "profil" | "coupe" | "volume" | "serie";
   /** Pour une coupe : valeurs distinctes de chaque coordonnée qui varie, et grille complète ou non. */
   grilles: number[][];
   reguliere: boolean;
@@ -147,6 +235,7 @@ export interface Geometrie {
 const distinctes = (v: Float64Array) => [...new Set([...v].filter(Number.isFinite).map((x) => Number(x.toPrecision(10))))].sort((a, b) => a - b);
 
 export function geometrie(e: ExportComsol): Geometrie {
+  if (e.nature === "table") return { varient: [0], genre: "serie", grilles: [], reguliere: false };
   const forcees = (e.forcer ?? []).filter((k, i, t) => k >= 0 && k < e.coordonnees.length && t.indexOf(k) === i);
   const varient = forcees.length ? forcees : e.coordonnees.map((_, k) => k).filter((k) => {
     let mn = Infinity;
@@ -165,6 +254,7 @@ export function geometrie(e: ExportComsol): Geometrie {
 
 /** Lectures possibles d'un export (pour corriger la détection) : profil selon chaque coordonnée, coupe pour chaque couple ordonné. */
 export function lecturesPossibles(e: ExportComsol): { libelle: string; forcer: number[] }[] {
+  if (e.nature === "table") return [];
   const c = e.coordonnees;
   const out = c.map((n, k) => ({ libelle: `Profil selon ${n}`, forcer: [k] }));
   for (let a = 0; a < c.length; a++) for (let b = 0; b < c.length; b++) if (a !== b) out.push({ libelle: `Coupe ${c[a]} (horizontal) × ${c[b]} (vertical)`, forcer: [a, b] });
@@ -174,6 +264,7 @@ export function lecturesPossibles(e: ExportComsol): { libelle: string; forcer: n
 /** « profil vertical (Z), 161 points », « coupe YZ, 263 × 65 points ». */
 export function descriptionGeometrie(e: ExportComsol): string {
   const g = geometrie(e);
+  if (g.genre === "serie") return `série (${e.coordonnees[0]}${e.uniteArgument ? ` en ${e.uniteArgument}` : ""}), ${e.lignes} instants, ${e.colonnes.length} colonne(s)`;
   const noms = g.varient.map((k) => e.coordonnees[k]!).join("");
   if (g.genre === "profil") return `profil ${/^z$/i.test(noms) ? "vertical" : "horizontal"} (${noms}), ${e.lignes} points`;
   if (g.genre === "coupe") return `coupe ${noms}, ${g.reguliere ? `${g.grilles[0]!.length} × ${g.grilles[1]!.length}` : e.lignes} points`;
@@ -184,22 +275,52 @@ export function descriptionGeometrie(e: ExportComsol): string {
 /** Paramètres de l'étude d'un export (ceux de sa première expression). */
 export const parametresDe = (e: ExportComsol): Record<string, string> => e.colonnes[0]?.parametres ?? {};
 
+/** Correspondance de légende : un mot du nom de fichier (« het ») ou un paramètre (« lc=1 ») → un texte. */
+export interface Correspondance {
+  de: string;
+  vers: string;
+}
+
+/** D'où viennent les légendes automatiques. */
+export type SourceLegende = "auto" | "nom" | "parametres" | "les-deux";
+
+const cleCorrespondance = (t: string) => t.replace(/\s+/g, "").toLowerCase();
+
 /**
  * Légende de chaque export : les mots qui diffèrent d'un nom de fichier à l'autre (« el lc3 het » /
- * « ve lc1 rect ») ; à défaut, les paramètres de l'étude qui diffèrent (« lc=3, VE=0 ») ; à défaut, le nom.
+ * « ve lc1 rect ») et/ou les paramètres de l'étude qui diffèrent (« lc=3, VE=0 »), traduits par la table de
+ * correspondances (« lc=1 » → « Rectangulaire », « het » → « Hétérogène »). « auto » : les mots, sinon les
+ * paramètres, sinon le nom. Une légende imposée (`legende` de l'export) l'emporte toujours.
  */
-export function legendes(exports: readonly ExportComsol[]): string[] {
+export function legendes(exports: readonly ExportComsol[], o: { correspondances?: readonly Correspondance[]; source?: SourceLegende } = {}): string[] {
+  const table = new Map((o.correspondances ?? []).filter((c) => c.de.trim()).map((c) => [cleCorrespondance(c.de), c.vers]));
+  const traduire = (t: string) => table.get(cleCorrespondance(t)) ?? t;
   const nomCourt = (n: string) => n.replace(/\.(txt|csv|dat)$/i, "");
-  if (exports.length <= 1) return exports.map((e) => nomCourt(e.nom));
+  const imposer = (l: string[]) => l.map((x, i) => exports[i]!.legende ?? x);
+  const source = o.source ?? "auto";
+  if (exports.length <= 1) {
+    // un seul fichier : son nom, avec ses mots traduits s'il y a lieu
+    const seul = (e: ExportComsol) => {
+      if (source === "parametres") return Object.entries(parametresDe(e)).map(([k, v]) => traduire(`${k}=${v}`)).join(", ");
+      const mots = nomCourt(e.nom).split(/[_\-\s]+/).filter(Boolean);
+      return mots.some((m) => table.has(cleCorrespondance(m))) ? mots.map(traduire).join(" ") : nomCourt(e.nom);
+    };
+    return imposer(exports.map((e) => seul(e) || nomCourt(e.nom)));
+  }
   const morceaux = exports.map((e) => nomCourt(e.nom).split(/[_\-\s]+/).filter(Boolean));
   const communs = new Set(morceaux[0]!.filter((m) => morceaux.every((x) => x.includes(m))));
-  const parNom = morceaux.map((m) => m.filter((x) => !communs.has(x)).join(" "));
-  if (parNom.every(Boolean) && new Set(parNom).size === parNom.length) return parNom;
+  const parNom = morceaux.map((m) => m.filter((x) => !communs.has(x)).map(traduire).join(" "));
   const cles = [...new Set(exports.flatMap((e) => Object.keys(parametresDe(e))))];
   const differents = cles.filter((k) => new Set(exports.map((e) => parametresDe(e)[k] ?? "")).size > 1);
-  const parParam = exports.map((e) => differents.map((k) => `${k}=${parametresDe(e)[k] ?? "?"}`).join(", "));
-  if (differents.length && new Set(parParam).size === parParam.length) return parParam;
-  return exports.map((e) => nomCourt(e.nom));
+  const parParam = exports.map((e) => differents.map((k) => traduire(`${k}=${parametresDe(e)[k] ?? "?"}`)).join(", "));
+  const distinctes = (l: string[]) => l.every(Boolean) && new Set(l).size === l.length;
+  const noms = exports.map((e) => nomCourt(e.nom));
+  if (source === "nom") return imposer(parNom.map((x, i) => x || noms[i]!));
+  if (source === "parametres") return imposer(parParam.map((x, i) => x || noms[i]!));
+  if (source === "les-deux") return imposer(parNom.map((x, i) => [x, parParam[i]].filter(Boolean).join(" — ") || noms[i]!));
+  if (distinctes(parNom)) return imposer(parNom);
+  if (differents.length && distinctes(parParam)) return imposer(parParam);
+  return imposer(noms);
 }
 
 /** Coin du graphe le moins chargé en points (pour y mettre la légende). */
@@ -224,7 +345,7 @@ export function coinLibre(series: readonly { x: number[]; y: number[] }[]): "nor
 // ---- Profils → graphe ----
 
 export type UniteLongueur = "m" | "cm" | "mm";
-const FACTEUR_LONGUEUR: Record<string, number> = { m: 1, cm: 100, mm: 1000, km: 1e-3 };
+export const FACTEUR_LONGUEUR: Record<string, number> = { m: 1, cm: 100, mm: 1000, km: 1e-3 };
 
 export interface OptionsProfils {
   /** Expressions à tracer (texte brut). */
@@ -239,6 +360,35 @@ export interface OptionsProfils {
    * l'inverse ; « auto » (défaut) : verticale si la coordonnée est Z.
    */
   orientation?: "auto" | "verticale" | "horizontale";
+  /** Interfaces de couches (cote z dans les coordonnées du fichier, en m) : lignes de repère. */
+  interfaces?: readonly Interface[];
+}
+
+/** Interface entre couches de la chaussée : cote z (unité de longueur des fichiers COMSOL) et nom. */
+export interface Interface {
+  z: number;
+  texte: string;
+}
+
+/** Coordonnée k d'un export après ses changements de repère (valeur du fichier → valeur affichée, même unité). */
+export function versRepere(e: ExportComsol, k: number, v: number): number {
+  const r = e.repere?.[k];
+  return r ? r.facteur * (v - r.origine) : v;
+}
+
+/** Titre d'axe d'une coordonnée, repère compris : « $z$ », « Profondeur », « $y - y_0$ ». */
+export function titreCoordonnee(e: ExportComsol, k: number): string {
+  const n = e.coordonnees[k]!.toLowerCase();
+  const r = e.repere?.[k];
+  if (r && r.facteur < 0 && n === "z" && r.origine === 0) return "Profondeur";
+  const base = r && r.origine !== 0 ? `${n} - ${n}_0` : n;
+  return `$${r && r.facteur < 0 ? `-(${base})` : base}$`;
+}
+
+/** Lignes de repère des interfaces sur l'axe qui porte z (null : z n'est sur aucun des deux axes). */
+function reperesInterfaces(e: ExportComsol, interfaces: readonly Interface[] | undefined, kz: number | undefined, axe: "x" | "y", facteur: number) {
+  if (!interfaces?.length || kz === undefined) return undefined;
+  return interfaces.map((i) => ({ axe, valeur: Number((versRepere(e, kz, i.z) * facteur).toPrecision(10)), texte: i.texte, trait: "dashed" as const }));
 }
 
 /**
@@ -251,17 +401,21 @@ export function grapheProfils(exports: readonly ExportComsol[], o: OptionsProfil
   const noms = o.noms ?? legendes(exports);
   const estZ = profils.every((e) => /^z$/i.test(e.coordonnees[geometrie(e).varient[0]!]!));
   const vertical = o.orientation === "verticale" || (o.orientation !== "horizontale" && estZ);
+  // z déjà passé en profondeur positive par un changement de repère : ne pas le retourner une seconde fois
+  const retourne = estZ && profils.every((e) => (e.repere?.[geometrie(e).varient[0]!]?.facteur ?? 1) < 0);
+  const prof = !!o.profondeur || retourne;
+  const signe = vertical && o.profondeur && !retourne ? -1 : 1;
   const series: Series[] = [];
   const unites = new Set<string>();
   const grandeurs = new Set<string>();
   for (const e of profils) {
     const k = geometrie(e).varient[0]!;
     const f = FACTEUR_LONGUEUR[o.longueur]! / (FACTEUR_LONGUEUR[e.uniteLongueur] ?? 1);
-    const coord = [...e.valeurs[k]!].map((v) => v * f * (vertical && o.profondeur ? -1 : 1));
+    const coord = [...e.valeurs[k]!].map((v) => v * f * signe);
     for (const expr of o.expressions) {
       const j = e.colonnes.findIndex((c) => c.expression === expr);
       if (j < 0) continue;
-      const lib = libelleExpression(e.colonnes[j]!);
+      const lib = libelleColonne(e.colonnes[j]!);
       unites.add(lib.unite);
       grandeurs.add(lib.grandeur);
       const vals = [...e.valeurs[e.coordonnees.length + j]!];
@@ -274,24 +428,30 @@ export function grapheProfils(exports: readonly ExportComsol[], o: OptionsProfil
   if (!series.length) throw new Error("Aucune des expressions choisies dans ces exports.");
   const g = [...grandeurs];
   const valeur = `${g.length === 1 ? g[0] : g.length <= 3 ? g.join(", ") : "Valeur"} (${[...unites].join(", ")})`;
-  const nomCoord = `$${profils[0]!.coordonnees[geometrie(profils[0]!).varient[0]!]!.toLowerCase()}$`;
-  const coordNom = vertical && estZ ? (o.profondeur ? "Profondeur" : "$z$") : nomCoord;
+  const nomCoord = titreCoordonnee(profils[0]!, geometrie(profils[0]!).varient[0]!);
+  const coordNom = vertical && estZ ? (o.profondeur ? "Profondeur" : retourne ? nomCoord : "$z$") : nomCoord;
   const coord = `${coordNom} (${o.longueur})`;
   // cote : de la surface (0) au point le plus bas, arrondi
   const toutes = series.flatMap((s) => (vertical ? s.y : s.x));
-  const extreme = vertical && o.profondeur ? Math.max(...toutes) : Math.min(...toutes);
+  const extreme = vertical && prof ? Math.max(...toutes) : Math.min(...toutes);
   const pas = 10 ** Math.floor(Math.log10(Math.abs(extreme) || 1) - 1);
-  const borne = vertical && o.profondeur ? Math.ceil(extreme / pas - 1e-9) * pas : Math.floor(extreme / pas + 1e-9) * pas;
+  const borne = vertical && prof ? Math.ceil(extreme / pas - 1e-9) * pas : Math.floor(extreme / pas + 1e-9) * pas;
+  const p0 = profils[0]!;
+  const k0 = geometrie(p0).varient[0]!;
+  const lignes = estZ ? reperesInterfaces(p0, o.interfaces, k0, vertical ? "y" : "x", (FACTEUR_LONGUEUR[o.longueur]! / (FACTEUR_LONGUEUR[p0.uniteLongueur] ?? 1)) * signe) : undefined;
+  // profondeur positive : vers le bas (axe inversé), de la surface (0) au point le plus bas
+  const profond = vertical && estZ && prof;
   return {
     format: GRAPH_FORMAT,
     width: vertical ? 90 : 130,
     height: vertical ? 110 : 80,
     theme: "these",
     x: { label: vertical ? valeur : coord, log: false },
-    y: { label: vertical ? coord : valeur, log: false, ...(vertical && estZ && !o.profondeur && extreme < 0 ? { min: borne, max: 0 } : vertical && estZ && o.profondeur && extreme > 0 ? { min: 0, max: borne } : {}) },
+    y: { label: vertical ? coord : valeur, log: false, ...(vertical && estZ && !prof && extreme < 0 ? { min: borne, max: 0 } : profond && extreme > 0 ? { min: 0, max: borne } : {}), ...(profond ? { inverse: true } : {}) },
     legend: coinLibre(series),
     grid: true,
     bar_width: 3,
+    ...(lignes ? { reperes: lignes } : {}),
     series,
   };
 }
@@ -348,9 +508,15 @@ export function grilleCoupe(e: ExportComsol, expression: string, longueur: Unite
  * Carte d'une coupe en graphe modifiable (champ `carte` de `graph.json`) : palette divergente si les valeurs
  * changent de signe, viridis sinon ; hauteur choisie pour une exagération verticale raisonnable.
  */
-export function grapheCarte(e: ExportComsol, expression: string, longueur: UniteLongueur): GraphDoc {
+export function grapheCarte(e: ExportComsol, expression: string, longueur: UniteLongueur, o: { interfaces?: readonly Interface[] } = {}): GraphDoc {
   const g = grilleCoupe(e, expression, longueur);
-  const lib = libelleExpression(e.colonnes.find((c) => c.expression === expression)!);
+  const lib = libelleColonne(e.colonnes.find((c) => c.expression === expression)!);
+  const [kx, ky] = geometrie(e).varient as [number, number];
+  const f = FACTEUR_LONGUEUR[longueur]! / (FACTEUR_LONGUEUR[e.uniteLongueur] ?? 1);
+  const kz = e.coordonnees.findIndex((c) => /^z$/i.test(c));
+  const lignes = kz === ky ? reperesInterfaces(e, o.interfaces, kz, "y", f) : kz === kx ? reperesInterfaces(e, o.interfaces, kz, "x", f) : undefined;
+  // un axe retourné par changement de repère (profondeur positive) se lit vers le bas / la gauche
+  const inv = (k: number) => ((e.repere?.[k]?.facteur ?? 1) < 0 ? { inverse: true } : {});
   const vals = g.v.flat().filter((x): x is number => x !== null);
   const div = vals.some((x) => x < 0) && vals.some((x) => x > 0);
   const lx = g.x.at(-1)! - g.x[0]!;
@@ -363,11 +529,12 @@ export function grapheCarte(e: ExportComsol, expression: string, longueur: Unite
     width: largeur,
     height: hauteur,
     theme: "these",
-    x: { label: `$${g.nomX}$ (${longueur})`, log: false, min: g.x[0]!, max: g.x.at(-1)! },
-    y: { label: `$${g.nomY}$ (${longueur})`, log: false, min: g.y[0]!, max: g.y.at(-1)! },
+    x: { label: `${titreCoordonnee(e, kx)} (${longueur})`, log: false, min: g.x[0]!, max: g.x.at(-1)!, ...inv(kx) },
+    y: { label: `${titreCoordonnee(e, ky)} (${longueur})`, log: false, min: g.y[0]!, max: g.y.at(-1)!, ...inv(ky) },
     legend: "none",
     grid: false,
     bar_width: 3,
+    ...(lignes ? { reperes: lignes } : {}),
     carte: { x: g.x, y: g.y, v: g.v, palette: div ? "divergente" : "viridis", niveaux: 24, legende: `${lib.grandeur} (${lib.unite})`, inverser: false },
     series: [],
   };
@@ -377,6 +544,6 @@ export function grapheCarte(e: ExportComsol, expression: string, longueur: Unite
 export function legendeCarte(e: ExportComsol, expression: string): string {
   const c = e.colonnes.find((x) => x.expression === expression);
   if (!c) return expression;
-  const l = libelleExpression(c);
+  const l = libelleColonne(c);
   return `${l.court} (${l.unite})`;
 }

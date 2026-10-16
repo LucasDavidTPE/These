@@ -27,6 +27,31 @@ export interface AxisSpec {
   /** Bornes imposées ; sinon calculées (valeurs « rondes »). */
   min?: number;
   max?: number;
+  /** Sens inversé (profondeur croissante vers le bas). */
+  inverse?: boolean;
+  /** Noms des catégories d'un diagramme en barres : x = 1, 2, 3… prend le nom n° 1, 2, 3… */
+  categories?: string[];
+}
+
+export type Trait = "solid" | "dashed" | "dotted";
+export const TRAITS: Trait[] = ["solid", "dashed", "dotted"];
+
+/** Ligne de repère sur toute la largeur (axe y : valeur constante) ou la hauteur (axe x) de la boîte. */
+export interface Repere {
+  axe: "x" | "y";
+  valeur: number;
+  texte: string;
+  trait: Trait;
+}
+
+export type Coin = Exclude<LegendPos, "none">;
+
+/** Point marqué et commenté (pic d'un signal…) ; le texte est placé du côté `position` du point. */
+export interface Annotation {
+  x: number;
+  y: number;
+  texte: string;
+  position: Coin;
 }
 
 export interface GraphDoc {
@@ -47,6 +72,10 @@ export interface GraphDoc {
   fit_pos?: Exclude<LegendPos, "none">;
   /** Carte en couleurs sous les courbes (coupe 2D) ; absente : graphe ordinaire. */
   carte?: CarteDoc;
+  /** Même échelle sur les deux axes (1 m = 1 m) : la hauteur suit la largeur. */
+  egalite?: boolean;
+  reperes?: Repere[];
+  annotations?: Annotation[];
   series: Series[];
 }
 
@@ -99,6 +128,8 @@ export function validateGraph(raw: unknown): { ok: true; doc: GraphDoc } | { ok:
       return d[k];
     }
     const out: AxisSpec = { label: typeof a.label === "string" ? a.label : "", log: a.log === true };
+    if (a.inverse === true) out.inverse = true;
+    if (Array.isArray(a.categories) && a.categories.length && a.categories.every((c) => typeof c === "string")) out.categories = [...(a.categories as string[])];
     for (const b of ["min", "max"] as const) {
       if (a[b] === undefined || a[b] === null) continue;
       if (typeof a[b] !== "number" || !Number.isFinite(a[b])) err(`${k}.${b}`, "doit être un nombre.");
@@ -125,6 +156,17 @@ export function validateGraph(raw: unknown): { ok: true; doc: GraphDoc } | { ok:
   if (LEGENDS.includes(raw.fit_pos as LegendPos) && raw.fit_pos !== "none") doc.fit_pos = raw.fit_pos as Exclude<LegendPos, "none">;
   const carte = parseCarte(raw.carte, err);
   if (carte) doc.carte = carte;
+  if (raw.egalite === true) doc.egalite = true;
+  const fini = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+  if (Array.isArray(raw.reperes)) {
+    const r = raw.reperes.filter((x): x is Record<string, unknown> => isRecord(x) && (x.axe === "x" || x.axe === "y") && fini(x.valeur));
+    if (r.length) doc.reperes = r.map((x) => ({ axe: x.axe as "x" | "y", valeur: x.valeur as number, texte: typeof x.texte === "string" ? x.texte : "", trait: TRAITS.includes(x.trait as Trait) ? (x.trait as Trait) : "dashed" }));
+  }
+  if (Array.isArray(raw.annotations)) {
+    const a = raw.annotations.filter((x): x is Record<string, unknown> => isRecord(x) && fini(x.x) && fini(x.y));
+    if (a.length)
+      doc.annotations = a.map((x) => ({ x: x.x as number, y: x.y as number, texte: typeof x.texte === "string" ? x.texte : "", position: LEGENDS.includes(x.position as LegendPos) && x.position !== "none" ? (x.position as Coin) : "north east" }));
+  }
   if (!Array.isArray(raw.series)) err("series", "doit être une liste.");
   (Array.isArray(raw.series) ? raw.series : []).forEach((s: unknown, i) => {
     const p = `series[${i}]`;

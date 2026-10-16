@@ -45,3 +45,10 @@ les suivantes passent par le bandeau.
 
 Les installeurs d'un seul module (Figurine, Traitement 2S2P1D) ne vérifient pas les mises
 à jour : ils sont faits pour être envoyés, pas suivis.
+
+## Si la mise à jour n'est pas proposée
+
+Au démarrage, une vérification qui échoue (hors ligne, proxy de l'établissement, pare-feu) ne s'affiche pas.
+**Diagnostic → Mises à jour → « Vérifier maintenant »** (1.27.1) interroge GitHub à la demande et affiche
+l'erreur exacte ; « Télécharger l'installeur à la main… » ouvre la page des versions dans le navigateur
+(qui passe souvent là où l'application est bloquée). Installer par-dessus ne touche pas aux données.
