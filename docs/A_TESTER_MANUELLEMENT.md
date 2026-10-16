@@ -1010,3 +1010,8 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
 - [ ] Lignes verticales : petits profils aux mêmes axes.
 - [ ] « Transformer » d'une coupe avec exx, ezz, exz : « + ε1 (x-z) » pour tous les fichiers ; valeur vérifiée à la main en un
       point ; rouvrir l'étude : la colonne est rejouée.
+
+## COMSOL : gros exports (1.38.1)
+
+- [ ] Ouvrir un vrai export de plusieurs dizaines de Mo (plan de coupe fin, tous les instants) : lecture en moins de
+      quelques secondes ; survol de la carte (sonde) fluide ; changer d'instant avec le curseur sans attente pénible.

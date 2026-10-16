@@ -12,7 +12,6 @@ import {
   bassinsLatex,
   candidatsSensibilite,
   courtDe,
-  executerTrace,
   expressionsCommunes,
   geometrie,
   libelleDe,
@@ -30,8 +29,7 @@ import {
 } from "../../core/graph";
 import { getBackend } from "../platform/backend";
 import { AtelierApercu } from "./AtelierApercu";
-import { calculer } from "./atelierCalcul";
-import { useContexteTrace, useLegende, useTrace } from "./hooks";
+import { useContexteTrace, useLegende, useTrace, useResultat } from "./hooks";
 import { ChoixEtape } from "./Instants";
 
 const fr = (x: number | null | undefined, ch = 3) =>
@@ -80,7 +78,7 @@ export function ModeBassin() {
   const [collage, setCollage] = useState("");
   const [uDist, setUDist] = useState<UniteLongueur>("mm");
   const [uDefl, setUDefl] = useState<"µm" | "mm" | "1/100 mm">("µm");
-  const resultat = calculer(() => executerTrace(t, c));
+  const resultat = useResultat(t);
   const bs = resultat && "bassins" in resultat ? resultat.bassins : undefined;
   const ecarts =
     resultat && "ecartsMesure" in resultat ? resultat.ecartsMesure : undefined;
@@ -353,7 +351,7 @@ export function ModeMaillage() {
     c.exports.filter((e) => e.nom === p.grossier || e.nom === p.fin),
   );
   const dispo = expressionsCommunes(es);
-  const resultat = calculer(() => executerTrace(t, c));
+  const resultat = useResultat(t);
   const lignes =
     resultat && "maillage" in resultat ? resultat.maillage : undefined;
   const problemes =
@@ -606,7 +604,7 @@ export function ModeSensibilite() {
   const plans = choisis.filter((e) => geometrie(e).genre === "coupe" && geometrie(e).reguliere);
   const [px, setPx] = useState(t.point ? String(t.point.x) : "");
   const [py, setPy] = useState(t.point ? String(t.point.y) : "");
-  const resultat = calculer(() => executerTrace(t, c));
+  const resultat = useResultat(t);
   const series = resultat && "sensibilite" in resultat ? resultat.sensibilite : undefined;
   const unite = params.find((p) => p.nom === t.parametre)?.unite ?? "";
   const tex = () => (series && t.parametre && t.expression && choisis[0] ? sensibiliteLatex(series, { parametre: t.parametre, unite, libelle: libelleDe(choisis[0], t.expression), virgule: t.virgule }) : "");

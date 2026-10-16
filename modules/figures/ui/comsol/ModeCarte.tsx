@@ -33,9 +33,8 @@ import { useNavigation } from "../navigation";
 import { usePlanche } from "../planche/usePlanche";
 import { AnimationInstants } from "./Animation";
 import { AtelierApercu } from "./AtelierApercu";
-import { calculer } from "./atelierCalcul";
 import { Declinaison } from "./Declinaison";
-import { useContexteTrace, useLegende, useTrace } from "./hooks";
+import { useContexteTrace, useLegende, useTrace, useResultat } from "./hooks";
 import { ChoixEtape } from "./Instants";
 import { ecrireDeclinaison } from "./lot";
 import { useAtelier } from "./useAtelier";
@@ -57,6 +56,7 @@ export function ModeCarte() {
   const c = useContexteTrace();
   const legende = useLegende();
   const [t, maj] = useTrace<TraceCarte>("carte");
+  const resultat = useResultat(t);
   const plans = plansDe(c.exports);
   const p = plans.find((e) => e.nom === t.plan);
   const [iso, setIso] = useState(t.isolignes.map(fr).join(" ; "));
@@ -286,7 +286,7 @@ export function ModeCarte() {
           <span className="atelier-etape">3</span> Aperçu
         </h3>
         <AtelierApercu
-          resultat={calculer(() => executerTrace(t, c))}
+          resultat={resultat}
           trace={t}
           onClic={epingler}
           onSurvol={setSurvol}

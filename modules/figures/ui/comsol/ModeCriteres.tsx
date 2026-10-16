@@ -9,7 +9,6 @@ import {
   avecCote,
   criteresLatex,
   critereDimensionnant,
-  executerTrace,
   type AffichageCriteres,
   type Critere,
   type Evaluation,
@@ -18,9 +17,8 @@ import {
 import { useReglagesComsol } from "../graph/useReglagesComsol";
 import { getBackend } from "../platform/backend";
 import { AtelierApercu } from "./AtelierApercu";
-import { calculer } from "./atelierCalcul";
 import { ChoixEtape } from "./Instants";
-import { useContexteTrace, useLegende, useTrace } from "./hooks";
+import { useContexteTrace, useLegende, useTrace, useResultat } from "./hooks";
 
 const fr = (x: number, ch = 3) =>
   String(Number(x.toPrecision(ch)))
@@ -49,7 +47,7 @@ export function ModeCriteres() {
   const actifs = t.criteres
     ? tous.filter((x) => t.criteres!.includes(x.id))
     : tous;
-  const resultat = calculer(() => executerTrace(t, c));
+  const resultat = useResultat(t);
   const tableau =
     resultat && "tableau" in resultat ? resultat.tableau : undefined;
   const tex = () =>

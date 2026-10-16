@@ -34,7 +34,7 @@ import { calculer } from "./atelierCalcul";
 import { Declinaison } from "./Declinaison";
 import { ChoixEtape } from "./Instants";
 import { ApercuMesures, MesuresCollees } from "./Mesures";
-import { useContexteTrace, useLegende, useTrace } from "./hooks";
+import { useContexteTrace, useLegende, useTrace, useResultat } from "./hooks";
 import { useAtelier } from "./useAtelier";
 
 const fr = (x: number) =>
@@ -195,6 +195,7 @@ const plansDe = (es: readonly ExportComsol[]) =>
 export function ModeProfils() {
   const c = useContexteTrace();
   const [t, maj] = useTrace<TraceProfils>("profils");
+  const resultat = useResultat(t);
   const lignes = lignesDe(c.exports);
   const choisies = t.fichiers
     ? lignes.filter((e) => t.fichiers!.includes(e.nom))
@@ -271,7 +272,7 @@ export function ModeProfils() {
       }
       apercu={
         <ApercuMesures
-          resultat={calculer(() => executerTrace(t, c))}
+          resultat={resultat}
           trace={t}
           aide={!choisies.length ? "Cochez au moins une ligne." : undefined}
         />
@@ -285,6 +286,7 @@ export function ModeProfils() {
 export function ModeCoupeProfils() {
   const c = useContexteTrace();
   const [t, maj] = useTrace<TraceCoupeProfils>("coupe-profils");
+  const resultat = useResultat(t);
   const plans = plansDe(c.exports);
   const p = plans.find((e) => e.nom === t.plan);
   const [saisie, setSaisie] = useState("");
@@ -502,7 +504,7 @@ export function ModeCoupeProfils() {
             }
           />
           <AtelierApercu
-            resultat={calculer(() => executerTrace(t, c))}
+            resultat={resultat}
             trace={t}
             aide={
               (t.sens === "segments" ? t.segments.length : t.valeurs.length)
@@ -524,6 +526,7 @@ export function ModeTemps() {
   const c = useContexteTrace();
   const legende = useLegende();
   const [t, maj] = useTrace<TraceTemps>("temps");
+  const resultat = useResultat(t);
   const tables = c.exports.filter((e) => e.nature === "table");
   const choisies = t.fichiers
     ? tables.filter((e) => t.fichiers!.includes(e.nom))
@@ -659,7 +662,7 @@ export function ModeTemps() {
       }
       apercu={
         <ApercuMesures
-          resultat={calculer(() => executerTrace(t, c))}
+          resultat={resultat}
           trace={t}
         />
       }
@@ -783,7 +786,7 @@ export function ModeSynthese() {
   const [t, maj] = useTrace<TraceSynthese>("synthese");
   const fichiers = c.exports.filter((e) => (t.fichiers ?? []).includes(e.nom));
   const mots = fichiers.length ? motsDuNom(fichiers[0]!.nom) : [];
-  const resultat = calculer(() => executerTrace(t, c));
+  const resultat = useResultat(t);
   const lignes =
     resultat && "lignes" in resultat ? (resultat.lignes ?? []) : [];
   const tex = () =>

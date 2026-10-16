@@ -1,5 +1,7 @@
 /** Accès React à l'atelier : contexte d'exécution des recettes, légendes, recette en cours d'un mode. */
-import { legendesDe, normaliser, traceVide, type ContexteTrace, type ExportComsol, type ModeTrace, type Trace } from "../../core/graph";
+import { useMemo } from "react";
+import { executerTrace, legendesDe, normaliser, traceVide, type ContexteTrace, type ExportComsol, type ModeTrace, type Trace } from "../../core/graph";
+import { calculer, type Resultat } from "./atelierCalcul";
 import { useReglagesComsol } from "../graph/useReglagesComsol";
 import { useAtelier } from "./useAtelier";
 
@@ -21,4 +23,17 @@ export function useTrace<T extends Trace>(mode: T["mode"]): [T, (p: Partial<T>) 
   const exports = useAtelier((s) => s.exports);
   const maj = (p: Partial<T>) => useAtelier.getState().majTrace(mode as ModeTrace, { ...(useAtelier.getState().traces[mode as ModeTrace] ?? traceVide(mode as ModeTrace)), ...p } as Trace);
   return [normaliser(brute, exports) as T, maj];
+}
+
+/**
+ * Résultat d'une recette, recalculé seulement quand la recette, les fichiers ou les réglages changent (pas à
+ * chaque rendu : survol de la sonde, saisie dans un autre champ…) — une carte d'un gros export coûte ~0,1 s.
+ */
+export function useResultat(t: Trace): Resultat {
+  const { exports, cadre, noms, correspondances, interfaces, criteres } = useContexteTrace();
+  const cle = JSON.stringify(t);
+  return useMemo(
+    () => calculer(() => executerTrace(JSON.parse(cle) as Trace, { exports, cadre, noms, correspondances, interfaces, ...(criteres ? { criteres } : {}) })),
+    [cle, exports, cadre, noms, correspondances, interfaces, criteres],
+  );
 }

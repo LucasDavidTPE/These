@@ -423,6 +423,9 @@ Ajouts permis par l'intégration :
   petits profils à axes communs, pic par `statistique`) ; `colonnesProposees` (ε1, ε3, γmax par plan, εvol,
   εh max, |εzz|, τmax, σVM selon `nomsColonnes`), ajoutées comme transformations « colonne » à un fichier ou à
   tous les fichiers d'origine qui les permettent.
+- **aperçus mémorisés** (1.38.1) : `useResultat` (ui/comsol/hooks.ts) ne réexécute une recette que si la recette
+  (sérialisée), les fichiers ou les réglages changent — pas à chaque rendu (sonde au survol, saisie). Mesuré :
+  export de 59 Mo (17 000 nœuds × 252 colonnes) lu en 0,5 s, carte à un instant en 0,1 s.
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,
