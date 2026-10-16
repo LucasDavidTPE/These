@@ -973,3 +973,12 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
 - [ ] Exporter .tex, `\input` dans l'article (préambule booktabs + figurine, `\cheminFigures` adapté) : compilation
       pdflatex sans erreur (grec, µ, signe moins), figures trouvées, `\ref{tab:…}` et `\ref{fig:FIG-…}` résolus.
 - [ ] Version anglaise : en-têtes, phrases, point décimal.
+
+## COMSOL : bassin de déflexion, convergence du maillage (1.34.0)
+
+- [ ] Exporter une ligne de surface (z = 0, le long de x, passant par le centre de la charge) avec w ; tuile « Bassin de
+      déflexion » : D0 et D300 conformes à COMSOL ; SCI, BDI, BCI, AREA, R vérifiés à la main sur un cas.
+- [ ] Coller le bassin d'un essai HWD (µm, normalisé à la même charge) : points sur le graphe, RMS plausible ; Continuer
+      dans Graphes ; régénérer après un nouveau calcul.
+- [ ] Ouvrir `…_EL_het` et `…_EL-fin_het` : paire trouvée, écarts (pic, pire point, L2) ; ajouter une paire à la main.
+- [ ] Rapport LaTeX : sections bassin et maillage, compilation.

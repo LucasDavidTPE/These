@@ -126,6 +126,17 @@ ou la thèse — tableau des cas, figures de l'étude (`\input` des exports pgfp
 varie de +50 % pour VE het… », « … le nombre de cycles admissibles du critère dimensionnant est divisé par
 7,59 pour VE het »), en **français ou en anglais**. Détails : § 9.1.
 
+### Bassin de déflexion et convergence du maillage (1.34.0)
+
+- **« Bassin de déflexion »** (◡) : la déflexion w en surface lue comme un essai **HWD** — déflexions aux
+  géophones (0, 200, 300, 450, 600, 900, 1200, 1500, 1800 mm), **D0, SCI, BDI, BCI, AREA, rayon de
+  courbure**, et l'écart à un **bassin mesuré** collé depuis le rapport d'essai (RMS, écart sur D0).
+- **« Convergence du maillage »** (⊞) : le même cas sur un maillage grossier et sur un maillage raffiné
+  (paires trouvées d'après les noms, « EL » / « EL-fin ») : écart sur le pic, plus grand écart point à point,
+  norme L2 ; verdict « le maillage grossier suffit » sous 2 %.
+
+Les deux vont aussi dans le **rapport LaTeX** (sections et phrases chiffrées). Détails : § 5.6 et § 5.7.
+
 Les sections suivantes détaillent les données attendues et chaque calcul.
 
 ---
@@ -526,6 +537,44 @@ déformation la plus forte est de signe contraire (la couche est comprimée à c
   l'étude.
 - **Copier le tableau LaTeX (booktabs)** / **Exporter .tex…** : µdef et N par critère, critère dimensionnant,
   trafic en légende.
+
+### 5.6 Bassin de déflexion (tuile « Bassin de déflexion »)
+
+**Où lire le bassin** : une **ligne horizontale en surface** (profil le long de x ou de y, en z = 0) ou une
+**coupe x-z / y-z** (la ligne la plus haute est prise). La déflexion est la colonne **w** (« 1e3*w » → mm ;
+« uz » dans la liste), sinon celle choisie.
+
+- **Centre de la charge** : au pic de déflexion par défaut, ou une position saisie (mm, sur la ligne).
+  Les déflexions sont **positives vers le bas** et **moyennées des deux côtés du centre** quand la ligne les a
+  (sinon le côté disponible).
+- **Géophones** : distances au centre en mm ; « HWD standard » = 0, 200, 300, 450, 600, 900, 1200, 1500,
+  1800 ; « 0 / 300 / 600 / 900 » pour l'AREA.
+- **Indices** (unité de la déflexion) : SCI = D0 − D300 (couches de surface), BDI = D300 − D600 (assise),
+  BCI = D600 − D900 (plate-forme), AREA = 150 (D0 + 2 D300 + 2 D600 + D900) / D0 en mm, rayon de courbure
+  R = r² / (2 (D0 − Dr)) en m (r = 200 mm par défaut ; avec 250 mm et des déflexions en 1/100 mm, c'est la
+  formule 3125 / (d0 − d25) de la poutre Benkelman). « — » : géophone au-delà de la ligne exportée.
+- **Bassin mesuré** : coller « distance déflexion » par ligne (le tableau du rapport HWD, normalisé à la même
+  charge que le calcul), choisir les unités (mm / cm / m ; µm, 1/100 mm ou mm), « Utiliser ». Le graphe
+  ajoute les points mesurés ; le tableau donne l'**écart quadratique moyen** (RMS, rapporté à la déflexion
+  moyenne mesurée) et l'écart sur D0. Gardé dans la recette (rétro-calcul : changer les modules dans
+  COMSOL, réexporter, régénérer).
+- Graphe : déflexion en fonction de la distance au centre, axe vers le bas, géophones en pointillés
+  ($D_{300}$…) ; tableau **booktabs** (D0, SCI, BDI, BCI, AREA, R, RMS).
+
+### 5.7 Convergence du maillage (tuile « Convergence du maillage »)
+
+Le même cas calculé sur deux maillages. **Paires** : trouvées d'après les noms (un mot terminé par « fin »,
+« fine », « raffine » : `coupeXZ_R1_EL-fin_het` va avec `coupeXZ_R1_EL_het`), ou ajoutées à la main
+(grossier… / fin… / + Paire). Le maillage **fin sert de référence**.
+
+Pour chaque paire et chaque grandeur cochée : **pic** des deux maillages (valeur de plus grande valeur
+absolue), **écart sur le pic** (|pic grossier| − |pic fin|) / |pic fin|, **plus grand écart point à point**
+(rapporté au pic fin, avec sa position), **norme L2 relative** de la différence. Mêmes points dans les deux
+fichiers (export sur la même grille, le cas habituel) : comparaison point à point ; sinon le fin est
+interpolé aux points du grossier (dans la maille d'une coupe, linéairement le long d'une ligne).
+
+Verdict : plus grand écart sur le pic, et « le maillage grossier suffit » s'il reste sous 2 %. Diagramme en
+barres (écart sur le pic, au pire point ou L2), tableau booktabs, et une phrase dans le rapport LaTeX.
 
 ---
 

@@ -391,6 +391,15 @@ Ajouts permis par l'intégration :
   anglais ; `texteLatex` (grec, µ, −, ·, exposants pour pdflatex) et `nombreLatex` (virgule `{,}`, puissances de
   10) partagés par les tableaux. Figures : `figuresDeEtude` (graph.json dont `origine.etude` est l'étude, et
   planches qui en contiennent).
+- **bassin de déflexion et convergence du maillage** (1.34.0, `core/graph/comsolBassin.ts`, `comsolMaillage.ts`,
+  modes « bassin » et « maillage ») : `ligneSurface` (profil horizontal, ou ligne la plus haute d'une coupe
+  contenant z), `bassin` (centre au pic ou imposé, déflexion positive vers le bas, moyenne des deux côtés,
+  D aux géophones, SCI, BDI, BCI, AREA métrique, R = r²/(2(D0 − Dr))), `lireMesure` / `ecartMesure` (RMS
+  relatif, écart sur D0), `grapheBassins`, `bassinsLatex` ; `pairesMaillage` (mot « …fin » ↔ même mot sans le
+  suffixe), `comparerMaillages` (pics, écart sur le pic, plus grand écart et position, L2 relative ; points
+  communs, sinon interpolation du fin aux points du grossier), `grapheMaillage`, `maillageLatex`. Rapport :
+  `phrasesBassins`, `phrasesMaillage`, sections « bassin » et « maillage ». `legendes` : si couper aux tirets
+  ne distingue pas les fichiers, coupe seulement aux « _ » (« EL » / « EL-fin »).
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,

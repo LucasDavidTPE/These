@@ -5,7 +5,7 @@
  */
 import { FACTEUR_LONGUEUR, geometrie, libelleColonne, parametresDe, type ExportComsol, type UniteLongueur } from "./comsol";
 import { combiner } from "./comsolCalcul";
-import { avecCote } from "./comsolEtude";
+import { avecCote, avecSurface } from "./comsolEtude";
 import { parametresVariables } from "./comsolInstants";
 import type { GraphLayout } from "./layout";
 import type { GraphDoc } from "./model";
@@ -100,7 +100,7 @@ function decrireForme(e: ExportComsol, longueur: UniteLongueur): Description {
   return { forme: "point", titre: "Un seul point", detail: `${e.lignes} ligne(s)`, grandeurs, etude, avertissement: "Aucune coordonnée ne varie : rien à tracer en courbe." };
 }
 
-export type ModeAtelier = "profils" | "carte" | "coupe-profils" | "temps" | "comparer" | "synthese" | "criteres";
+export type ModeAtelier = "profils" | "carte" | "coupe-profils" | "temps" | "comparer" | "synthese" | "criteres" | "bassin" | "maillage";
 
 export const MODES: { id: ModeAtelier; titre: string; explication: string }[] = [
   { id: "profils", titre: "Comparer des profils", explication: "Des courbes le long d'une ligne (εzz en profondeur…), un fichier ou une grandeur par courbe." },
@@ -110,6 +110,8 @@ export const MODES: { id: ModeAtelier; titre: string; explication: string }[] = 
   { id: "comparer", titre: "Comparer deux cas", explication: "A / B, A − B ou écart en % point à point (VE / EL, het / circ…)." },
   { id: "synthese", titre: "Tableau de synthèse", explication: "Max, min et positions de chaque cas ; LaTeX booktabs ; barres groupées." },
   { id: "criteres", titre: "Critères de dimensionnement", explication: "εt à la base des couches liées, εz au sommet du sol : cycles admissibles, dommage, cas dimensionnant." },
+  { id: "bassin", titre: "Bassin de déflexion", explication: "Déflexion en surface lue comme un essai HWD : D0, SCI, BDI, BCI, AREA, rayon de courbure ; écart à un bassin mesuré." },
+  { id: "maillage", titre: "Convergence du maillage", explication: "Maillage grossier contre raffiné (EL / EL-fin) : écart sur le pic, plus grand écart, norme L2." },
 ];
 
 /** Pour chaque tracé : null s'il est possible avec les fichiers ouverts, sinon ce qu'il manque. */
@@ -127,6 +129,8 @@ export function modesDisponibles(exports: readonly ExportComsol[]): Record<ModeA
     comparer: exports.length >= 2 ? null : "Il faut au moins deux fichiers de même grille.",
     synthese: exports.some((_, i) => genres[i]!.genre !== "point") ? null : aucun,
     criteres: avecCote(exports).length ? null : exports.length ? "Aucune coupe contenant z ni profil vertical." : aucun,
+    bassin: avecSurface(exports).length ? null : exports.length ? "Aucune ligne de surface avec une déflexion w (ligne horizontale en surface, ou coupe contenant z)." : aucun,
+    maillage: exports.length >= 2 ? null : "Il faut deux fichiers : le même cas sur un maillage grossier et sur un maillage fin (« EL » et « EL-fin »).",
   };
 }
 

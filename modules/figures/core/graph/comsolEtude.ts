@@ -28,6 +28,8 @@ import {
 import { ajouterColonne, changerRepere, combiner, grapheBarres, grapheTemporel, motsDuNom, pic, profilsInterpoles, synthese, type LigneSynthese, type ModePic, type Operation, type Statistique } from "./comsolCalcul";
 import { grapheCriteres, tableauCriteres, type AffichageCriteres, type Critere, type TableauCriteres } from "./comsolCriteres";
 import { parametresDesExports, signalAuPoint, titreEtape, valeurCarte, vueEtape, type Etape } from "./comsolInstants";
+import { bassin, ecartMesure, expressionDeflexion, grapheBassins, ligneSurface, type Bassin, type Mesure } from "./comsolBassin";
+import { comparerMaillages, grapheMaillage, pairesMaillage, type LigneMaillage, type PaireMaillage } from "./comsolMaillage";
 import { hauteurEgale } from "./layout";
 import type { GraphDoc, Series } from "./model";
 
@@ -67,7 +69,7 @@ export const sourcesDerive = (d: Derive) => (d.genre === "operation" ? [d.a, d.b
 
 // ---- Recettes (tracés de l'atelier) ----
 
-export type ModeTrace = "profils" | "carte" | "coupe-profils" | "temps" | "comparer" | "synthese" | "criteres";
+export type ModeTrace = "profils" | "carte" | "coupe-profils" | "temps" | "comparer" | "synthese" | "criteres" | "bassin" | "maillage";
 
 /**
  * Instant (ou enveloppe) choisi pour les exports à plusieurs instants ; absent : le premier instant. Commun à
@@ -140,7 +142,32 @@ export interface TraceCriteres extends AvecEtape {
   reference: string | null;
   virgule: boolean;
 }
-export type Trace = TraceProfils | TraceCarte | TraceCoupeProfils | TraceTemps | TraceComparer | TraceSynthese | TraceCriteres;
+export interface TraceBassin extends AvecEtape {
+  mode: "bassin";
+  /** Lignes de surface évaluées ; null : toutes celles qui ont une déflexion. */
+  fichiers: string[] | null;
+  /** Colonne de déflexion ; null : w / uz de chaque fichier. */
+  expression: string | null;
+  /** Centre de la charge (m, coordonnée COMSOL) ; null : au pic de déflexion. */
+  centre: number | null;
+  /** Distances des géophones au centre (m). */
+  capteurs: number[];
+  /** Distance du rayon de courbure (m). */
+  rayon: number;
+  /** Bassin mesuré (HWD), distances et déflexions en m ; null : sans. */
+  mesure: Mesure | null;
+  virgule: boolean;
+}
+export interface TraceMaillage extends AvecEtape {
+  mode: "maillage";
+  /** Paires grossier / fin ; null : trouvées d'après les noms (« EL » / « EL-fin »). */
+  paires: PaireMaillage[] | null;
+  expressions: string[];
+  /** Écart porté sur le diagramme. */
+  mesure: "pic" | "l2" | "max";
+  virgule: boolean;
+}
+export type Trace = TraceProfils | TraceCarte | TraceCoupeProfils | TraceTemps | TraceComparer | TraceSynthese | TraceCriteres | TraceBassin | TraceMaillage;
 
 /** Réglages de l'atelier au moment du tracé (gardés avec la recette). */
 export interface Cadre {
@@ -183,8 +210,17 @@ export function traceVide(mode: ModeTrace): Trace {
       return { mode, fichiers: null, expressions: [], virgule: true, barres: { expression: null, categorie: null, groupe: null, statistique: "abs" } };
     case "criteres":
       return { mode, fichiers: null, criteres: null, trafic: null, affichage: "cycles", reference: null, virgule: true };
+    case "bassin":
+      return { mode, fichiers: null, expression: null, centre: null, capteurs: [...CAPTEURS_HWD], rayon: 0.2, mesure: null, virgule: true };
+    case "maillage":
+      return { mode, paires: null, expressions: [], mesure: "pic", virgule: true };
   }
 }
+
+/** Géophones d'un HWD (m) : 0, 200, 300, 450, 600, 900, 1200, 1500, 1800 mm. */
+export const CAPTEURS_HWD = [0, 0.2, 0.3, 0.45, 0.6, 0.9, 1.2, 1.5, 1.8];
+/** Exports où lire un bassin : une ligne de surface et une déflexion. */
+export const avecSurface = (es: readonly ExportComsol[]) => es.filter((e) => e.nature !== "table" && ligneSurface(e) !== null && expressionDeflexion(e) !== null);
 
 // ---- Exécution ----
 
@@ -268,6 +304,16 @@ export function normaliser(t: Trace, exports: readonly ExportComsol[]): Trace {
       const dispo = a && b ? expressionsCommunes([a, b]) : [];
       return { ...t, a: a?.nom ?? null, b: b?.nom ?? null, expression: t.expression && dispo.includes(t.expression) ? t.expression : expressionParDefaut(dispo) };
     }
+    case "bassin": {
+      const l = avecSurface(exports);
+      return { ...t, fichiers: t.fichiers ? t.fichiers.filter((n) => l.some((e) => e.nom === n)) : null };
+    }
+    case "maillage": {
+      const paires = (t.paires ?? pairesMaillage(exports)).filter((p) => exports.some((e) => e.nom === p.grossier) && exports.some((e) => e.nom === p.fin));
+      const es = paires.flatMap((p) => exports.filter((e) => e.nom === p.grossier || e.nom === p.fin));
+      const dispo = expressionsCommunes(es);
+      return { ...t, expressions: garder(t.expressions, dispo, expressionParDefaut(dispo)) };
+    }
     case "criteres": {
       const avecZ = avecCote(exports);
       return { ...t, fichiers: t.fichiers ? t.fichiers.filter((n) => avecZ.some((e) => e.nom === n)) : null, reference: t.reference && avecZ.some((e) => e.nom === t.reference) ? t.reference : (avecZ[0]?.nom ?? null) };
@@ -301,6 +347,12 @@ export interface ResultatTrace {
   calcule?: ExportComsol;
   /** Tableau des critères (mode critères). */
   tableau?: TableauCriteres;
+  /** Bassins de déflexion et écarts à la mesure (mode bassin). */
+  bassins?: Bassin[];
+  ecartsMesure?: (ReturnType<typeof ecartMesure> | null)[];
+  /** Convergence du maillage (mode maillage) ; paires qui n'ont pas pu être comparées. */
+  maillage?: LigneMaillage[];
+  problemes?: string[];
 }
 
 const interfacesSi = (c: ContexteTrace) => (c.cadre.couches ? c.interfaces : undefined);
@@ -416,6 +468,41 @@ function executerVue(t0: Trace, c: ContexteTrace): ResultatTrace | null {
       if (g === "serie") return { doc: grapheTemporel([res], { expressions: [t.expression], noms: [res.legende!] }), titre, calcule: res };
       throw new Error("Ce genre de fichier ne se trace pas directement ; le résultat peut aller dans la synthèse.");
     }
+    case "bassin": {
+      const l = choisis(avecSurface(c.exports), t.fichiers);
+      if (!l.length) return null;
+      const bassins = l.map((e) =>
+        bassin(e, { expression: t.expression && e.colonnes.some((k) => k.expression === t.expression) ? t.expression : expressionDeflexion(e)!, centre: t.centre, capteurs: t.capteurs, rayon: t.rayon, legende: legende(e) }),
+      );
+      return {
+        doc: grapheBassins(bassins, { longueur: L, mesure: t.mesure, capteurs: t.capteurs }),
+        titre: `Bassin de déflexion — ${l.map(legende).join(", ")}`,
+        bassins,
+        ...(t.mesure ? { ecartsMesure: bassins.map((b) => ecartMesure(b, t.mesure!)) } : {}),
+      };
+    }
+    case "maillage": {
+      const paires = t.paires ?? pairesMaillage(c.exports);
+      const lignes: LigneMaillage[] = [];
+      const problemes: string[] = [];
+      for (const p of paires) {
+        const g = parNom(c.exports, p.grossier);
+        const f = parNom(c.exports, p.fin);
+        if (!g || !f) continue;
+        for (const x of t.expressions)
+          try {
+            lignes.push(comparerMaillages(g, f, x, L));
+          } catch (e) {
+            problemes.push(e instanceof Error ? e.message : String(e));
+          }
+      }
+      if (!lignes.length) {
+        if (problemes.length) throw new Error(problemes.join("\n"));
+        return null;
+      }
+      const nom = (n: string) => (parNom(c.exports, n) ? legende(parNom(c.exports, n)!) : n);
+      return { doc: grapheMaillage(lignes, nom, t.mesure), titre: `Convergence du maillage — ${[...new Set(lignes.map((l) => nom(l.paire.grossier)))].join(", ")}`, maillage: lignes, problemes };
+    }
     case "criteres": {
       const l = choisis(avecCote(c.exports), t.fichiers);
       const tous = c.criteres ?? [];
@@ -529,7 +616,7 @@ export const memesBornes = (a: GraphDoc, b: GraphDoc) => !a.carte || !b.carte ||
 const estObjet = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 const chaines = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 const nombres = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is number => typeof x === "number" && Number.isFinite(x)) : []);
-const MODES: ModeTrace[] = ["profils", "carte", "coupe-profils", "temps", "comparer", "synthese", "criteres"];
+const MODES: ModeTrace[] = ["profils", "carte", "coupe-profils", "temps", "comparer", "synthese", "criteres", "bassin", "maillage"];
 
 export function lireCadre(v: unknown): Cadre {
   const c = estObjet(v) ? v : {};
@@ -591,6 +678,27 @@ function lireTraceSeule(v: unknown): Trace | null {
     }
     case "comparer":
       return { ...base, a: ch("a"), b: ch("b"), op: v.op === "difference" || v.op === "ecart" ? v.op : "rapport", expression: ch("expression") };
+    case "bassin": {
+      const m = estObjet(v.mesure) ? v.mesure : null;
+      return {
+        ...base,
+        fichiers: liste("fichiers"),
+        expression: ch("expression"),
+        centre: typeof v.centre === "number" ? v.centre : null,
+        capteurs: Array.isArray(v.capteurs) ? nombres(v.capteurs) : base.capteurs,
+        rayon: typeof v.rayon === "number" && v.rayon > 0 ? v.rayon : base.rayon,
+        mesure: m && Array.isArray(m.r) && Array.isArray(m.d) && m.r.length === m.d.length ? { r: nombres(m.r), d: nombres(m.d) } : null,
+        virgule: v.virgule !== false,
+      };
+    }
+    case "maillage":
+      return {
+        ...base,
+        paires: Array.isArray(v.paires) ? v.paires.filter(estObjet).flatMap((p) => (typeof p.grossier === "string" && typeof p.fin === "string" ? [{ grossier: p.grossier, fin: p.fin }] : [])) : null,
+        expressions: chaines(v.expressions),
+        mesure: v.mesure === "l2" || v.mesure === "max" ? v.mesure : "pic",
+        virgule: v.virgule !== false,
+      };
     case "criteres":
       return {
         ...base,

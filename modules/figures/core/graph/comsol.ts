@@ -308,9 +308,16 @@ export function legendes(exports: readonly ExportComsol[], o: { correspondances?
     };
     return imposer(exports.map((e) => seul(e) || nomCourt(e.nom)));
   }
-  const morceaux = exports.map((e) => nomCourt(e.nom).split(/[_\-\s]+/).filter(Boolean));
-  const communs = new Set(morceaux[0]!.filter((m) => morceaux.every((x) => x.includes(m))));
-  const parNom = morceaux.map((m) => m.filter((x) => !communs.has(x)).map(traduire).join(" "));
+  // mots qui diffèrent d'un nom à l'autre ; si couper aux tirets ne les distingue pas (« EL » / « EL-fin »),
+  // couper seulement aux « _ » et aux blancs
+  const differentsMots = (sep: RegExp) => {
+    const morceaux = exports.map((e) => nomCourt(e.nom).split(sep).filter(Boolean));
+    const communs = new Set(morceaux[0]!.filter((m) => morceaux.every((x) => x.includes(m))));
+    return morceaux.map((m) => m.filter((x) => !communs.has(x)).map(traduire).join(" "));
+  };
+  const avecTirets = differentsMots(/[_\-\s]+/);
+  const sansTirets = differentsMots(/[_\s]+/);
+  const parNom = avecTirets.every(Boolean) && new Set(avecTirets).size === avecTirets.length ? avecTirets : sansTirets.every(Boolean) && new Set(sansTirets).size === sansTirets.length ? sansTirets : avecTirets;
   const cles = [...new Set(exports.flatMap((e) => Object.keys(parametresDe(e))))];
   const differents = cles.filter((k) => new Set(exports.map((e) => parametresDe(e)[k] ?? "")).size > 1);
   const parParam = exports.map((e) => differents.map((k) => traduire(`${k}=${parametresDe(e)[k] ?? "?"}`)).join(", "));

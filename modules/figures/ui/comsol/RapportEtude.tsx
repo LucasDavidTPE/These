@@ -5,7 +5,14 @@
  */
 import { useEffect, useState } from "react";
 import {
+  CAPTEURS_HWD,
   avecCote,
+  avecSurface,
+  bassin,
+  comparerMaillages,
+  ecartMesure,
+  expressionDeflexion,
+  pairesMaillage,
   courtDe,
   decrireExport,
   expressionParDefaut,
@@ -23,7 +30,9 @@ import {
   type Etape,
   type FigureRapport,
   type Langue,
+  type TraceBassin,
   type TraceCriteres,
+  type TraceMaillage,
 } from "../../core/graph";
 import { getBackend } from "../platform/backend";
 import { useContexteTrace } from "./hooks";
@@ -58,7 +67,13 @@ export function RapportEtude() {
     figures: true,
     extrema: true,
     criteres: true,
+    bassin: true,
+    maillage: true,
   });
+  // réglages repris des recettes « bassin » et « maillage » de l'étude, s'il y en a
+  const traces = a.recettes.map((r) => r.trace);
+  const recetteBassin = traces.find((t): t is TraceBassin => t.mode === "bassin");
+  const recetteMaillage = traces.find((t): t is TraceMaillage => t.mode === "maillage");
   const dispo = expressionsCommunes(donnees);
   const [choix, setChoix] = useState<string[] | null>(null);
   const expressions = (
@@ -118,6 +133,29 @@ export function RapportEtude() {
       : [];
     const T = Number(trafic.replace(",", ".").replace(/\s/g, ""));
     const avecZ = avecCote(vues);
+    const surfaces = avecSurface(vues);
+    const listeBassins = surfaces.map((e) =>
+      bassin(e, {
+        expression: expressionDeflexion(e)!,
+        centre: recetteBassin?.centre ?? null,
+        capteurs: recetteBassin?.capteurs ?? CAPTEURS_HWD,
+        rayon: recetteBassin?.rayon ?? 0.2,
+        legende: leg(e.nom),
+      }),
+    );
+    const mesure = recetteBassin?.mesure ?? null;
+    const lignesMaillage = (recetteMaillage?.paires ?? pairesMaillage(vues)).flatMap((p) => {
+      const g = vues.find((e) => e.nom === p.grossier);
+      const f = vues.find((e) => e.nom === p.fin);
+      if (!g || !f) return [];
+      return (recetteMaillage?.expressions.length ? recetteMaillage.expressions : expressions).flatMap((x) => {
+        try {
+          return [comparerMaillages(g, f, x, L)];
+        } catch {
+          return [];
+        }
+      });
+    });
     tex = rapportLatex(
       {
         titre: a.titre || etude?.titre || "Étude COMSOL",
@@ -144,6 +182,8 @@ export function RapportEtude() {
             : null,
         trafic: T > 0 ? T : null,
         ...(params.length ? { etape: titreEtape(etape, params) } : {}),
+        bassins: listeBassins.length ? { liste: listeBassins, ...(mesure ? { ecarts: listeBassins.map((b) => ecartMesure(b, mesure)) } : {}) } : null,
+        maillage: lignesMaillage,
       },
       { langue, virgule, reference, sections },
     );
@@ -228,6 +268,8 @@ export function RapportEtude() {
             {section("figures", "Figures")}
             {section("extrema", "Valeurs extrêmes")}
             {section("criteres", "Critères de dimensionnement")}
+            {section("bassin", "Bassin de déflexion")}
+            {section("maillage", "Convergence du maillage")}
           </div>
         </fieldset>
         <fieldset className="atelier-champ">

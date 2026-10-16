@@ -11,6 +11,8 @@ import {
   type TableauCriteres,
 } from "./comsolCriteres";
 import { nombreLatex, texteLatex } from "./comsolLatex";
+import { bassinsLatex, type Bassin, type ecartMesure } from "./comsolBassin";
+import { maillageLatex, type LigneMaillage } from "./comsolMaillage";
 
 export type Langue = "fr" | "en";
 
@@ -41,6 +43,10 @@ export interface DonneesRapport {
   trafic: number | null;
   /** Instant ou enveloppe des exports à plusieurs instants (« |max| sur t »), écrit dans le texte. */
   etape?: string;
+  /** Bassins de déflexion (et écarts à un bassin mesuré). */
+  bassins?: { liste: Bassin[]; ecarts?: (ReturnType<typeof ecartMesure> | null)[] } | null;
+  /** Convergence du maillage. */
+  maillage?: LigneMaillage[] | null;
 }
 export interface OptionsRapport {
   langue: Langue;
@@ -52,6 +58,8 @@ export interface OptionsRapport {
     figures: boolean;
     extrema: boolean;
     criteres: boolean;
+    bassin?: boolean;
+    maillage?: boolean;
   };
 }
 
@@ -271,6 +279,57 @@ export function phrasesCriteres(
   return out;
 }
 
+/** Phrases sur les bassins : étendue de D0, du SCI et du rayon de courbure ; écart à la mesure. */
+export function phrasesBassins(bs: readonly Bassin[], o: { langue: Langue; virgule: boolean; ecarts?: (ReturnType<typeof ecartMesure> | null)[] }): string[] {
+  const fr = o.langue === "fr";
+  if (!bs.length) return [];
+  const n = (v: number) => nombreLatex(v, { virgule: o.virgule });
+  const U = `~${texteLatex(bs[0]!.unite)}`;
+  const cas = (b: Bassin) => texteLatex(b.legende);
+  const etendue = (k: "D0" | "SCI" | "R", unite: string, nomFr: string, nomEn: string) => {
+    const xs = bs.filter((b) => b.indices[k] !== null).sort((a, b) => a.indices[k]! - b.indices[k]!);
+    if (!xs.length) return "";
+    const a = xs[0]!;
+    const b = xs.at(-1)!;
+    return xs.length === 1
+      ? `${fr ? nomFr : nomEn} ${fr ? "vaut" : "is"} ${n(a.indices[k]!)}${unite} (${cas(a)})`
+      : `${fr ? nomFr : nomEn} ${fr ? "va de" : "ranges from"} ${n(a.indices[k]!)}${unite} (${cas(a)}) ${fr ? "à" : "to"} ${n(b.indices[k]!)}${unite} (${cas(b)})`;
+  };
+  const out: string[] = [];
+  const morceaux = [etendue("D0", U, "La déflexion sous la charge $D_0$", "The deflection under the load $D_0$"), etendue("SCI", U, "le SCI", "the SCI"), etendue("R", "~m", "le rayon de courbure", "the radius of curvature")].filter(Boolean);
+  if (morceaux.length) out.push(`${morceaux.join(fr ? " ; " : "; ")}.`);
+  const ec = (o.ecarts ?? []).flatMap((e, i) => (e ? [{ b: bs[i]!, e }] : []));
+  if (ec.length) {
+    const meilleur = ec.reduce((a, b) => (b.e.relatif < a.e.relatif ? b : a));
+    const liste = ec.map((x) => `${n(x.e.relatif)}\\,\\% (${cas(x.b)})`).join(", ");
+    out.push(
+      fr
+        ? `Comparé au bassin mesuré, l'écart quadratique moyen est de ${liste} ; le cas le plus proche de la mesure est ${cas(meilleur.b)}.`
+        : `Compared with the measured basin, the root-mean-square difference is ${liste}; the closest case is ${cas(meilleur.b)}.`,
+    );
+  }
+  return out;
+}
+
+/** Phrase sur la convergence du maillage : le plus grand écart sur le pic, et si le maillage grossier suffit. */
+export function phrasesMaillage(lignes: readonly LigneMaillage[], o: { langue: Langue; virgule: boolean; legende: (fichier: string) => string; seuil?: number }): string[] {
+  if (!lignes.length) return [];
+  const fr = o.langue === "fr";
+  const seuil = o.seuil ?? 2;
+  const pire = lignes.reduce((a, b) => (Math.abs(b.ecartPic) > Math.abs(a.ecartPic) ? b : a));
+  const G = pire.libelle.grandeur.includes("$") ? pire.libelle.grandeur : texteLatex(pire.libelle.grandeur);
+  const v = nombreLatex(Math.abs(pire.ecartPic), { virgule: o.virgule, chiffres: 2 });
+  const l2 = nombreLatex(Math.max(...lignes.map((l) => l.l2)), { virgule: o.virgule, chiffres: 2 });
+  const ok = Math.abs(pire.ecartPic) <= seuil;
+  const s = nombreLatex(seuil, { virgule: o.virgule });
+  const cas = texteLatex(o.legende(pire.paire.grossier));
+  return [
+    fr
+      ? `Entre le maillage grossier et le maillage raffiné, l'écart sur le pic ne dépasse pas ${v}\\,\\% (${G}, ${cas}) et l'écart en norme $L_2$ ne dépasse pas ${l2}\\,\\% ; ${ok ? `le maillage grossier est suffisant (écart inférieur à ${s}\\,\\%)` : `le maillage grossier n'est pas convergé pour cette grandeur (écart supérieur à ${s}\\,\\%)`}.`
+      : `Between the coarse and the refined mesh, the peak difference does not exceed ${v}\\,\\% (${G}, ${cas}) and the $L_2$ difference does not exceed ${l2}\\,\\%; ${ok ? `the coarse mesh is sufficient (difference below ${s}\\,\\%)` : `the coarse mesh is not converged for this quantity (difference above ${s}\\,\\%)`}.`,
+  ];
+}
+
 // ---- Document ----
 
 const etiquette = (s: string) =>
@@ -384,6 +443,16 @@ export function rapportLatex(d: DonneesRapport, o: OptionsRapport): string {
         `\\end{tabular}\n\\label{tab:${id}-criteres}`,
       ),
     );
+  }
+  if (o.sections.bassin && d.bassins?.liste.length) {
+    const ecarts = d.bassins.ecarts ? { ecarts: d.bassins.ecarts } : {};
+    out.push(`\\subsection{${fr ? "Bassin de déflexion" : "Deflection basin"}}`, "", ...phrasesBassins(d.bassins.liste, { langue: o.langue, virgule: o.virgule, ...ecarts }).map((p) => `${p}\n`));
+    out.push(bassinsLatex(d.bassins.liste, { virgule: o.virgule, ...ecarts }).replace("\\end{tabular}", `\\end{tabular}\n\\label{tab:${id}-bassin}`));
+  }
+  if (o.sections.maillage && d.maillage?.length) {
+    const nom = (f: string) => d.cas.find((c) => c.fichier === f)?.legende ?? f.replace(/\.(txt|csv|dat)$/i, "");
+    out.push(`\\subsection{${fr ? "Convergence du maillage" : "Mesh convergence"}}`, "", ...phrasesMaillage(d.maillage, { langue: o.langue, virgule: o.virgule, legende: nom }).map((p) => `${p}\n`));
+    out.push(maillageLatex(d.maillage, nom, { virgule: o.virgule, anglais: !fr }).replace("\\end{tabular}", `\\end{tabular}\n\\label{tab:${id}-maillage}`));
   }
   return out.join("\n").replace(/\n{3,}/g, "\n\n");
 }

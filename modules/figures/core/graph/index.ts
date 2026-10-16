@@ -21,3 +21,5 @@ export * from "./comsolCriteres";
 export * from "./comsolInstants";
 export * from "./comsolRapport";
 export * from "./comsolLatex";
+export * from "./comsolBassin";
+export * from "./comsolMaillage";

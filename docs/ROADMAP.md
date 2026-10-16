@@ -241,6 +241,8 @@ lancent tous les tests automatiques sous Windows.
       **épingles** de valeurs sur la carte, **signal au cours du temps** en un point, planche **cas × instants** (1.32.0)
 - [x] COMSOL : **rapport LaTeX** de l'étude (cas, figures en `\input`, extrema et critères booktabs, phrases chiffrées
       comparatives FR / EN, texte compatible pdflatex) (1.33.0)
+- [x] COMSOL : **bassin de déflexion** (géophones HWD, D0, SCI, BDI, BCI, AREA, rayon de courbure, écart à un bassin mesuré)
+      et **convergence du maillage** (EL / EL-fin : écart sur le pic, pire point, L2), dans le rapport LaTeX (1.34.0)
 - [x] Manuscrits : anciens fichiers **.doc** acceptés (parties, dossiers, corrections reçues), convertis en `.docx` par Word
       à côté de l'original (1.26.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),
