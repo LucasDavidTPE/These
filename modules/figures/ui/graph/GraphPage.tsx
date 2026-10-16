@@ -6,6 +6,7 @@ import { Apercu } from "./Apercu";
 import { Apparence, SerieLook } from "./Apparence";
 import { DonneesSerie } from "./DonneesSerie";
 import { CarteReglages } from "./CarteReglages";
+import { ReperesReglages } from "./ReperesReglages";
 import { Comsol } from "./Comsol";
 import { Modeles } from "./Modeles";
 import { RegressionSerie } from "./Regression";
@@ -174,10 +175,14 @@ export function GraphPage() {
               <NumberInput value={s.doc.width} onChange={(v) => s.update({ width: v })} />
             </label>
             <label className="field">
-              <span>Hauteur (mm)</span>
+              <span>Hauteur (mm){s.doc.egalite ? " — auto" : ""}</span>
               <NumberInput value={s.doc.height} onChange={(v) => s.update({ height: v })} />
             </label>
           </div>
+          <label className="chip" title="Même échelle sur les deux axes : la hauteur suit la largeur et les bornes des axes (cartes, coupes)">
+            <input type="checkbox" checked={!!s.doc.egalite} onChange={(e) => s.update({ egalite: e.target.checked || undefined })} />
+            Échelles égales (1 m = 1 m)
+          </label>
           {(["x", "y"] as const).map((k) => (
             <fieldset key={k} className="list-field">
               <legend>Axe {k}</legend>
@@ -189,6 +194,23 @@ export function GraphPage() {
                 <input type="checkbox" checked={s.doc[k].log} onChange={(e) => s.update({ [k]: { ...s.doc[k], log: e.target.checked } })} />
                 Échelle logarithmique
               </label>
+              <label className="chip" title="Valeurs croissantes vers le bas (axe y) ou vers la gauche (axe x) : profondeur positive">
+                <input type="checkbox" checked={!!s.doc[k].inverse} onChange={(e) => s.update({ [k]: { ...s.doc[k], inverse: e.target.checked || undefined } })} />
+                Sens inversé
+              </label>
+              {k === "x" && (s.doc.x.categories || s.doc.series.some((sr) => sr.type === "bar")) ? (
+                <label className="field">
+                  <span>Catégories (x = 1, 2, 3… ; séparées par ;)</span>
+                  <TextInput
+                    value={(s.doc.x.categories ?? []).join(" ; ")}
+                    onChange={(v) => {
+                      const c = v.split(";").map((t) => t.trim());
+                      s.update({ x: { ...s.doc.x, categories: c.some(Boolean) ? c : undefined } });
+                    }}
+                    placeholder="Rectangulaire ; Circulaire ; Hétérogène"
+                  />
+                </label>
+              ) : null}
               <div className="grid2">
                 <label className="field">
                   <span>Min (vide = auto)</span>
@@ -214,6 +236,7 @@ export function GraphPage() {
             </fieldset>
           ))}
           <CarteReglages />
+          <ReperesReglages />
           <label className="field">
             <span>Légende</span>
             <select value={s.doc.legend} onChange={(e) => s.update({ legend: e.target.value as LegendPos })}>

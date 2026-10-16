@@ -309,6 +309,30 @@ Ajouts permis par l'intégration :
   pgfplots (une `tikzpicture`, un `axis` par graphe placé par `at`/`anchor=north west` au millimètre du SVG,
   étiquettes en gras) ; enregistrée avec `export.svg`, `export.tex`, `export.png`. Bibliothèque : « Ouvrir
   dans Planches » et, sur un graphe, « Ajouter à une planche ».
+- **COMSOL, calculs et annotations** (1.27.0, guide d'utilisation : `docs/GUIDE_COMSOL.md`) :
+  - **tables COMSOL** (séries temporelles) : dernière ligne d'en-tête `% Temps (s)  titre (unité)…` (titres
+    séparés par tabulations ou 2 espaces, unité = première parenthèse sans virgule, `Point:` gardé), lues
+    comme un export de nature `table` (genre « série ») ; tracé superposé avec référence (valeur saisie ou
+    extremum d'un autre fichier), instant repère (10 s) et pic annoté (valeur, instant, Δt) ;
+  - **opérations** A − B, A / B, (A − B) / |B| % entre deux exports de mêmes points (appariés par
+    coordonnées arrondies à 9 chiffres, dans n'importe quel ordre ; refus détaillé sinon) → un export de la
+    liste ; **colonnes calculées** par formule (analyseur dédié, sans évaluation de code : nombres,
+    variables, + − * / ^, abs, max, min, sqrt, exp, ln, log10, sign) ; **changement de repère**
+    (± (v − origine), composable, suivi par les interfaces et les titres d'axes « Profondeur », « $y - y_0$ ») ;
+  - **profils interpolés** (linéaire entre lignes de grille, plusieurs valeurs d'un coup, légende imposée) ;
+  - **synthèse** max / min et positions, LaTeX `booktabs`, **barres groupées** (catégories = un mot du nom de
+    fichier, séries = un autre) ;
+  - **légendes** depuis les mots du nom et/ou les paramètres `@ …`, traduites par une **table de
+    correspondances** (« lc=1 » → « Rectangulaire », « het » → « Hétérogène ») ; correspondances et
+    **interfaces de couches** (z en m, texte) dans `_comsol/reglages.json` à la racine de la bibliothèque
+    (format `these-comsol/1`, partagé entre les postes) ;
+  - `graph.json` gagne : `reperes` (lignes `axe` x | y, `valeur`, `texte`, `trait` solid | dashed | dotted),
+    `annotations` (point `x`, `y`, `texte`, `position` = coin du texte), `egalite` (échelles égales : la
+    hauteur suit la largeur et les bornes), `x|y.inverse` (sens inversé, `dir=reverse`), `x.categories`
+    (noms des catégories des barres, `xticklabels`), `carte.isolignes` (carrés marchants sur les nœuds,
+    cols tranchés par la moyenne de la maille, polylignes chaînées ; `\addplot coordinates` + valeur en
+    `\node`) ; contour d'empreinte = une série noire hors légende (cercle, rectangle, courbe collée) ;
+  - planche : `memeEchelle` (bornes de couleurs communes aux cartes, symétriques si toutes en rouge-bleu).
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,

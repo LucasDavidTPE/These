@@ -124,6 +124,12 @@ export function PlanchePage() {
               ))}
             </select>
           </label>
+          {docs.filter((d) => d.carte).length >= 2 ? (
+            <label className="chip" title="Bornes de couleurs communes à toutes les cartes (symétriques autour de 0 en rouge-bleu) : les cartes se comparent d'un coup d'œil">
+              <input type="checkbox" checked={!!s.doc.memeEchelle} onChange={(e) => s.set({ memeEchelle: e.target.checked || undefined })} />
+              Même échelle de couleurs pour toutes les cartes
+            </label>
+          ) : null}
           <label className="chip">
             <input type="checkbox" checked={!!s.doc.taille} onChange={(e) => s.set({ taille: e.target.checked ? { largeur: docs[0]?.width ?? 80, hauteur: docs[0]?.height ?? 60 } : null })} />
             Même taille pour tous les graphes

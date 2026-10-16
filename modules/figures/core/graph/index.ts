@@ -12,3 +12,5 @@ export * from "./xlsx";
 export * from "./comsol";
 export * from "./carte";
 export * from "./planche";
+export * from "./comsolCalcul";
+export * from "./formule";

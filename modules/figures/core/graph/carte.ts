@@ -31,6 +31,8 @@ export interface CarteDoc {
   legende: string;
   /** Échelle inversée. */
   inverser: boolean;
+  /** Valeurs des isolignes tracées par-dessus (vide ou absent : aucune). */
+  isolignes?: number[];
 }
 
 const RAMPES: Record<PaletteCarte, string[]> = {
@@ -68,6 +70,7 @@ export function parseCarte(raw: unknown, err: (path: string, message: string) =>
   const palette = PALETTES_CARTE.includes(c.palette as PaletteCarte) ? (c.palette as PaletteCarte) : "viridis";
   const niveaux = isNum(c.niveaux) ? Math.round(Math.min(64, Math.max(2, c.niveaux))) : 24;
   const out: CarteDoc = { x, y, v: v.map((l) => [...(l as (number | null)[])]), palette, niveaux, legende: typeof c.legende === "string" ? c.legende : "", inverser: c.inverser === true };
+  if (Array.isArray(c.isolignes) && c.isolignes.some(isNum)) out.isolignes = [...new Set(c.isolignes.filter(isNum))].sort((a, b) => a - b);
   if (isNum(c.min)) out.min = c.min;
   if (isNum(c.max)) out.max = c.max;
   if (out.min !== undefined && out.max !== undefined && !(out.min < out.max)) err("carte", "min doit être inférieur à max.");
@@ -132,4 +135,103 @@ export function bordCellule(g: readonly number[], i: number): [number, number] {
 /** Carte aux axes échangés (x ↔ y), valeurs transposées. */
 export function transposerCarte(c: CarteDoc): CarteDoc {
   return { ...c, x: [...c.y], y: [...c.x], v: c.x.map((_, i) => c.y.map((__, j) => c.v[j]![i] ?? null)) };
+}
+
+// ---- Isolignes (carrés marchants sur les nœuds de la grille) ----
+
+type Pt2 = [number, number];
+
+/**
+ * Isoligne `niveau` d'une carte : polylignes en coordonnées des données, interpolées linéairement sur les arêtes
+ * entre nœuds. Les mailles qui touchent une valeur absente sont sautées ; un col (4 croisements) est tranché par
+ * la moyenne de la maille.
+ */
+export function isoligne(c: CarteDoc, niveau: number): Pt2[][] {
+  const { x, y, v } = c;
+  // arête horizontale h:i:j entre (i, j) et (i+1, j) ; verticale v:i:j entre (i, j) et (i, j+1)
+  const point = (id: string): Pt2 => {
+    const [k, a, b] = id.split(":");
+    const i = Number(a);
+    const j = Number(b);
+    const v0 = v[j]![i]!;
+    const v1 = k === "h" ? v[j]![i + 1]! : v[j + 1]![i]!;
+    const t = v1 === v0 ? 0.5 : (niveau - v0) / (v1 - v0);
+    return k === "h" ? [x[i]! + t * (x[i + 1]! - x[i]!), y[j]!] : [x[i]!, y[j]! + t * (y[j + 1]! - y[j]!)];
+  };
+  const segments: [string, string][] = [];
+  for (let j = 0; j + 1 < y.length; j++) {
+    for (let i = 0; i + 1 < x.length; i++) {
+      // coins : a (i, j), b (i+1, j), cc (i+1, j+1), d (i, j+1)
+      const vals = [v[j]![i], v[j]![i + 1], v[j + 1]![i + 1], v[j + 1]![i]];
+      if (vals.some((w) => w === null || w === undefined)) continue;
+      const haut = (vals as number[]).map((w) => w >= niveau);
+      // arêtes : 0 bas (a-b), 1 droite (b-c), 2 haut (d-c), 3 gauche (a-d)
+      const aretes = [`h:${i}:${j}`, `v:${i + 1}:${j}`, `h:${i}:${j + 1}`, `v:${i}:${j}`];
+      const coupe = [haut[0] !== haut[1], haut[1] !== haut[2], haut[3] !== haut[2], haut[0] !== haut[3]];
+      const n = coupe.filter(Boolean).length;
+      if (n === 2) {
+        const [p, q] = aretes.filter((_, k) => coupe[k]);
+        segments.push([p!, q!]);
+      } else if (n === 4) {
+        const centre = (vals as number[]).reduce((s2, w) => s2 + w, 0) / 4 >= niveau;
+        // on isole chaque coin dont l'état diffère du centre : coin → ses deux arêtes
+        const coins: [number, number][] = [
+          [0, 3],
+          [0, 1],
+          [1, 2],
+          [2, 3],
+        ];
+        coins.forEach(([e1, e2], k) => {
+          if (haut[k] !== centre) segments.push([aretes[e1]!, aretes[e2]!]);
+        });
+      }
+    }
+  }
+  // chaînage des segments par arêtes communes
+  const parArete = new Map<string, number[]>();
+  segments.forEach(([p, q], k) => {
+    for (const e of [p, q]) parArete.set(e, [...(parArete.get(e) ?? []), k]);
+  });
+  const vu = new Set<number>();
+  const lignes: Pt2[][] = [];
+  const suivre = (depart: number, debut: string) => {
+    const chemin = [debut];
+    let k = depart;
+    let bout = debut;
+    while (!vu.has(k)) {
+      vu.add(k);
+      const [p, q] = segments[k]!;
+      bout = p === bout ? q : p;
+      chemin.push(bout);
+      const suivant = (parArete.get(bout) ?? []).find((m) => !vu.has(m));
+      if (suivant === undefined) break;
+      k = suivant;
+    }
+    lignes.push(chemin.map(point));
+  };
+  // d'abord les lignes ouvertes (une extrémité sur une seule maille), puis les boucles
+  segments.forEach(([p, q], k) => {
+    if (vu.has(k)) return;
+    if ((parArete.get(p) ?? []).length === 1) suivre(k, p);
+    else if ((parArete.get(q) ?? []).length === 1) suivre(k, q);
+  });
+  segments.forEach(([p], k) => {
+    if (!vu.has(k)) suivre(k, p);
+  });
+  return lignes;
+}
+
+/** Point où écrire la valeur d'une isoligne : le milieu de sa plus longue polyligne (null si vide). */
+export function placeEtiquette(lignes: Pt2[][], echelle: (p: Pt2) => Pt2 = (p) => p): Pt2 | null {
+  let best: Pt2[] | null = null;
+  let lmax = -1;
+  for (const l of lignes) {
+    const e = l.map(echelle);
+    const lg = e.slice(1).reduce((s2, p, k) => s2 + Math.hypot(p[0] - e[k]![0], p[1] - e[k]![1]), 0);
+    if (lg > lmax) {
+      lmax = lg;
+      best = l;
+    }
+  }
+  return best ? best[Math.floor(best.length / 2)]! : null;
 }

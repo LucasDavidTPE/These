@@ -15,6 +15,7 @@ import {
   STYLES_DIR,
   styleFileName,
   validateGraph,
+  hauteurEgale,
   decodeText,
   estComsol,
   lireComsol,
@@ -116,7 +117,14 @@ export const useGraph = create<GraphState>()((set, get) => {
   // Historique : chaque changement du graphe passe par commit ; la saisie au clavier
   // (plusieurs changements en moins d'une seconde sur le même champ) n'en fait qu'un.
   let dernier = { cle: "", quand: 0 };
-  const commit = (doc: GraphDoc, cle = "") => {
+  const commit = (doc0: GraphDoc, cle = "") => {
+    // échelles égales : la hauteur suit la largeur et les bornes des axes
+    let doc = doc0;
+    try {
+      if (doc0.egalite) doc = { ...doc0, height: hauteurEgale(doc0) };
+    } catch {
+      // graphe incomplet : la hauteur sera recalculée à la modification suivante
+    }
     const now = Date.now();
     const fusion = cle !== "" && cle === dernier.cle && now - dernier.quand < 1000;
     dernier = { cle, quand: now };

@@ -1173,3 +1173,71 @@ button.small-btn.actif {
   padding: 4px 0;
   border-bottom: 1px dashed var(--border, #ddd);
 }
+
+/* COMSOL : outils par fichier, réglages partagés, synthèse */
+.comsol-outils,
+.comsol-reglages {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 6px;
+  border: 1px dashed var(--border, #ccc);
+  border-radius: 4px;
+}
+
+.comsol-outils h5,
+.comsol-panneau h5 {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+
+.comsol-ligne,
+.repere-ligne {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.comsol-ligne input,
+.repere-ligne input,
+.repere-ligne select {
+  min-width: 0;
+  flex: 1;
+}
+
+.repere-ligne select {
+  flex: 0 0 auto;
+  max-width: 90px;
+}
+
+.rangee-boutons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.comsol-synthese {
+  max-height: 260px;
+  overflow: auto;
+  font-size: 11.5px;
+}
+
+.comsol-synthese table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.comsol-synthese th,
+.comsol-synthese td {
+  padding: 2px 4px;
+  border-bottom: 1px solid var(--border, #e2e2e2);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.carte-contour summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  margin: 4px 0;
+}

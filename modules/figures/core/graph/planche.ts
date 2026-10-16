@@ -6,7 +6,8 @@
  */
 import { escapeXml, primitiveSvg } from "../schema/export/svg";
 import { exportPgfplots } from "./export";
-import { graphLayout } from "./layout";
+import { bornesCarte } from "./carte";
+import { graphLayout, hauteurEgale } from "./layout";
 import type { GraphDoc } from "./model";
 import { graphTheme } from "./style";
 
@@ -25,6 +26,8 @@ export interface PlancheDoc {
   taille: { largeur: number; hauteur: number } | null;
   /** Graphes, dans l'ordre de lecture (dossier de la figure dans la bibliothèque). */
   panneaux: { dossier: string }[];
+  /** Même échelle de couleurs pour toutes les cartes de la planche (bornes communes). */
+  memeEchelle?: boolean;
 }
 
 export function plancheVide(): PlancheDoc {
@@ -42,6 +45,7 @@ export function lirePlanche(raw: unknown): PlancheDoc {
     espacement: num(b.espacement, 0, 50, 6),
     etiquettes: ETIQUETTES.includes(b.etiquettes as StyleEtiquette) ? (b.etiquettes as StyleEtiquette) : "(a)",
     taille: t && typeof t === "object" ? { largeur: num(t.largeur, 20, 1000, 80), hauteur: num(t.hauteur, 20, 1000, 60) } : null,
+    ...(b.memeEchelle === true ? { memeEchelle: true } : {}),
     panneaux: (Array.isArray(b.panneaux) ? b.panneaux : []).filter((p): p is { dossier: string } => typeof (p as { dossier?: unknown })?.dossier === "string").map((p) => ({ dossier: p.dossier })),
   };
 }
@@ -63,8 +67,31 @@ export interface MisePage {
 }
 
 /** Grille : colonnes à la largeur du plus large graphe de la colonne, lignes à la hauteur du plus haut. */
+/**
+ * Bornes de couleurs communes aux cartes d'une planche : la plus petite et la plus grande des bornes de chaque
+ * carte (symétriques autour de 0 si toutes sont en rouge-bleu) ; null s'il y a moins de deux cartes.
+ */
+export function echelleCommune(docs: readonly GraphDoc[]): [number, number] | null {
+  const cartes = docs.map((d) => d.carte).filter((c): c is NonNullable<GraphDoc["carte"]> => !!c);
+  if (cartes.length < 2) return null;
+  const b = cartes.map(bornesCarte);
+  const lo = Math.min(...b.map((x) => x[0]));
+  const hi = Math.max(...b.map((x) => x[1]));
+  if (cartes.every((c) => c.palette === "divergente")) {
+    const m = Math.max(Math.abs(lo), Math.abs(hi));
+    return [-m, m];
+  }
+  return [lo, hi];
+}
+
 export function miseEnPage(p: PlancheDoc, docs: readonly GraphDoc[]): MisePage {
-  const sized = docs.map((d) => (p.taille ? { ...d, width: p.taille.largeur, height: p.taille.hauteur } : d));
+  const commune = p.memeEchelle ? echelleCommune(docs) : null;
+  const sized = docs.map((d0) => {
+    let d = commune && d0.carte ? { ...d0, carte: { ...d0.carte, min: commune[0], max: commune[1] } } : d0;
+    if (p.taille) d = { ...d, width: p.taille.largeur, height: p.taille.hauteur };
+    // échelles égales : la hauteur suit la largeur imposée
+    return d.egalite ? { ...d, height: hauteurEgale(d) } : d;
+  });
   const n = sized.length;
   const cols = Math.max(1, Math.min(p.colonnes, n || 1));
   const lignes = Math.ceil(n / cols);

@@ -8,7 +8,7 @@ import type { Primitive } from "../schema/geometry";
 import type { Theme } from "../schema/theme";
 import type { Pt } from "../schema/types";
 import { fitCorner, fitLabel, fitPoints, fitSample, fitSeries, type FitResult } from "./fit";
-import { bordCellule, bornesCarte, couleursCarte, palier } from "./carte";
+import { bordCellule, bornesCarte, couleursCarte, isoligne, palier, placeEtiquette } from "./carte";
 import type { GraphDoc, Series } from "./model";
 import { graphTheme } from "./style";
 import { formatTick, linearScale, logScale, project, type AxisScale } from "./ticks";
@@ -74,7 +74,22 @@ export function barScale(doc: GraphDoc): AxisScale {
   if (xsAll.length > 25) return linearScale(min, max, { min, max });
   const dec = Math.max(0, ...xsAll.map((v) => (String(v).split(".")[1] ?? "").length));
   const ticks = xsAll.filter((v) => v >= min && v <= max);
-  return { min, max, ticks, labels: ticks.map((t) => formatTick(t, Math.min(dec, 6), ticks.some((v) => Math.abs(v) >= 10000))), log: false };
+  const cat = doc.x.categories;
+  const label = (t: number) => (cat && Number.isInteger(t) && cat[t - 1] !== undefined ? cat[t - 1]! : formatTick(t, Math.min(dec, 6), ticks.some((v) => Math.abs(v) >= 10000)));
+  return { min, max, ticks, labels: ticks.map(label), log: false };
+}
+
+/**
+ * Hauteur d'un graphe à échelles égales (1 unité en x = 1 unité en y) pour sa largeur : la boîte des axes
+ * prend les proportions des bornes des axes (bornée à 20…1000 mm).
+ */
+export function hauteurEgale(doc: GraphDoc): number {
+  const M = marginsOf(doc);
+  const { xs, ys } = scales(doc);
+  if (xs.log || ys.log || !(xs.max > xs.min) || !(ys.max > ys.min)) return doc.height;
+  const w = doc.width - M.left - M.right;
+  const h = (w * (ys.max - ys.min)) / (xs.max - xs.min);
+  return Math.round(Math.min(1000, Math.max(20, h + M.top + M.bottom)) * 10) / 10;
 }
 
 /** Découpe d'un segment par la boîte (Liang-Barsky) ; null s'il est dehors. */
@@ -138,8 +153,8 @@ export function graphLayout(doc: GraphDoc): GraphLayout {
   const M = marginsOf(doc);
   const box = { x: M.left, y: M.top, w: doc.width - M.left - M.right, h: doc.height - M.top - M.bottom };
   const { xs, ys } = scales(doc);
-  const X = (v: number) => box.x + project(xs, v) * box.w;
-  const Y = (v: number) => box.y + (1 - project(ys, v)) * box.h;
+  const X = (v: number) => box.x + (doc.x.inverse ? 1 - project(xs, v) : project(xs, v)) * box.w;
+  const Y = (v: number) => box.y + (doc.y.inverse ? project(ys, v) : 1 - project(ys, v)) * box.h;
   const out: Primitive[] = [];
   const line = (pts: Pt[], extra: Partial<Extract<Primitive, { kind: "path" }>> = {}): Primitive => ({
     kind: "path",
@@ -188,6 +203,27 @@ export function graphLayout(doc: GraphDoc): GraphLayout {
       }
     }
   });
+
+  // Isolignes de la carte (par-dessus les couleurs et les courbes), valeur écrite au milieu de la plus longue.
+  if (doc.carte?.isolignes?.length) {
+    for (const niveau of doc.carte.isolignes) {
+      const lignes = isoligne(doc.carte, niveau);
+      for (const l of lignes) {
+        const pts: Pt[] = l.map(([a, b]) => [X(a), Y(b)]);
+        for (let j = 0; j + 1 < pts.length; j++) {
+          const seg = clipSegment(pts[j]!, pts[j + 1]!, box);
+          if (seg) out.push(line(seg, { color: "#000000" }));
+        }
+      }
+      const at = placeEtiquette(lignes, ([a, b]) => [X(a), Y(b)]);
+      if (at && X(at[0]) >= box.x && X(at[0]) <= box.x + box.w && Y(at[1]) >= box.y && Y(at[1]) <= box.y + box.h) {
+        out.push({ kind: "text", at: [X(at[0]), Y(at[1])], text: formatTick(niveau, decimales(niveau), false), anchor: "center", halo: true, size: "petit" });
+      }
+    }
+  }
+
+  // Repères (lignes) et annotations (points commentés).
+  out.push(...reperes(doc, theme, box, X, Y, xs, ys));
 
   // Régressions : courbe en tirets de la couleur de la série.
   const fits = graphFits(doc, xs, ys);
@@ -238,6 +274,42 @@ export function graphLayout(doc: GraphDoc): GraphLayout {
   return { box, xs, ys, primitives: out };
 }
 
+/** Décimales utiles d'une valeur saisie (0,25 → 2), pour l'écrire telle quelle. */
+export function decimales(v: number): number {
+  return Math.min(6, (String(Number(v.toPrecision(10))).split(".")[1] ?? "").length);
+}
+
+const dansAxe = (s: AxisScale, v: number) => Number.isFinite(v) && v >= Math.min(s.min, s.max) && v <= Math.max(s.min, s.max) && (!s.log || v > 0);
+
+/** Lignes de repère (étiquette au bout, côté haut / droite) et annotations (point + texte dans un coin). */
+function reperes(doc: GraphDoc, theme: Theme, box: GraphLayout["box"], X: (v: number) => number, Y: (v: number) => number, xs: AxisScale, ys: AxisScale): Primitive[] {
+  const out: Primitive[] = [];
+  for (const r of doc.reperes ?? []) {
+    if (!dansAxe(r.axe === "x" ? xs : ys, r.valeur)) continue;
+    const dash = r.trait === "dotted" ? ("dotted" as const) : r.trait === "dashed" ? true : undefined;
+    if (r.axe === "y") {
+      const y = Y(r.valeur);
+      out.push({ kind: "path", segs: [{ op: "M", p: [box.x, y] }, { op: "L", p: [box.x + box.w, y] }], stroke: "trait fin", fill: "none", color: theme.ink, dash });
+      if (r.texte) out.push({ kind: "text", at: [box.x + box.w - 1, y - 0.6], text: r.texte, anchor: "south east", halo: true, size: "petit" });
+    } else {
+      const x = X(r.valeur);
+      out.push({ kind: "path", segs: [{ op: "M", p: [x, box.y] }, { op: "L", p: [x, box.y + box.h] }], stroke: "trait fin", fill: "none", color: theme.ink, dash });
+      if (r.texte) out.push({ kind: "text", at: [x + 0.8, box.y + 1], text: r.texte, anchor: "north west", halo: true, size: "petit" });
+    }
+  }
+  for (const a of doc.annotations ?? []) {
+    if (!dansAxe(xs, a.x) || !dansAxe(ys, a.y)) continue;
+    const p: Pt = [X(a.x), Y(a.y)];
+    out.push({ kind: "circle", c: p, r: 0.6, stroke: null, fill: "none", fillColor: theme.ink });
+    if (!a.texte) continue;
+    const est = a.position.includes("east");
+    const nord = a.position.includes("north");
+    const anchor = `${nord ? "south" : "north"} ${est ? "west" : "east"}` as const;
+    out.push({ kind: "text", at: [p[0] + (est ? 1.2 : -1.2), p[1] + (nord ? -1.2 : 1.2)], text: a.texte, anchor, halo: true, size: "petit" });
+  }
+  return out;
+}
+
 /**
  * Cellules de la carte (plages contiguës de même palier fusionnées, coupées à la boîte des axes) et barre
  * de couleurs graduée à droite de la boîte.
@@ -251,8 +323,8 @@ function carte(doc: GraphDoc, X: (v: number) => number, Y: (v: number) => number
   const clipY = (v: number) => Math.max(box.y, Math.min(box.y + box.h, v));
   c.y.forEach((_, j) => {
     const [ya, yb] = bordCellule(c.y, j);
-    const y0 = clipY(Y(yb));
-    const y1 = clipY(Y(ya));
+    const y0 = clipY(Math.min(Y(ya), Y(yb)));
+    const y1 = clipY(Math.max(Y(ya), Y(yb)));
     if (y1 - y0 <= 1e-9) return;
     let i = 0;
     while (i < c.x.length) {
@@ -264,8 +336,9 @@ function carte(doc: GraphDoc, X: (v: number) => number, Y: (v: number) => number
       const k = palier(c, bornes, v);
       let fin = i;
       while (fin + 1 < c.x.length && c.v[j]![fin + 1] !== null && palier(c, bornes, c.v[j]![fin + 1]!) === k) fin++;
-      const x0 = clipX(X(bordCellule(c.x, i)[0]));
-      const x1 = clipX(X(bordCellule(c.x, fin)[1]));
+      const [xa, xb] = [X(bordCellule(c.x, i)[0]), X(bordCellule(c.x, fin)[1])];
+      const x0 = clipX(Math.min(xa, xb));
+      const x1 = clipX(Math.max(xa, xb));
       // léger recouvrement : pas de liseré blanc entre cellules
       if (x1 - x0 > 1e-9) out.push({ kind: "rect", x: x0, y: y0, w: x1 - x0 + 0.05, h: y1 - y0 + 0.05, stroke: null, fill: "none", fillColor: couleurs[k] });
       i = fin + 1;

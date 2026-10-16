@@ -92,7 +92,10 @@ export function Apercu() {
     const { box, xs, ys } = disposition;
     const tx = (mx - box.x) / box.w,
       ty = 1 - (my - box.y) / box.h;
-    return { x: unproject(xs, tx), y: unproject(ys, ty), dedans: tx >= 0 && tx <= 1 && ty >= 0 && ty <= 1 };
+    // axes inversés (profondeur vers le bas) : la position se lit à rebours
+    const ux = rendu.doc.x.inverse ? 1 - tx : tx,
+      uy = rendu.doc.y.inverse ? 1 - ty : ty;
+    return { x: unproject(xs, ux), y: unproject(ys, uy), dedans: tx >= 0 && tx <= 1 && ty >= 0 && ty <= 1 };
   }
 
   function relacher() {

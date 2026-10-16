@@ -1,16 +1,20 @@
 # Tracer des exports COMSOL dans Thèse
 
 Guide d'utilisation de tout ce que **Figures → Graphes** sait faire avec les fichiers exportés de COMSOL
-(versions 1.24.0 à 1.25.0) : les données attendues, ce que l'appli en comprend, les tracés possibles, les
-réglages après coup, l'enregistrement, les exports LaTeX et l'assemblage en planches.
+(versions 1.24.0 à 1.27.0) : les données attendues, ce que l'appli en comprend, les tracés possibles, les
+calculs avant tracé, les réglages après coup, l'enregistrement, les exports LaTeX et l'assemblage en planches.
 
 En bref :
 
-1. Dans COMSOL, exporter des **Données** (profil le long d'une ligne, ou coupe sur un plan) en `.txt`.
+1. Dans COMSOL, exporter des **Données** (profil le long d'une ligne, ou coupe sur un plan) ou une **Table**
+   (signal en un point au cours du temps) en `.txt`.
 2. Dans Thèse, *Figures → Graphes → « Ouvrir des exports COMSOL… »*, en choisissant un ou plusieurs fichiers.
-3. **Tracer** : les profils superposés, la carte en couleurs d'une coupe, ou un profil extrait d'une coupe.
-4. **Retoucher** à droite (axes, légendes, couleurs, palette, taille), puis **Enregistrer** dans la bibliothèque.
-5. **Exporter** en pgfplots, SVG ou PNG, ou **assembler** plusieurs graphes dans une planche (a), (b)…
+3. **Calculer** si besoin : colonne calculée, changement de repère, A − B / A / B / écart relatif entre deux
+   cas, profils interpolés dans une coupe, tableau de synthèse.
+4. **Tracer** : profils superposés, carte en couleurs, séries temporelles, barres groupées.
+5. **Retoucher** à droite (axes, légendes, couleurs, palette, isolignes, repères, annotations, taille), puis
+   **Enregistrer** dans la bibliothèque.
+6. **Exporter** en pgfplots, SVG ou PNG, ou **assembler** plusieurs graphes dans une planche (a), (b)…
 
 ---
 
@@ -85,7 +89,9 @@ Les expressions COMSOL sont traduites en libellés d'axe prêts pour LaTeX :
 | `1e3*solid.eXX` | `$\varepsilon_{xx}$` | ‰ |
 | `100*solid.eYY` | `$\varepsilon_{yy}$` | % |
 | `solid.eXZ` (sans facteur) | `$\varepsilon_{xz}$` | - |
-| `solid.ep1`, `solid.ep3` (principales) | `$\varepsilon_{1}$`, `$\varepsilon_{3}$` | selon le facteur |
+| `solid.ep1`, `solid.ep3` (principales), ou des variables nommées `e1`, `e3` | `$\varepsilon_{1}$`, `$\varepsilon_{3}$` | selon le facteur |
+| variables nommées `exx`, `ezz`, `exz`…, `eeq`, `sxx`, `szz` | `$\varepsilon_{xx}$`…, `$\varepsilon_{eq}$`, `$\sigma_{xx}$`… | selon facteur et unité |
+| titres de table « Déformation, composante zz », « Contrainte, composante xz » | `$\varepsilon_{zz}$`, `$\sigma_{xz}$` | selon l'unité |
 | `1e-6*solid.sZZ` (unité `Pa`) | `$\sigma_{zz}$` | MPa |
 | `1e-3*solid.sp1` | `$\sigma_{1}$` | kPa |
 | `solid.mises` | `$\sigma_{VM}$` | Pa (ou selon le facteur) |
@@ -94,7 +100,27 @@ Les expressions COMSOL sont traduites en libellés d'axe prêts pour LaTeX :
 
 Facteurs reconnus : `1e6`, `1e3`, `100`, `1` pour les grandeurs sans dimension et les longueurs, `1e-6`, `1e-3`
 pour les pascals. Un facteur inconnu s'affiche tel quel (« 1e4 Pa »). Tous ces libellés se corrigent
-ensuite à la main (§ 6).
+ensuite à la main (§ 8).
+
+### 1.4 Exports de tables (séries temporelles)
+
+Une **Table** COMSOL (évaluation en un point, *Point Evaluation*, au cours d'une étude temporelle) exportée en
+texte est reconnue, avec ou sans les lignes `% Model:`… :
+
+```
+% Model:              tfeversion3.mph
+% Table:              Table 2 - Évaluation ponctuelle 1
+% Temps (s)               1e6*solid.eZZ (1), Point: (0.848, 6.5, -0.08)          Déformation, composante xz (1), Point: (…)
+0.0                     -1.09e-11                                               0
+0.5                     -1.61e-10                                               4.79e-06
+```
+
+- La **dernière ligne d'en-tête** commence par la variable de la table et son unité : `Temps (s)`, `Time (s)`,
+  `Fréquence (Hz)`… C'est elle qui distingue une table d'un export « Données » (qui commence par X, Y, Z).
+- Les **titres** sont séparés par des tabulations ou au moins deux espaces ; l'unité est la première
+  parenthèse sans virgule (`(1)`, `(Pa)`), le reste (`Point: (…)`, `@ …: lc=3`) est gardé comme paramètres.
+- Une ligne par instant, valeurs séparées par des blancs. Le fichier est listé « série (Temps en s),
+  41 instants, 2 colonne(s) ».
 
 ---
 
@@ -106,6 +132,8 @@ ensuite à la main (§ 6).
 - Chaque fichier est listé avec ce que l'appli a détecté : « profil vertical (Z), 161 points », « coupe YZ,
   263 × 65 points », « nuage 3D… ». Le survol affiche le modèle, la date et les paramètres de l'étude.
 - **×** retire un fichier de la liste. Les fichiers sont lus, jamais modifiés.
+- **ƒ** ouvre les outils du fichier : colonne calculée et changement de repère (§ 5).
+- La **case à cocher** devant un profil dit s'il est tracé avec les autres (pour n'en superposer que certains).
 - « Ouvrir des données… », le bouton général de Graphes, reconnaît aussi un export COMSOL et l'envoie dans ce
   panneau.
 - Lecture rapide : une coupe de 7 Mo s'ouvre en quelques secondes au plus.
@@ -120,6 +148,7 @@ Pour chaque fichier, l'appli regarde quelles coordonnées **varient** :
 | une seule | **profil** (vertical si c'est Z, horizontal sinon) | courbes |
 | deux | **coupe** (grille régulière ou non) | carte (si régulière), profils extraits |
 | trois | nuage 3D | non traçable tel quel |
+| (table) | **série** | séries temporelles (§ 6) |
 
 ### Corriger la lecture si la détection se trompe
 
@@ -173,17 +202,35 @@ Pour chaque fichier, la légende est choisie ainsi :
    « lc=1, VE=1 ».
 3. À défaut, le nom du fichier.
 
-Chaque légende se **modifie à la main** dans le champ « Légende » sous le fichier, avant de tracer. La
+« **Légendes depuis** » impose la source : mots du nom de fichier, paramètres de l'en-tête (`@ lc=3, VE=1`),
+ou les deux (« VE het — Hétérogène, Viscoélastique »).
+
+**Table de correspondances** (« Correspondances et couches », réglée une fois pour **toute la
+bibliothèque**, fichier `_comsol/reglages.json`, partagé entre les deux PC) : chaque ligne traduit un mot du
+nom de fichier (`het` → « Hétérogène », `VE` → « Viscoélastique ») ou un paramètre de l'en-tête (`lc=1` →
+« Rectangulaire », `VE=0` → « Élastique »). Valeurs proposées au départ : lc=1/2/3 → Rectangulaire /
+Circulaire / Hétérogène, VE=0/1 → Élastique / Viscoélastique. « Enregistrer » sous le tableau.
+
+Chaque légende se **modifie encore à la main** dans le champ « Légende » sous le fichier, avant de tracer. La
 légende du graphe est placée dans le **coin le moins chargé** en points.
 
 ### 3.4 Tracer
 
 **« Tracer le profil »** ou **« Tracer les N profils »** remplace le graphe en cours, après confirmation
-s'il y en a un. Le résultat est un **graphe ordinaire**, modifiable entièrement (§ 6) :
+s'il y en a un. Le résultat est un **graphe ordinaire**, modifiable entièrement (§ 8) :
 
 - titre proposé : « εzz — 3 profil(s) COMSOL » ;
 - taille de départ : 90 × 110 mm pour un profil vertical, 130 × 80 mm pour un profil horizontal ;
-- quadrillage, thème « these », courbes en traits continus.
+- quadrillage, thème « these », courbes en traits continus ;
+- **« Repères des couches »** coché : une ligne en tirets à chaque interface de couches (§ 3.5).
+
+### 3.5 Repères des couches
+
+Les **interfaces de couches** (cote z dans les coordonnées des fichiers, en m, z = 0 en surface) se règlent
+une fois pour toute la bibliothèque, avec les correspondances : par défaut z = −0,08 « BB/GB » et z = −0,32
+« GB/GRH ». La case « Repères des couches » les ajoute aux profils verticaux et aux cartes dont un axe est z,
+converties dans l'unité de tracé et dans le repère choisi (profondeur positive comprise). Sur n'importe quel
+graphe, le bloc « Repères et annotations » → « Interfaces de couches » les ajoute aussi (axe, unité, sens).
 
 ---
 
@@ -222,48 +269,133 @@ Le reste se règle comme pour n'importe quel graphe : les **bornes des axes** (p
 charge, par exemple), les libellés, la taille du graphe, la police. On peut aussi **superposer des courbes**
 à la carte, par exemple la position des interfaces entre couches importée d'un tableau.
 
-### 4.2 Extraire un profil d'une coupe
+En plus (1.27.0) :
 
-Sous « Ou extraire un profil » : choisir une ligne de la grille (« à Y = … » ou « à Z = … », valeurs
-proposées dans la grille), puis **« Ajouter ce profil »**. Le profil rejoint la liste des fichiers sous le
-nom `coupe_… (Y = 4.6 m)` et se trace avec les autres profils, avec légende, superposition et orientation.
-C'est l'outil idéal pour comparer « au droit de la roue » et « entre les roues » à partir d'un seul export de
-plan.
+| Réglage | Effet |
+|---|---|
+| **Isolignes** | valeurs séparées par `;` (« −200 ; −100 ; 0 »), ou « 3 / 7 niveaux réguliers » entre les bornes des couleurs. Tracées en noir fin, valeur écrite au milieu de la plus longue ligne (carrés marchants sur la grille ; une maille avec un trou est sautée). |
+| **Contour d'empreinte…** | superpose un **cercle** (centre, rayon), un **rectangle** (centre, lx × Ly) ou une **courbe collée** (x y par ligne), en unités des axes (mm si les longueurs sont en mm). C'est une série en trait noir hors légende, modifiable ou supprimable dans « Séries ». |
+| **Échelles égales (1 m = 1 m)** | sous la taille du graphe : la hauteur suit la largeur et les bornes des axes, pour une coupe à ses vraies proportions. Recalculée à chaque changement de bornes. |
+| **Sens inversé** (axe) | profondeur croissante vers le bas ; posé tout seul quand z est passé en profondeur positive (§ 5). |
+
+### 4.2 Profils extraits d'une coupe (interpolés, plusieurs d'un coup)
+
+Sous « Profils extraits » : choisir la **coordonnée fixe** (X = …, Y = … ou Z = …, unité du fichier) et taper
+une ou **plusieurs valeurs** (« 0,70 ; 0,848 ; 0,90 ; 0,967 »), puis **« Ajouter les N profils »**. Une valeur
+entre deux lignes de la grille est **interpolée linéairement** (exacte sur une ligne de la grille) ; une valeur
+hors de la coupe est refusée. Les profils rejoignent la liste, cochés, légendés « $x$ = 0,848 m », et se
+tracent ensemble (« Tracer les 4 profils »), avec orientation, profondeur et repères des couches. Décocher
+les autres profils de la liste pour ne superposer que ceux-là.
 
 ---
 
-## 5. Ce qui n'est pas (encore) possible
+## 5. Calculs avant le tracé
+
+### 5.1 Colonnes calculées (bouton ƒ d'un fichier)
+
+Une **formule** sur les colonnes du fichier, évaluée point par point ; la nouvelle colonne s'ajoute au
+fichier et se trace, se cartographie ou se synthétise comme les autres.
+
+- **Noms** : le nom de variable COMSOL (`1e6*solid.eZZ` → `ezz`, `solid.ep1` → `ep1` ou `e1`, `w`), les
+  coordonnées (`x`, `y`, `z`, `t` pour une table) et `c1`, `c2`… (n° de colonne). La liste est affichée sous la
+  formule ; un nom porté par deux colonnes n'est accessible que par `cN`.
+- **Opérations** : `+ − * / ^`, parenthèses, `abs`, `max(·,·)`, `min`, `sqrt`, `exp`, `ln`, `log10`, `sign`.
+  Point décimal. Une division par zéro donne un trou, pas une erreur.
+- **Exemples** : `abs(ezz)`, `max(e1, 0)` (traction seule), `0.5*(exx + eyy)`, `-ezz` (changement de signe),
+  `1e-3*ezz` (µdef → ‰), `e1 - e3`.
+- **Nom** et **unité** de la colonne : ce qui s'affiche sur l'axe et dans les listes.
+
+### 5.2 Changement de repère (bouton ƒ d'un fichier)
+
+Nouvelle coordonnée = ± (ancienne − origine), sur X, Y ou Z, dans l'unité du fichier :
+
+- **z en profondeur positive** : coordonnée Z, origine 0, « Changer le sens » → l'axe devient « Profondeur »,
+  dirigé vers le bas sur les cartes ;
+- **centrer sur la roue** : coordonnée Y, origine y0 (6,5 m, par exemple) → l'axe devient « $y - y_0$ ».
+
+Les changements se composent ; « Repère d'origine » revient aux coordonnées du fichier. Les interfaces de
+couches suivent le repère.
+
+### 5.3 Opérations entre deux fichiers (« Opérations entre fichiers »)
+
+**A − B**, **A / B** ou **écart relatif (A − B) / |B|** en %, point à point, sur les expressions communes aux
+deux fichiers (VE / EL, het / circ…). Les deux fichiers doivent avoir **les mêmes points** (dans n'importe quel
+ordre) ; sinon l'opération est **refusée** avec le nombre de points qui manquent et un exemple
+(« Grilles différentes : 9 points dans A, 9 dans B, dont 3 de A absents de B (par exemple X = 0,8, …) »).
+Le résultat **s'ajoute à la liste** comme un fichier (légende « VE het / EL het ») : carte, profils,
+profils extraits ou synthèse, puis « Enregistrer » comme tout graphe. Les libellés suivent :
+« Δε_zz (µdef) », « ε_zz (rapport) (-) », « Écart relatif ε_zz (%) ».
+
+> L'écart relatif est rapporté à |B| : pour des déformations négatives (compression), un VE plus comprimé que
+> l'EL donne un écart **négatif**. Pour comparer des amplitudes, prendre le rapport, ou une colonne `abs(ezz)`
+> avant l'opération.
+
+### 5.4 Tableau de synthèse (« Tableau de synthèse »)
+
+Pour une sélection de fichiers (par défaut : les fichiers d'origine, ni tables ni résultats de calcul) et de
+grandeurs : le **max**, le **min** et leur **position** (x, y, z dans l'unité de tracé ; l'instant pour une
+table), une ligne par fichier × grandeur, avec la légende du cas (correspondances comprises).
+
+- **« Copier LaTeX (booktabs) »** / **« Exporter .tex… »** : un `table` + `tabular` avec `\toprule`,
+  `\cmidrule` (Maximum / Minimum), `\midrule`, `\bottomrule` (paquet `booktabs`) ; virgule décimale en
+  option.
+- **Barres groupées** : une grandeur, une valeur (extremum en valeur absolue, max ou min), les **catégories**
+  en abscisse = un mot du nom de fichier (l'empreinte : mot n° 4 de `coupeXZ_R1_VE_het`), les **séries** = un
+  autre mot (le matériau : mot n° 3). Les correspondances s'appliquent (« het » → « Hétérogène »). Le
+  graphe a des catégories nommées en abscisse (modifiables : axe x → « Catégories »).
+
+---
+
+## 6. Séries temporelles (exports de tables)
+
+Section **« Séries temporelles »** dès qu'une table est ouverte :
+
+- **Colonnes** à tracer (communes aux tables) ; plusieurs fichiers = courbes superposées, légendes comme
+  pour les profils.
+- **Référence (trait horizontal)** : aucune, une **valeur saisie** (et son texte, « Élastique »), ou
+  l'**extremum** de la même grandeur dans un autre fichier ouvert (le cas élastique, table ou données).
+- **Instant repère** (10 s par défaut) : un trait vertical pointillé « t = 10 s ».
+- **Pic annoté** : plus grande valeur absolue, maximum ou minimum de chaque courbe ; le point est marqué et
+  commenté « −150 µdef à 11 s ; Δt = +1 s » (décalage par rapport à l'instant repère). Le texte se place
+  vers l'intérieur du graphe et se déplace ou se corrige dans « Repères et annotations ».
+
+---
+
+## 7. Ce qui n'est pas (encore) possible
 
 - **Nuage 3D** (trois coordonnées qui varient) : pas de carte ni de profil direct. Exporter plutôt une ligne
   ou un plan de coupe.
-- **Coupe aux nœuds du maillage** (grille non régulière) : pas de carte, il faut réexporter sur une grille
-  régulière. On peut encore forcer la lecture en profil.
+- **Coupe aux nœuds du maillage** (grille non régulière) : pas de carte ni de profil interpolé, ni
+  d'opération avec un export sur grille ; il faut réexporter sur une grille régulière.
 - **Virgule décimale** dans les valeurs (export retouché dans Excel en français) : non lue, il faut garder
   le point de COMSOL.
-- **Isolignes** (contours) et **interpolation lisse** de la carte : non faits. La carte est en cellules
-  (paliers), comme `matrix plot` de pgfplots.
-- **Calculs entre colonnes** (ε1 − ε3, rapport de deux cas…) : à faire dans COMSOL, en exportant
-  l'expression voulue directement.
-- La **liste des fichiers ouverts** n'est pas enregistrée : seul le graphe tracé l'est. Pour refaire un tracé
-  d'un autre fichier, il faut le rouvrir.
+- **Interpolation lisse** de la carte : non faite. La carte est en cellules (paliers), comme `matrix plot`
+  de pgfplots ; les isolignes sont linéaires par maille.
+- **Opérations entre plus de deux fichiers** en une fois : les enchaîner (le résultat est un fichier).
+- La **liste des fichiers ouverts** (et les colonnes calculées) n'est pas enregistrée : seul le graphe tracé
+  l'est. Pour refaire un tracé d'un autre fichier, il faut le rouvrir.
 
 ---
 
-## 6. Retoucher le graphe (tout est modifiable après coup)
+## 8. Retoucher le graphe (tout est modifiable après coup)
 
 Une fois tracé, un profil ou une carte est un graphe normal de la page Graphes. Tout se règle à droite :
 
-- **Axes** : libellés (`$…$` pour LaTeX), bornes, échelle log, graduations, axes FR/EN.
+- **Axes** : libellés (`$…$` pour LaTeX), bornes, échelle log, **sens inversé**, catégories (barres),
+  graduations, axes FR/EN.
 - **Séries** : nom (légende), couleur, style de trait, marqueurs, épaisseur. On peut aussi en ajouter, en
   dupliquer ou en retirer.
 - **Données** (colonne de gauche) : gomme, tableau x ↹ y, ×/+ sur x ou y (changement d'unité, de signe),
   moyenne glissante, échange des axes. Annuler / Rétablir sont disponibles.
 - **Apparence** : taille en mm, thème, palettes, styles enregistrés, position de la légende, quadrillage.
 - **Carte** : le bloc « Carte en couleurs » (§ 4.1).
+- **Repères et annotations** : lignes horizontales ou verticales (valeur, texte, trait continu / tirets /
+  pointillé), interfaces de couches, points commentés (x, y, texte, côté du texte). Exportés en SVG et en
+  pgfplots (`\draw … node`, `\fill … circle`, `\node`).
 
 ---
 
-## 7. Enregistrer et exporter
+## 9. Enregistrer et exporter
 
 - **« Enregistrer »** range le graphe dans la **Bibliothèque de figures** (`FIG-xxxx`), avec `graph.json`
   (toutes les données et tous les réglages, carte comprise), la vignette et les exports. Il se rouvre et se
@@ -274,7 +406,9 @@ Une fois tracé, un profil ou une carte est un graphe normal de la page Graphes.
   - carte : `\addplot[matrix plot*, mesh/cols=…, mesh/rows=…, point meta=explicit]` avec la grille en
     table (ou dans un fichier `.dat` séparé), la palette écrite en `colormap={carte}{rgb255=…}` en paliers
     (`colormap access=piecewise constant`, donc les mêmes teintes que l'aperçu), `point meta min/max`, et la
-    barre de couleurs (`colorbar`) avec son titre. Les trous (`NaN`) sont gérés (`unbounded coords=jump`).
+    barre de couleurs (`colorbar`) avec son titre. Les trous (`NaN`) sont gérés (`unbounded coords=jump`) ;
+  - isolignes : une `\addplot[black, …] coordinates {…}` par ligne, calculées comme dans l'aperçu, et la
+    valeur en `\node` ; axe inversé : `y dir=reverse` ; catégories : `xticklabels={…}`.
 - **SVG** et **PNG** (300 / 600 dpi) : identiques à l'aperçu.
 
 > Pour une carte très fine (plusieurs dizaines de milliers de cellules), la compilation LaTeX peut être lente.
@@ -282,12 +416,12 @@ Une fois tracé, un profil ou une carte est un graphe normal de la page Graphes.
 
 ---
 
-## 8. Assembler plusieurs graphes : les planches
+## 10. Assembler plusieurs graphes : les planches
 
 *Figures → **Planches*** (1.25.0) : plusieurs graphes de la bibliothèque réunis en une seule figure, par
 exemple la carte εzz en (a) et les profils verticaux en (b).
 
-1. Enregistrer d'abord chaque graphe dans la bibliothèque (§ 7).
+1. Enregistrer d'abord chaque graphe dans la bibliothèque (§ 9).
 2. Dans Planches, colonne de gauche : rechercher (titre, tag, `FIG-…`) puis **+** pour ajouter. Depuis la
    Bibliothèque, le bouton « Ajouter à une planche » d'un graphe fait la même chose.
 3. Régler à droite :
@@ -295,7 +429,11 @@ exemple la carte εzz en (a) et les profils verticaux en (b).
    - le nombre de **graphes par ligne** (1 à 6) et l'**espacement** (mm) ;
    - les **étiquettes** : (a), (b)… / a), b)… / (A), (B)… / aucune ;
    - **« Même taille pour tous les graphes »** (largeur × hauteur en mm), sinon chacun garde la sienne.
-     Les colonnes prennent alors la largeur de leur plus large graphe.
+     Les colonnes prennent alors la largeur de leur plus large graphe. Un graphe à « Échelles égales » garde
+     ses proportions (la hauteur suit la largeur imposée) ;
+   - **« Même échelle de couleurs pour toutes les cartes »** (dès deux cartes) : bornes communes (la plus
+     petite et la plus grande, symétriques autour de 0 si toutes sont en rouge-bleu), pour comparer les
+     cartes d'un coup d'œil.
 4. **« Enregistrer »** crée une figure de type « Planche » dans la Bibliothèque, rouvrable par « Ouvrir dans
    Planches ».
 5. Exports : **pgfplots** (une seule `tikzpicture`, un `axis` par graphe placé au millimètre près comme dans
@@ -307,7 +445,7 @@ alors à jour.
 
 ---
 
-## 9. Recettes rapides
+## 11. Recettes rapides
 
 **Comparer élastique et viscoélastique sur la verticale sous la charge**
 Ouvrir `verticale_…_el_….txt` et `verticale_…_ve_….txt` → cocher εzz → « Tracer les 2 profils » → renommer
@@ -324,13 +462,26 @@ Ouvrir la coupe YZ → Grandeur εzz → « Tracer la carte » → bornes de l'a
 Ouvrir la coupe et le profil → « à Y = … » → « Ajouter ce profil » → cocher la grandeur → « Tracer les 2
 profils ».
 
+**Article : 3 empreintes × EL / EL-fin / VE (fichiers `coupeXZ_R1_VE_het.txt`…)**
+1. Ouvrir toutes les coupes. Dans « Correspondances et couches » : `het` → Hétérogène, `circ` → Circulaire,
+   `rect` → Rectangulaire, `VE` → Viscoélastique, `EL` → Élastique, `EL-fin`… (Enregistrer, une fois).
+2. Pour chaque coupe : ƒ → repère Z, origine 0, « Changer le sens » (profondeur), puis repère X, origine x0.
+3. Cartes εzz : Tracer la carte, isolignes, contour d'empreinte, « Échelles égales », Enregistrer ; puis une
+   planche des trois empreintes avec « Même échelle de couleurs ».
+4. Écarts : Opérations → A = VE het, B = EL het, « A / B » → carte du rapport ; idem het / circ.
+5. Profils : sur une coupe, « Profils extraits » X = 0,70 ; 0,848 ; 0,90 ; 0,967 → décocher les autres →
+   Tracer, « Repères des couches ».
+6. Synthèse : toutes les coupes, εzz, ε1, εeq → « Copier LaTeX (booktabs) » ; barres : catégories mot 4
+   (empreinte), séries mot 3 (matériau).
+7. Signal en un point : ouvrir les tables VE et EL → Référence « Extremum de EL… », instant 10 s, pic → Tracer.
+
 **Figure (a) carte + (b) profils pour le manuscrit**
 Enregistrer les deux graphes → Planches → + carte, + profils → 2 par ligne, étiquettes (a) → « Même taille »
 si on veut des boîtes alignées → Enregistrer → « Copier pgfplots » ou PNG 600 dpi.
 
 ---
 
-## 10. En cas de souci
+## 12. En cas de souci
 
 | Message ou symptôme | Cause probable | Que faire |
 |---|---|---|
@@ -342,8 +493,13 @@ si on veut des boîtes alignées → Enregistrer → « Copier pgfplots » ou PN
 | Libellé ou unité faux | expression non reconnue (§ 1.3) | corriger le libellé de l'axe ou le titre de la barre à la main |
 | Légendes peu parlantes (préfixes, mots en trop) | noms de fichiers | renommer les légendes dans le panneau avant de tracer, ou plus tard dans les séries |
 | Trous blancs dans la carte | valeurs `NaN` (hors domaine) | normal ; ajuster les bornes des axes pour cadrer la zone utile |
+| « Grilles différentes : … » | les deux cas n'ont pas été exportés sur les mêmes points | réexporter les deux sur la même grille régulière (même jeu de données de coupe) |
+| « Formule : « … » ne désigne aucune colonne » | nom inconnu ou ambigu | utiliser un nom de la liste sous la formule, ou `c3` |
+| « … est hors de la coupe » | valeur de profil en dehors de la grille | vérifier l'unité (m du fichier) et le repère appliqué |
+| Table vue comme « Données » | première colonne nommée X, Y ou Z | renommer la colonne de la table dans COMSOL (Temps…) |
+| Contour d'empreinte invisible | centre ou rayon dans une autre unité que les axes | les saisir en unités des axes (mm si « Longueurs en mm ») |
 
 ---
 
-*Pour les détails techniques (format `graph.json`, champ `carte`, `planche.json`), voir `docs/SPEC.md`,
-section Figures → Graphes.*
+*Pour les détails techniques (format `graph.json`, champs `carte`, `reperes`, `annotations`, `egalite`,
+`planche.json`, `_comsol/reglages.json`), voir `docs/SPEC.md`, section Figures → Graphes.*
