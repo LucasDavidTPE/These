@@ -21,6 +21,7 @@ import {
   legendesDe,
   motsDuNom,
   parametresDesExports,
+  rapportEnBlocs,
   rapportLatex,
   synthese,
   tableauCriteres,
@@ -34,6 +35,8 @@ import {
   type TraceCriteres,
   type TraceMaillage,
 } from "../../core/graph";
+import { ecrireDocx } from "@noyau/formats/docx-ecriture";
+import { useContexte } from "@interface/contexte";
 import { getBackend } from "../platform/backend";
 import { useContexteTrace } from "./hooks";
 import { figuresDeEtude } from "./lot";
@@ -41,7 +44,16 @@ import { useAtelier } from "./useAtelier";
 
 const aujourdhui = () => new Date().toLocaleDateString("fr-FR");
 
+/** Largeur et hauteur d'un PNG (en-tête IHDR). */
+const taillePng = (o: Uint8Array) => {
+  const v = new DataView(o.buffer, o.byteOffset, o.byteLength);
+  return o.length > 24
+    ? { largeur: v.getUint32(16), hauteur: v.getUint32(20) }
+    : null;
+};
+
 export function RapportEtude() {
+  const ctx = useContexte();
   const c = useContexteTrace();
   const a = useAtelier();
   const legende = legendesDe(c);
@@ -72,8 +84,12 @@ export function RapportEtude() {
   });
   // réglages repris des recettes « bassin » et « maillage » de l'étude, s'il y en a
   const traces = a.recettes.map((r) => r.trace);
-  const recetteBassin = traces.find((t): t is TraceBassin => t.mode === "bassin");
-  const recetteMaillage = traces.find((t): t is TraceMaillage => t.mode === "maillage");
+  const recetteBassin = traces.find(
+    (t): t is TraceBassin => t.mode === "bassin",
+  );
+  const recetteMaillage = traces.find(
+    (t): t is TraceMaillage => t.mode === "maillage",
+  );
   const dispo = expressionsCommunes(donnees);
   const [choix, setChoix] = useState<string[] | null>(null);
   const expressions = (
@@ -144,11 +160,17 @@ export function RapportEtude() {
       }),
     );
     const mesure = recetteBassin?.mesure ?? null;
-    const lignesMaillage = (recetteMaillage?.paires ?? pairesMaillage(vues)).flatMap((p) => {
+    const lignesMaillage = (
+      recetteMaillage?.paires ?? pairesMaillage(vues)
+    ).flatMap((p) => {
       const g = vues.find((e) => e.nom === p.grossier);
       const f = vues.find((e) => e.nom === p.fin);
       if (!g || !f) return [];
-      return (recetteMaillage?.expressions.length ? recetteMaillage.expressions : expressions).flatMap((x) => {
+      return (
+        recetteMaillage?.expressions.length
+          ? recetteMaillage.expressions
+          : expressions
+      ).flatMap((x) => {
         try {
           return [comparerMaillages(g, f, x, L)];
         } catch {
@@ -182,7 +204,14 @@ export function RapportEtude() {
             : null,
         trafic: T > 0 ? T : null,
         ...(params.length ? { etape: titreEtape(etape, params) } : {}),
-        bassins: listeBassins.length ? { liste: listeBassins, ...(mesure ? { ecarts: listeBassins.map((b) => ecartMesure(b, mesure)) } : {}) } : null,
+        bassins: listeBassins.length
+          ? {
+              liste: listeBassins,
+              ...(mesure
+                ? { ecarts: listeBassins.map((b) => ecartMesure(b, mesure)) }
+                : {}),
+            }
+          : null,
         maillage: lignesMaillage,
       },
       { langue, virgule, reference, sections },
@@ -202,6 +231,36 @@ export function RapportEtude() {
       ).saveTextAs(tex, `resultats-${etude?.id ?? "comsol"}.tex`, "tex")
     )
       setEtat("Rapport enregistré.");
+  };
+  // le même rapport en Word : phrases, tableaux, et les figures de l'étude en images (export.png de la bibliothèque)
+  const word = async () => {
+    const images = new Map<
+      string,
+      { png: Uint8Array; largeur: number; hauteur: number }
+    >();
+    if (ctx.dossierFigures && sections.figures) {
+      const fs = ctx.plateforme.fichiers(ctx.dossierFigures);
+      for (const f of (figures ?? []).filter((x) => !exclues.includes(x.id))) {
+        const png = await fs
+          .readBytes(`${f.dossier}/export.png`)
+          .catch(() => null);
+        const t = png ? taillePng(png) : null;
+        if (png && t) images.set(f.dossier, { png, ...t });
+      }
+    }
+    const blocs = rapportEnBlocs(tex, {
+      anglais: langue === "en",
+      image: (d) => images.get(d) ?? null,
+    });
+    if (
+      await ctx.plateforme.enregistrerSous(
+        `resultats-${etude?.id ?? "comsol"}.docx`,
+        ecrireDocx(blocs),
+      )
+    )
+      setEtat(
+        "Rapport Word enregistré (légendes numérotées par Word : une fois collé dans la thèse, Ctrl+A puis F9 met les numéros à jour).",
+      );
   };
   const section = (k: keyof typeof sections, texte: string) => (
     <label className="chip">
@@ -365,6 +424,14 @@ export function RapportEtude() {
           </button>
           <button type="button" disabled={!tex} onClick={() => void exporter()}>
             Exporter .tex…
+          </button>
+          <button
+            type="button"
+            disabled={!tex}
+            onClick={() => void word()}
+            title="Le même rapport en Word : titres, phrases chiffrées, tableaux, figures de l'étude en images, légendes numérotées"
+          >
+            Word (.docx)…
           </button>
         </div>
         {etat ? <p className="small">{etat}</p> : null}

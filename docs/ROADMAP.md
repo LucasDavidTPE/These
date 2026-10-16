@@ -256,6 +256,7 @@ lancent tous les tests automatiques sous Windows.
 - [x] COMSOL : conversions d'unité proposées (sans facteur → µdef, Pa → MPa, m → mm) (1.40.0)
 - [x] COMSOL : **jeu d'exemple intégré** (16 fichiers synthétiques) et **visite guidée** de toutes les tuiles (1.41.0)
 - [x] Coquille : **Quoi de neuf** après chaque mise à jour, rouvrable (barre, Ctrl+K), bouton « Essayer » par nouveauté (1.42.0)
+- [x] COMSOL : **rapport en Word (.docx)** — titres, phrases chiffrées, tableaux, figures en images, légendes numérotées (1.43.0)
 - [x] Manuscrits : anciens fichiers **.doc** acceptés (parties, dossiers, corrections reçues), convertis en `.docx` par Word
       à côté de l'original (1.26.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),

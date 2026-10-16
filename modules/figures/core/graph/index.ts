@@ -20,6 +20,7 @@ export * from "./comsolLot";
 export * from "./comsolCriteres";
 export * from "./comsolInstants";
 export * from "./comsolRapport";
+export * from "./comsolWord";
 export * from "./comsolLatex";
 export * from "./comsolBassin";
 export * from "./comsolMaillage";

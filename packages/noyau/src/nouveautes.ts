@@ -31,6 +31,13 @@ const COMSOL = (page = "comsol", exemple = true): Essai => ({
 /** Les plus récentes d'abord. */
 export const NOUVEAUTES: readonly Nouveaute[] = [
   {
+    version: "1.43.0",
+    module: "figures",
+    titre: "COMSOL : rapport en Word",
+    detail: "Le rapport de l'étude aussi en .docx : titres, phrases chiffrées (ε, indices), tableaux, figures en images et légendes numérotées par Word, à coller dans la thèse.",
+    essayer: { libelle: "Essayer sur l'exemple", action: "figures.aller", charge: { page: "comsol", exemple: true } },
+  },
+  {
     version: "1.42.0",
     titre: "Quoi de neuf",
     detail: "Ce panneau : après chaque mise à jour, ce qui a changé et un bouton pour l'essayer. Rouvrable par « Nouveautés » en bas de la barre, ou Ctrl+K « nouveautés ».",

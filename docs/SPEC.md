@@ -444,6 +444,12 @@ Ajouts permis par l'intégration :
   `jeuExemple()` → 16 exports synthétiques au format COMSOL (champs analytiques d'une chaussée BB/GB/GRH, roue
   en x = 0,9 m), `mesureExemple()` et `bassinExemple()` (textes à coller) ; test : toutes les tuiles tracent, aucun
   point d'attention. Visite : étapes qui posent la recette d'une tuile (`majTrace`) et l'ouvrent.
+- **rapport Word** (1.43.0, `noyau/formats/docx-ecriture.ts`, `core/graph/comsolWord.ts`) : `ecrireDocx(blocs)`
+  écrit un .docx déterministe (titres, paragraphes à morceaux gras / italique / indice / exposant / chasse
+  fixe, tableaux à `gridSpan`, images PNG, légendes `SEQ`, styles intégrés `heading n` et `caption`) ;
+  `rapportEnBlocs(tex)` relit le LaTeX de `rapportLatex` (sous-ensemble connu : sections, `table`/`tabular`
+  booktabs avec `\multicolumn`, `figure` avec `\input{\cheminFigures/<dossier>/export.tex}`, mode math des
+  nombres et grandeurs) ; une seule source pour les deux formats.
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,

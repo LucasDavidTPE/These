@@ -1038,3 +1038,9 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
       depuis 1.25 ; « Lancer la visite → » ouvre Figures → COMSOL avec le jeu d'exemple et la visite guidée.
 - [ ] Relancer Thèse : le panneau ne revient pas ; « Nouveautés » (en bas de la barre) et Ctrl+K « nouveautés » le rouvrent.
 - [ ] Sur l'autre PC : le panneau s'ouvre une fois aussi (mémoire propre à chaque poste).
+
+## COMSOL : rapport Word (1.43.0)
+
+- [ ] Rapport LaTeX… → « Word (.docx)… » : le fichier s'ouvre dans Word sans réparation ; titres en « Titre 1/2 »,
+      ε et indices corrects, tableaux lisibles (Maximum / Minimum fusionnés), figures de l'étude en images.
+- [ ] Copier le contenu dans un chapitre de la thèse, Ctrl+A puis F9 : les légendes se renumérotent dans la suite.

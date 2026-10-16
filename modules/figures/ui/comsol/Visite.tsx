@@ -114,7 +114,7 @@ const ETAPES: Etape[] = [
   },
   {
     titre: "Vérifier, Excel, rapport",
-    quoi: "« Vérifier » (liste des fichiers), « Excel… » sous chaque aperçu, et le premier jet LaTeX de la partie résultats.",
+    quoi: "« Vérifier » (liste des fichiers), « Excel… » sous chaque aperçu, et le premier jet de la partie résultats, en LaTeX ou en Word (.docx).",
     faire: () => useAtelier.getState().set({ verifier: true, rapport: true }),
   },
 ];

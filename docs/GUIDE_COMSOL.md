@@ -845,6 +845,14 @@ Ce que contient le fichier :
 Les phrases sont **exactes mais mécaniques** : elles donnent les chiffres et les comparaisons ; le
 commentaire physique reste à écrire.
 
+**Le même rapport en Word (1.43.0)** : bouton **« Word (.docx)… »**. Mêmes réglages, même contenu, pour
+une thèse rédigée sous Word : titres (styles intégrés « Titre 1 », « Titre 2 » : collés dans la thèse, ils
+prennent son style), phrases chiffrées avec ε, indices, exposants, puissances de dix et virgule décimale,
+tableaux à filets façon booktabs (cases « Maximum » / « Minimum » fusionnées, ligne d'en-tête répétée), figures
+de l'étude en **images** (le `export.png` de chaque figure de la bibliothèque ; une figure sans image est
+signalée entre crochets) et **légendes numérotées par Word** (« Tableau 2 – … », « Figure 1 – … », champs SEQ :
+une fois collé dans la thèse, Ctrl+A puis F9 renumérote dans la suite des autres légendes).
+
 ### 9.2 Données vers Excel (1.36.0)
 
 **« Excel… »** à côté de « Continuer dans Graphes » (tous les tracés de l'atelier) : un classeur .xlsx avec
