@@ -874,3 +874,6 @@ nombres doivent être identiques, dans les deux modes.
 - [ ] .doc protégé par mot de passe : message d'erreur en moins de 3 min, rien d'ajouté, aucun WINWORD.EXE qui traîne
       (Gestionnaire des tâches).
 - [ ] Retours → choisir un .doc relu : remarques lues, rangé sous le nom `….docx` ; aucun fichier créé à côté du .doc.
+- [ ] (1.26.1) Sur le PC de l'ENTPE (PowerShell verrouillé, « mode de langage restreint ») : convertir
+      `paper_template_maireinfra27.doc` → le `.docx` apparaît à côté, sans message d'erreur ; avec ce même `.doc` déjà ouvert
+      dans Word, il reste ouvert après la conversion.

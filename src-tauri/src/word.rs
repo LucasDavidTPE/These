@@ -1,5 +1,5 @@
 //! Anciens documents Word (`.doc`, format binaire 97-2003) : convertis en `.docx` par Word
-//! lui-même (automatisation COM via PowerShell, fenêtre invisible), seul moyen fidèle de
+//! lui-même (automatisation COM, fenêtre invisible), seul moyen fidèle de
 //! garder titres, commentaires et modifications suivies. Toujours sur un geste de
 //! l'utilisateur ; le `.doc` d'origine n'est jamais modifié.
 
@@ -24,91 +24,278 @@ pub fn chemin_docx(source: &str) -> LibResult<PathBuf> {
     Ok(p.with_extension("docx"))
 }
 
-/// Script PowerShell : chemins passés par variables d'environnement (aucun échappement).
-/// S'il se rattache à un Word déjà ouvert, il ne le ferme pas et rend ses réglages.
-#[cfg(any(windows, test))]
-const SCRIPT: &str = r#"
-$ErrorActionPreference = 'Stop'
-[Console]::OutputEncoding = [Text.Encoding]::UTF8
-try { $w = New-Object -ComObject Word.Application } catch { [Console]::Error.WriteLine('WORD_ABSENT'); exit 2 }
-$alertes = $w.DisplayAlerts
-try {
-  $w.DisplayAlerts = 0
-  $d = $w.Documents.Open($env:THESE_DOC_SOURCE, $false, $true, $false, 'x')
-  try { $d.SaveAs2($env:THESE_DOC_CIBLE, 16) } finally { $d.Close(0) }
-} catch {
-  [Console]::Error.WriteLine($_.Exception.Message); exit 1
-} finally {
-  try { $w.DisplayAlerts = $alertes } catch {}
-  if ($w.Documents.Count -eq 0) { $w.Quit(0) }
-  [void][Runtime.InteropServices.Marshal]::ReleaseComObject($w)
+/// Pilotage de Word par COM (liaison tardive, `IDispatch`), directement depuis l'application : pas de
+/// script PowerShell, donc indifférent aux postes verrouillés (mode de langage restreint).
+#[cfg(windows)]
+mod com {
+    use std::mem::ManuallyDrop;
+    use windows::core::{BSTR, GUID, HSTRING, PCWSTR};
+    use windows::Win32::Foundation::{VARIANT_FALSE, VARIANT_TRUE};
+    use windows::Win32::System::Com::{
+        CLSIDFromProgID, CoCreateInstance, CoInitializeEx, CoUninitialize, IDispatch,
+        CLSCTX_LOCAL_SERVER, COINIT_APARTMENTTHREADED, DISPATCH_FLAGS, DISPATCH_METHOD,
+        DISPATCH_PROPERTYGET, DISPATCH_PROPERTYPUT, DISPPARAMS, EXCEPINFO,
+    };
+    use windows::Win32::System::Ole::DISPID_PROPERTYPUT;
+    use windows::Win32::System::Variant::{
+        VariantClear, VARIANT, VT_BOOL, VT_BSTR, VT_DISPATCH, VT_I2, VT_I4,
+    };
+
+    /// Noms des méthodes et propriétés en anglais (bibliothèque de types de Word).
+    const LCID_EN: u32 = 0x0409;
+    pub const WORD_ABSENT: &str = "WORD_ABSENT";
+
+    enum Arg<'a> {
+        Texte(&'a str),
+        Entier(i32),
+        Bool(bool),
+    }
+
+    fn variant(a: &Arg) -> VARIANT {
+        let mut v = VARIANT::default();
+        // SAFETY : union VARIANT remplie selon son étiquette `vt`.
+        unsafe {
+            let x = &mut *v.Anonymous.Anonymous;
+            match a {
+                Arg::Texte(t) => {
+                    x.vt = VT_BSTR;
+                    x.Anonymous.bstrVal = ManuallyDrop::new(BSTR::from(*t));
+                }
+                Arg::Entier(n) => {
+                    x.vt = VT_I4;
+                    x.Anonymous.lVal = *n;
+                }
+                Arg::Bool(b) => {
+                    x.vt = VT_BOOL;
+                    x.Anonymous.boolVal = if *b { VARIANT_TRUE } else { VARIANT_FALSE };
+                }
+            }
+        }
+        v
+    }
+
+    /// Résultat d'un appel : un objet ou un entier (le reste est ignoré).
+    struct Retour {
+        objet: Option<IDispatch>,
+        entier: Option<i32>,
+    }
+
+    fn appeler(
+        obj: &IDispatch,
+        nom: &str,
+        genre: DISPATCH_FLAGS,
+        args: &[Arg],
+    ) -> Result<Retour, String> {
+        let large = HSTRING::from(nom);
+        let mut id = 0i32;
+        // SAFETY : un nom, un identifiant en sortie.
+        unsafe {
+            obj.GetIDsOfNames(
+                &GUID::zeroed(),
+                &PCWSTR(large.as_ptr()),
+                1,
+                LCID_EN,
+                &mut id,
+            )
+        }
+        .map_err(|e| format!("{nom} : {}", e.message()))?;
+        // arguments dans l'ordre inverse (convention IDispatch)
+        let mut vargs: Vec<VARIANT> = args.iter().rev().map(variant).collect();
+        let mut id_put = DISPID_PROPERTYPUT;
+        let put = genre == DISPATCH_PROPERTYPUT;
+        let params = DISPPARAMS {
+            rgvarg: if vargs.is_empty() {
+                std::ptr::null_mut()
+            } else {
+                vargs.as_mut_ptr()
+            },
+            rgdispidNamedArgs: if put {
+                &mut id_put
+            } else {
+                std::ptr::null_mut()
+            },
+            cArgs: vargs.len() as u32,
+            cNamedArgs: u32::from(put),
+        };
+        let mut res = VARIANT::default();
+        let mut exc = EXCEPINFO::default();
+        // SAFETY : paramètres valides pendant l'appel, libérés ensuite.
+        let r = unsafe {
+            obj.Invoke(
+                id,
+                &GUID::zeroed(),
+                LCID_EN,
+                genre,
+                &params,
+                Some(&mut res),
+                Some(&mut exc),
+                None,
+            )
+        };
+        for v in vargs.iter_mut() {
+            // SAFETY : variantes créées ci-dessus.
+            let _ = unsafe { VariantClear(v) };
+        }
+        // SAFETY : chaînes de l'exception remplies (ou vides) par Invoke ; libérées une fois.
+        let detail = unsafe {
+            let d = exc.bstrDescription.to_string();
+            ManuallyDrop::drop(&mut exc.bstrDescription);
+            ManuallyDrop::drop(&mut exc.bstrSource);
+            ManuallyDrop::drop(&mut exc.bstrHelpFile);
+            d
+        };
+        if let Err(e) = r {
+            let _ = unsafe { VariantClear(&mut res) };
+            return Err(if detail.trim().is_empty() {
+                format!("{nom} : {}", e.message())
+            } else {
+                detail.trim().to_string()
+            });
+        }
+        // SAFETY : lecture selon l'étiquette, puis libération.
+        let sortie = unsafe {
+            let x = &*res.Anonymous.Anonymous;
+            let objet = if x.vt == VT_DISPATCH {
+                (*x.Anonymous.pdispVal).clone()
+            } else {
+                None
+            };
+            let entier = if x.vt == VT_I4 {
+                Some(x.Anonymous.lVal)
+            } else if x.vt == VT_I2 {
+                Some(i32::from(x.Anonymous.iVal))
+            } else {
+                None
+            };
+            Retour { objet, entier }
+        };
+        let _ = unsafe { VariantClear(&mut res) };
+        Ok(sortie)
+    }
+
+    fn objet(r: Result<Retour, String>, quoi: &str) -> Result<IDispatch, String> {
+        r?.objet
+            .ok_or_else(|| format!("{quoi} : Word n'a rien renvoyé."))
+    }
+
+    fn piloter(source: &str, cible: &str) -> Result<(), String> {
+        // SAFETY : identifiant de programme constant.
+        let clsid = unsafe { CLSIDFromProgID(windows::core::w!("Word.Application")) }
+            .map_err(|_| WORD_ABSENT.to_string())?;
+        // SAFETY : serveur COM local (WINWORD.EXE).
+        let word: IDispatch = unsafe { CoCreateInstance(&clsid, None, CLSCTX_LOCAL_SERVER) }
+            .map_err(|e| format!("Word ne démarre pas : {}", e.message()))?;
+        let alertes = appeler(&word, "DisplayAlerts", DISPATCH_PROPERTYGET, &[])
+            .ok()
+            .and_then(|r| r.entier);
+        let _ = appeler(
+            &word,
+            "DisplayAlerts",
+            DISPATCH_PROPERTYPUT,
+            &[Arg::Entier(0)],
+        );
+        let docs = objet(
+            appeler(&word, "Documents", DISPATCH_PROPERTYGET, &[]),
+            "Documents",
+        );
+        let compter = |d: &IDispatch| {
+            appeler(d, "Count", DISPATCH_PROPERTYGET, &[])
+                .ok()
+                .and_then(|r| r.entier)
+        };
+        let resultat = docs.as_ref().map_err(Clone::clone).and_then(|docs| {
+            let avant = compter(docs);
+            // Open(FileName, ConfirmConversions, ReadOnly, AddToRecentFiles, PasswordDocument) : un mot de passe
+            // factice fait échouer un document protégé au lieu d'ouvrir une boîte invisible.
+            let doc = objet(
+                appeler(
+                    docs,
+                    "Open",
+                    DISPATCH_METHOD,
+                    &[
+                        Arg::Texte(source),
+                        Arg::Bool(false),
+                        Arg::Bool(true),
+                        Arg::Bool(false),
+                        Arg::Texte("x"),
+                    ],
+                ),
+                "Open",
+            )?;
+            // 16 = wdFormatXMLDocument (.docx)
+            let r = appeler(
+                &doc,
+                "SaveAs2",
+                DISPATCH_METHOD,
+                &[Arg::Texte(cible), Arg::Entier(16)],
+            );
+            // un document que l'utilisateur avait déjà ouvert (le compte n'a pas bougé) reste ouvert
+            if compter(docs)
+                .zip(avant)
+                .is_none_or(|(apres, avant)| apres > avant)
+            {
+                let _ = appeler(&doc, "Close", DISPATCH_METHOD, &[Arg::Entier(0)]);
+            }
+            r.map(|_| ())
+        });
+        if let Some(a) = alertes {
+            let _ = appeler(
+                &word,
+                "DisplayAlerts",
+                DISPATCH_PROPERTYPUT,
+                &[Arg::Entier(a)],
+            );
+        }
+        // ne ferme jamais un Word où l'utilisateur a des documents ouverts
+        let ouverts = docs.ok().and_then(|d| compter(&d));
+        if ouverts == Some(0) {
+            let _ = appeler(&word, "Quit", DISPATCH_METHOD, &[Arg::Entier(0)]);
+        }
+        resultat
+    }
+
+    /// Conversion `.doc` → `.docx` par Word, dans le fil appelant (initialise COM pour lui).
+    pub fn convertir(source: &str, cible: &str) -> Result<(), String> {
+        // SAFETY : COM initialisé puis libéré dans ce même fil, objets relâchés avant.
+        let init = unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) };
+        if init.is_err() {
+            return Err(format!("COM indisponible : {}", init.message()));
+        }
+        let r = piloter(source, cible);
+        unsafe { CoUninitialize() };
+        r
+    }
 }
-"#;
 
 #[cfg(windows)]
 fn convertir(source: &Path, cible: &Path) -> LibResult<()> {
-    use std::io::Read;
-    use std::os::windows::process::CommandExt;
-    use std::process::{Command, Stdio};
-    let mut enfant = Command::new("powershell")
-        .args([
-            "-NoProfile",
-            "-NonInteractive",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-Command",
-            SCRIPT,
-        ])
-        .env("THESE_DOC_SOURCE", source)
-        .env("THESE_DOC_CIBLE", cible)
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::piped())
-        // CREATE_NO_WINDOW : pas de console qui clignote.
-        .creation_flags(0x0800_0000)
-        .spawn()
-        .map_err(|e| LibError::NotAllowed(format!("PowerShell introuvable ({e}).")))?;
-    let debut = std::time::Instant::now();
-    let statut = loop {
-        if let Some(s) = enfant
-            .try_wait()
-            .map_err(|e| LibError::io(source.display().to_string(), e))?
-        {
-            break s;
-        }
-        if debut.elapsed() > DELAI {
-            let _ = enfant.kill();
-            return Err(LibError::NotAllowed(
-                "Word n'a pas répondu (document protégé par mot de passe ? boîte de dialogue ouverte dans Word ?). \
-                 Ouvrez le .doc dans Word puis « Enregistrer sous » .docx."
-                    .into(),
-            ));
-        }
-        std::thread::sleep(std::time::Duration::from_millis(200));
-    };
-    let mut erreur = String::new();
-    if let Some(mut e) = enfant.stderr.take() {
-        let mut octets = Vec::new();
-        let _ = e.read_to_end(&mut octets);
-        erreur = String::from_utf8_lossy(&octets).trim().to_string();
-    }
-    if statut.success() && cible.exists() {
-        return Ok(());
-    }
-    Err(LibError::NotAllowed(if erreur.contains("WORD_ABSENT") {
-        "Microsoft Word est introuvable sur ce PC : la conversion d'un .doc passe par Word. \
-         Ouvrez-le dans Word (ou LibreOffice) puis « Enregistrer sous » .docx."
-            .into()
-    } else {
-        format!(
-            "Word n'a pas pu convertir le fichier{}.",
-            if erreur.is_empty() {
-                String::new()
-            } else {
-                format!(" : {erreur}")
-            }
+    let (src, dst) = (source.display().to_string(), cible.display().to_string());
+    let (tx, rx) = std::sync::mpsc::channel();
+    // fil dédié : COM y est initialisé, et un Word bloqué ne bloque pas l'application
+    std::thread::spawn(move || {
+        let _ = tx.send(com::convertir(&src, &dst));
+    });
+    let r = rx.recv_timeout(DELAI).map_err(|_| {
+        LibError::NotAllowed(
+            "Word n'a pas répondu (document protégé ? boîte de dialogue ouverte dans Word ?). \
+             Ouvrez le .doc dans Word puis « Enregistrer sous » .docx."
+                .into(),
         )
-    }))
+    })?;
+    match r {
+        Ok(()) if cible.exists() => Ok(()),
+        Ok(()) => Err(LibError::NotAllowed(
+            "Word n'a pas produit le .docx.".into(),
+        )),
+        Err(e) if e == com::WORD_ABSENT => Err(LibError::NotAllowed(
+            "Microsoft Word est introuvable sur ce PC : la conversion d'un .doc passe par Word. \
+             Ouvrez-le dans Word (ou LibreOffice) puis « Enregistrer sous » .docx."
+                .into(),
+        )),
+        Err(e) => Err(LibError::NotAllowed(format!(
+            "Word n'a pas pu convertir le fichier : {e}"
+        ))),
+    }
 }
 
 #[cfg(not(windows))]
@@ -181,14 +368,5 @@ mod tests {
         let racine = if cfg!(windows) { "C:\\x\\" } else { "/x/" };
         assert!(chemin_docx(&format!("{racine}ch1.docx")).is_err());
         assert!(chemin_docx(&format!("{racine}ch1")).is_err());
-    }
-
-    #[test]
-    fn script_sans_chemin_en_dur() {
-        assert!(
-            SCRIPT.contains("$env:THESE_DOC_SOURCE") && SCRIPT.contains("$env:THESE_DOC_CIBLE")
-        );
-        // ne ferme jamais un Word où l'utilisateur a des documents ouverts
-        assert!(SCRIPT.contains("if ($w.Documents.Count -eq 0) { $w.Quit(0) }"));
     }
 }

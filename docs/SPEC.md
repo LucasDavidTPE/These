@@ -475,7 +475,7 @@ commentaires (résolus ou non) et modifications suivies, citations Zotero, date 
 au retour dans la fenêtre. Elle n'écrit jamais dans un fichier Word.
 **Anciens `.doc`** (Word 97-2003, 1.26.0) : acceptés partout où l'on choisit un fichier Word (« Ajouter une partie… »,
 « Ajouter un dossier… », « Pointer le fichier… », Retours). Le format binaire n'est pas lu tel quel : **Microsoft
-Word** le convertit (automatisation COM par PowerShell, invisible, sur le geste de l'utilisateur ; `src-tauri/src/word.rs`)
+Word** le convertit (automatisation COM pilotée directement par l'application, sans script — un PowerShell verrouillé en « mode de langage restreint » n'y change rien —, invisible, sur le geste de l'utilisateur ; `src-tauri/src/word.rs`)
 en un `.docx` du même nom **à côté** — le `.doc` reste intact, un `.docx` existant n'est jamais écrasé ni
 reconverti — et la partie suit ce `.docx` (on continue la rédaction dans celui-ci). Un Word déjà ouvert n'est jamais
 fermé. Un `.doc` reçu en correction est converti dans le dossier temporaire du poste, lu, et rangé en `.docx`.
