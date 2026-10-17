@@ -276,6 +276,16 @@ export function RapportEtude() {
   return (
     <div className="atelier-rapport">
       <div className="atelier-rapport-options">
+        <div className="rangee-boutons">
+          <button
+            type="button"
+            className="small-btn"
+            onClick={() => a.set({ rapport: false })}
+          >
+            ← Retour aux tracés
+          </button>
+          <strong>Rapport de l'étude (LaTeX, Word)</strong>
+        </div>
         <p className="muted small">
           Premier jet de la partie « résultats » : chiffres exacts tirés des
           fichiers ouverts, phrases à relire et à réécrire. À{" "}

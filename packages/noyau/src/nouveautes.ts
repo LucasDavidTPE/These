@@ -31,6 +31,13 @@ const COMSOL = (page = "comsol", exemple = true): Essai => ({
 /** Les plus récentes d'abord. */
 export const NOUVEAUTES: readonly Nouveaute[] = [
   {
+    version: "1.43.1",
+    module: "figures",
+    titre: "COMSOL : plus de place pour les tracés",
+    detail: "Visite guidée en une bande (une étape à la fois), rapport à la place des tracés sur toute la hauteur, tuiles compactes une fois le tracé choisi (« Détails » pour les explications).",
+    essayer: { libelle: "Essayer sur l'exemple", action: "figures.aller", charge: { page: "comsol", exemple: true } },
+  },
+  {
     version: "1.43.0",
     module: "figures",
     titre: "COMSOL : rapport en Word",

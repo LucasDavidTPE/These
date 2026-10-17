@@ -1044,3 +1044,9 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
 - [ ] Rapport LaTeX… → « Word (.docx)… » : le fichier s'ouvre dans Word sans réparation ; titres en « Titre 1/2 »,
       ε et indices corrects, tableaux lisibles (Maximum / Minimum fusionnés), figures de l'étude en images.
 - [ ] Copier le contenu dans un chapitre de la thèse, Ctrl+A puis F9 : les légendes se renumérotent dans la suite.
+
+## COMSOL : place pour les tracés (1.43.1)
+
+- [ ] Visite guidée ouverte puis « Rapport… » : pas de défilement de la page, la visite tient sur une bande, le rapport
+      occupe toute la hauteur ; « ← Retour aux tracés » ramène la tuile.
+- [ ] Sur l'écran du portable : la tuile choisie et son graphe restent visibles sous les tuiles compactes.

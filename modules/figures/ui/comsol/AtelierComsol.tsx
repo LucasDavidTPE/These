@@ -181,6 +181,8 @@ export function AtelierComsol() {
   const a = useAtelier();
   const reg = useReglagesComsol();
   const [reglages, setReglages] = useState(false);
+  // tuiles avec leur explication : tant qu'aucun tracé n'est choisi, ou sur demande ; sinon compactes
+  const [details, setDetails] = useState(false);
   const rapport = a.rapport;
   const setRapport = (v: boolean) => a.set({ rapport: v });
   const ensemble = a.ensemble;
@@ -221,12 +223,11 @@ export function AtelierComsol() {
         <button type="button" aria-expanded={a.visite} onClick={() => a.set({ visite: !a.visite })} title="Découvrir l'atelier pas à pas, sur un jeu d'exemple intégré">
           Visite guidée
         </button>
-        <button type="button" aria-expanded={rapport} disabled={!a.exports.length} onClick={() => setRapport(!rapport)} title="Premier jet LaTeX de la partie résultats : cas, figures de l'étude, extrema et critères (booktabs), phrases chiffrées comparatives">
-          Rapport LaTeX…
+        <button type="button" aria-expanded={rapport} disabled={!a.exports.length} onClick={() => setRapport(!rapport)} title="Premier jet de la partie résultats, en LaTeX ou en Word : cas, figures de l'étude, extrema et critères, phrases chiffrées comparatives">
+          Rapport…
         </button>
       </header>
       {a.visite ? <VisiteGuidee /> : null}
-      {rapport && a.exports.length ? <RapportEtude /> : null}
       {reglages ? (
         <div className="atelier-reglages-partages">
           <ReglagesPartages ouvertParDefaut />
@@ -240,18 +241,25 @@ export function AtelierComsol() {
           </button>
         </p>
       ) : null}
-      <div className="atelier-corps">
+      {/* le rapport prend la place des tracés (toute la hauteur) ; les tracés restent montés, cachés */}
+      {rapport && a.exports.length ? <RapportEtude /> : null}
+      <div className="atelier-corps" style={rapport && a.exports.length ? { display: "none" } : undefined}>
         <AtelierFichiers />
         <div className="atelier-centre">
           <section className="atelier-colonne atelier-modes">
             <h3>
               <span className="atelier-etape">2</span> Que voulez-vous tracer ?
               <span className="grow" />
+              {mode ? (
+                <button type="button" className="small-btn" aria-pressed={details} onClick={() => setDetails(!details)} title="Afficher l'explication sous chaque tuile (sinon : dans l'infobulle)">
+                  Détails
+                </button>
+              ) : null}
               <button type="button" className="small-btn" aria-pressed={ensemble} disabled={!a.exports.length} onClick={() => setEnsemble(!ensemble)} title="Tous les cas d'un coup : petites cartes ou petits profils à la même échelle, rangés en matrice">
                 ▦▦ Vue d'ensemble
               </button>
             </h3>
-            <div className="atelier-tuiles">
+            <div className={`atelier-tuiles${mode && !details ? " compactes" : ""}`}>
               {MODES.map((m) => (
                 <button key={m.id} type="button" className={`atelier-tuile${mode === m.id ? " actif" : ""}`} disabled={!!dispo[m.id]} title={dispo[m.id] ?? m.explication} onClick={() => a.set({ mode: m.id })}>
                   <span className="atelier-icone" aria-hidden="true">

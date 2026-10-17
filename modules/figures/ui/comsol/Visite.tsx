@@ -1,6 +1,7 @@
 /**
  * Visite guidée de l'atelier COMSOL, sur le jeu d'exemple intégré : une étape par fonction, chacune avec ce qu'il
- * faut regarder et un bouton qui ouvre la bonne tuile, réglée sur les bons fichiers.
+ * faut regarder et un bouton qui ouvre la bonne tuile, réglée sur les bons fichiers. Une bande compacte (une étape
+ * à la fois, pastilles pour sauter) : la tuile ouverte reste visible en dessous.
  */
 import { useState } from "react";
 import {
@@ -30,14 +31,15 @@ const ouvrir = (
 ) => {
   const a = useAtelier.getState();
   a.majTrace(t.mode, t);
-  a.set({ mode: t.mode, ensemble: false, ...autres });
+  // le rapport prend la place des tracés : on le referme pour montrer la tuile
+  a.set({ mode: t.mode, ensemble: false, rapport: false, ...autres });
 };
 
 const ETAPES: Etape[] = [
   {
     titre: "Vue d'ensemble",
     quoi: "Toutes les coupes d'un coup, EL / VE × het / rect / circ, à la même échelle ; le pic sous chaque carte. Cliquez une carte pour l'ouvrir en grand.",
-    faire: () => useAtelier.getState().set({ ensemble: true }),
+    faire: () => useAtelier.getState().set({ ensemble: true, rapport: false }),
   },
   {
     titre: "Carte et instants",
@@ -121,72 +123,107 @@ const ETAPES: Etape[] = [
 
 export function VisiteGuidee() {
   const exports = useAtelier((s) => s.exports);
+  const [courante, setCourante] = useState(0);
   const [faites, setFaites] = useState<number[]>([]);
   const [copie, setCopie] = useState<string | null>(null);
   const exemple = exports.some(
     (e) => e.nom === "coupeXZ_R1_VE-roulant_het.txt",
   );
+  const e = ETAPES[courante]!;
+  // aller à une étape l'ouvre aussitôt (une fois l'exemple chargé)
+  const aller = (i: number) => {
+    setCourante(i);
+    if (!exemple) return;
+    ETAPES[i]!.faire();
+    setFaites((f) => [...new Set([...f, i])]);
+  };
   return (
-    <div className="atelier-visite">
-      <div className="atelier-ensemble-barre">
+    <div className="atelier-visite" role="region" aria-label="Visite guidée">
+      <div className="atelier-visite-tete">
         <strong>Visite guidée</strong>
+        <ol className="atelier-visite-pastilles">
+          {ETAPES.map((x, i) => (
+            <li key={x.titre}>
+              <button
+                type="button"
+                className={`${i === courante ? "actif" : ""}${faites.includes(i) ? " faite" : ""}`}
+                aria-current={i === courante ? "step" : undefined}
+                title={x.titre}
+                onClick={() => aller(i)}
+              >
+                {faites.includes(i) && i !== courante ? "✓" : i + 1}
+              </button>
+            </li>
+          ))}
+        </ol>
         <span className="muted small">
-          sur le jeu d'exemple (fichiers synthétiques au format COMSOL) ; chaque
-          bouton ouvre la tuile réglée.
+          jeu d'exemple : fichiers synthétiques au format COMSOL
         </span>
         <span className="grow" />
-        {!exemple ? (
-          <button type="button" className="primary" onClick={chargerExemple}>
-            Charger le jeu d'exemple
-          </button>
-        ) : null}
         <button
           type="button"
+          className="small-btn"
           onClick={() => useAtelier.getState().set({ visite: false })}
         >
           Fermer
         </button>
       </div>
-      <ol className="atelier-etapes">
-        {ETAPES.map((e, i) => (
-          <li
-            key={e.titre}
-            className={faites.includes(i) ? "faite" : undefined}
-          >
-            <strong>
-              {i + 1}. {e.titre}
-              {faites.includes(i) ? " ✓" : ""}
-            </strong>
-            <span className="small">{e.quoi}</span>
-            <div className="rangee-boutons">
+      <div className="atelier-visite-etape">
+        <div className="atelier-visite-texte">
+          <strong>
+            {courante + 1}. {e.titre}
+          </strong>{" "}
+          <span className="small">{e.quoi}</span>
+        </div>
+        <div className="rangee-boutons">
+          {!exemple ? (
+            <button type="button" className="primary" onClick={chargerExemple}>
+              Charger le jeu d'exemple
+            </button>
+          ) : (
+            <>
               <button
                 type="button"
                 className="small-btn"
-                disabled={!exemple}
-                onClick={() => {
-                  e.faire();
-                  setFaites([...new Set([...faites, i])]);
-                }}
+                disabled={courante === 0}
+                onClick={() => aller(courante - 1)}
+                title="Étape précédente"
+              >
+                ◀
+              </button>
+              <button
+                type="button"
+                className="small-btn primary"
+                onClick={() => aller(courante)}
               >
                 Essayer →
               </button>
-              {e.copier ? (
-                <button
-                  type="button"
-                  className="small-btn"
-                  onClick={() =>
-                    void getBackend()
-                      .then((b) => b.copyText(e.copier!.texte()))
-                      .then(() => setCopie(e.titre))
-                  }
-                >
-                  {copie === e.titre ? "Copié ✓" : e.copier.libelle}
-                </button>
-              ) : null}
-            </div>
-          </li>
-        ))}
-      </ol>
+              <button
+                type="button"
+                className="small-btn"
+                disabled={courante === ETAPES.length - 1}
+                onClick={() => aller(courante + 1)}
+                title="Étape suivante (l'ouvre aussitôt)"
+              >
+                Suivante ▶
+              </button>
+            </>
+          )}
+          {e.copier ? (
+            <button
+              type="button"
+              className="small-btn"
+              onClick={() =>
+                void getBackend()
+                  .then((b) => b.copyText(e.copier!.texte()))
+                  .then(() => setCopie(e.titre))
+              }
+            >
+              {copie === e.titre ? "Copié ✓" : e.copier.libelle}
+            </button>
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }

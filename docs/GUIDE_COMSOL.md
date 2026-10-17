@@ -36,7 +36,8 @@ format COMSOL — formes analytiques vraisemblables, pas un calcul mécanique :
 | `signal_VE_het.txt` (table : εxx à la base de la GB au passage de la roue) | signal dans le temps, mesures |
 
 La **visite guidée** (9 étapes) dit quoi regarder dans chaque tuile, et son bouton « Essayer → » ouvre la tuile
-réglée sur les bons fichiers. Deux étapes donnent de quoi coller : **« Copier le bassin HWD d'exemple »**
+réglée sur les bons fichiers. Depuis 1.43.1 c'est une bande compacte en haut de l'atelier : une étape à la fois,
+« Suivante ▶ » ouvre l'étape suivante, les pastilles 1 à 9 sautent à une étape ; la tuile reste visible dessous. Deux étapes donnent de quoi coller : **« Copier le bassin HWD d'exemple »**
 (à coller dans « Bassin mesuré ») et **« Copier la mesure de jauge d'exemple »** (à coller dans « Mesures
 superposées »). Une fois essayé, « × » sur chaque fichier, ou « Nouvelle étude », avant d'ouvrir les vrais
 exports.
@@ -198,6 +199,12 @@ Les deux vont aussi dans le **rapport LaTeX** (sections et phrases chiffrées). 
 - **Grandeurs dérivées** (« Transformer (ƒ)… » d'un fichier) : en un clic, ε1 / ε3 / γmax dans le plan x-z
   (y-z, x-y), εvol, εh max, |εzz|, τmax, σVM selon les colonnes présentes — ajoutées comme colonnes calculées,
   **à tous les fichiers** qui ont les colonnes nécessaires (case cochée par défaut).
+
+### Place pour les tracés (1.43.1)
+
+Dès qu'un tracé est choisi, les tuiles se compactent (icône et titre ; l'explication est dans l'infobulle, ou
+sous chaque tuile avec **« Détails »**), et la zone du tracé garde au moins 55 % de la hauteur : sur un petit
+écran, c'est le haut (tuiles, pistes) qui défile, pas le graphe.
 
 ### Pistes (1.39.0)
 
@@ -815,8 +822,9 @@ Une fois tracé, un profil ou une carte est un graphe normal de la page Graphes.
 
 ### 9.1 Rapport LaTeX de l'étude (1.33.0)
 
-Bouton **« Rapport LaTeX… »** de l'atelier (dès qu'un fichier est ouvert). À gauche les réglages, à droite le
-LaTeX, mis à jour en direct ; **« Copier le LaTeX »** ou **« Exporter .tex… »**.
+Bouton **« Rapport… »** de l'atelier (dès qu'un fichier est ouvert). Le rapport prend la place des tracés, sur
+toute la hauteur (**« ← Retour aux tracés »** pour revenir) : à gauche les réglages, à droite le LaTeX, mis à jour
+en direct ; **« Copier le LaTeX »**, **« Exporter .tex… »** ou **« Word (.docx)… »**.
 
 - **Langue** : français ou English (titres de sections, phrases, en-têtes des tableaux) ; le passage en
   anglais met le point décimal (la case « Virgule décimale » reste modifiable).
