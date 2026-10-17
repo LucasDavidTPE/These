@@ -1,65 +1,75 @@
 /**
- * Étape 2 et 3 de l'atelier COMSOL : réglages du tracé choisi (au centre) et aperçu en direct (à droite).
- * Chaque mode dit en clair ce qu'il fait ; les choix se font sur ce qui existe dans les fichiers ouverts.
+ * Étapes 2 et 3 de l'atelier COMSOL : réglages du tracé choisi (au centre) et aperçu en direct (à droite).
+ * Chaque mode édite une **recette** (core/graph/comsolEtude.ts) : ce qui s'affiche est exactement ce que
+ * l'étude gardera, et ce qui se rejouera pour régénérer la figure.
  */
 import { useState } from "react";
 import {
-  FACTEUR_LONGUEUR,
-  LIBELLES_PALETTES,
   OPERATIONS,
-  PALETTES_CARTE,
   arrondirClic,
-  combiner,
+  carteDeSelection,
   comparables,
+  courtDe,
   decrireExport,
+  executerTrace,
+  expressionsCommunes,
+  expressionsDe,
   geometrie,
-  grapheBarres,
-  grapheCarte,
-  grapheProfils,
-  grapheTemporel,
-  hauteurEgale,
-  libelleColonne,
   lireValeurs,
   motsDuNom,
-  pic,
-  profilsInterpoles,
-  synthese,
   syntheseLatex,
   type ExportComsol,
-  type GraphDoc,
-  type LigneSynthese,
   type ModePic,
   type Operation,
-  type PaletteCarte,
   type Statistique,
+  type TraceComparer,
+  type TraceCoupeProfils,
+  type TraceProfils,
+  type TraceSynthese,
+  type TraceTemps,
 } from "../../core/graph";
-import { useGraph } from "../graph/useGraph";
-import { useReglagesComsol } from "../graph/useReglagesComsol";
 import { getBackend } from "../platform/backend";
 import { AtelierApercu } from "./AtelierApercu";
-import { calculer, type Resultat } from "./atelierCalcul";
-import { useAtelier, useLegendes } from "./useAtelier";
+import { calculer } from "./atelierCalcul";
+import { Declinaison } from "./Declinaison";
+import { ChoixEtape } from "./Instants";
+import { ApercuMesures, MesuresCollees } from "./Mesures";
+import { useContexteTrace, useLegende, useTrace, useResultat } from "./hooks";
+import { useAtelier } from "./useAtelier";
 
-const fr = (x: number) => String(Number(x.toPrecision(5))).replace(".", ",").replace("-", "−");
-const nombre = (t: string) => Number(t.trim().replace(",", ".").replace("−", "-"));
+const fr = (x: number) =>
+  String(Number(x.toPrecision(5)))
+    .replace(".", ",")
+    .replace("-", "−");
+const nombre = (t: string) =>
+  Number(t.trim().replace(",", ".").replace("−", "-"));
 const sansExt = (n: string) => n.replace(/\.(txt|csv|dat)$/i, "");
-const communes = (es: readonly ExportComsol[]) => (es.length ? es[0]!.colonnes.map((c) => c.expression).filter((x) => es.every((e) => e.colonnes.some((c) => c.expression === x))) : []);
-const court = (e: ExportComsol | undefined, x: string) => {
-  const c = e?.colonnes.find((k) => k.expression === x);
-  return c ? `${libelleColonne(c).court} (${libelleColonne(c).unite})` : x;
-};
-const parDefaut = (xs: string[]) => xs.find((x) => /ezz$/i.test(x)) ?? xs[0];
 
 /** Cases à cocher des grandeurs ; `seule` : un choix unique (liste). */
-function Grandeurs({ e, liste, actives, set, seule }: { e: ExportComsol | undefined; liste: string[]; actives: string[]; set: (v: string[]) => void; seule?: boolean }) {
+function Grandeurs({
+  e,
+  liste,
+  actives,
+  set,
+  seule,
+}: {
+  e: ExportComsol | undefined;
+  liste: string[];
+  actives: string[];
+  set: (v: string[]) => void;
+  seule?: boolean;
+}) {
   if (seule)
     return (
       <label className="field">
         <span>Grandeur</span>
-        <select value={actives[0] ?? ""} onChange={(x) => set([x.target.value])}>
+        <select
+          value={actives[0] ?? ""}
+          onChange={(x) => set([x.target.value])}
+        >
           {liste.map((x) => (
             <option key={x} value={x}>
-              {court(e, x)}
+              {courtDe(e, x)}
             </option>
           ))}
         </select>
@@ -71,8 +81,18 @@ function Grandeurs({ e, liste, actives, set, seule }: { e: ExportComsol | undefi
       <div className="comsol-expressions">
         {liste.map((x) => (
           <label key={x} className="chip" title={x}>
-            <input type="checkbox" checked={actives.includes(x)} onChange={(ev) => set(ev.target.checked ? [...actives, x] : actives.filter((y) => y !== x))} />
-            {court(e, x)}
+            <input
+              type="checkbox"
+              checked={actives.includes(x)}
+              onChange={(ev) =>
+                set(
+                  ev.target.checked
+                    ? [...actives, x]
+                    : actives.filter((y) => y !== x),
+                )
+              }
+            />
+            {courtDe(e, x)}
           </label>
         ))}
       </div>
@@ -80,15 +100,63 @@ function Grandeurs({ e, liste, actives, set, seule }: { e: ExportComsol | undefi
   );
 }
 
+/** Cases à cocher de fichiers ; `null` = tous. */
+function Fichiers({
+  titre,
+  liste,
+  choisis,
+  set,
+}: {
+  titre: string;
+  liste: ExportComsol[];
+  choisis: string[] | null;
+  set: (v: string[] | null) => void;
+}) {
+  const legende = useLegende();
+  const tous = choisis === null;
+  return (
+    <fieldset className="atelier-champ">
+      <legend>{titre}</legend>
+      {liste.map((e) => (
+        <label key={e.nom} className="chip">
+          <input
+            type="checkbox"
+            checked={tous || choisis.includes(e.nom)}
+            onChange={(x) => {
+              const actuels = tous ? liste.map((f) => f.nom) : choisis;
+              const n = x.target.checked
+                ? [...actuels, e.nom]
+                : actuels.filter((k) => k !== e.nom);
+              set(n.length === liste.length ? null : n);
+            }}
+          />
+          {legende(e)}
+        </label>
+      ))}
+    </fieldset>
+  );
+}
+
 /** Choix d'un fichier dans une liste, décrit en clair. */
-function ChoixFichier({ libelle, liste, valeur, set, legende }: { libelle: string; liste: ExportComsol[]; valeur: ExportComsol | undefined; set: (e: ExportComsol) => void; legende: (e: ExportComsol) => string }) {
-  const longueur = useAtelier((s) => s.longueur);
+function ChoixFichier({
+  libelle,
+  liste,
+  valeur,
+  set,
+}: {
+  libelle: string;
+  liste: ExportComsol[];
+  valeur: string | null;
+  set: (nom: string) => void;
+}) {
+  const longueur = useAtelier((s) => s.cadre.longueur);
+  const legende = useLegende();
   return (
     <label className="field">
       <span>{libelle}</span>
-      <select value={valeur ? liste.indexOf(valeur) : 0} onChange={(x) => set(liste[Number(x.target.value)]!)}>
-        {liste.map((e, i) => (
-          <option key={i} value={i}>
+      <select value={valeur ?? ""} onChange={(x) => set(x.target.value)}>
+        {liste.map((e) => (
+          <option key={e.nom} value={e.nom}>
             {legende(e)} — {decrireExport(e, longueur).titre}
           </option>
         ))}
@@ -97,7 +165,13 @@ function ChoixFichier({ libelle, liste, valeur, set, legende }: { libelle: strin
   );
 }
 
-function Colonnes({ options, apercu }: { options: React.ReactNode; apercu: React.ReactNode }) {
+function Colonnes({
+  options,
+  apercu,
+}: {
+  options: React.ReactNode;
+  apercu: React.ReactNode;
+}) {
   return (
     <>
       <div className="atelier-reglages">{options}</div>
@@ -111,134 +185,98 @@ function Colonnes({ options, apercu }: { options: React.ReactNode; apercu: React
   );
 }
 
-const interfacesSi = () => (useAtelier.getState().couches ? useReglagesComsol.getState().reglages.interfaces : undefined);
+const lignesDe = (es: readonly ExportComsol[]) =>
+  es.filter((e) => geometrie(e).genre === "profil");
+const plansDe = (es: readonly ExportComsol[]) =>
+  es.filter((e) => geometrie(e).genre === "coupe" && geometrie(e).reguliere);
 
 // ---- Comparer des profils ----
 
 export function ModeProfils() {
-  const exports = useGraph((s) => s.comsol);
-  const a = useAtelier();
-  useReglagesComsol((s) => s.reglages);
-  const legende = useLegendes();
-  const lignes = exports.filter((e) => geometrie(e).genre === "profil");
-  const [exclus, setExclus] = useState<string[]>([]);
-  const choisis = lignes.filter((e) => !exclus.includes(e.nom));
-  const liste = communes(choisis.length ? choisis : lignes);
-  const [choix, setChoix] = useState<string[] | null>(null);
-  const actives = (choix ?? [parDefaut(liste)].filter((x): x is string => !!x)).filter((x) => liste.includes(x));
-  const [orientation, setOrientation] = useState<"auto" | "verticale" | "horizontale">("auto");
-  const [profondeur, setProfondeur] = useState(true);
-  const enZ = choisis.length > 0 && choisis.every((e) => /^z$/i.test(e.coordonnees[geometrie(e).varient[0]!]!));
-  const resultat: Resultat = calculer(() =>
-    choisis.length && actives.length
-      ? {
-          doc: grapheProfils(choisis, { expressions: actives, longueur: a.longueur, profondeur: enZ && orientation !== "horizontale" && profondeur, orientation, noms: choisis.map(legende), interfaces: interfacesSi() }),
-          titre: actives.length === 1 ? `${court(choisis[0], actives[0]!)} — ${choisis.length} profil(s) COMSOL` : `Profils COMSOL — ${choisis.map(legende).join(", ")}`,
-        }
-      : null,
-  );
+  const c = useContexteTrace();
+  const [t, maj] = useTrace<TraceProfils>("profils");
+  const resultat = useResultat(t);
+  const lignes = lignesDe(c.exports);
+  const choisies = t.fichiers
+    ? lignes.filter((e) => t.fichiers!.includes(e.nom))
+    : lignes;
+  const enZ =
+    choisies.length > 0 &&
+    choisies.every((e) =>
+      /^z$/i.test(e.coordonnees[geometrie(e).varient[0]!]!),
+    );
   return (
     <Colonnes
       options={
         <>
-          <fieldset className="atelier-champ">
-            <legend>Lignes à superposer (une courbe chacune)</legend>
-            {lignes.map((e) => (
-              <label key={e.nom} className="chip">
-                <input type="checkbox" checked={!exclus.includes(e.nom)} onChange={(x) => setExclus(x.target.checked ? exclus.filter((n) => n !== e.nom) : [...exclus, e.nom])} />
-                {legende(e)}
-              </label>
-            ))}
-          </fieldset>
-          <Grandeurs e={choisis[0]} liste={liste} actives={actives} set={setChoix} />
+          <ChoixEtape mode="profils" />
+          <Fichiers
+            titre="Lignes à superposer (une courbe chacune)"
+            liste={lignes}
+            choisis={t.fichiers}
+            set={(fichiers) => maj({ fichiers })}
+          />
+          <Grandeurs
+            e={choisies[0]}
+            liste={expressionsCommunes(choisies.length ? choisies : lignes)}
+            actives={t.expressions}
+            set={(expressions) => maj({ expressions })}
+          />
           <fieldset className="atelier-champ">
             <legend>Sens du tracé</legend>
             <label className="chip">
-              <input type="radio" checked={orientation === "auto"} onChange={() => setOrientation("auto")} />
-              Automatique ({enZ ? "ligne verticale : valeur en abscisse, profondeur en ordonnée" : "position en abscisse, valeur en ordonnée"})
+              <input
+                type="radio"
+                checked={t.orientation === "auto"}
+                onChange={() => maj({ orientation: "auto" })}
+              />
+              Automatique (
+              {enZ
+                ? "ligne verticale : valeur en abscisse, profondeur en ordonnée"
+                : "position en abscisse, valeur en ordonnée"}
+              )
             </label>
             <label className="chip">
-              <input type="radio" checked={orientation === "verticale"} onChange={() => setOrientation("verticale")} />
+              <input
+                type="radio"
+                checked={t.orientation === "verticale"}
+                onChange={() => maj({ orientation: "verticale" })}
+              />
               Valeur en abscisse, position en ordonnée
             </label>
             <label className="chip">
-              <input type="radio" checked={orientation === "horizontale"} onChange={() => setOrientation("horizontale")} />
+              <input
+                type="radio"
+                checked={t.orientation === "horizontale"}
+                onChange={() => maj({ orientation: "horizontale" })}
+              />
               Position en abscisse, valeur en ordonnée
             </label>
-            {enZ && orientation !== "horizontale" ? (
+            {enZ && t.orientation !== "horizontale" ? (
               <label className="chip">
-                <input type="checkbox" checked={profondeur} onChange={(e) => setProfondeur(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={t.profondeur}
+                  onChange={(e) => maj({ profondeur: e.target.checked })}
+                />
                 Profondeur positive, de la surface vers le bas
               </label>
             ) : null}
           </fieldset>
+          <MesuresCollees
+            mesures={t.mesures}
+            set={(mesures) => maj({ mesures })}
+            abscisse="position telle que sur l'axe (mm…)"
+          />
         </>
       }
-      apercu={<AtelierApercu resultat={resultat} aide={!choisis.length ? "Cochez au moins une ligne." : undefined} />}
-    />
-  );
-}
-
-// ---- Carte d'une coupe ----
-
-function usePlans() {
-  const exports = useGraph((s) => s.comsol);
-  return exports.filter((e) => {
-    const g = geometrie(e);
-    return g.genre === "coupe" && g.reguliere;
-  });
-}
-
-export function ModeCarte() {
-  const a = useAtelier();
-  useReglagesComsol((s) => s.reglages);
-  const legende = useLegendes();
-  const plans = usePlans();
-  const [plan, setPlan] = useState<ExportComsol | undefined>(undefined);
-  const p = plan && plans.includes(plan) ? plan : plans[0];
-  const liste = p ? p.colonnes.map((c) => c.expression) : [];
-  const [choix, setChoix] = useState<string | null>(null);
-  const expr = choix && liste.includes(choix) ? choix : parDefaut(liste);
-  const [palette, setPalette] = useState<PaletteCarte | "auto">("auto");
-  const [iso, setIso] = useState("");
-  const [egalite, setEgalite] = useState(false);
-  const resultat: Resultat = calculer(() => {
-    if (!p || !expr) return null;
-    let doc: GraphDoc = grapheCarte(p, expr, a.longueur, { interfaces: interfacesSi() });
-    const isolignes = lireValeurs(iso.replace(/−/g, "-"));
-    doc = { ...doc, carte: { ...doc.carte!, ...(palette !== "auto" ? { palette } : {}), ...(isolignes.length ? { isolignes } : {}) } };
-    if (egalite) doc = { ...doc, egalite: true, height: hauteurEgale({ ...doc, egalite: true }) };
-    return { doc, titre: `${legende(p)} — ${court(p, expr)}` };
-  });
-  return (
-    <Colonnes
-      options={
-        <>
-          <ChoixFichier libelle="Plan de coupe" liste={plans} valeur={p} set={setPlan} legende={legende} />
-          <Grandeurs e={p} liste={liste} actives={expr ? [expr] : []} set={(v) => setChoix(v[0] ?? null)} seule />
-          <label className="field">
-            <span>Couleurs</span>
-            <select value={palette} onChange={(e) => setPalette(e.target.value as PaletteCarte | "auto")}>
-              <option value="auto">Automatique (rouge-bleu si le signe change, sinon viridis)</option>
-              {PALETTES_CARTE.map((x) => (
-                <option key={x} value={x}>
-                  {LIBELLES_PALETTES[x]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            <span>Isolignes (valeurs séparées par ;, facultatif)</span>
-            <input value={iso} onChange={(e) => setIso(e.target.value)} placeholder="−200 ; −100 ; 0" />
-          </label>
-          <label className="chip">
-            <input type="checkbox" checked={egalite} onChange={(e) => setEgalite(e.target.checked)} />
-            Vraies proportions (1 m = 1 m)
-          </label>
-          <p className="muted small">Bornes des couleurs, contour d'empreinte, annotations, taille : dans Graphes, après « Continuer ».</p>
-        </>
+      apercu={
+        <ApercuMesures
+          resultat={resultat}
+          trace={t}
+          aide={!choisies.length ? "Cochez au moins une ligne." : undefined}
+        />
       }
-      apercu={<AtelierApercu resultat={resultat} />}
     />
   );
 }
@@ -246,110 +284,236 @@ export function ModeCarte() {
 // ---- Profils dans une coupe (clic sur la carte) ----
 
 export function ModeCoupeProfils() {
-  const a = useAtelier();
-  useReglagesComsol((s) => s.reglages);
-  const legende = useLegendes();
-  const plans = usePlans();
-  const [plan, setPlan] = useState<ExportComsol | undefined>(undefined);
-  const p = plan && plans.includes(plan) ? plan : plans[0];
-  const liste = p ? p.colonnes.map((c) => c.expression) : [];
-  const [choix, setChoix] = useState<string | null>(null);
-  const expr = choix && liste.includes(choix) ? choix : parDefaut(liste);
-  const [sens, setSens] = useState<"verticales" | "horizontales">("verticales");
-  const [valeurs, setValeurs] = useState<number[]>([]);
+  const c = useContexteTrace();
+  const [t, maj] = useTrace<TraceCoupeProfils>("coupe-profils");
+  const resultat = useResultat(t);
+  const plans = plansDe(c.exports);
+  const p = plans.find((e) => e.nom === t.plan);
   const [saisie, setSaisie] = useState("");
-  const [profondeur, setProfondeur] = useState(true);
+  // segments : premier clic = A (en attente), second clic = B
+  const [depart, setDepart] = useState<{ x: number; y: number } | null>(null);
   const g = p ? geometrie(p) : null;
   const [kx, ky] = (g?.varient ?? [0, 1]) as [number, number];
   const nomH = p ? p.coordonnees[kx]!.toLowerCase() : "x";
   const nomV = p ? p.coordonnees[ky]!.toLowerCase() : "z";
-  const fixe = sens === "verticales" ? kx : ky;
-  const nomFixe = sens === "verticales" ? nomH : nomV;
+  const nomFixe = t.sens === "verticales" ? nomH : nomV;
   const lettre = (i: number) => String.fromCharCode(97 + (i % 26));
-
-  const carte: Resultat = calculer(() => {
-    if (!p || !expr) return null;
-    const doc = grapheCarte(p, expr, a.longueur, { interfaces: interfacesSi() });
-    return {
-      doc: { ...doc, reperes: [...(doc.reperes ?? []), ...valeurs.map((v, i) => ({ axe: sens === "verticales" ? ("x" as const) : ("y" as const), valeur: v, texte: lettre(i), trait: "solid" as const }))] },
-      titre: "",
-    };
+  const carte = calculer(() => {
+    const d = carteDeSelection(t, c);
+    return d ? { doc: d, titre: "" } : null;
   });
-  const etendue = carte && "doc" in carte ? (sens === "verticales" ? carte.doc.carte!.x : carte.doc.carte!.y) : [0, 1];
-  const ajouter = (v: number) => setValeurs([...valeurs, arrondirClic(v, etendue.at(-1)! - etendue[0]!)].filter((x, i, t) => t.indexOf(x) === i));
-  const resultat: Resultat = calculer(() => {
-    if (!p || !expr || !valeurs.length) return null;
-    const f = FACTEUR_LONGUEUR[a.longueur]! / (FACTEUR_LONGUEUR[p.uniteLongueur] ?? 1);
-    const profils = profilsInterpoles(
-      p,
-      fixe,
-      valeurs.map((v) => v / f),
-    ).map((x, i) => ({ ...x, legende: `${lettre(i)}. $${nomFixe}$ = ${fr(valeurs[i]!)} ${a.longueur}` }));
-    return {
-      doc: grapheProfils(profils, { expressions: [expr], longueur: a.longueur, profondeur, interfaces: interfacesSi() }),
-      titre: `${court(p, expr)} — profils à ${nomFixe} = ${valeurs.map(fr).join(" ; ")} ${a.longueur}`,
+  const etendue =
+    carte && "doc" in carte
+      ? t.sens === "verticales"
+        ? carte.doc.carte!.x
+        : carte.doc.carte!.y
+      : [0, 1];
+  const etendueDe = (k: "x" | "y") =>
+    carte && "doc" in carte
+      ? Math.abs(carte.doc.carte![k].at(-1)! - carte.doc.carte![k][0]!)
+      : 1;
+  const cliquer = (x: number, y: number) => {
+    if (t.sens !== "segments")
+      return ajouter([
+        arrondirClic(
+          t.sens === "verticales" ? x : y,
+          etendue.at(-1)! - etendue[0]!,
+        ),
+      ]);
+    const pt = {
+      x: arrondirClic(x, etendueDe("x")),
+      y: arrondirClic(y, etendueDe("y")),
     };
-  });
+    if (!depart) return setDepart(pt);
+    if (pt.x !== depart.x || pt.y !== depart.y)
+      maj({
+        segments: [
+          ...t.segments,
+          { x0: depart.x, y0: depart.y, x1: pt.x, y1: pt.y },
+        ],
+      });
+    setDepart(null);
+  };
+  const ajouter = (vs: number[]) =>
+    maj({
+      valeurs: [...t.valeurs, ...vs].filter((x, i, l) => l.indexOf(x) === i),
+    });
+  const saisir = () => {
+    ajouter(lireValeurs(saisie.replace(/−/g, "-")));
+    setSaisie("");
+  };
   return (
     <Colonnes
       options={
         <>
-          <ChoixFichier libelle="Plan de coupe" liste={plans} valeur={p} set={(e) => (setPlan(e), setValeurs([]))} legende={legende} />
-          <Grandeurs e={p} liste={liste} actives={expr ? [expr] : []} set={(v) => setChoix(v[0] ?? null)} seule />
+          <ChoixEtape mode="coupe-profils" />
+          <ChoixFichier
+            libelle="Plan de coupe"
+            liste={plans}
+            valeur={t.plan}
+            set={(plan) => maj({ plan, expression: null, valeurs: [] })}
+          />
+          <Grandeurs
+            e={p}
+            liste={expressionsDe(p)}
+            actives={t.expression ? [t.expression] : []}
+            set={(v) => maj({ expression: v[0] ?? null })}
+            seule
+          />
           <fieldset className="atelier-champ">
             <legend>Lignes à placer</legend>
             <label className="chip">
-              <input type="radio" checked={sens === "verticales"} onChange={() => (setSens("verticales"), setValeurs([]))} />
+              <input
+                type="radio"
+                checked={t.sens === "verticales"}
+                onChange={() => maj({ sens: "verticales", valeurs: [] })}
+              />
               Verticales : à {nomH} fixé (profils le long de {nomV})
             </label>
             <label className="chip">
-              <input type="radio" checked={sens === "horizontales"} onChange={() => (setSens("horizontales"), setValeurs([]))} />
+              <input
+                type="radio"
+                checked={t.sens === "horizontales"}
+                onChange={() => maj({ sens: "horizontales", valeurs: [] })}
+              />
               Horizontales : à {nomV} fixé (profils le long de {nomH})
             </label>
-          </fieldset>
-          <p className="atelier-consigne">
-            <strong>Cliquez sur la carte</strong> pour placer une ligne, ou tapez des valeurs de {nomFixe} ({a.longueur}) :
-          </p>
-          <div className="comsol-ligne">
-            <input value={saisie} onChange={(e) => setSaisie(e.target.value)} placeholder="700 ; 848 ; 900 ; 967" onKeyDown={(e) => e.key === "Enter" && (setValeurs([...valeurs, ...lireValeurs(saisie.replace(/−/g, "-"))]), setSaisie(""))} />
-            <button
-              type="button"
-              disabled={!lireValeurs(saisie).length}
-              onClick={() => {
-                setValeurs([...valeurs, ...lireValeurs(saisie.replace(/−/g, "-"))]);
-                setSaisie("");
-              }}
-            >
-              Ajouter
-            </button>
-          </div>
-          <div className="atelier-grandeurs">
-            {valeurs.map((v, i) => (
-              <span key={i} className="atelier-puce">
-                {lettre(i)}. {nomFixe} = {fr(v)} {a.longueur}{" "}
-                <button type="button" className="lien" aria-label="Retirer" onClick={() => setValeurs(valeurs.filter((_, j) => j !== i))}>
-                  ×
-                </button>
-              </span>
-            ))}
-            {valeurs.length ? (
-              <button type="button" className="lien" onClick={() => setValeurs([])}>
-                tout retirer
-              </button>
-            ) : null}
-          </div>
-          {sens === "verticales" && /^z$/i.test(nomV) ? (
             <label className="chip">
-              <input type="checkbox" checked={profondeur} onChange={(e) => setProfondeur(e.target.checked)} />
+              <input
+                type="radio"
+                checked={t.sens === "segments"}
+                onChange={() => maj({ sens: "segments" })}
+              />
+              Segments quelconques : de A à B, en deux clics (obliques,
+              diagonales)
+            </label>
+          </fieldset>
+          {t.sens === "segments" ? (
+            <>
+              <p className="atelier-consigne">
+                <strong>Cliquez sur la carte</strong>{" "}
+                {depart
+                  ? `le point B (A est en ${nomH} = ${fr(depart.x)}, ${nomV} = ${fr(depart.y)})`
+                  : "le point A, puis le point B"}{" "}
+                ; profils tracés en fonction de la distance depuis A.
+                {depart ? (
+                  <button
+                    type="button"
+                    className="lien"
+                    onClick={() => setDepart(null)}
+                  >
+                    {" "}
+                    annuler A
+                  </button>
+                ) : null}
+              </p>
+              <div className="atelier-grandeurs">
+                {t.segments.map((sg, i) => (
+                  <span key={i} className="atelier-puce">
+                    {lettre(i)}. ({fr(sg.x0)} ; {fr(sg.y0)}) → ({fr(sg.x1)} ;{" "}
+                    {fr(sg.y1)}){" "}
+                    <button
+                      type="button"
+                      className="lien"
+                      aria-label="Retirer"
+                      onClick={() =>
+                        maj({ segments: t.segments.filter((_, j) => j !== i) })
+                      }
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </>
+          ) : null}
+          {t.sens !== "segments" ? (
+            <>
+              <p className="atelier-consigne">
+                <strong>Cliquez sur la carte</strong> pour placer une ligne, ou
+                tapez des valeurs de {nomFixe} ({c.cadre.longueur}) :
+              </p>
+              <div className="comsol-ligne">
+                <input
+                  value={saisie}
+                  onChange={(e) => setSaisie(e.target.value)}
+                  placeholder="700 ; 848 ; 900 ; 967"
+                  onKeyDown={(e) => e.key === "Enter" && saisir()}
+                />
+                <button
+                  type="button"
+                  disabled={!lireValeurs(saisie).length}
+                  onClick={saisir}
+                >
+                  Ajouter
+                </button>
+              </div>
+              <div className="atelier-grandeurs">
+                {t.valeurs.map((v, i) => (
+                  <span key={i} className="atelier-puce">
+                    {lettre(i)}. {nomFixe} = {fr(v)} {c.cadre.longueur}{" "}
+                    <button
+                      type="button"
+                      className="lien"
+                      aria-label="Retirer"
+                      onClick={() =>
+                        maj({ valeurs: t.valeurs.filter((_, j) => j !== i) })
+                      }
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                {t.valeurs.length ? (
+                  <button
+                    type="button"
+                    className="lien"
+                    onClick={() => maj({ valeurs: [] })}
+                  >
+                    tout retirer
+                  </button>
+                ) : null}
+              </div>
+            </>
+          ) : null}
+          {t.sens === "verticales" && /^z$/i.test(nomV) ? (
+            <label className="chip">
+              <input
+                type="checkbox"
+                checked={t.profondeur}
+                onChange={(e) => maj({ profondeur: e.target.checked })}
+              />
               Profondeur positive, de la surface vers le bas
             </label>
+          ) : null}
+          {t.sens !== "segments" && t.valeurs.length ? (
+            <Declinaison t={t} />
           ) : null}
         </>
       }
       apercu={
         <>
-          <AtelierApercu resultat={carte} onClic={(x, y) => ajouter(sens === "verticales" ? x : y)} sansEnvoi petit aide="Carte : cliquez pour placer une ligne (a, b, c…)." />
-          <AtelierApercu resultat={resultat} aide={valeurs.length ? "Profils le long des lignes placées :" : undefined} />
+          <AtelierApercu
+            resultat={carte}
+            onClic={cliquer}
+            petit
+            aide={
+              t.sens === "segments"
+                ? "Carte : cliquez A puis B pour chaque segment (a, b, c…)."
+                : "Carte : cliquez pour placer une ligne (a, b, c…)."
+            }
+          />
+          <AtelierApercu
+            resultat={resultat}
+            trace={t}
+            aide={
+              (t.sens === "segments" ? t.segments.length : t.valeurs.length)
+                ? t.sens === "segments"
+                  ? "Profils le long des segments :"
+                  : "Profils le long des lignes placées :"
+                : undefined
+            }
+          />
         </>
       }
     />
@@ -359,85 +523,149 @@ export function ModeCoupeProfils() {
 // ---- Signal dans le temps ----
 
 export function ModeTemps() {
-  const exports = useGraph((s) => s.comsol);
-  const legende = useLegendes();
-  const tables = exports.filter((e) => e.nature === "table");
-  const [exclus, setExclus] = useState<string[]>([]);
-  const choisies = tables.filter((e) => !exclus.includes(e.nom));
-  const liste = communes(choisies.length ? choisies : tables);
-  const [choix, setChoix] = useState<string[] | null>(null);
-  const actives = (choix ?? liste.slice(0, 1)).filter((x) => liste.includes(x));
-  const [refMode, setRefMode] = useState<string>("aucune");
-  const [refValeur, setRefValeur] = useState("");
-  const [refTexte, setRefTexte] = useState("Élastique");
-  const [instant, setInstant] = useState("10");
-  const [modePic, setModePic] = useState<ModePic | "">("abs");
-  const resultat: Resultat = calculer(() => {
-    if (!choisies.length || !actives.length) return null;
-    let reference: { valeur: number; texte: string } | null = null;
-    if (refMode === "valeur" && refValeur.trim()) {
-      const v = nombre(refValeur);
-      if (!Number.isFinite(v)) throw new Error("Valeur de référence : un nombre.");
-      reference = { valeur: v, texte: refTexte };
-    } else if (refMode !== "aucune" && refMode !== "valeur") {
-      const e = exports[Number(refMode)]!;
-      const j = e.colonnes.findIndex((c) => c.expression === actives[0]);
-      if (j < 0) throw new Error(`${legende(e)} n'a pas la grandeur ${court(choisies[0], actives[0]!)}.`);
-      const pk = pic(e.valeurs[0]!, e.valeurs[e.coordonnees.length + j]!, "abs");
-      if (pk) reference = { valeur: Number(pk.y.toPrecision(6)), texte: refTexte || legende(e) };
-    }
-    const t = nombre(instant);
-    return {
-      doc: grapheTemporel(choisies, { expressions: actives, noms: choisies.map(legende), reference, instant: instant.trim() && Number.isFinite(t) ? t : null, pic: modePic || null }),
-      titre: `${court(choisies[0], actives[0]!)} au cours du temps — ${choisies.map(legende).join(", ")}`,
-    };
-  });
+  const c = useContexteTrace();
+  const legende = useLegende();
+  const [t, maj] = useTrace<TraceTemps>("temps");
+  const resultat = useResultat(t);
+  const tables = c.exports.filter((e) => e.nature === "table");
+  const choisies = t.fichiers
+    ? tables.filter((e) => t.fichiers!.includes(e.nom))
+    : tables;
+  const [valeur, setValeur] = useState(
+    t.reference.genre === "valeur" ? fr(t.reference.valeur) : "",
+  );
+  const texte =
+    t.reference.genre === "aucune" ? "Élastique" : t.reference.texte;
   return (
     <Colonnes
       options={
         <>
-          <fieldset className="atelier-champ">
-            <legend>Signaux à superposer</legend>
-            {tables.map((e) => (
-              <label key={e.nom} className="chip">
-                <input type="checkbox" checked={!exclus.includes(e.nom)} onChange={(x) => setExclus(x.target.checked ? exclus.filter((n) => n !== e.nom) : [...exclus, e.nom])} />
-                {legende(e)}
-              </label>
-            ))}
-          </fieldset>
-          <Grandeurs e={choisies[0]} liste={liste} actives={actives} set={setChoix} />
+          <Fichiers
+            titre="Signaux à superposer"
+            liste={tables}
+            choisis={t.fichiers}
+            set={(fichiers) => maj({ fichiers })}
+          />
+          <Grandeurs
+            e={choisies[0]}
+            liste={expressionsCommunes(choisies.length ? choisies : tables)}
+            actives={t.expressions}
+            set={(expressions) => maj({ expressions })}
+          />
           <fieldset className="atelier-champ">
             <legend>Valeur de référence (trait horizontal)</legend>
-            <select value={refMode} onChange={(e) => setRefMode(e.target.value)}>
+            <select
+              value={
+                t.reference.genre === "fichier"
+                  ? `f:${t.reference.fichier}`
+                  : t.reference.genre
+              }
+              onChange={(e) => {
+                const v = e.target.value;
+                maj({
+                  reference:
+                    v === "aucune"
+                      ? { genre: "aucune" }
+                      : v === "valeur"
+                        ? {
+                            genre: "valeur",
+                            valeur: nombre(valeur) || 0,
+                            texte,
+                          }
+                        : { genre: "fichier", fichier: v.slice(2), texte },
+                });
+              }}
+            >
               <option value="aucune">Aucune</option>
               <option value="valeur">Une valeur que je tape</option>
-              {exports.map((e, i) =>
-                e.colonnes.some((c) => c.expression === actives[0]) ? (
-                  <option key={i} value={String(i)}>
+              {c.exports.map((e) =>
+                e.colonnes.some((k) => k.expression === t.expressions[0]) ? (
+                  <option key={e.nom} value={`f:${e.nom}`}>
                     Le pic de « {legende(e)} » ({sansExt(e.nom)})
                   </option>
                 ) : null,
               )}
             </select>
-            {refMode === "valeur" ? <input value={refValeur} onChange={(e) => setRefValeur(e.target.value)} placeholder="−152" aria-label="Valeur" /> : null}
-            {refMode !== "aucune" ? <input value={refTexte} onChange={(e) => setRefTexte(e.target.value)} aria-label="Texte de la référence" placeholder="Élastique" /> : null}
+            {t.reference.genre === "valeur" ? (
+              <input
+                value={valeur}
+                onChange={(e) => setValeur(e.target.value)}
+                onBlur={() =>
+                  Number.isFinite(nombre(valeur)) &&
+                  maj({
+                    reference: {
+                      genre: "valeur",
+                      valeur: nombre(valeur),
+                      texte,
+                    },
+                  })
+                }
+                placeholder="−152"
+                aria-label="Valeur"
+              />
+            ) : null}
+            {t.reference.genre !== "aucune" ? (
+              <input
+                value={texte}
+                onChange={(e) =>
+                  maj({
+                    reference: {
+                      ...t.reference,
+                      texte: e.target.value,
+                    } as TraceTemps["reference"],
+                  })
+                }
+                aria-label="Texte de la référence"
+              />
+            ) : null}
           </fieldset>
           <label className="field">
             <span>Instant repère, en s (trait vertical ; vide = aucun)</span>
-            <input value={instant} onChange={(e) => setInstant(e.target.value)} />
+            <input
+              defaultValue={t.instant === null ? "" : fr(t.instant)}
+              onBlur={(e) =>
+                maj({
+                  instant:
+                    e.target.value.trim() &&
+                    Number.isFinite(nombre(e.target.value))
+                      ? nombre(e.target.value)
+                      : null,
+                })
+              }
+            />
           </label>
           <label className="field">
-            <span>Pic à annoter (valeur, instant, décalage par rapport à l'instant repère)</span>
-            <select value={modePic} onChange={(e) => setModePic(e.target.value as ModePic | "")}>
+            <span>
+              Pic à annoter (valeur, instant, décalage par rapport à l'instant
+              repère)
+            </span>
+            <select
+              value={t.pic ?? ""}
+              onChange={(e) =>
+                maj({ pic: (e.target.value || null) as ModePic | null })
+              }
+            >
               <option value="">Aucun</option>
               <option value="abs">Plus grande valeur absolue</option>
               <option value="max">Maximum</option>
               <option value="min">Minimum</option>
             </select>
           </label>
+          <MesuresCollees
+            mesures={t.mesures}
+            set={(mesures) => maj({ mesures })}
+            aligner={t.aligner}
+            setAligner={(aligner) => maj({ aligner })}
+            abscisse="temps (s)"
+          />
         </>
       }
-      apercu={<AtelierApercu resultat={resultat} />}
+      apercu={
+        <ApercuMesures
+          resultat={resultat}
+          trace={t}
+        />
+      }
     />
   );
 }
@@ -447,47 +675,42 @@ export function ModeTemps() {
 const EXPLICATIONS: Record<Operation, string> = {
   rapport: "A / B : 1,5 = A vaut une fois et demie B.",
   difference: "A − B, dans l'unité de la grandeur.",
-  ecart: "(A − B) / |B| en % ; attention au signe pour des compressions (valeurs négatives).",
+  ecart:
+    "(A − B) / |B| en % ; attention au signe pour des compressions (valeurs négatives).",
 };
 
 export function ModeComparer() {
-  const exports = useGraph((s) => s.comsol);
-  const a = useAtelier();
-  useReglagesComsol((s) => s.reglages);
-  const legende = useLegendes();
-  const [ia, setIa] = useState(0);
-  const [ib, setIb] = useState(1);
-  const [op, setOp] = useState<Operation>("rapport");
-  const [choix, setChoix] = useState<string | null>(null);
-  const A = exports[Math.min(ia, exports.length - 1)];
-  const B = exports[Math.min(ib, exports.length - 1)];
+  const c = useContexteTrace();
+  const legende = useLegende();
+  const [t, maj] = useTrace<TraceComparer>("comparer");
+  const A = c.exports.find((e) => e.nom === t.a);
+  const B = c.exports.find((e) => e.nom === t.b);
   const raison = A && B ? comparables(A, B) : "Choisissez A et B.";
-  const liste = A && B && !raison ? communes([A, B]) : [];
-  const expr = choix && liste.includes(choix) ? choix : parDefaut(liste);
-  const resultat: Resultat = calculer(() => {
+  const resultat = calculer(() => {
     if (raison) throw new Error(raison);
-    if (!A || !B || !expr) return null;
-    const res = combiner(A, B, op, { nomA: legende(A), nomB: legende(B), expressions: [expr] });
-    const g = geometrie(res).genre;
-    const titre = `${court(A, expr)} : ${res.legende}`;
-    if (g === "coupe") return { doc: grapheCarte(res, expr, a.longueur, { interfaces: interfacesSi() }), titre };
-    if (g === "profil") return { doc: grapheProfils([res], { expressions: [expr], longueur: a.longueur, profondeur: true, noms: [res.legende!], interfaces: interfacesSi() }), titre };
-    if (g === "serie") return { doc: grapheTemporel([res], { expressions: [expr], noms: [res.legende!] }), titre };
-    throw new Error("Ce genre de fichier ne se trace pas directement ; le résultat peut aller dans la synthèse.");
+    return executerTrace(t, c);
   });
-  const choixFichier = (libelle: string, v: number, set: (n: number) => void, autre?: ExportComsol) => (
+  const choixFichier = (
+    libelle: string,
+    v: string | null,
+    set: (nom: string) => void,
+    autre?: ExportComsol,
+  ) => (
     <label className="field">
       <span>{libelle}</span>
-      <select value={Math.min(v, exports.length - 1)} onChange={(e) => set(Number(e.target.value))}>
-        {exports.map((e, i) => {
-          const r = autre && autre !== e ? comparables(autre, e) : null;
-          return (
-            <option key={i} value={i}>
-              {autre === e ? "= A : " : r ? "✗ " : autre ? "✓ " : ""}
-              {legende(e)} ({sansExt(e.nom)})
-            </option>
-          );
-        })}
+      <select value={v ?? ""} onChange={(e) => set(e.target.value)}>
+        {c.exports.map((e) => (
+          <option key={e.nom} value={e.nom}>
+            {autre === e
+              ? "= A : "
+              : autre
+                ? comparables(autre, e)
+                  ? "✗ "
+                  : "✓ "
+                : ""}
+            {legende(e)} ({sansExt(e.nom)})
+          </option>
+        ))}
       </select>
     </label>
   );
@@ -495,36 +718,62 @@ export function ModeComparer() {
     <Colonnes
       options={
         <>
-          {choixFichier("Cas A", ia, setIa)}
-          {choixFichier("Cas B (✓ = même grille que A)", ib, setIb, A)}
+          <ChoixEtape mode="comparer" />
+          {choixFichier("Cas A", t.a, (a) => maj({ a }))}
+          {choixFichier(
+            "Cas B (✓ = même grille que A)",
+            t.b,
+            (b) => maj({ b }),
+            A,
+          )}
           <fieldset className="atelier-champ">
             <legend>Opération, point par point</legend>
             {(Object.keys(OPERATIONS) as Operation[]).map((o) => (
               <label key={o} className="chip" title={EXPLICATIONS[o]}>
-                <input type="radio" checked={op === o} onChange={() => setOp(o)} />
+                <input
+                  type="radio"
+                  checked={t.op === o}
+                  onChange={() => maj({ op: o })}
+                />
                 {OPERATIONS[o]}
               </label>
             ))}
-            <p className="muted small">{EXPLICATIONS[op]}</p>
+            <p className="muted small">{EXPLICATIONS[t.op]}</p>
           </fieldset>
-          {liste.length ? <Grandeurs e={A} liste={liste} actives={expr ? [expr] : []} set={(v) => setChoix(v[0] ?? null)} seule /> : null}
+          {A && B && !raison ? (
+            <Grandeurs
+              e={A}
+              liste={expressionsCommunes([A, B])}
+              actives={t.expression ? [t.expression] : []}
+              set={(v) => maj({ expression: v[0] ?? null })}
+              seule
+            />
+          ) : null}
           <button
             type="button"
             disabled={!!raison || !A || !B}
-            title="Le résultat rejoint la liste des fichiers : carte, profils dans une coupe, synthèse…"
-            onClick={() => {
-              try {
-                if (A && B) useGraph.setState({ comsol: [...exports, combiner(A, B, op, { nomA: legende(A), nomB: legende(B) })] });
-              } catch (e) {
-                window.alert(e instanceof Error ? e.message : String(e));
-              }
-            }}
+            title="Le résultat rejoint la liste des fichiers (et l'étude) : carte, profils dans une coupe, synthèse…"
+            onClick={() =>
+              A &&
+              B &&
+              useAtelier
+                .getState()
+                .garderCalcule({
+                  nom: `${legende(A)} ${t.op === "rapport" ? "/" : t.op === "difference" ? "−" : "écart"} ${legende(B)}`,
+                  genre: "operation",
+                  a: A.nom,
+                  b: B.nom,
+                  op: t.op,
+                  legendeA: legende(A),
+                  legendeB: legende(B),
+                })
+            }
           >
             Garder le résultat dans la liste des fichiers
           </button>
         </>
       }
-      apercu={<AtelierApercu resultat={resultat} />}
+      apercu={<AtelierApercu resultat={resultat} trace={t} />}
     />
   );
 }
@@ -532,72 +781,83 @@ export function ModeComparer() {
 // ---- Tableau de synthèse ----
 
 export function ModeSynthese() {
-  const exports = useGraph((s) => s.comsol);
-  const a = useAtelier();
-  const reg = useReglagesComsol();
-  const legende = useLegendes();
-  const [choixFichiers, setChoixFichiers] = useState<Record<string, boolean>>({});
-  const inclus = (e: ExportComsol) => choixFichiers[e.nom] ?? (!e.legende && e.nature !== "table" && geometrie(e).genre !== "point");
-  const fichiers = exports.filter(inclus);
-  const liste = communes(fichiers);
-  const [choix, setChoix] = useState<string[] | null>(null);
-  const actives = (choix ?? [parDefaut(liste)].filter((x): x is string => !!x)).filter((x) => liste.includes(x));
-  const [virgule, setVirgule] = useState(true);
+  const c = useContexteTrace();
+  const legende = useLegende();
+  const [t, maj] = useTrace<TraceSynthese>("synthese");
+  const fichiers = c.exports.filter((e) => (t.fichiers ?? []).includes(e.nom));
   const mots = fichiers.length ? motsDuNom(fichiers[0]!.nom) : [];
-  const [categorie, setCategorie] = useState<number | null>(null);
-  const [groupe, setGroupe] = useState<number | null>(null);
-  const [stat, setStat] = useState<Statistique>("abs");
-  const [exprBarres, setExprBarres] = useState<string | null>(null);
-  const cat = categorie ?? Math.max(0, mots.length - 1);
-  const grp = groupe ?? Math.max(0, mots.length - 2);
-  let lignes: LigneSynthese[] = [];
-  let erreur = "";
-  try {
-    lignes = actives.length ? synthese(fichiers, actives, { longueur: a.longueur, correspondances: reg.reglages.correspondances }) : [];
-  } catch (e) {
-    erreur = e instanceof Error ? e.message : String(e);
-  }
-  // légendes de l'atelier (saisies comprises) plutôt que celles recalculées sur la sélection
-  lignes = lignes.map((l) => ({ ...l, legende: legende(fichiers.find((e) => e.nom === l.fichier)!) }));
-  const xBarres = exprBarres && actives.includes(exprBarres) ? exprBarres : actives[0];
-  const barres: Resultat = calculer(() =>
-    lignes.length && xBarres ? { doc: grapheBarres(lignes, { expression: xBarres, categorie: cat, groupe: grp, statistique: stat, correspondances: reg.reglages.correspondances }), titre: `${court(fichiers[0], xBarres)} — synthèse COMSOL` } : null,
-  );
-  const tex = () => syntheseLatex(lignes, { longueur: a.longueur, virgule });
+  const resultat = useResultat(t);
+  const lignes =
+    resultat && "lignes" in resultat ? (resultat.lignes ?? []) : [];
+  const tex = () =>
+    syntheseLatex(lignes, { longueur: c.cadre.longueur, virgule: t.virgule });
+  const majBarres = (p: Partial<TraceSynthese["barres"]>) =>
+    maj({ barres: { ...t.barres, ...p } });
   return (
     <Colonnes
       options={
         <>
+          <ChoixEtape mode="synthese" />
           <fieldset className="atelier-champ">
             <legend>Cas (une ligne du tableau chacun)</legend>
-            {exports.map((e) => (
+            {c.exports.map((e) => (
               <label key={e.nom} className="chip" title={e.nom}>
-                <input type="checkbox" checked={inclus(e)} onChange={(x) => setChoixFichiers({ ...choixFichiers, [e.nom]: x.target.checked })} />
+                <input
+                  type="checkbox"
+                  checked={(t.fichiers ?? []).includes(e.nom)}
+                  onChange={(x) =>
+                    maj({
+                      fichiers: x.target.checked
+                        ? [...(t.fichiers ?? []), e.nom]
+                        : (t.fichiers ?? []).filter((n) => n !== e.nom),
+                    })
+                  }
+                />
                 {legende(e)}
               </label>
             ))}
           </fieldset>
-          <Grandeurs e={fichiers[0]} liste={liste} actives={actives} set={setChoix} />
+          <Grandeurs
+            e={fichiers[0]}
+            liste={expressionsCommunes(fichiers)}
+            actives={t.expressions}
+            set={(expressions) => maj({ expressions })}
+          />
           <label className="chip">
-            <input type="checkbox" checked={virgule} onChange={(e) => setVirgule(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={t.virgule}
+              onChange={(e) => maj({ virgule: e.target.checked })}
+            />
             Virgule décimale dans le LaTeX
           </label>
           <fieldset className="atelier-champ">
             <legend>Diagramme en barres</legend>
             <label className="field">
               <span>Grandeur</span>
-              <select value={xBarres ?? ""} onChange={(e) => setExprBarres(e.target.value)}>
-                {actives.map((x) => (
+              <select
+                value={t.barres.expression ?? ""}
+                onChange={(e) => majBarres({ expression: e.target.value })}
+              >
+                {t.expressions.map((x) => (
                   <option key={x} value={x}>
-                    {court(fichiers[0], x)}
+                    {courtDe(fichiers[0], x)}
                   </option>
                 ))}
               </select>
             </label>
-            <p className="muted small">Les groupes viennent des mots du nom de fichier (ex. « {fichiers[0] ? sansExt(fichiers[0].nom) : "coupeXZ_R1_VE_het"} »).</p>
+            <p className="muted small">
+              Les groupes viennent des mots du nom de fichier (ex. «{" "}
+              {fichiers[0] ? sansExt(fichiers[0].nom) : "coupeXZ_R1_VE_het"} »).
+            </p>
             <label className="field">
               <span>En abscisse (groupes)</span>
-              <select value={cat} onChange={(e) => setCategorie(Number(e.target.value))}>
+              <select
+                value={t.barres.categorie ?? 0}
+                onChange={(e) =>
+                  majBarres({ categorie: Number(e.target.value) })
+                }
+              >
                 {mots.map((m, i) => (
                   <option key={i} value={i}>
                     mot {i + 1} : « {m} »
@@ -607,7 +867,10 @@ export function ModeSynthese() {
             </label>
             <label className="field">
               <span>En couleurs (une barre par)</span>
-              <select value={grp} onChange={(e) => setGroupe(Number(e.target.value))}>
+              <select
+                value={t.barres.groupe ?? 0}
+                onChange={(e) => majBarres({ groupe: Number(e.target.value) })}
+              >
                 {mots.map((m, i) => (
                   <option key={i} value={i}>
                     mot {i + 1} : « {m} »
@@ -617,8 +880,15 @@ export function ModeSynthese() {
             </label>
             <label className="field">
               <span>Valeur</span>
-              <select value={stat} onChange={(e) => setStat(e.target.value as Statistique)}>
-                <option value="abs">Extremum (plus grande valeur absolue)</option>
+              <select
+                value={t.barres.statistique}
+                onChange={(e) =>
+                  majBarres({ statistique: e.target.value as Statistique })
+                }
+              >
+                <option value="abs">
+                  Extremum (plus grande valeur absolue)
+                </option>
                 <option value="max">Maximum</option>
                 <option value="min">Minimum</option>
               </select>
@@ -628,7 +898,9 @@ export function ModeSynthese() {
       }
       apercu={
         <>
-          {erreur ? <p className="banner error">{erreur}</p> : null}
+          {resultat && "erreur" in resultat ? (
+            <p className="banner error">{resultat.erreur}</p>
+          ) : null}
           {lignes.length ? (
             <>
               <div className="comsol-synthese">
@@ -638,9 +910,9 @@ export function ModeSynthese() {
                       <th>Cas</th>
                       <th>Grandeur</th>
                       <th>Max</th>
-                      <th>à ({a.longueur})</th>
+                      <th>à ({c.cadre.longueur})</th>
                       <th>Min</th>
-                      <th>à ({a.longueur})</th>
+                      <th>à ({c.cadre.longueur})</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -651,27 +923,53 @@ export function ModeSynthese() {
                           {l.libelle.court} ({l.libelle.unite})
                         </td>
                         <td>{fr(l.max)}</td>
-                        <td>{Object.entries(l.posMax).map(([k, v]) => `${k.toLowerCase()} ${fr(v)}`).join(", ")}</td>
+                        <td>
+                          {Object.entries(l.posMax)
+                            .map(([k, v]) => `${k.toLowerCase()} ${fr(v)}`)
+                            .join(", ")}
+                        </td>
                         <td>{fr(l.min)}</td>
-                        <td>{Object.entries(l.posMin).map(([k, v]) => `${k.toLowerCase()} ${fr(v)}`).join(", ")}</td>
+                        <td>
+                          {Object.entries(l.posMin)
+                            .map(([k, v]) => `${k.toLowerCase()} ${fr(v)}`)
+                            .join(", ")}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
               <div className="rangee-boutons">
-                <button type="button" onClick={() => void getBackend().then((b) => b.copyText(tex()))}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    void getBackend().then((b) => b.copyText(tex()))
+                  }
+                >
                   Copier le tableau LaTeX (booktabs)
                 </button>
-                <button type="button" onClick={() => void getBackend().then((b) => b.saveTextAs(tex(), "synthese-comsol.tex", "tex"))}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    void getBackend().then((b) =>
+                      b.saveTextAs(tex(), "synthese-comsol.tex", "tex"),
+                    )
+                  }
+                >
                   Exporter .tex…
                 </button>
               </div>
+              <AtelierApercu
+                resultat={resultat}
+                trace={t}
+                aide="Diagramme en barres :"
+              />
             </>
           ) : (
-            <div className="atelier-apercu vide">Cochez des cas et des grandeurs.</div>
+            <div className="atelier-apercu vide">
+              Cochez des cas et des grandeurs.
+            </div>
           )}
-          {lignes.length ? <AtelierApercu resultat={barres} aide="Diagramme en barres :" /> : null}
         </>
       }
     />

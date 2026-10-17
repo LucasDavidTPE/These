@@ -230,6 +230,35 @@ lancent tous les tests automatiques sous Windows.
       contour d'empreinte, repères et annotations, axes inversés, même échelle de couleurs dans une planche
 - [x] Figures : **atelier COMSOL** (onglet dédié) — fichiers décrits en clair, tracés guidés en tuiles, aperçu en direct, profils
       placés d'un clic sur la carte, cas comparables signalés (1.28.0)
+- [x] COMSOL : **études** enregistrées et reproductibles (fichiers suivis sur les deux PC, transformations et recettes rejouées,
+      relecture automatique des fichiers réexportés, glisser-déposer, « Régénérer depuis COMSOL » dans Graphes, centrage sur
+      l'extremum) (1.29.0)
+- [x] COMSOL : **décliner** une recette sur tous les plans (N figures + planche en matrice matériau × empreinte, titres, échelle
+      commune) et **« Régénérer toute l'étude »** (figures et planches) (1.30.0)
+- [x] COMSOL : **critères de dimensionnement** (εt base des couches liées, εz sommet du sol, lois de fatigue et de sol réglables,
+      N admissibles, dommage pour un trafic, critère dimensionnant, booktabs, barres log / relatives) (1.31.0)
+- [x] COMSOL : **exports à plusieurs instants** (curseur, lecture ▶, enveloppes max / min / |max|), **sonde** multi-cas au survol,
+      **épingles** de valeurs sur la carte, **signal au cours du temps** en un point, planche **cas × instants** (1.32.0)
+- [x] COMSOL : **rapport LaTeX** de l'étude (cas, figures en `\input`, extrema et critères booktabs, phrases chiffrées
+      comparatives FR / EN, texte compatible pdflatex) (1.33.0)
+- [x] COMSOL : **bassin de déflexion** (géophones HWD, D0, SCI, BDI, BCI, AREA, rayon de courbure, écart à un bassin mesuré)
+      et **convergence du maillage** (EL / EL-fin : écart sur le pic, pire point, L2), dans le rapport LaTeX (1.34.0)
+- [x] COMSOL : **profils le long de segments** quelconques (deux clics), **lissage** de la carte, **animation** des instants en GIF
+      animé ou en images + `\animategraphics` pour Beamer (1.35.0)
+- [x] COMSOL : **sensibilité à un paramètre** (balayage ou instants d'un fichier, paramètre d'en-tête d'un fichier à l'autre ;
+      extremum ou valeur en un point) et **export Excel** des données de chaque tracé et des tableaux (1.36.0)
+- [x] COMSOL : **mesures superposées** (jauges, capteurs, profils mesurés ; écarts, recalage des pics) et **vérification des
+      fichiers** (unités, NaN, cas manquants, pics au bord de la zone exportée) (1.37.0)
+- [x] COMSOL : **vue d'ensemble** de tous les cas (petites cartes ou profils à la même échelle, en matrice, clic pour ouvrir) et
+      **grandeurs dérivées** en un clic (principales dans le plan, γmax, εvol, σVM…) pour tous les fichiers (1.38.0)
+- [x] COMSOL : aperçus mémorisés (gros exports fluides) (1.38.1) ; **pistes** proposées d'après les fichiers ouverts, tuiles
+      compactes (1.39.0)
+- [x] COMSOL : conversions d'unité proposées (sans facteur → µdef, Pa → MPa, m → mm) (1.40.0)
+- [x] COMSOL : **jeu d'exemple intégré** (16 fichiers synthétiques) et **visite guidée** de toutes les tuiles (1.41.0)
+- [x] Coquille : **Quoi de neuf** après chaque mise à jour, rouvrable (barre, Ctrl+K), bouton « Essayer » par nouveauté (1.42.0)
+- [x] COMSOL : **rapport en Word (.docx)** — titres, phrases chiffrées, tableaux, figures en images, légendes numérotées (1.43.0)
+- [x] Thème sombre vérifié (test des feuilles de style, `npm run audit:sombre`) ; atelier COMSOL rapide sur gros exports
+      (géométrie, grilles, surfaces, index des nœuds en cache ; une carte = un chemin SVG par palier) (1.43.2)
 - [x] Manuscrits : anciens fichiers **.doc** acceptés (parties, dossiers, corrections reçues), convertis en `.docx` par Word
       à côté de l'original (1.26.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),

@@ -141,7 +141,7 @@ export function lireTitreTable(t: string): ColonneComsol {
   const parametres: Record<string, string> = {};
   const point = /Point\s*:\s*(\([^)]*\)|\S+)/i.exec(reste);
   if (point) parametres.Point = point[1]!;
-  const at = /@\s*([^:]*):\s*(.*)$/.exec(reste);
+  const at = /@\s*(?:([^:=,]*):\s*)?(.*)$/.exec(reste);
   for (const p of (at?.[2] ?? "").split(/,\s*/)) {
     const i = p.indexOf("=");
     if (i > 0) parametres[p.slice(0, i).trim()] = p.slice(i + 1).trim();
@@ -160,7 +160,8 @@ export function lireTitres(texte: string, n: number): ColonneComsol[] {
   }
   return trouves.map((t, k) => {
     const suite = texte.slice(t.fin, trouves[k + 1]?.debut ?? texte.length).trim();
-    const m = /^@\s*([^:]*):\s*(.*)$/.exec(suite);
+    // « @ 303: Temps=10 s, lc=3 » (solution numérotée) ou « @ t=9 » (export à plusieurs instants)
+    const m = /^@\s*(?:([^:=,]*):\s*)?(.*)$/.exec(suite);
     const parametres: Record<string, string> = {};
     for (const p of (m?.[2] ?? "").split(/,\s*/)) {
       const i = p.indexOf("=");
@@ -232,10 +233,38 @@ export interface Geometrie {
   reguliere: boolean;
 }
 
-const distinctes = (v: Float64Array) => [...new Set([...v].filter(Number.isFinite).map((x) => Number(x.toPrecision(10))))].sort((a, b) => a - b);
+/** Valeurs distinctes (à 10 chiffres près), triées : tri d'une copie typée, puis une passe. */
+function distinctes(v: Float64Array): number[] {
+  const out: number[] = [];
+  let avant = NaN;
+  for (const x of Float64Array.from(v).sort()) {
+    if (!Number.isFinite(x)) continue;
+    const r = Number(x.toPrecision(10));
+    if (r !== avant) out.push((avant = r));
+  }
+  return out;
+}
+
+/**
+ * Géométrie déjà calculée, par tableau de valeurs (les valeurs d'un export ne changent jamais une fois lues ; une
+ * copie `{ ...e, legende }` les partage) puis par lecture imposée. Appelée à chaque rendu par les légendes, les
+ * pistes, les tuiles : sans ce cache, elle recompte les coordonnées distinctes de chaque fichier à chaque fois.
+ */
+const geometries = new WeakMap<Float64Array[], Map<string, Geometrie>>();
 
 export function geometrie(e: ExportComsol): Geometrie {
   if (e.nature === "table") return { varient: [0], genre: "serie", grilles: [], reguliere: false };
+  const cle = `${e.lignes}|${(e.forcer ?? []).join(",")}`;
+  let parLecture = geometries.get(e.valeurs);
+  if (!parLecture) geometries.set(e.valeurs, (parLecture = new Map()));
+  const deja = parLecture.get(cle);
+  if (deja) return deja;
+  const g = calculerGeometrie(e);
+  parLecture.set(cle, g);
+  return g;
+}
+
+function calculerGeometrie(e: ExportComsol): Geometrie {
   const forcees = (e.forcer ?? []).filter((k, i, t) => k >= 0 && k < e.coordonnees.length && t.indexOf(k) === i);
   const varient = forcees.length ? forcees : e.coordonnees.map((_, k) => k).filter((k) => {
     let mn = Infinity;
@@ -307,9 +336,16 @@ export function legendes(exports: readonly ExportComsol[], o: { correspondances?
     };
     return imposer(exports.map((e) => seul(e) || nomCourt(e.nom)));
   }
-  const morceaux = exports.map((e) => nomCourt(e.nom).split(/[_\-\s]+/).filter(Boolean));
-  const communs = new Set(morceaux[0]!.filter((m) => morceaux.every((x) => x.includes(m))));
-  const parNom = morceaux.map((m) => m.filter((x) => !communs.has(x)).map(traduire).join(" "));
+  // mots qui diffèrent d'un nom à l'autre ; si couper aux tirets ne les distingue pas (« EL » / « EL-fin »),
+  // couper seulement aux « _ » et aux blancs
+  const differentsMots = (sep: RegExp) => {
+    const morceaux = exports.map((e) => nomCourt(e.nom).split(sep).filter(Boolean));
+    const communs = new Set(morceaux[0]!.filter((m) => morceaux.every((x) => x.includes(m))));
+    return morceaux.map((m) => m.filter((x) => !communs.has(x)).map(traduire).join(" "));
+  };
+  const avecTirets = differentsMots(/[_\-\s]+/);
+  const sansTirets = differentsMots(/[_\s]+/);
+  const parNom = avecTirets.every(Boolean) && new Set(avecTirets).size === avecTirets.length ? avecTirets : sansTirets.every(Boolean) && new Set(sansTirets).size === sansTirets.length ? sansTirets : avecTirets;
   const cles = [...new Set(exports.flatMap((e) => Object.keys(parametresDe(e))))];
   const differents = cles.filter((k) => new Set(exports.map((e) => parametresDe(e)[k] ?? "")).size > 1);
   const parParam = exports.map((e) => differents.map((k) => traduire(`${k}=${parametresDe(e)[k] ?? "?"}`)).join(", "));
@@ -481,12 +517,39 @@ export function extraireProfil(e: ExportComsol, fixe: number, valeur: number): E
 // ---- Carte d'une coupe ----
 
 /** Grille d'une coupe régulière : nœuds (unité de longueur choisie) et valeurs [ligne y][colonne x] (null : absente). */
-export function grilleCoupe(e: ExportComsol, expression: string, longueur: UniteLongueur): { x: number[]; y: number[]; v: (number | null)[][]; nomX: string; nomY: string } {
+type Grille = { x: number[]; y: number[]; v: (number | null)[][]; nomX: string; nomY: string };
+
+/**
+ * Grilles déjà construites, par colonne de valeurs puis par colonnes de coordonnées (partagées par les vues d'un
+ * export à un instant, `vueEtape`) : la sonde, le curseur des instants et l'aperçu redemandent les mêmes à chaque
+ * rendu. À lire seulement.
+ */
+const grillesConstruites = new WeakMap<Float64Array, WeakMap<Float64Array, WeakMap<Float64Array, Map<string, Grille>>>>();
+
+export function grilleCoupe(e: ExportComsol, expression: string, longueur: UniteLongueur): Grille {
   const g = geometrie(e);
   if (g.genre !== "coupe" || !g.reguliere) throw new Error("Carte possible seulement pour une coupe sur grille régulière (sinon, choisir une autre lecture du fichier).");
   const j = e.colonnes.findIndex((c) => c.expression === expression);
   if (j < 0) throw new Error(`Expression absente : ${expression}.`);
   const [kx, ky] = g.varient as [number, number];
+  const niveau = <K extends object, V>(m: WeakMap<K, V>, k: K, nouveau: () => V): V => {
+    if (!m.has(k)) m.set(k, nouveau());
+    return m.get(k)!;
+  };
+  const parCle = niveau(
+    niveau(niveau(grillesConstruites, e.valeurs[e.coordonnees.length + j]!, () => new WeakMap()), e.valeurs[kx]!, () => new WeakMap()),
+    e.valeurs[ky]!,
+    () => new Map<string, Grille>(),
+  );
+  const cle = `${kx},${ky}|${longueur}|${e.uniteLongueur}|${e.lignes}|${e.coordonnees[kx]}|${e.coordonnees[ky]}`;
+  const deja = parCle.get(cle);
+  if (deja) return deja;
+  const grille = construireGrille(e, g, j, kx, ky, longueur);
+  parCle.set(cle, grille);
+  return grille;
+}
+
+function construireGrille(e: ExportComsol, g: Geometrie, j: number, kx: number, ky: number, longueur: UniteLongueur): Grille {
   const f = FACTEUR_LONGUEUR[longueur]! / (FACTEUR_LONGUEUR[e.uniteLongueur] ?? 1);
   const gx = g.grilles[0]!;
   const gy = g.grilles[1]!;

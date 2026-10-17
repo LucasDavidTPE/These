@@ -1,7 +1,7 @@
 # Tracer des exports COMSOL dans Thèse
 
 Guide d'utilisation de tout ce que **Figures → Graphes** sait faire avec les fichiers exportés de COMSOL
-(versions 1.24.0 à 1.28.0) : les données attendues, ce que l'appli en comprend, les tracés possibles, les
+(versions 1.24.0 à 1.30.0) : les données attendues, ce que l'appli en comprend, les tracés possibles, les
 calculs avant tracé, les réglages après coup, l'enregistrement, les exports LaTeX et l'assemblage en planches.
 
 En bref :
@@ -17,6 +17,30 @@ En bref :
 6. **Exporter** en pgfplots, SVG ou PNG, ou **assembler** plusieurs graphes dans une planche (a), (b)…
 
 ---
+
+## Pour découvrir : jeu d'exemple et visite guidée (1.41.0)
+
+Sans rien exporter de COMSOL : « Nouveautés » en bas de la barre de Thèse → **« Lancer la visite → »** (1.42.0),
+ou, dans l'atelier vide, **« Essayer avec le jeu d'exemple »** (ou bouton **« Visite
+guidée »** de la barre, puis « Charger le jeu d'exemple »). L'atelier charge 16 fichiers **synthétiques** au
+format COMSOL — formes analytiques vraisemblables, pas un calcul mécanique :
+
+| Fichiers | Pour essayer |
+|---|---|
+| `coupeXZ_R1_{EL,VE}_{het,rect,circ}.txt` (coupes x-z 41 × 41, εxx, εzz, εxz, w) | vue d'ensemble, cartes, critères, comparer, synthèse, rapport |
+| `coupeXZ_R1_EL-fin_het.txt` (le même cas « raffiné ») | convergence du maillage |
+| `coupeXZ_R1_VE-roulant_het.txt` (charge roulante, 9 instants de 8 à 12 s) | curseur, ▶, enveloppe, sonde, épingles, signal en un point, animation |
+| `surface_{EL,VE}_het.txt` (ligne de surface, w) | bassin de déflexion |
+| `verticale_{EL,VE}_het.txt` | profils, critères sur profil vertical |
+| `sensib_EGB{9,11,13}_EL_het.txt` (en-tête `E_GB=… MPa`) | sensibilité d'un fichier à l'autre |
+| `signal_VE_het.txt` (table : εxx à la base de la GB au passage de la roue) | signal dans le temps, mesures |
+
+La **visite guidée** (9 étapes) dit quoi regarder dans chaque tuile, et son bouton « Essayer → » ouvre la tuile
+réglée sur les bons fichiers. Depuis 1.43.1 c'est une bande compacte en haut de l'atelier : une étape à la fois,
+« Suivante ▶ » ouvre l'étape suivante, les pastilles 1 à 9 sautent à une étape ; la tuile reste visible dessous. Deux étapes donnent de quoi coller : **« Copier le bassin HWD d'exemple »**
+(à coller dans « Bassin mesuré ») et **« Copier la mesure de jauge d'exemple »** (à coller dans « Mesures
+superposées »). Une fois essayé, « × » sur chaque fichier, ou « Nouvelle étude », avant d'ouvrir les vrais
+exports.
 
 ## 0. L'atelier COMSOL (1.28.0)
 
@@ -54,6 +78,143 @@ ensuite (synthèse, profils dans une coupe…).
 Dans **Graphes**, le panneau « Exports COMSOL » ne garde qu'un bouton « Ouvrir l'atelier COMSOL » ; un export
 COMSOL ouvert par « Ouvrir des données… » rejoint aussi l'atelier.
 
+### Études : tout refaire en un clic (1.29.0)
+
+Une **étude** garde l'analyse entière : les fichiers (retrouvés sur les **deux PC** : un fichier rangé dans
+OneDrive ou dans l'espace est noté `onedrive:Thèse/COMSOL/coupeXZ_R1_VE_het.txt`, pas par son chemin
+`C:\Users\…`), leur lecture corrigée, leurs **transformations** (colonnes calculées, repères), les légendes
+saisies, les fichiers calculés (A / B…) et les **recettes** (chaque tracé envoyé dans Graphes).
+
+- **Barre du haut** : « Étude » (liste des études de la bibliothèque, ou nouvelle), titre, **Enregistrer** (● =
+  changements non enregistrés). Rangée dans la bibliothèque de figures : `_comsol/etudes/<titre>.json`.
+- **Rouvrir** une étude relit ses fichiers là où ils sont sur ce PC, rejoue les transformations dans l'ordre et
+  recalcule les fichiers dérivés ; ce qui manque est listé.
+- **Fichiers suivis** : chaque carte dit « ✓ retrouvé sur les deux PC » ou « hors OneDrive : à rouvrir sur l'autre
+  PC ». **↻** relit un fichier (ou tous, « ↻ Relire » en haut de la colonne) ; un fichier **réexporté par COMSOL
+  est relu tout seul** (le dossier est surveillé) ; rouvrir un fichier déjà ouvert le relit en gardant ses
+  transformations.
+- **Glisser-déposer** : des `.txt` lâchés sur la page s'ajoutent.
+- **Recettes** : « Continuer dans Graphes » garde le tracé dans l'étude (créée au besoin) ; elles s'affichent sous
+  les tuiles (un clic : on retrouve le tracé et ses réglages). La figure enregistrée retient sa recette
+  (`origine` dans graph.json).
+- **Régénérer** : dans Graphes, une figure issue d'une recette a un bouton **« ↻ Régénérer depuis COMSOL »** :
+  les fichiers sont relus, la recette rejouée, et les **nouvelles données** remplacent les anciennes en gardant
+  les retouches (titres, couleurs, noms de séries, taille, palette, isolignes, repères ajoutés). « Enregistrer »
+  pour garder. C'est le geste à faire après un nouveau calcul COMSOL.
+- **Transformer (ƒ)** a deux raccourcis : **« z → profondeur »** et **« Centrer x (ou y) sur l'extremum de
+  εzz »** (l'origine se met au point le plus sollicité : la roue au centre, sans chercher sa coordonnée).
+
+### Décliner une recette sur tous les cas, et tout régénérer (1.30.0)
+
+Dans **Carte d'une coupe** (et **Profils dans une coupe**, une fois des lignes placées), le cadre **« Décliner
+pour tous les plans »** fait d'un réglage une série complète :
+
+1. cocher les plans à traiter (tous ceux qui ont la grandeur, par défaut) ;
+2. choisir les **lignes** et les **colonnes** de la planche parmi les mots qui varient dans les noms de fichiers
+   (`coupeXZ_R1_EL-fin_het.txt` : mot 3 = matériau, mot 4 = empreinte ; les mots sont séparés par « _ », un
+   « - » reste dans le mot) ; l'aperçu de la matrice montre où ira chaque cas (— = case vide) ; deux fichiers
+   dans la même case : message, choisir d'autres mots ;
+3. **même échelle de couleurs**, **même taille**, style d'étiquettes ;
+4. **« Créer N figures + la planche »** : une figure par plan dans la bibliothèque (titre « EL het — εzz »,
+   tags `comsol` et le titre de l'étude), chacune avec sa recette, puis une **planche en matrice** avec les
+   titres de lignes et de colonnes (traduits par les correspondances : « het » → « Hétérogène »), cases vides
+   gardées. « Ouvrir la planche → » pour la voir.
+
+**« ↻ Régénérer toute l'étude »** (barre du haut, étude enregistrée) : après un nouveau calcul COMSOL, relit les
+fichiers et refait **toutes les figures de l'étude** dans la bibliothèque (données neuves, retouches gardées),
+puis **toutes les planches** qui en contiennent (exports SVG, PNG, pgfplots réécrits). Une figure ouverte sur
+l'autre PC (verrou) est laissée telle quelle et signalée.
+
+### Critères de dimensionnement (1.31.0)
+
+Tuile **« Critères de dimensionnement »** (⚖) : pour chaque cas, la déformation qui dimensionne et le nombre de
+cycles qu'elle permet — **εt à la base des couches liées** (fatigue) et **εz au sommet du sol** (orniérage),
+façon méthode rationnelle. Tableau booktabs, barres, dommage pour un trafic : voir la section 5.5.
+
+### Exports à plusieurs instants, sonde et épingles (1.32.0)
+
+Un export « Données » fait **à tous les instants** (ou pour toutes les valeurs d'un balayage) a une colonne
+par grandeur **et par instant** (`1e6*solid.eZZ (1) @ t=9`, `… @ t=10`…). La fiche du fichier l'annonce
+(« ⏱ 21 valeurs de t, de 0 à 20 ») et chaque tracé reçoit un **curseur d'instant** : glisser pour changer
+d'instant, ▶ pour faire défiler la carte dans le temps, ou **enveloppe** (maximum, minimum, plus grande valeur
+absolue sur tous les instants, point par point). Sur la carte : **sonde** au survol (la valeur au même point
+dans tous les plans comparables), **épingles** (un clic écrit la valeur sur la carte), **signal au cours du
+temps** au point épinglé, **déclinaison sur les instants** (planche cas × instants). Détails : § 4.3.
+
+### Rapport LaTeX de l'étude (1.33.0)
+
+**« Rapport LaTeX… »** (barre du haut) : un **premier jet de la partie résultats**, à `\input` dans l'article
+ou la thèse — tableau des cas, figures de l'étude (`\input` des exports pgfplots de la bibliothèque, légende
+= titre de la figure, `\label{fig:FIG-…}`), valeurs extrêmes et critères de dimensionnement en **booktabs**, et
+**phrases chiffrées** qui comparent les cas au cas de référence (« Rapportée au cas EL het (−193 µdef), elle
+varie de +50 % pour VE het… », « … le nombre de cycles admissibles du critère dimensionnant est divisé par
+7,59 pour VE het »), en **français ou en anglais**. Détails : § 9.1.
+
+### Bassin de déflexion et convergence du maillage (1.34.0)
+
+- **« Bassin de déflexion »** (◡) : la déflexion w en surface lue comme un essai **HWD** — déflexions aux
+  géophones (0, 200, 300, 450, 600, 900, 1200, 1500, 1800 mm), **D0, SCI, BDI, BCI, AREA, rayon de
+  courbure**, et l'écart à un **bassin mesuré** collé depuis le rapport d'essai (RMS, écart sur D0).
+- **« Convergence du maillage »** (⊞) : le même cas sur un maillage grossier et sur un maillage raffiné
+  (paires trouvées d'après les noms, « EL » / « EL-fin ») : écart sur le pic, plus grand écart point à point,
+  norme L2 ; verdict « le maillage grossier suffit » sous 2 %.
+
+Les deux vont aussi dans le **rapport LaTeX** (sections et phrases chiffrées). Détails : § 5.6 et § 5.7.
+
+### Segments, lissage, animation (1.35.0)
+
+- **Profils le long de segments quelconques** (« Profils dans une coupe » → « Segments quelconques ») : deux
+  clics sur la carte, A puis B ; le profil est tracé en fonction de la distance depuis A (obliques sous le
+  bord du pneu, diagonales dans une couche).
+- **Lissage de la carte** (× 2, × 4) : nœuds interpolés entre ceux de la grille, rendu plus lisse.
+- **Animer les instants** (carte d'un export à plusieurs instants) : **GIF animé** (PowerPoint, Word,
+  courriel) ou **images PNG + code `\animategraphics`** pour Beamer (archive .zip), même échelle de couleurs,
+  instant écrit sous l'axe. Détails : § 4.4.
+
+### Sensibilité à un paramètre, exports Excel (1.36.0)
+
+- **« Sensibilité à un paramètre »** (↗) : le pic d'une grandeur (maximum, minimum ou plus grande valeur
+  absolue, avec sa position) ou sa **valeur en un point** d'une coupe, en fonction d'un paramètre — un
+  **balayage COMSOL** ou les **instants** d'un même fichier (`@ E=…`, `@ t=…`), ou un **paramètre de
+  l'en-tête qui change d'un fichier à l'autre** (`lc=1`, `lc=2`, `lc=3`, une courbe par groupe d'autres
+  paramètres : `VE=0`, `VE=1`). Tableau, booktabs. Détails : § 5.8.
+- **« Excel… »** sous chaque aperçu : les données du graphe (x et y de chaque courbe, ou la grille de la carte)
+  et les tableaux calculés (synthèse, critères, bassins, maillage, sensibilité) dans un classeur .xlsx.
+
+### Mesures superposées, vérification des fichiers (1.37.0)
+
+- **Mesures superposées** (« Signal dans le temps », « Comparer des profils ») : coller les colonnes d'Excel
+  (jauges, capteurs, profil mesuré) ; tracées en noir, comparées à chaque courbe calculée (pic, écart sur le
+  pic, RMS) ; pour un signal, **recalage des pics** dans le temps (décalage donné). Détails : § 6.1.
+- **« Vérifier »** (liste des fichiers) : même grandeur dans des unités différentes, valeurs absentes, deux
+  fichiers à la même légende, **cas manquants** du plan tiré des noms (« il manque VE × rect »), **pic au bord
+  de la zone exportée** (zone trop petite ?), grilles différentes entre plans comparables.
+
+### Vue d'ensemble, grandeurs dérivées (1.38.0)
+
+- **« ▦▦ Vue d'ensemble »** (en tête des tuiles) : tous les cas d'un coup, en **petites cartes** (ou petits
+  profils) à la **même échelle**, rangés en matrice d'après les mots des noms (lignes = matériau, colonnes =
+  empreinte), le pic sous chaque case ; un clic ouvre le cas en grand (« Carte d'une coupe », « Comparer des
+  profils »).
+- **Grandeurs dérivées** (« Transformer (ƒ)… » d'un fichier) : en un clic, ε1 / ε3 / γmax dans le plan x-z
+  (y-z, x-y), εvol, εh max, |εzz|, τmax, σVM selon les colonnes présentes — ajoutées comme colonnes calculées,
+  **à tous les fichiers** qui ont les colonnes nécessaires (case cochée par défaut).
+
+### Place pour les tracés (1.43.1)
+
+Dès qu'un tracé est choisi, les tuiles se compactent (icône et titre ; l'explication est dans l'infobulle, ou
+sous chaque tuile avec **« Détails »**), et la zone du tracé garde au moins 55 % de la hauteur : sur un petit
+écran, c'est le haut (tuiles, pistes) qui défile, pas le graphe.
+
+### Pistes (1.39.0)
+
+Sous les tuiles, **« Pistes pour ces fichiers »** : ce que l'atelier peut faire des fichiers ouverts, dit en
+clair, chaque piste menant à sa tuile ou à son panneau — « 3 coupes (EL / EL-fin / VE) : toutes d'un coup »
+→ vue d'ensemble ; « fichiers à plusieurs valeurs de t » → carte avec curseur ; « 1 paire maillage grossier /
+fin » → convergence ; « déflexion w en surface » → bassin ; « 2 points d'attention » → Vérifier ; « premier jet
+LaTeX » → rapport. Les trois premières sont affichées (« + N autres »), « masquer » les cache. Les tuiles
+tiennent sur 3 ou 4 colonnes, explications abrégées (le détail est dans l'infobulle).
+
 Les sections suivantes détaillent les données attendues et chaque calcul.
 
 ---
@@ -81,6 +242,10 @@ Conseils pour l'export :
   traçables, mais la carte sera refusée.
 - **Un fichier par cas de calcul** (élastique / viscoélastique, cas de charge, géométrie…) : c'est la
   manière la plus simple d'obtenir ensuite des courbes superposées avec des légendes automatiques.
+- **Plusieurs instants dans un même fichier** (étude temporelle, charge roulante) : dans *Export → Données*,
+  garder « Temps : tous » (ou une liste d'instants). COMSOL écrit une colonne par grandeur et par instant
+  (`… @ t=9`, `… @ t=10`, ou `… @ 3: Temps=10 s, lc=3`) ; Thèse les regroupe et propose un curseur (§ 4.3).
+  Même chose pour un balayage paramétrique (`@ lc=1`, `@ lc=2`…).
 - **Nommer les fichiers avec des mots séparés par `_`**, comme `verticale_max_std_el_lc3_het.txt` ou
   `verticale_max_std_ve_lc1_rect.txt` : les légendes sont tirées des mots qui diffèrent d'un nom à l'autre
   (§ 3.3).
@@ -327,6 +492,71 @@ entre deux lignes de la grille est **interpolée linéairement** (exacte sur une
 hors de la coupe est refusée. Les lignes sont nommées a, b, c… sur la carte, les profils légendés « a. $y$ = 848
 mm » et superposés dans l'aperçu, avec profondeur et repères des couches.
 
+### 4.3 Instants, sonde, épingles (1.32.0)
+
+**Instant tracé.** Dès qu'un fichier ouvert a plusieurs instants (ou plusieurs valeurs d'un paramètre), un cadre
+« Instant tracé » apparaît en tête des réglages de chaque tracé (sauf « Signal dans le temps ») :
+
+- **À un instant** : le curseur choisit l'instant (« t = 10 (11 / 21) ») ; ▶ fait défiler les instants en
+  boucle (0,7 s chacun), ⏸ arrête. Les fichiers sans instants (le cas élastique) sont tracés tels quels.
+- **Enveloppe** : pour chaque point, le **maximum**, le **minimum** ou la **plus grande valeur absolue**
+  (avec son signe) sur tous les instants. C'est la carte « pire cas » d'une charge roulante, et ce qu'il faut
+  pour les **critères de dimensionnement** (§ 5.5) quand la charge se déplace.
+
+Le choix fait partie de la recette : la figure se régénère au même instant, et son titre le dit
+(« VE het — εzz (µdef) (t = 10) », « … (|max| sur t) »).
+
+**Sonde.** Au survol de la carte, sous l'aperçu : la position et la valeur au même point **dans tous les plans
+comparables** (mêmes axes, même grandeur : EL, VE, autres empreintes), interpolée dans la maille, à l'instant
+choisi. Le plan affiché est en gras.
+
+**Épingles.** Un **clic** sur la carte épingle le point : sa valeur est écrite sur la carte (point noir et texte
+tourné vers l'intérieur) et listée à gauche (a, b, c…). Les valeurs sont **recalculées** à chaque
+régénération (nouveau calcul COMSOL, autre instant) ; × retire une épingle.
+
+**Signal au cours du temps.** Pour un fichier à plusieurs instants, « ∿ signal » sur une épingle crée, pour
+chaque plan comparable qui a des instants, un **fichier calculé** : la valeur au point (interpolée dans la
+maille) à chaque instant, comme une table COMSOL. Il apparaît dans la liste (« Signal au cours de t, tiré
+de … »), se trace dans **« Signal dans le temps »** (pic annoté, instant repère, référence élastique) et est
+gardé dans l'étude (recalculé à l'ouverture).
+
+**Décliner sur les instants** (sous la carte d'un fichier à plusieurs instants) : cocher jusqu'à 6 instants
+et les cas comparables (une ligne chacun) → une figure par cas et par instant (recette gardée), et une
+**planche** cas × instants, titres de colonnes « t = 9 », « t = 10 »…, **même échelle de couleurs**.
+
+### 4.5 Vue d'ensemble (1.38.0)
+
+Bouton **« ▦▦ Vue d'ensemble »** à droite de « Que voulez-vous tracer ? » : à la place du tracé en cours,
+
+- **Coupes** ou **Lignes**, et la **grandeur** (communes à tous les cas) ;
+- **lignes** et **colonnes** de la matrice : deux mots qui varient dans les noms (par défaut les deux premiers) ;
+- une petite carte par cas (même échelle de couleurs pour toutes), ou un petit profil (mêmes axes), avec la
+  légende du cas et son **pic** (valeur de plus grande valeur absolue) ; « — » : combinaison absente ;
+- **clic** sur une case : le cas s'ouvre en grand dans « Carte d'une coupe » (ou « Comparer des profils »),
+  avec la même grandeur. « Fermer » revient au tracé.
+
+### 4.4 Segments, lissage, animation (1.35.0)
+
+**Segments quelconques** (« Profils dans une coupe », troisième choix) : cliquer **A** puis **B** sur la carte
+(le consigne rappelle A en attente ; « annuler A »). Chaque segment est tracé en noir sur la carte (a, b, c…)
+et son profil, interpolé dans la maille (200 pas), en fonction de la **distance parcourue depuis A** ; la
+légende rappelle les extrémités, « (754 ; −279) → (862 ; −64) ». Un segment hors de la carte est refusé.
+Gardés dans la recette, régénérables.
+
+**Lissage** (« Carte d'une coupe ») : × 2 ou × 4 nœuds interpolés (bilinéaire) entre deux nœuds de la grille :
+les paliers de couleur suivent mieux les variations, les valeurs aux nœuds exportés ne changent pas. Le
+fichier pgfplots grossit d'autant (× 16 points avec × 4).
+
+**Animer les instants** (« Carte d'une coupe », fichier à plusieurs instants) :
+
+- une image par instant (« un instant sur k » pour alléger), la carte telle que réglée (palette, isolignes,
+  épingles, lissage), **même échelle de couleurs** pour toutes, l'instant écrit sous l'axe horizontal ;
+- **« GIF animé… »** : boucle infinie, durée d'une image réglable (400 ms par défaut), résolution 80 à
+  160 dpi ; 256 couleurs (suffisant pour une carte à 24 teintes et du texte) ;
+- **« Images + LaTeX (Beamer, .zip)… »** : les images en PNG 200 dpi et un `.tex` à `\input`
+  (`\usepackage{animate}` ; `\animategraphics[controls, loop, autoplay, width=\linewidth]{2,5}{nom-}{0}{n−1}`),
+  lisible dans Adobe Reader (pas dans tous les lecteurs PDF).
+
 ---
 
 ## 5. Calculs avant le tracé
@@ -344,6 +574,29 @@ fichier et se trace, se cartographie ou se synthétise comme les autres.
 - **Exemples** : `abs(ezz)`, `max(e1, 0)` (traction seule), `0.5*(exx + eyy)`, `-ezz` (changement de signe),
   `1e-3*ezz` (µdef → ‰), `e1 - e3`.
 - **Nom** et **unité** de la colonne : ce qui s'affiche sur l'axe et dans les listes.
+
+### 5.1 bis Grandeurs dérivées proposées (1.38.0)
+
+Sous « Colonne calculée », **« Grandeurs dérivées »** propose ce que les colonnes du fichier permettent :
+
+| Proposée | Formule (noms courts des colonnes) | Il faut |
+|---|---|---|
+| ε1 (x-z), ε3 (x-z) | 0.5*(exx+ezz) ± sqrt((0.5*(exx−ezz))^2 + exz^2) | exx, ezz, exz (tensoriel, comme `solid.eXZ`) |
+| γmax (x-z) | 2*sqrt((0.5*(exx−ezz))^2 + exz^2) = ε1 − ε3 | idem |
+| mêmes en y-z, x-y | avec eyy, eyz / exx, eyy, exy | |
+| εvol | exx + eyy + ezz | les trois |
+| εh max | max(exx, eyy) | exx, eyy |
+| \|εzz\| | abs(ezz) | ezz |
+| τmax (x-z) | sqrt((0.5*(sxx−szz))^2 + sxz^2) | sxx, szz, sxz |
+| σVM | von Mises (six composantes) | sxx … sxz |
+
+Conversions d'unité (1.40.0) : une grandeur exportée sans facteur est proposée convertie — εzz sans unité →
+« εzz (µdef) » (1e6*ezz), σ en Pa → MPa, w en m → mm — pour la mettre à l'unité des autres fichiers quand
+« Vérifier » signale des unités différentes.
+
+Un clic ajoute la colonne (unité de la première composante), à ce fichier ou, case cochée, à **tous les
+fichiers d'origine** qui ont les colonnes. Comme toute colonne calculée, elle est gardée dans l'étude et
+rejouée à la relecture. Les grandeurs déjà présentes ne sont pas proposées.
 
 ### 5.2 Changement de repère (« Transformer (ƒ)… » sur un fichier)
 
@@ -384,6 +637,98 @@ table), une ligne par fichier × grandeur, avec la légende du cas (correspondan
   autre mot (le matériau : mot n° 3). Les correspondances s'appliquent (« het » → « Hétérogène »). Le
   graphe a des catégories nommées en abscisse (modifiables : axe x → « Catégories »).
 
+### 5.5 Critères de dimensionnement (tuile « Critères de dimensionnement »)
+
+**Cas évalués** : les coupes régulières qui contiennent z (plan x-z, y-z) et les profils verticaux (ligne le
+long de z). Pour chaque cas et chaque **critère** coché :
+
+1. la ligne à la **cote de l'interface** est prise dans le fichier (interpolée dans une coupe ; interpolée
+   entre deux points d'un profil vertical), du côté demandé (« au-dessus de » pour la base d'une couche liée,
+   « en dessous de » pour le sommet du sol), avec un **décalage** dans la couche si besoin. Si l'export
+   s'arrête juste avant l'interface (−0,3199 pour −0,32 m), le bord du fichier est pris, à condition d'être
+   à moins de 1 % de l'étendue en z et **du bon côté** (jamais de l'autre côté de l'interface) ;
+2. sur cette ligne, la plus forte **traction** (valeur maxi) ou **compression** (valeur mini, comptée
+   positive) parmi les **variables** du critère (`exx, eyy` pour εt ; `ezz` pour εz ; on peut mettre `e1`,
+   `e3`…). Unités converties en µdef (µε, ‰, sans unité = m/m) ;
+3. les **cycles admissibles** par la loi du critère :
+   - fatigue des couches liées : εt,adm = ε6 · k · (N/10⁶)^b, donc N = 10⁶ · (εt / (ε6·k))^(1/b)
+     (b négatif ; k regroupe kc, kr, ks, kθ) ;
+   - sol : εz,adm = A · N^(−e), donc N = (εz / A)^(−1/e) (A = 0,012 ou 0,016 ; e = 0,222).
+
+Le tableau donne, par cas et par critère, la déformation, **N admissible** et, si un **trafic de calcul** est
+saisi, le **dommage** D = trafic / N (Miner ; en orange au-delà de 1) ; la survol d'une case montre la
+position du maximum, la variable retenue et la cote évaluée. La case **surlignée** est le **critère
+dimensionnant** du cas (le moins de cycles), rappelé dans la dernière colonne. « pas de traction » : la
+déformation la plus forte est de signe contraire (la couche est comprimée à cette cote).
+
+- **Régler les critères et les lois…** (pour toute la bibliothèque, comme les interfaces) : nom, traction ou
+  compression, cote z (m, négative vers le bas), côté, décalage, variables, et ε6, b, k ou A, e. Les trois
+  critères de départ (εt base BB à −0,08 m, εt base GB et εz sommet GRH à −0,32 m) ont des **valeurs
+  indicatives** : les remplacer par celles des matériaux de l'étude.
+- **Diagramme** : cycles admissibles (échelle log), déformations critiques, ou **cycles rapportés à un cas de
+  référence** (en %, trait à 100 % : « le VE tient 12 % des cycles de l'EL »). Une série par critère, les
+  cas en abscisse ; graphe modifiable comme les autres (« Continuer dans Graphes »), recette gardée dans
+  l'étude.
+- **Copier le tableau LaTeX (booktabs)** / **Exporter .tex…** : µdef et N par critère, critère dimensionnant,
+  trafic en légende.
+
+### 5.6 Bassin de déflexion (tuile « Bassin de déflexion »)
+
+**Où lire le bassin** : une **ligne horizontale en surface** (profil le long de x ou de y, en z = 0) ou une
+**coupe x-z / y-z** (la ligne la plus haute est prise). La déflexion est la colonne **w** (« 1e3*w » → mm ;
+« uz » dans la liste), sinon celle choisie.
+
+- **Centre de la charge** : au pic de déflexion par défaut, ou une position saisie (mm, sur la ligne).
+  Les déflexions sont **positives vers le bas** et **moyennées des deux côtés du centre** quand la ligne les a
+  (sinon le côté disponible).
+- **Géophones** : distances au centre en mm ; « HWD standard » = 0, 200, 300, 450, 600, 900, 1200, 1500,
+  1800 ; « 0 / 300 / 600 / 900 » pour l'AREA.
+- **Indices** (unité de la déflexion) : SCI = D0 − D300 (couches de surface), BDI = D300 − D600 (assise),
+  BCI = D600 − D900 (plate-forme), AREA = 150 (D0 + 2 D300 + 2 D600 + D900) / D0 en mm, rayon de courbure
+  R = r² / (2 (D0 − Dr)) en m (r = 200 mm par défaut ; avec 250 mm et des déflexions en 1/100 mm, c'est la
+  formule 3125 / (d0 − d25) de la poutre Benkelman). « — » : géophone au-delà de la ligne exportée.
+- **Bassin mesuré** : coller « distance déflexion » par ligne (le tableau du rapport HWD, normalisé à la même
+  charge que le calcul), choisir les unités (mm / cm / m ; µm, 1/100 mm ou mm), « Utiliser ». Le graphe
+  ajoute les points mesurés ; le tableau donne l'**écart quadratique moyen** (RMS, rapporté à la déflexion
+  moyenne mesurée) et l'écart sur D0. Gardé dans la recette (rétro-calcul : changer les modules dans
+  COMSOL, réexporter, régénérer).
+- Graphe : déflexion en fonction de la distance au centre, axe vers le bas, géophones en pointillés
+  ($D_{300}$…) ; tableau **booktabs** (D0, SCI, BDI, BCI, AREA, R, RMS).
+
+### 5.7 Convergence du maillage (tuile « Convergence du maillage »)
+
+Le même cas calculé sur deux maillages. **Paires** : trouvées d'après les noms (un mot terminé par « fin »,
+« fine », « raffine » : `coupeXZ_R1_EL-fin_het` va avec `coupeXZ_R1_EL_het` ; un mot « fin » seul aussi :
+`coupe_EL_fin_het` avec `coupe_EL_het`), ou ajoutées à la main
+(grossier… / fin… / + Paire). Le maillage **fin sert de référence**.
+
+Pour chaque paire et chaque grandeur cochée : **pic** des deux maillages (valeur de plus grande valeur
+absolue), **écart sur le pic** (|pic grossier| − |pic fin|) / |pic fin|, **plus grand écart point à point**
+(rapporté au pic fin, avec sa position), **norme L2 relative** de la différence. Mêmes points dans les deux
+fichiers (export sur la même grille, le cas habituel) : comparaison point à point ; sinon le fin est
+interpolé aux points du grossier (dans la maille d'une coupe, linéairement le long d'une ligne).
+
+Verdict : plus grand écart sur le pic, et « le maillage grossier suffit » s'il reste sous 2 %. Diagramme en
+barres (écart sur le pic, au pire point ou L2), tableau booktabs, et une phrase dans le rapport LaTeX.
+
+### 5.8 Sensibilité à un paramètre (tuile « Sensibilité à un paramètre »)
+
+**Le paramètre varie…**
+
+- **dans un même fichier** : un balayage paramétrique ou une étude temporelle exportés en une fois (une colonne
+  par grandeur et par valeur, `@ E=1000`, `@ t=9`) ; une courbe par fichier ;
+- **d'un fichier à l'autre** : un paramètre de l'en-tête des colonnes COMSOL (`… @ 3: lc=2, VE=0`) qui a des
+  valeurs numériques différentes selon les fichiers ; les fichiers qui ont les mêmes autres paramètres forment
+  une courbe (`VE=0`, `VE=1`).
+
+**Valeur retenue** : l'extremum sur tout le fichier (plus grande valeur absolue avec son signe, maximum ou
+minimum ; le survol d'une case du tableau donne sa position), ou la **valeur en un point** des coupes
+(interpolée dans la maille ; coordonnées dans l'unité de tracé).
+
+Graphe : la valeur en fonction du paramètre (courbes avec points) ; tableau (une ligne par valeur du
+paramètre, une colonne par courbe), booktabs, Excel. Avec des fichiers à plusieurs instants et un paramètre
+d'en-tête, le cadre « Instant tracé » choisit l'instant (ou l'enveloppe) de chaque fichier.
+
 ---
 
 ## 6. Séries temporelles (exports de tables)
@@ -399,6 +744,25 @@ Tuile **« Signal dans le temps »**, dès qu'une table est ouverte :
   commenté « −150 µdef à 11 s ; Δt = +1 s » (décalage par rapport à l'instant repère). Le texte se place
   vers l'intérieur du graphe et se déplace ou se corrige dans « Repères et annotations ».
 
+### 6.1 Mesures superposées (1.37.0)
+
+Cadre **« Mesures superposées »** sous les réglages de « Signal dans le temps » et de « Comparer des profils » :
+
+1. coller les colonnes copiées dans Excel (ou un fichier texte) : la **première colonne** est l'abscisse (le
+   temps en s ; pour un profil, la position **telle qu'elle apparaît sur l'axe**, profondeur positive comprise),
+   chacune des suivantes est une mesure ; une première ligne de titres donne les noms (« Jauge T1 ») ;
+   tabulations ou « ; » avec virgule décimale, blancs, ou CSV à l'anglaise ;
+2. **valeurs ×** : pour passer dans l'unité du calcul (1e6 : m/m → µdef ; 1e-3 : µm → mm) ; **changer le signe**
+   si les jauges comptent la compression positive ;
+3. **Ajouter** : chaque mesure est tracée en noir (points, ou trait pointillé au-delà de 60 points) ; son nom se
+   corrige dans la liste.
+
+Sous l'aperçu, pour chaque mesure et chaque courbe calculée : **pic mesuré**, **pic calculé**, **écart sur le
+pic** (orange au-delà de 10 %), **RMS** (écart quadratique moyen sur les points mesurés dans l'étendue du calcul,
+et rapporté au pic mesuré). **Recaler les pics dans le temps** : la mesure est décalée pour que son pic tombe sur
+celui du calcul (le décalage est affiché) — utile quand l'instant de passage de la roue n'est pas connu.
+Les mesures sont gardées dans la recette (elles restent sur la figure régénérée).
+
 ---
 
 ## 7. Ce qui n'est pas (encore) possible
@@ -412,8 +776,8 @@ Tuile **« Signal dans le temps »**, dès qu'une table est ouverte :
 - **Interpolation lisse** de la carte : non faite. La carte est en cellules (paliers), comme `matrix plot`
   de pgfplots ; les isolignes sont linéaires par maille.
 - **Opérations entre plus de deux fichiers** en une fois : les enchaîner (le résultat est un fichier).
-- La **liste des fichiers ouverts** (et les colonnes calculées) n'est pas enregistrée : seul le graphe tracé
-  l'est. Pour refaire un tracé d'un autre fichier, il faut le rouvrir.
+- La liste des fichiers ouverts, les colonnes calculées et les recettes ne sont gardées que dans une
+  **étude enregistrée** (barre du haut) ; sans étude, seul le graphe tracé l'est.
 
 ---
 
@@ -455,6 +819,60 @@ Une fois tracé, un profil ou une carte est un graphe normal de la page Graphes.
 > Dans ce cas, réexporter de COMSOL sur une grille plus lâche, ou utiliser le PNG.
 
 ---
+
+### 9.1 Rapport LaTeX de l'étude (1.33.0)
+
+Bouton **« Rapport… »** de l'atelier (dès qu'un fichier est ouvert). Le rapport prend la place des tracés, sur
+toute la hauteur (**« ← Retour aux tracés »** pour revenir) : à gauche les réglages, à droite le LaTeX, mis à jour
+en direct ; **« Copier le LaTeX »**, **« Exporter .tex… »** ou **« Word (.docx)… »**.
+
+- **Langue** : français ou English (titres de sections, phrases, en-têtes des tableaux) ; le passage en
+  anglais met le point décimal (la case « Virgule décimale » reste modifiable).
+- **Cas de référence** : le cas élastique par défaut (mot « el » dans le nom), ou aucun. Les écarts sont
+  donnés en valeur absolue du pic ; un écart de moins de 0,5 % est dit « reste la même ».
+- **Sections** : cas étudiés, figures, valeurs extrêmes, critères de dimensionnement.
+- **Grandeurs des valeurs extrêmes** : celles communes aux fichiers (εzz par défaut).
+- **Fichiers à plusieurs instants** : enveloppe (|max| par défaut, max, min) ou un instant donné ; écrit en
+  commentaire dans le rapport.
+- **Trafic de calcul** : repris de la recette « critères » de l'étude s'il y en a une ; donne la phrase sur le
+  dommage de Miner.
+- **Figures de l'étude** : celles de la bibliothèque tracées depuis l'étude enregistrée (graphes et planches
+  qui les contiennent), à cocher.
+
+Ce que contient le fichier :
+
+- en tête, `\providecommand{\cheminFigures}{figures}` : **dossier de la bibliothèque de figures vu depuis le
+  document LaTeX** ; le redéfinir avant l'`\input` (`\newcommand{\cheminFigures}{../Figures}`), ou
+  modifier la ligne ;
+- `\section{Résultats COMSOL : <titre de l'étude>}` et ses `\subsection` ; étiquettes `sec:<étude>`,
+  `tab:<étude>-cas`, `tab:<étude>-extrema`, `tab:<étude>-criteres`, `fig:FIG-0007`… ;
+- texte compatible **pdflatex** : lettres grecques en `\ensuremath{\varepsilon_{zz}}`, µ en `\textmu{}`,
+  signe moins et exposants convertis ;
+- préambule à prévoir : `\usepackage{booktabs}` et, pour les figures, `\usepackage{figurine}`.
+
+Les phrases sont **exactes mais mécaniques** : elles donnent les chiffres et les comparaisons ; le
+commentaire physique reste à écrire.
+
+**Le même rapport en Word (1.43.0)** : bouton **« Word (.docx)… »**. Mêmes réglages, même contenu, pour
+une thèse rédigée sous Word : titres (styles intégrés « Titre 1 », « Titre 2 » : collés dans la thèse, ils
+prennent son style), phrases chiffrées avec ε, indices, exposants, puissances de dix et virgule décimale,
+tableaux à filets façon booktabs (cases « Maximum » / « Minimum » fusionnées, ligne d'en-tête répétée), figures
+de l'étude en **images** (le `export.png` de chaque figure de la bibliothèque ; une figure sans image est
+signalée entre crochets) et **légendes numérotées par Word** (« Tableau 2 – … », « Figure 1 – … », champs SEQ :
+une fois collé dans la thèse, Ctrl+A puis F9 renumérote dans la suite des autres légendes).
+
+### 9.2 Données vers Excel (1.36.0)
+
+**« Excel… »** à côté de « Continuer dans Graphes » (tous les tracés de l'atelier) : un classeur .xlsx avec
+
+- **Courbes** : pour chaque courbe, une colonne x et une colonne y (titres = légende et titre d'axe) ; pour un
+  diagramme en barres, la catégorie au lieu du numéro ;
+- **Carte** : la grille (première colonne = ordonnées, première ligne = abscisses, cases vides sans valeur) ;
+- et selon le tracé : **Synthèse** (max, min, positions), **Critères** (µdef, N admissible, dommage, critère
+  dimensionnant), **Bassins** (D aux géophones, SCI, BDI, BCI, AREA, R, écarts à la mesure), **Maillage**,
+  **Sensibilité**.
+
+Les noms de fichiers proposés sont sans accents ni lettres grecques (`Sensibilite-de-ezz-a-lc.xlsx`).
 
 ## 10. Assembler plusieurs graphes : les planches
 

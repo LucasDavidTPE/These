@@ -9,7 +9,8 @@ import { svgToPng } from "./ui/editor/raster";
 import { figuresRecentes } from "./core/recentes";
 import { detacher, figuresDe, rattacher, type Cible } from "./core/rattachement";
 import { scanLibrary } from "./core/library";
-import { useNavigation } from "./ui/navigation";
+import { chargerExemple } from "./ui/comsol/exemple";
+import { PAGES, useNavigation, type PageId } from "./ui/navigation";
 import { FiguresPage } from "./ui/FiguresPage";
 
 const figures: Manifeste = {
@@ -112,6 +113,16 @@ const figures: Manifeste = {
       const { ctx, dossier, cible } = charge as { ctx: Contexte; dossier: string; cible: Cible };
       if (!ctx.dossierFigures) return;
       await detacher(ctx.plateforme.fichiers(ctx.dossierFigures), dossier, cible, isoAvecDecalage(new Date(), -new Date().getTimezoneOffset()), ctx.poste);
+    },
+    /**
+     * Ouvre une page de Figures (« comsol », « planches »…) ; charge : { ctx, page, exemple? }. Avec `exemple`,
+     * l'atelier COMSOL charge son jeu d'exemple et ouvre la visite guidée (« Quoi de neuf »).
+     */
+    "figures.aller": async (charge) => {
+      const { ctx, page, exemple } = charge as { ctx: Contexte; page: PageId; exemple?: boolean };
+      useNavigation.getState().goTo(PAGES.some((p) => p.id === page) ? page : "library");
+      if (page === "comsol" && exemple) chargerExemple();
+      ctx.naviguer("figures");
     },
     /** Ouvre une figure dans la bibliothèque ; charge : { ctx, dossier }. */
     "figures.ouvrir": async (charge) => {

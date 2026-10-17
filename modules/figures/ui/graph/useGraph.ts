@@ -18,8 +18,6 @@ import {
   hauteurEgale,
   decodeText,
   estComsol,
-  lireComsol,
-  type ExportComsol,
   type GraphDoc,
   type GraphStyle,
   type Box,
@@ -29,6 +27,7 @@ import {
 import { LockedError, createFigure, joinPath, saveMeta, validateMeta, type FigureMeta } from "../../core/library";
 import { svgToPng } from "../editor/raster";
 import { nowIso, useLibrary } from "../library/useLibrary";
+import { useAtelier } from "../comsol/useAtelier";
 import { getBackend } from "../platform/backend";
 
 export interface Pick {
@@ -76,9 +75,6 @@ interface GraphState {
   /** Remplace le graphe par un modèle (nouvelle figure). */
   fromTemplate(doc: GraphDoc, title: string): void;
   /** Exports COMSOL ouverts (panneau COMSOL). */
-  comsol: ExportComsol[];
-  ouvrirComsol(): Promise<void>;
-  retirerComsol(i: number): void;
   /** Remplace le graphe par des profils COMSOL (nouvelle figure). */
   tracerComsol(doc: GraphDoc, title: string): void;
   /** Historique des modifications du graphe (données comprises). */
@@ -222,7 +218,8 @@ export const useGraph = create<GraphState>()((set, get) => {
         if (!f) return;
         const texte = /\.(txt|csv|dat)$/i.test(f.name) ? decodeText(f.bytes) : "";
         if (texte && estComsol(texte)) {
-          set({ comsol: [...get().comsol, lireComsol(texte, f.name)], message: { kind: "info", text: `${f.name} : export COMSOL reconnu : il vous attend dans l'atelier COMSOL (onglet COMSOL).` } });
+          useAtelier.getState().ajouter([f]);
+          set({ message: { kind: "info", text: `${f.name} : export COMSOL reconnu : il vous attend dans l'atelier COMSOL (onglet COMSOL).` } });
           return;
         }
         const sheets = readDataFile(f.name, f.bytes);
@@ -388,21 +385,6 @@ export const useGraph = create<GraphState>()((set, get) => {
         await get().loadStyles();
       }),
 
-    comsol: [],
-    ouvrirComsol: () =>
-      run(async () => {
-        const fichiers = await (await getBackend()).openDataFiles();
-        const lus: ExportComsol[] = [];
-        const refuses: string[] = [];
-        for (const f of fichiers) {
-          const texte = decodeText(f.bytes);
-          if (!estComsol(texte)) refuses.push(f.name);
-          else lus.push(lireComsol(texte, f.name));
-        }
-        set({ comsol: [...get().comsol, ...lus] });
-        if (refuses.length) set({ message: { kind: "error", text: `Pas des exports COMSOL (en-tête « % Model: … » attendu) : ${refuses.join(", ")}.` } });
-      }),
-    retirerComsol: (i) => set({ comsol: get().comsol.filter((_, k) => k !== i) }),
     tracerComsol: (doc, title) => {
       void releaseLock();
       commit(doc);

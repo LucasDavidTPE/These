@@ -46,6 +46,12 @@ export interface Repere {
 
 export type Coin = Exclude<LegendPos, "none">;
 
+/** Recette d'une étude COMSOL d'où vient un graphe (`_comsol/etudes/<etude>.json`, recette `recette`). */
+export interface OrigineComsol {
+  etude: string;
+  recette: string;
+}
+
 /** Point marqué et commenté (pic d'un signal…) ; le texte est placé du côté `position` du point. */
 export interface Annotation {
   x: number;
@@ -76,6 +82,8 @@ export interface GraphDoc {
   egalite?: boolean;
   reperes?: Repere[];
   annotations?: Annotation[];
+  /** Tracé depuis une recette d'étude COMSOL : de quoi le régénérer quand les fichiers changent. */
+  origine?: OrigineComsol;
   series: Series[];
 }
 
@@ -157,6 +165,7 @@ export function validateGraph(raw: unknown): { ok: true; doc: GraphDoc } | { ok:
   const carte = parseCarte(raw.carte, err);
   if (carte) doc.carte = carte;
   if (raw.egalite === true) doc.egalite = true;
+  if (isRecord(raw.origine) && typeof raw.origine.etude === "string" && typeof raw.origine.recette === "string") doc.origine = { etude: raw.origine.etude, recette: raw.origine.recette };
   const fini = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
   if (Array.isArray(raw.reperes)) {
     const r = raw.reperes.filter((x): x is Record<string, unknown> => isRecord(x) && (x.axe === "x" || x.axe === "y") && fini(x.valeur));

@@ -27,3 +27,28 @@ export async function svgToPng(svg: string, widthMm: number, heightMm: number, d
     URL.revokeObjectURL(url);
   }
 }
+
+/** Pixels RVBA d'un SVG (images d'une animation), sur fond `background`. */
+export async function svgToRgba(svg: string, widthMm: number, heightMm: number, dpi: number, background = "white"): Promise<{ largeur: number; hauteur: number; pixels: Uint8ClampedArray }> {
+  const { width, height } = pixelSize(widthMm, heightMm, dpi);
+  const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+  try {
+    const img = new Image();
+    img.decoding = "sync";
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("Rendu SVG impossible."));
+      img.src = url;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = background;
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(img, 0, 0, width, height);
+    return { largeur: width, hauteur: height, pixels: ctx.getImageData(0, 0, width, height).data };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}

@@ -4,10 +4,11 @@
  * « carte : x à l'horizontale, z à la verticale ») ; ƒ transforme le fichier (colonne calculée, repère).
  */
 import { useState } from "react";
-import { decrireExport, geometrie, type Description, type ExportComsol } from "../../core/graph";
-import { useGraph } from "../graph/useGraph";
+import { decrireExport, diagnostiquer, geometrie, type Description, type ExportComsol } from "../../core/graph";
+import { useLegende } from "./hooks";
 import { OutilsFichier } from "./Outils";
-import { useAtelier, useLegendes } from "./useAtelier";
+import { chargerExemple } from "./exemple";
+import { useAtelier } from "./useAtelier";
 
 /** Petite figure : ligne verticale / horizontale, plan avec ses axes, signal temporel. */
 export function Vignette({ d }: { d: Description }) {
@@ -51,43 +52,82 @@ export function Vignette({ d }: { d: Description }) {
 }
 
 export function AtelierFichiers() {
-  const s = useGraph();
   const a = useAtelier();
-  const legende = useLegendes();
-  const [ouvert, setOuvert] = useState<{ i: number; quoi: "lecture" | "outils" } | null>(null);
+  const legende = useLegende();
+  const [ouvert, setOuvert] = useState<{ nom: string; quoi: "lecture" | "outils" } | null>(null);
+  const verifier = a.verifier;
+  const setVerifier = (v: boolean) => a.set({ verifier: v });
+  const suivi = (nom: string) => a.fichiers.find((f) => f.nom === nom);
+  const derive = (nom: string) => a.derives.find((d) => d.nom === nom);
   return (
     <section className="atelier-colonne atelier-fichiers">
       <h3>
         <span className="atelier-etape">1</span> Fichiers COMSOL
       </h3>
-      <button type="button" className="primary" onClick={() => void s.ouvrirComsol()} disabled={s.busy}>
-        Ouvrir des fichiers .txt…
-      </button>
-      <p className="muted small">Exports « Données » (une ligne ou un plan de coupe) ou « Table » (un point au cours du temps). Plusieurs d'un coup : Ctrl + clic.</p>
-      {!s.comsol.length ? (
+      <div className="rangee-boutons">
+        <button type="button" className="primary" onClick={() => void a.ouvrir()}>
+          Ouvrir des fichiers .txt…
+        </button>
+        {a.fichiers.some((f) => f.source || f.absolu) ? (
+          <button type="button" onClick={() => void a.relire()} title="Relit tous les fichiers depuis le disque (après un nouvel export COMSOL) ; transformations gardées">
+            ↻ Relire
+          </button>
+        ) : null}
+        {a.exports.length ? (
+          <button type="button" aria-expanded={verifier} onClick={() => setVerifier(!verifier)} title="Unités incohérentes, valeurs absentes, cas manquants, pics au bord de la zone exportée…">
+            Vérifier
+          </button>
+        ) : null}
+      </div>
+      {verifier && a.exports.length ? (
+        <ul className="atelier-constats">
+          {diagnostiquer(a.exports, { legende, longueur: a.cadre.longueur }).map((x, i) => (
+            <li key={i} className={x.niveau === "attention" ? "atelier-avert" : undefined}>
+              {x.niveau === "attention" ? "⚠ " : "ℹ "}
+              {x.texte}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <p className="muted small">Exports « Données » (une ligne ou un plan de coupe) ou « Table » (un point au cours du temps). Plusieurs d'un coup : Ctrl + clic, ou glissez-les sur cette page.</p>
+      {!a.exports.length ? (
         <div className="atelier-vide">
           <p>
             <strong>Comment ça marche ?</strong>
           </p>
           <ol>
-            <li>Ouvrez un ou plusieurs exports COMSOL : chacun est décrit ici en clair.</li>
+            <li>Ouvrez (ou glissez) un ou plusieurs exports COMSOL : chacun est décrit ici en clair.</li>
             <li>Choisissez ce que vous voulez tracer (au centre) et réglez-le.</li>
             <li>L'aperçu se met à jour à droite ; « Continuer dans Graphes » pour les retouches et l'enregistrement.</li>
           </ol>
+          <p className="muted small">Tout se garde dans une <strong>étude</strong> (en haut) : fichiers, transformations, tracés. Elle se rouvre sur l'autre PC, et les figures se régénèrent quand COMSOL réexporte.</p>
+          <p>
+            <button type="button" className="primary" onClick={chargerExemple}>
+              Essayer avec le jeu d'exemple
+            </button>
+          </p>
+          <p className="muted small">16 fichiers synthétiques au format COMSOL (coupes EL / VE × 3 empreintes, maillage fin, charge roulante, surface, profils, balayage, signal) et une visite guidée de toutes les tuiles.</p>
         </div>
       ) : null}
       <ul className="atelier-cartes">
-        {s.comsol.map((e, i) => {
-          const d = decrireExport(e, a.longueur);
+        {a.exports.map((e) => {
+          const d = decrireExport(e, a.cadre.longueur);
+          const f = suivi(e.nom);
+          const calc = derive(e.nom);
           return (
-            <li key={`${e.nom}-${i}`} className={`atelier-fichier${d.avertissement ? " alerte" : ""}`} title={`${e.nom}\n${e.meta.Model ?? ""} · ${e.meta.Date ?? ""}`}>
+            <li key={e.nom} className={`atelier-fichier${d.avertissement ? " alerte" : ""}`} title={`${e.nom}\n${e.meta.Model ?? ""} · ${e.meta.Date ?? ""}${f?.source ? `\nSuivi : ${f.source}` : f?.absolu ? `\n${f.absolu}` : ""}`}>
               <div className="atelier-fichier-tete">
                 <Vignette d={d} />
                 <div className="atelier-fichier-texte">
                   <input className="atelier-legende" value={legende(e)} onChange={(x) => a.set({ noms: { ...a.noms, [e.nom]: x.target.value } })} aria-label="Légende" title="Légende de ce fichier sur les graphes (modifiable)" />
                   <span className="atelier-forme">{d.titre}</span>
                 </div>
-                <button type="button" className="small-btn" aria-label={`Retirer ${e.nom}`} title="Retirer de la liste (le fichier n'est pas touché)" onClick={() => a.retirer(i)}>
+                {f && (f.source || f.absolu) ? (
+                  <button type="button" className="small-btn" title="Relire depuis le disque" aria-label={`Relire ${e.nom}`} onClick={() => void a.relire(e.nom)}>
+                    ↻
+                  </button>
+                ) : null}
+                <button type="button" className="small-btn" aria-label={`Retirer ${e.nom}`} title="Retirer de la liste et de l'étude (le fichier n'est pas touché)" onClick={() => a.retirer(e.nom)}>
                   ×
                 </button>
               </div>
@@ -100,20 +140,35 @@ export function AtelierFichiers() {
                 ))}
                 {d.grandeurs.length > 8 ? <span className="muted small">+{d.grandeurs.length - 8}</span> : null}
               </div>
+              {d.instants ? <div className="small atelier-suivi">⏱ {d.instants} (curseur dans les tracés)</div> : null}
               {d.etude ? <div className="muted small">Étude : {d.etude}</div> : null}
+              {calc?.genre === "operation" ? <div className="muted small">Calculé : {calc.legendeA} {calc.op === "rapport" ? "/" : calc.op === "difference" ? "−" : "écart"} {calc.legendeB}</div> : null}
+              {calc?.genre === "signal" ? (
+                <div className="muted small">
+                  Signal au cours de {calc.parametre}, tiré de {calc.fichier.replace(/\.(txt|csv|dat)$/i, "")}
+                </div>
+              ) : null}
+              {f ? (
+                <div className={`small ${f.source ? "atelier-suivi" : "atelier-avert"}`}>
+                  {f.source ? `✓ retrouvé sur les deux PC (${f.source.split(":")[0]})` : f.absolu ? "Hors OneDrive : à rouvrir sur l'autre PC" : "Ouvert sans chemin : non relisible"}
+                  {f.transformations.length ? ` · ${f.transformations.length} transformation(s)` : ""}
+                </div>
+              ) : null}
               {d.avertissement ? <div className="atelier-avert">{d.avertissement}</div> : null}
-              <div className="atelier-fichier-actions">
-                {e.nature !== "table" ? (
-                  <button type="button" className="lien" onClick={() => setOuvert(ouvert?.i === i && ouvert.quoi === "lecture" ? null : { i, quoi: "lecture" })}>
-                    {e.forcer ? "Lecture corrigée ✎" : "Pas la bonne forme ?"}
+              {f ? (
+                <div className="atelier-fichier-actions">
+                  {e.nature !== "table" ? (
+                    <button type="button" className="lien" onClick={() => setOuvert(ouvert?.nom === e.nom && ouvert.quoi === "lecture" ? null : { nom: e.nom, quoi: "lecture" })}>
+                      {e.forcer ? "Lecture corrigée ✎" : "Pas la bonne forme ?"}
+                    </button>
+                  ) : null}
+                  <button type="button" className="lien" onClick={() => setOuvert(ouvert?.nom === e.nom && ouvert.quoi === "outils" ? null : { nom: e.nom, quoi: "outils" })}>
+                    Transformer (ƒ)…
                   </button>
-                ) : null}
-                <button type="button" className="lien" onClick={() => setOuvert(ouvert?.i === i && ouvert.quoi === "outils" ? null : { i, quoi: "outils" })}>
-                  Transformer (ƒ)…
-                </button>
-              </div>
-              {ouvert?.i === i && ouvert.quoi === "lecture" ? <Lecture e={e} remplacer={(n) => a.remplacer(i, n)} /> : null}
-              {ouvert?.i === i && ouvert.quoi === "outils" ? <OutilsFichier e={e} remplacer={(n) => a.remplacer(i, n)} /> : null}
+                </div>
+              ) : null}
+              {ouvert?.nom === e.nom && ouvert.quoi === "lecture" ? <Lecture e={e} forcer={(v) => a.forcer(e.nom, v)} /> : null}
+              {ouvert?.nom === e.nom && ouvert.quoi === "outils" ? <OutilsFichier e={e} transformer={(t) => a.transformer(e.nom, t)} repereOrigine={() => a.repereOrigine(e.nom)} /> : null}
             </li>
           );
         })}
@@ -123,22 +178,15 @@ export function AtelierFichiers() {
 }
 
 /** Corriger la lecture en mots : une ligne le long de…, ou un plan avec ses axes horizontal et vertical. */
-function Lecture({ e, remplacer }: { e: ExportComsol; remplacer: (n: ExportComsol) => void }) {
+function Lecture({ e, forcer }: { e: ExportComsol; forcer: (v: number[] | null) => void }) {
   const g = geometrie(e);
   const coord = e.coordonnees;
   const [forme, setForme] = useState<"ligne" | "plan">(g.genre === "coupe" ? "plan" : "ligne");
   const [k, setK] = useState(g.genre === "profil" ? g.varient[0]! : Math.max(0, coord.findIndex((c) => /^z$/i.test(c))));
   const [h, setH] = useState(g.genre === "coupe" ? g.varient[0]! : 0);
   const [v, setV] = useState(g.genre === "coupe" ? g.varient[1]! : Math.min(coord.length - 1, 2));
-  const appliquer = () => {
-    const n: ExportComsol = { ...e, forcer: forme === "ligne" ? [k] : [h, v] };
-    remplacer(n);
-  };
-  const auto = () => {
-    const n: ExportComsol = { ...e };
-    delete n.forcer;
-    remplacer(n);
-  };
+  const appliquer = () => forcer(forme === "ligne" ? [k] : [h, v]);
+  const auto = () => forcer(null);
   const choix = (val: number, set: (n: number) => void, exclu?: number) => (
     <select value={val} onChange={(x) => set(Number(x.target.value))}>
       {coord.map((c, j) => (

@@ -4,7 +4,9 @@
  * le sont pas, fichiers comparables point à point, passage d'un clic sur l'aperçu aux valeurs des données.
  */
 import { FACTEUR_LONGUEUR, geometrie, libelleColonne, parametresDe, type ExportComsol, type UniteLongueur } from "./comsol";
-import { combiner } from "./comsolCalcul";
+import { combiner, memesCoordonnees } from "./comsolCalcul";
+import { avecCote, avecSurface, sourcesSensibilite } from "./comsolEtude";
+import { parametresVariables } from "./comsolInstants";
 import type { GraphLayout } from "./layout";
 import type { GraphDoc } from "./model";
 import { project, unproject } from "./ticks";
@@ -25,16 +27,34 @@ export interface Description {
   axes?: [string, string];
   /** Ce qui ne marchera pas avec ce fichier, et pourquoi. */
   avertissement?: string;
+  /** Export à plusieurs instants (ou valeurs d'un balayage) : « 3 valeurs de t, de 9 à 11 ». */
+  instants?: string;
 }
 
 const fr = (v: number) => String(Number(v.toPrecision(4))).replace(".", ",").replace("-", "−");
 
 /** Description en clair d'un export, longueurs dans l'unité de tracé. */
 export function decrireExport(e: ExportComsol, longueur: UniteLongueur): Description {
+  const d = decrireForme(e, longueur);
+  const params = parametresVariables(e);
+  if (!params.length) return d;
+  const instants = params
+    .map((p) => {
+      const a = p.valeurs[0]!;
+      const b = p.valeurs.at(-1)!;
+      const u = p.unite ? ` ${p.unite}` : "";
+      return `${p.valeurs.length} valeurs de ${p.nom}, de ${Number.isFinite(a.nombre) ? fr(a.nombre) : a.texte} à ${Number.isFinite(b.nombre) ? fr(b.nombre) : b.texte}${u}`;
+    })
+    .join(" ; ");
+  return { ...d, instants };
+}
+
+function decrireForme(e: ExportComsol, longueur: UniteLongueur): Description {
   const g = geometrie(e);
-  const grandeurs = e.colonnes.map((c) => libelleColonne(c).court);
+  const params = parametresVariables(e);
+  const grandeurs = [...new Set(e.colonnes.map((c) => libelleColonne(c).court))];
   const etude = Object.entries(parametresDe(e))
-    .filter(([k]) => k !== "Point")
+    .filter(([k]) => k !== "Point" && !params.some((p) => p.nom === k))
     .map(([k, v]) => `${k}=${v}`)
     .join(", ");
   const f = FACTEUR_LONGUEUR[longueur]! / (FACTEUR_LONGUEUR[e.uniteLongueur] ?? 1);
@@ -80,7 +100,7 @@ export function decrireExport(e: ExportComsol, longueur: UniteLongueur): Descrip
   return { forme: "point", titre: "Un seul point", detail: `${e.lignes} ligne(s)`, grandeurs, etude, avertissement: "Aucune coordonnée ne varie : rien à tracer en courbe." };
 }
 
-export type ModeAtelier = "profils" | "carte" | "coupe-profils" | "temps" | "comparer" | "synthese";
+export type ModeAtelier = "profils" | "carte" | "coupe-profils" | "temps" | "comparer" | "synthese" | "criteres" | "bassin" | "maillage" | "sensibilite";
 
 export const MODES: { id: ModeAtelier; titre: string; explication: string }[] = [
   { id: "profils", titre: "Comparer des profils", explication: "Des courbes le long d'une ligne (εzz en profondeur…), un fichier ou une grandeur par courbe." },
@@ -89,6 +109,10 @@ export const MODES: { id: ModeAtelier; titre: string; explication: string }[] = 
   { id: "temps", titre: "Signal dans le temps", explication: "Courbes au cours du temps (tables), référence élastique, pic et décalage." },
   { id: "comparer", titre: "Comparer deux cas", explication: "A / B, A − B ou écart en % point à point (VE / EL, het / circ…)." },
   { id: "synthese", titre: "Tableau de synthèse", explication: "Max, min et positions de chaque cas ; LaTeX booktabs ; barres groupées." },
+  { id: "criteres", titre: "Critères de dimensionnement", explication: "εt à la base des couches liées, εz au sommet du sol : cycles admissibles, dommage, cas dimensionnant." },
+  { id: "bassin", titre: "Bassin de déflexion", explication: "Déflexion en surface lue comme un essai HWD : D0, SCI, BDI, BCI, AREA, rayon de courbure ; écart à un bassin mesuré." },
+  { id: "maillage", titre: "Convergence du maillage", explication: "Maillage grossier contre raffiné (EL / EL-fin) : écart sur le pic, plus grand écart, norme L2." },
+  { id: "sensibilite", titre: "Sensibilité à un paramètre", explication: "Pic (ou valeur en un point) en fonction d'un balayage COMSOL, des instants, ou d'un paramètre qui change d'un fichier à l'autre." },
 ];
 
 /** Pour chaque tracé : null s'il est possible avec les fichiers ouverts, sinon ce qu'il manque. */
@@ -105,12 +129,32 @@ export function modesDisponibles(exports: readonly ExportComsol[]): Record<ModeA
     temps: tables ? null : exports.length ? "Aucune table (signal en un point au cours du temps)." : aucun,
     comparer: exports.length >= 2 ? null : "Il faut au moins deux fichiers de même grille.",
     synthese: exports.some((_, i) => genres[i]!.genre !== "point") ? null : aucun,
+    criteres: avecCote(exports).length ? null : exports.length ? "Aucune coupe contenant z ni profil vertical." : aucun,
+    bassin: avecSurface(exports).length ? null : exports.length ? "Aucune ligne de surface avec une déflexion w (ligne horizontale en surface, ou coupe contenant z)." : aucun,
+    maillage: exports.length >= 2 ? null : "Il faut deux fichiers : le même cas sur un maillage grossier et sur un maillage fin (« EL » et « EL-fin »).",
+    sensibilite: (() => {
+      const s = sourcesSensibilite(exports);
+      return s.instants.length || s.fichiers.length ? null : exports.length ? "Ni balayage dans un fichier (@ E=…, @ t=…), ni paramètre de l'en-tête qui change d'un fichier à l'autre." : aucun;
+    })(),
   };
 }
 
+/** Réponses déjà connues, par couple d'exports (la vérification calcule toute la différence). */
+const paires = new WeakMap<ExportComsol, WeakMap<ExportComsol, string | null>>();
+
 /** Peut-on calculer A ∘ B point à point ? null si oui, sinon la raison (grilles différentes…). */
 export function comparables(a: ExportComsol, b: ExportComsol): string | null {
+  let pourA = paires.get(a);
+  if (!pourA) paires.set(a, (pourA = new WeakMap()));
+  if (!pourA.has(b)) pourA.set(b, verifierComparables(a, b));
+  return pourA.get(b)!;
+}
+
+function verifierComparables(a: ExportComsol, b: ExportComsol): string | null {
   if (a === b) return "A et B sont le même fichier.";
+  // même maillage, mêmes points dans le même ordre : comparables dès qu'une expression est commune
+  if ((a.nature ?? "donnees") === (b.nature ?? "donnees") && memesCoordonnees(a, b))
+    return a.colonnes.some((c) => b.colonnes.some((d) => d.expression === c.expression)) ? null : "Aucune expression commune aux deux fichiers.";
   try {
     combiner(a, b, "difference");
     return null;
@@ -143,4 +187,14 @@ export function versAperçu(doc: Pick<GraphDoc, "x" | "y">, l: Pick<GraphLayout,
 export function arrondirClic(v: number, etendue: number): number {
   const pas = 10 ** (Math.floor(Math.log10(Math.abs(etendue) || 1)) - 2);
   return Number((Math.round(v / pas) * pas).toPrecision(10));
+}
+
+/** Point où une grandeur est la plus forte en valeur absolue : valeur et coordonnées (unité du fichier). */
+export function positionExtremum(e: ExportComsol, expression: string): { valeur: number; coordonnees: number[] } | null {
+  const j = e.colonnes.findIndex((c) => c.expression === expression);
+  if (j < 0) return null;
+  const v = e.valeurs[e.coordonnees.length + j]!;
+  let best = -1;
+  for (let i = 0; i < e.lignes; i++) if (Number.isFinite(v[i]!) && (best < 0 || Math.abs(v[i]!) > Math.abs(v[best]!))) best = i;
+  return best < 0 ? null : { valeur: v[best]!, coordonnees: e.coordonnees.map((_, k) => e.valeurs[k]![best]!) };
 }

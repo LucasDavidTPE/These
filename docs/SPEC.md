@@ -133,6 +133,25 @@ les classe (`noyau/recherche.ts`). Un résultat ouvre son élément par une acti
 quand le module en offre une (`chausspec.ouvrir-cas`, `bibliotheque.ouvrir`, `etudes.ouvrir`, `campagnes.ouvrir`, `figures.ouvrir`), sinon la page du module. La palette
 propose aussi les pages (Réglages, Diagnostic…). Rien n'est lu tant qu'elle n'est pas ouverte.
 
+### 3.0 ter Thème sombre (1.43.2)
+L'application suit le thème de Windows (`prefers-color-scheme`). Règles, vérifiées par `tests/theme.test.ts` à chaque
+`npm run test` : toute variable CSS utilisée est définie (sinon son repli devient la couleur dans les deux thèmes) ;
+toute variable de couleur claire a sa valeur sombre ; pas de fond clair ni de texte foncé écrit en dur sans variante
+sombre, sauf les zones « papier » listées dans le test (aperçus de figures, vignettes, pages PDF : blanches comme la
+figure exportée) ; le texte posé sur `--accent` utilise `--accent-texte`. Le contraste réel, page par page (thème
+sombre ou clair, seuil 3:1), se vérifie avec `npm run audit:sombre` (`outils/audit-sombre.mjs`, Playwright sur la
+démo ; sous Windows, Edge).
+
+### 3.0 bis Quoi de neuf (1.42.0)
+`noyau/nouveautes.ts` tient la liste des nouveautés (version, module, titre, une phrase, et de quoi
+l'essayer : une destination ou une action du registre, par exemple `figures.aller { page: "comsol",
+exemple: true }` qui ouvre l'atelier COMSOL sur son jeu d'exemple avec la visite guidée). Au démarrage de
+Thèse, la coquille montre celles qui sont postérieures à la dernière version vue sur ce poste (mémorisée
+dans le stockage local de la fenêtre, comme les sections repliées du menu ; aucune la première fois →
+toutes) et limitées aux modules de l'installeur ; « Nouveautés » en bas de la barre (point bleu tant que
+non vues) et Ctrl+K « quoi de neuf » les rouvrent toutes. Chaque version qui ajoute une fonction visible
+ajoute sa ligne (le test vérifie l'ordre et que la liste ne dépasse pas la version de l'application).
+
 ### 3.1 Installeurs
 
 Le même code produit plusieurs installeurs. Le produit est choisi à la compilation par
@@ -342,6 +361,109 @@ Ajouts permis par l'intégration :
   enregistré y est ouvert). Profils dans une coupe : clic sur la carte → valeur (`versDonnees`, axes inversés
   compris, arrondie à 3 chiffres de l'étendue), lignes a, b, c en repères. Comparer : B marqué ✓ / ✗ selon
   `comparables`. Les repères comptent dans l'étendue des axes (une référence reste visible).
+- **études COMSOL** (1.29.0, `core/graph/comsolEtude.ts`) : `_comsol/etudes/<id>.json` dans la bibliothèque
+  (format `these-comsol-etude/1`) : `cadre` (longueur, couches, source des légendes), `fichiers` (nom = clé,
+  `source` racine:chemin commune aux deux PC — `espace:`, `onedrive:` partagées via `@noyau/poste/partage`,
+  sinon racine du poste —, `absolu` de secours, `forcer`, `legende`, `transformations` rejouées dans l'ordre :
+  colonne {formule, nom, unite} | repere {k, facteur, origine}), `derives` (opérations A∘B, recalculées),
+  `recettes` ({id, nom, trace, cadre}). Une **recette** (`Trace`, une par mode : profils, carte, coupe-profils,
+  temps, comparer, synthese ; `null` = choix par défaut) est exécutée par `executerTrace` (pure) après
+  `normaliser` (défauts, choix devenus impossibles remplacés). « Continuer dans Graphes » garde la recette
+  (identique : réutilisée) et pose `origine` {etude, recette} dans graph.json ; « Régénérer depuis COMSOL »
+  relit, rejoue et applique `rafraichirDonnees` (données neuves, retouches gardées ; bornes d'axes calées sur
+  l'ancienne grille suivent la nouvelle ; pics et références recalculés pour un signal temporel). Fichiers
+  relus par `readDataPath` (Tauri : `file_read_data`), dossiers surveillés (`plateforme.surveiller`), glisser-
+  déposer (`onFileDrop`).
+- **déclinaison et régénération en série** (1.30.0, `core/graph/comsolLot.ts`, `ui/comsol/lot.ts`) : une recette
+  carte ou coupe-profils déclinée sur les plans réguliers qui ont la grandeur (`ciblesDeclinaison`, `decliner`) ;
+  rangement en matrice par deux mots du nom de fichier (`motsDuNom` sépare par « _ » et les blancs ; `ranger`,
+  erreur si deux fichiers dans une case ; `motsVariables` propose les mots qui varient) ; `plancheMatrice` →
+  planche avec `entetes` {lignes, colonnes} (titres traduits par les correspondances ; place de 6 mm, titres de
+  lignes tournés) et cases vides (`dossier: ""`, gardées dans la mise en page, sautées dans les étiquettes).
+  Écriture en série : `ecrireGraphe` / `ecrirePlanche` (même contenu que « Enregistrer »), recettes gardées d'un
+  coup (`sauverRecettes`, une écriture d'étude). `regenererEtude` : chaque graph.json dont `origine.etude` est
+  l'étude (verrous de l'autre PC respectés) est régénéré et réécrit, puis chaque planche qui en contient un.
+- **critères de dimensionnement** (1.31.0, `core/graph/comsolCriteres.ts`, mode d'atelier « criteres ») : `Critere`
+  {nom, genre traction|compression, z (m, repère COMSOL), côté dessus|dessous, décalage, variables, loi}, lois
+  `fatigue` (εt,adm = ε6·k·(N/10⁶)^b) et `sol` (εz,adm = A·N^(−e)), réglées dans `_comsol/reglages.json`
+  (`criteres`, valeurs de départ indicatives). `evaluer` : ligne à la cote (coupe régulière contenant z :
+  `profilsInterpoles` ; profil vertical : interpolation linéaire), repère du fichier respecté (profondeur
+  positive), bord du fichier accepté à 1 % de l'étendue du côté demandé seulement ; extremum de traction ou de
+  compression parmi les variables, converti en µdef (`versMicrodef`) ; N admissible, déformation admissible et
+  dommage de Miner pour un trafic. `tableauCriteres`, `critereDimensionnant` (le moins de cycles),
+  `grapheCriteres` (barres : cycles en log, déformations, ou % d'un cas de référence avec repère à 100 %),
+  `criteresLatex` (booktabs). Recette `TraceCriteres` dans l'étude, régénérable.
+- **exports à plusieurs instants** (1.32.0, `core/graph/comsolInstants.ts`) : en-têtes `@ t=9` lus (étiquette de
+  solution facultative) ; `parametresVariables` = paramètres qui changent entre colonnes de même grandeur
+  (valeurs triées) ; `vueEtape(e, etape)` = une colonne par grandeur, à l'instant choisi (premier par défaut) ou
+  en enveloppe point par point (max, min, |max| signé) ; champ commun `etape` de toutes les recettes, appliqué
+  par `executerTrace` à tous les exports (titre complété par `titreEtape`). `valeurCarte` (bilinéaire dans la
+  maille) pour la sonde (`sonder`) et les épingles (`TraceCarte.epingles`, annotations recalculées à la
+  régénération : `rafraichirDonnees` distingue annotations et repères calculés). Dérivé `signal` : table au
+  cours du paramètre en un point (`signalAuPoint`, interpolé sur une coupe régulière, nœud le plus proche
+  sinon). Décliner sur les instants : planche cas × instants (`ecrireDeclinaison`, clés `plan|instant`).
+- **rapport LaTeX d'une étude** (1.33.0, `core/graph/comsolRapport.ts`, `comsolLatex.ts`, `ui/comsol/RapportEtude.tsx`) :
+  `rapportLatex(donnees, options)` → section `\input`-able (cas, figures de l'étude en `\input{\cheminFigures/
+  <dossier>/export.tex}`, extrema `syntheseLatex`, critères `criteresLatex`, étiquettes `sec:`/`tab:`/`fig:`) ;
+  `phrasesExtrema` (étendue du pic en valeur absolue, position, écarts au cas de référence, < 0,5 % = même valeur)
+  et `phrasesCriteres` (critère dimensionnant, rapport des N admissibles, dommage de Miner), en français ou en
+  anglais ; `texteLatex` (grec, µ, −, ·, exposants pour pdflatex) et `nombreLatex` (virgule `{,}`, puissances de
+  10) partagés par les tableaux. Figures : `figuresDeEtude` (graph.json dont `origine.etude` est l'étude, et
+  planches qui en contiennent).
+- **bassin de déflexion et convergence du maillage** (1.34.0, `core/graph/comsolBassin.ts`, `comsolMaillage.ts`,
+  modes « bassin » et « maillage ») : `ligneSurface` (profil horizontal, ou ligne la plus haute d'une coupe
+  contenant z), `bassin` (centre au pic ou imposé, déflexion positive vers le bas, moyenne des deux côtés,
+  D aux géophones, SCI, BDI, BCI, AREA métrique, R = r²/(2(D0 − Dr))), `lireMesure` / `ecartMesure` (RMS
+  relatif, écart sur D0), `grapheBassins`, `bassinsLatex` ; `pairesMaillage` (mot « …fin » ↔ même mot sans le
+  suffixe ; mot « fin » seul ↔ même nom sans ce mot, 1.40.1), `comparerMaillages` (pics, écart sur le pic, plus grand écart et position, L2 relative ; points
+  communs, sinon interpolation du fin aux points du grossier), `grapheMaillage`, `maillageLatex`. Rapport :
+  `phrasesBassins`, `phrasesMaillage`, sections « bassin » et « maillage ». `legendes` : si couper aux tirets
+  ne distingue pas les fichiers, coupe seulement aux « _ » (« EL » / « EL-fin »).
+- **segments, lissage, animation** (1.35.0) : `comsolSegments.ts` (`profilSegment`, `grapheSegments` ; recette
+  coupe-profils `sens: "segments"`, `segments` {x0, y0, x1, y1}) ; `affinerCarte` (nœuds bilinéaires, recette carte
+  `lissage`) ; `comsolAnimation.ts` (`imagesInstants` : une carte par instant, bornes communes ; `animationBeamer`) ;
+  `@noyau/formats/gif` (`gifAnime` : GIF89a, palette commune par coupe médiane sur 5 bits, LZW avec remise à zéro
+  à 4096 codes, boucle NETSCAPE2.0) ; rendu RVBA `svgToRgba` ; enregistrement par `plateforme.enregistrerSous`.
+- **sensibilité et Excel** (1.36.0) : `comsolSensibilite.ts` (`statistique` : extremum et position, ou valeur
+  bilinéaire en un point d'une coupe ; `sensibiliteInterne` sur `parametresVariables` d'un fichier ;
+  `parametresFichiers` / `sensibiliteFichiers` sur les paramètres d'en-tête numériques, groupés par les autres
+  paramètres ; `grapheSensibilite`, `sensibiliteLatex`) ; recette `TraceSensibilite` (source instants | fichiers,
+  pas de vue à l'instant appliquée d'avance pour un balayage interne). `comsolExcel.ts` : `feuillesGraphe`
+  (courbes, grille), `feuilleSynthese`, `feuilleCriteres`, `feuilleBassins`, `feuilleMaillage`,
+  `feuilleSensibilite` → `ecrireClasseur` (noyau) ; `nomDeFichier` (sans accents ni grec).
+- **mesures et vérification** (1.37.0) : `comsolMesures.ts` (`lireMesures` : colonnes collées, séparateurs et
+  virgule décimale reconnus, facteur et signe ; `comparerMesure` : interpolation du calcul aux abscisses mesurées,
+  RMS, écart sur le pic, recalage des pics ; recettes profils et temps `mesures`, temps `aligner`, écarts dans
+  `ResultatTrace.ecartsMesures`). `comsolDiagnostic.ts` (`diagnostiquer` : unités d'une même grandeur, NaN,
+  légendes en double, cases manquantes d'un plan 2 × N tiré des noms, pics au bord latéral ou bas de la zone
+  exportée, grilles différentes).
+- **vue d'ensemble et grandeurs dérivées** (1.38.0, `core/graph/comsolEnsemble.ts`) : `vueEnsemble` (cas d'un genre
+  ayant la grandeur, matrice `ranger` sur deux mots variables, petites cartes à bornes de couleurs communes ou
+  petits profils à axes communs, pic par `statistique`) ; `colonnesProposees` (ε1, ε3, γmax par plan, εvol,
+  εh max, |εzz|, τmax, σVM selon `nomsColonnes`), ajoutées comme transformations « colonne » à un fichier ou à
+  tous les fichiers d'origine qui les permettent.
+- **aperçus mémorisés** (1.38.1) : `useResultat` (ui/comsol/hooks.ts) ne réexécute une recette que si la recette
+  (sérialisée), les fichiers ou les réglages changent — pas à chaque rendu (sonde au survol, saisie). Mesuré :
+  export de 59 Mo (17 000 nœuds × 252 colonnes) lu en 0,5 s, carte à un instant en 0,1 s.
+- **pistes** (1.39.0, `core/graph/comsolPistes.ts`) : `pistes(exports)` → libellé, texte et action (tuile, vue
+  d'ensemble, vérification, rapport) d'après les fichiers ouverts (coupes ou lignes en nombre, instants,
+  paires de maillage, surface avec w, cote z, paramètre d'en-tête, tables, points d'attention de `diagnostiquer`) ;
+  panneaux « vérifier », « ensemble », « rapport » dans l'état de l'atelier (non enregistrés).
+- **jeu d'exemple et visite** (1.41.0, `core/graph/comsolExemple.ts`, `ui/comsol/Visite.tsx`, `exemple.ts`) :
+  `jeuExemple()` → 16 exports synthétiques au format COMSOL (champs analytiques d'une chaussée BB/GB/GRH, roue
+  en x = 0,9 m), `mesureExemple()` et `bassinExemple()` (textes à coller) ; test : toutes les tuiles tracent, aucun
+  point d'attention. Visite : étapes qui posent la recette d'une tuile (`majTrace`) et l'ouvrent.
+- **rapidité** (1.43.2) : les calculs redemandés à chaque rendu sont gardés, par objet (un export, ses colonnes
+  de valeurs, ne changent jamais une fois lus) : `geometrie` (coordonnées distinctes), `grilleCoupe`,
+  `ligneSurface`, `comparables` (par couple), index des nœuds de `profilsInterpoles` ; deux exports aux mêmes
+  coordonnées dans le même ordre se combinent sans index. Les pistes et les tuiles disponibles ne sont recalculées
+  que si les fichiers changent. Une carte est dessinée en un chemin SVG par palier (au plus `niveaux` éléments).
+- **rapport Word** (1.43.0, `noyau/formats/docx-ecriture.ts`, `core/graph/comsolWord.ts`) : `ecrireDocx(blocs)`
+  écrit un .docx déterministe (titres, paragraphes à morceaux gras / italique / indice / exposant / chasse
+  fixe, tableaux à `gridSpan`, images PNG, légendes `SEQ`, styles intégrés `heading n` et `caption`) ;
+  `rapportEnBlocs(tex)` relit le LaTeX de `rapportLatex` (sous-ensemble connu : sections, `table`/`tabular`
+  booktabs avec `\multicolumn`, `figure` avec `\input{\cheminFigures/<dossier>/export.tex}`, mode math des
+  nombres et grandeurs) ; une seule source pour les deux formats.
 - **retouche des données** d'un graphe : gomme (rectangle sur l'aperçu, une série ou
   toutes), tableau x ↹ y modifiable ou collé d'Excel, ×/+ sur x ou y (unités, signe, zéro),
   plage de x gardée ou retirée, moyenne glissante, un point sur n, tri, échange des axes,

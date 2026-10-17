@@ -177,7 +177,8 @@ describe("tableau de synthèse", () => {
     const tex = syntheseLatex(s, { longueur: "mm", virgule: true });
     expect(tex).toContain("\\toprule");
     expect(tex).toContain("\\cmidrule(lr){3-6} \\cmidrule(lr){7-10}");
-    expect(tex).toContain("$\\varepsilon_{zz}$ (µdef) & $-127$ & $900$ & $6500$ & $-320$ & $-193$");
+    // µ écrit \textmu{} : compile avec pdflatex comme avec LuaLaTeX
+    expect(tex).toContain("$\\varepsilon_{zz}$ (\\textmu{}def) & $-127$ & $900$ & $6500$ & $-320$ & $-193$");
     expect(tex).toContain("\\bottomrule");
     const b = grapheBarres(s, { expression: "1e6*solid.eZZ", categorie: 3, groupe: 2, statistique: "abs", correspondances: corr });
     expect(b.x.categories).toEqual(["Hétérogène", "rect"]);
@@ -200,6 +201,7 @@ describe("légendes depuis l'en-tête COMSOL", () => {
       format: "these-comsol/1",
       correspondances: [{ de: "lc=1", vers: "Rect" }],
       interfaces: [{ z: -0.08, texte: "BB/GB" }],
+      criteres: expect.any(Array),
     });
   });
 });
@@ -234,7 +236,7 @@ describe("cartes : isolignes, aspect réel, échelle commune, contour d'empreint
     const b = { ...base, carte: { ...carte, palette: "divergente" as const, v: carte.v.map((l) => l.map((v) => (v === null ? null : -2 * v))) } };
     expect(echelleCommune([a, b])).toEqual([-8, 8]);
     const m = miseEnPage({ ...plancheVide(), memeEchelle: true }, [a, b]);
-    expect(m.cases.map((c) => [c.doc.carte!.min, c.doc.carte!.max])).toEqual([
+    expect(m.cases.map((c) => [c.doc!.carte!.min, c.doc!.carte!.max])).toEqual([
       [-8, 8],
       [-8, 8],
     ]);

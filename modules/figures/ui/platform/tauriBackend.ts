@@ -105,10 +105,11 @@ export function tauriBackend(): Backend {
         filters: [{ name: "Exports COMSOL", extensions: ["txt", "csv", "dat"] }],
       });
       const liste = Array.isArray(paths) ? paths : typeof paths === "string" ? [paths] : [];
-      const out: { name: string; bytes: Uint8Array }[] = [];
-      for (const path of liste) out.push({ name: path.split(/[\\/]/).pop() ?? path, bytes: asBytes(await call<ArrayBuffer>("file_read_data", { path }, path)) });
+      const out: { name: string; bytes: Uint8Array; path: string }[] = [];
+      for (const path of liste) out.push({ name: path.split(/[\\/]/).pop() ?? path, bytes: asBytes(await call<ArrayBuffer>("file_read_data", { path }, path)), path });
       return out;
     },
+    readDataPath: async (path) => asBytes(await call<ArrayBuffer>("file_read_data", { path }, path)),
     readDroppedFile: async (path) => asBytes(await call<ArrayBuffer>("file_read_image", { path }, path)),
     onFileDrop: async (handler) =>
       getCurrentWebview().onDragDropEvent((e) => {

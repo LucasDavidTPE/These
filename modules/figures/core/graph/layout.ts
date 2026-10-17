@@ -4,7 +4,7 @@
  * l'export pgfplots.
  */
 import { measureLabel } from "../math/tex";
-import type { Primitive } from "../schema/geometry";
+import type { Primitive, Seg } from "../schema/geometry";
 import type { Theme } from "../schema/theme";
 import type { Pt } from "../schema/types";
 import { fitCorner, fitLabel, fitPoints, fitSample, fitSeries, type FitResult } from "./fit";
@@ -314,8 +314,9 @@ function reperes(doc: GraphDoc, theme: Theme, box: GraphLayout["box"], X: (v: nu
 }
 
 /**
- * Cellules de la carte (plages contiguës de même palier fusionnées, coupées à la boîte des axes) et barre
- * de couleurs graduée à droite de la boîte.
+ * Cellules de la carte (plages contiguës de même palier fusionnées, coupées à la boîte des axes), réunies en un
+ * seul chemin par palier — une carte de 263 × 65 nœuds donne au plus `niveaux` éléments SVG, pas des milliers de
+ * rectangles —, et barre de couleurs graduée à droite de la boîte.
  */
 function carte(doc: GraphDoc, X: (v: number) => number, Y: (v: number) => number, box: GraphLayout["box"]): Primitive[] {
   const c = doc.carte!;
@@ -324,6 +325,7 @@ function carte(doc: GraphDoc, X: (v: number) => number, Y: (v: number) => number
   const couleurs = couleursCarte(c);
   const clipX = (v: number) => Math.max(box.x, Math.min(box.x + box.w, v));
   const clipY = (v: number) => Math.max(box.y, Math.min(box.y + box.h, v));
+  const parPalier: Seg[][] = couleurs.map(() => []);
   c.y.forEach((_, j) => {
     const [ya, yb] = bordCellule(c.y, j);
     const y0 = clipY(Math.min(Y(ya), Y(yb)));
@@ -343,9 +345,15 @@ function carte(doc: GraphDoc, X: (v: number) => number, Y: (v: number) => number
       const x0 = clipX(Math.min(xa, xb));
       const x1 = clipX(Math.max(xa, xb));
       // léger recouvrement : pas de liseré blanc entre cellules
-      if (x1 - x0 > 1e-9) out.push({ kind: "rect", x: x0, y: y0, w: x1 - x0 + 0.05, h: y1 - y0 + 0.05, stroke: null, fill: "none", fillColor: couleurs[k] });
+      if (x1 - x0 > 1e-9) {
+        const [xd, yd] = [x1 + 0.05, y1 + 0.05];
+        parPalier[k]!.push({ op: "M", p: [x0, y0] }, { op: "L", p: [xd, y0] }, { op: "L", p: [xd, yd] }, { op: "L", p: [x0, yd] }, { op: "Z" });
+      }
       i = fin + 1;
     }
+  });
+  parPalier.forEach((segs, k) => {
+    if (segs.length) out.push({ kind: "path", segs, stroke: null, fill: "none", fillColor: couleurs[k] });
   });
   // barre de couleurs
   const bx = box.x + box.w + BARRE.ecart;

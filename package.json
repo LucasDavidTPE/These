@@ -1,7 +1,7 @@
 {
   "name": "these",
   "private": true,
-  "version": "1.28.0",
+  "version": "1.43.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,7 +14,8 @@
     "tauri": "tauri",
     "construire": "node outils/construire.mjs",
     "fetch-models": "node outils/fetch-models.mjs",
-    "version": "node outils/version.mjs"
+    "version": "node outils/version.mjs",
+    "audit:sombre": "node outils/audit-sombre.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",
@@ -41,6 +42,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.12.0",
+    "playwright-core": "1.63.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.70.1",
     "vite": "^8.3.1",

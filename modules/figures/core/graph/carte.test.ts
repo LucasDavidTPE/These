@@ -48,9 +48,13 @@ describe("carte en couleurs d'un graphe", () => {
     const d = doc();
     expect(marginsOf(d).right).toBeGreaterThan(marginsOf({ ...d, carte: undefined }).right + 10);
     const { box, primitives } = graphLayout(d);
-    const cellules = primitives.filter((p) => p.kind === "rect" && p.stroke === null && p.x < box.x + box.w);
-    expect(cellules.length).toBeGreaterThan(5);
-    for (const p of cellules) if (p.kind === "rect") expect(p.x + p.w).toBeLessThanOrEqual(box.x + box.w + 0.06);
+    // cellules : un chemin par palier, chaque rectangle dans la boîte
+    const cellules = primitives.filter((p): p is Extract<typeof p, { kind: "path" }> => p.kind === "path" && p.stroke === null && !!p.fillColor);
+    expect(cellules.length).toBeGreaterThan(2);
+    expect(new Set(cellules.map((p) => p.fillColor)).size).toBe(cellules.length);
+    const coins = cellules.flatMap((p) => p.segs.flatMap((sg) => ("p" in sg ? [sg.p] : [])));
+    expect(coins.length).toBeGreaterThan(5 * 4);
+    for (const [x] of coins) expect(x).toBeLessThanOrEqual(box.x + box.w + 0.06);
     const barre = primitives.filter((p) => p.kind === "rect" && p.stroke === null && p.x > box.x + box.w);
     expect(barre).toHaveLength(8);
     expect(primitives.some((p) => p.kind === "text" && p.text === d.carte!.legende && p.rotate === 90)).toBe(true);

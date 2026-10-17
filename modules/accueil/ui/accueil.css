@@ -293,6 +293,11 @@
   overflow: hidden;
 }
 
+/* la vignette reste blanche (comme la figure) : son texte de remplacement aussi est sombre */
+.acc-vignette .discret {
+  color: #6a6a66;
+}
+
 .acc-vignette img {
   max-width: 100%;
   max-height: 100%;

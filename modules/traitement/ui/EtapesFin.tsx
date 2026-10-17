@@ -44,7 +44,7 @@ export function EtapeComparaison() {
                       <input type="checkbox" checked={e.visible} aria-label={`Afficher ${e.nom}`} onChange={(ev) => s.maj(() => (e.visible = ev.target.checked))} />
                     </td>
                     <th scope="row">
-                      <span className="tr-puce" style={{ borderColor: e.couleur, color: e.couleur }}>
+                      <span className="tr-puce" style={{ ["--serie" as string]: e.couleur }}>
                         {e.nom}
                       </span>
                     </th>

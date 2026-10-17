@@ -40,6 +40,10 @@ La CI construit l'installeur signé et crée la release `v0.3.0` dans `These-ver
 avec `latest.json`. Les deux PC proposent la mise à jour au démarrage suivant. (Pousser
 un tag `v0.3.0` fait la même chose.)
 
+Avant de publier une version qui ajoute une fonction visible, ajouter sa ligne en tête de
+`packages/noyau/src/nouveautes.ts` : au démarrage suivant, le panneau « Quoi de neuf » la montre
+avec son bouton « Essayer ».
+
 La **première** installation se fait à la main, depuis la release (`Thèse_x.y.z_x64-setup.exe`) ;
 les suivantes passent par le bandeau.
 

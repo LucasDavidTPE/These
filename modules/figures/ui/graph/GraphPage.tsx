@@ -11,6 +11,8 @@ import { Comsol } from "./Comsol";
 import { Modeles } from "./Modeles";
 import { RegressionSerie } from "./Regression";
 import { useGraph } from "./useGraph";
+import { useContexte } from "@interface/contexte";
+import { regenerer } from "../comsol/regeneration";
 
 const TYPES: { value: SeriesType; label: string }[] = [
   { value: "linepoints", label: "Lignes et points" },
@@ -58,6 +60,7 @@ export function GraphPage() {
         <button type="button" onClick={() => s.openFile()} disabled={s.busy}>
           Ouvrir des données…
         </button>
+        {s.doc.origine ? <BoutonRegenerer /> : null}
         <span className="grow" />
         <button type="button" onClick={() => s.copyPgfplots()} disabled={s.busy}>
           Copier pgfplots
@@ -359,5 +362,37 @@ function DataPreview() {
         </tfoot>
       )}
     </table>
+  );
+}
+
+/** « Régénérer depuis COMSOL » : la recette de l'étude est rejouée sur les fichiers relus, retouches gardées. */
+function BoutonRegenerer() {
+  const ctx = useContexte();
+  const [occupe, setOccupe] = useState(false);
+  return (
+    <button
+      type="button"
+      disabled={occupe}
+      title="Relit les fichiers COMSOL de l'étude (sur ce PC) et refait les données de ce graphe ; titres, couleurs, tailles et repères restent"
+      onClick={async () => {
+        setOccupe(true);
+        try {
+          const r = await regenerer(useGraph.getState().doc, { espace: ctx.espace?.racine ?? null, racines: ctx.racines });
+          useGraph.getState().update(r.doc);
+          useGraph.setState({
+            message: {
+              kind: r.avertissements.length ? "error" : "info",
+              text: `Régénéré depuis COMSOL (${r.relus.length} fichier(s) relu(s))${r.avertissements.length ? ` ; attention :\n${r.avertissements.join("\n")}` : ""}. « Enregistrer » pour garder.`,
+            },
+          });
+        } catch (e) {
+          useGraph.setState({ message: { kind: "error", text: e instanceof Error ? e.message : String(e) } });
+        } finally {
+          setOccupe(false);
+        }
+      }}
+    >
+      ↻ Régénérer depuis COMSOL
+    </button>
   );
 }

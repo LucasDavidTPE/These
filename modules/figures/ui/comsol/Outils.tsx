@@ -3,8 +3,9 @@
  * partagés par toute la bibliothèque (correspondances de légende, interfaces de couches).
  */
 import { useState } from "react";
-import { ajouterColonne, changerRepere, nomsColonnes, type ExportComsol } from "../../core/graph";
+import { ajouterColonne, colonnesProposees, expressionParDefaut, libelleColonne, nomsColonnes, positionExtremum, type ColonneProposee, type ExportComsol, type Transformation } from "../../core/graph";
 import { useReglagesComsol } from "../graph/useReglagesComsol";
+import { useAtelier } from "./useAtelier";
 
 const nombre = (t: string) => Number(t.trim().replace(",", ".").replace("−", "-"));
 
@@ -12,15 +13,27 @@ function alerte(e: unknown) {
   window.alert(e instanceof Error ? e.message : String(e));
 }
 
-/** Colonne calculée et changement de repère d'un fichier. */
-export function OutilsFichier({ e, remplacer }: { e: ExportComsol; remplacer: (n: ExportComsol) => void }) {
+/** Colonne calculée et changement de repère d'un fichier (gardés dans l'étude, rejoués à chaque relecture). */
+export function OutilsFichier({ e, transformer, repereOrigine }: { e: ExportComsol; transformer: (t: Transformation) => void; repereOrigine: () => void }) {
   const [formule, setFormule] = useState("");
   const [nom, setNom] = useState("");
   const [unite, setUnite] = useState("");
   const [k, setK] = useState(Math.max(0, e.coordonnees.findIndex((c) => /^z$/i.test(c))));
   const [signe, setSigne] = useState(false);
+  const [partout, setPartout] = useState(true);
+  const proposees = colonnesProposees(e);
+  // une grandeur dérivée usuelle, ici ou dans tous les fichiers d'origine qui ont les colonnes nécessaires
+  const ajouterProposee = (p: ColonneProposee) => {
+    const t: Transformation = { genre: "colonne", formule: p.formule, nom: p.nom, unite: p.unite };
+    if (!partout) return transformer(t);
+    const a = useAtelier.getState();
+    for (const x of a.exports) if (a.fichiers.some((f) => f.nom === x.nom) && colonnesProposees(x).some((q) => q.nom === p.nom)) a.transformer(x.nom, t);
+  };
   const [origine, setOrigine] = useState("0");
+  const [centre, setCentre] = useState(expressionParDefaut(e.colonnes.map((c) => c.expression)) ?? "");
   const disponibles = [...nomsColonnes(e).keys()].filter((n) => !/^c\d+$/.test(n));
+  const kz = e.coordonnees.findIndex((c) => /^z$/i.test(c));
+  const horizontales = e.coordonnees.map((c, j) => ({ c, j })).filter(({ j }) => j !== kz);
   return (
     <div className="comsol-outils">
       <h5>Colonne calculée</h5>
@@ -46,7 +59,9 @@ export function OutilsFichier({ e, remplacer }: { e: ExportComsol; remplacer: (n
         disabled={!formule.trim()}
         onClick={() => {
           try {
-            remplacer(ajouterColonne(e, { formule, nom, unite }));
+            // vérifiée sur le fichier avant d'être gardée (message clair si elle est fausse)
+            ajouterColonne(e, { formule, nom, unite });
+            transformer({ genre: "colonne", formule, nom: nom.trim() || formule.trim(), unite });
             setFormule("");
             setNom("");
           } catch (x) {
@@ -56,55 +71,102 @@ export function OutilsFichier({ e, remplacer }: { e: ExportComsol; remplacer: (n
       >
         Ajouter la colonne
       </button>
+      <h5>Grandeurs dérivées</h5>
+      {proposees.length ? (
+        <>
+          <div className="atelier-grandeurs">
+            {proposees.map((p) => (
+              <button key={p.nom} type="button" className="small-btn" title={`${p.explication}\n${p.formule}`} onClick={() => ajouterProposee(p)}>
+                + {p.nom}
+              </button>
+            ))}
+          </div>
+          <label className="chip">
+            <input type="checkbox" checked={partout} onChange={(x) => setPartout(x.target.checked)} />
+            à tous les fichiers qui ont ces colonnes
+          </label>
+        </>
+      ) : (
+        <p className="muted small">Aucune proposée (il faut par exemple exx, ezz et exz pour les déformations principales dans le plan x-z).</p>
+      )}
       {e.nature !== "table" ? (
         <>
           <h5>Repère</h5>
-          <div className="grid2">
-            <label className="field">
-              <span>Coordonnée</span>
-              <select value={k} onChange={(x) => setK(Number(x.target.value))}>
-                {e.coordonnees.map((c, j) => (
-                  <option key={c} value={j}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              <span>Origine ({e.uniteLongueur})</span>
-              <input value={origine} onChange={(x) => setOrigine(x.target.value)} title="Nouvelle coordonnée = ± (ancienne − origine) : y0 de la roue pour centrer" />
-            </label>
-          </div>
-          <label className="chip">
-            <input type="checkbox" checked={signe} onChange={(x) => setSigne(x.target.checked)} />
-            Changer le sens (z → profondeur positive)
-          </label>
           <div className="rangee-boutons">
+            {kz >= 0 && !(e.repere?.[kz]?.facteur === -1) ? (
+              <button type="button" title="z devient la profondeur, positive vers le bas (surface en haut des cartes)" onClick={() => transformer({ genre: "repere", k: kz, facteur: -1, origine: 0 })}>
+                z → profondeur
+              </button>
+            ) : null}
+          </div>
+          <div className="comsol-ligne">
+            <span className="small">Centrer</span>
+            <select value={horizontales.some((h) => h.j === k) ? k : (horizontales[0]?.j ?? 0)} onChange={(x) => setK(Number(x.target.value))} aria-label="Coordonnée à centrer">
+              {horizontales.map(({ c, j }) => (
+                <option key={c} value={j}>
+                  {c.toLowerCase()}
+                </option>
+              ))}
+            </select>
+            <span className="small">sur l'extremum de</span>
+            <select value={centre} onChange={(x) => setCentre(x.target.value)} aria-label="Grandeur">
+              {e.colonnes.map((c) => (
+                <option key={c.expression} value={c.expression}>
+                  {libelleColonne(c).court}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              title="Trouve le point où la grandeur est la plus forte (en valeur absolue) et y met l'origine : la roue au centre"
+              onClick={() => {
+                const kk = horizontales.some((h) => h.j === k) ? k : (horizontales[0]?.j ?? 0);
+                const p = positionExtremum(e, centre);
+                if (!p) return alerte("Aucune valeur.");
+                transformer({ genre: "repere", k: kk, facteur: 1, origine: Number(p.coordonnees[kk]!.toPrecision(8)) });
+              }}
+            >
+              OK
+            </button>
+          </div>
+          <details>
+            <summary className="small">Repère à la main…</summary>
+            <div className="grid2">
+              <label className="field">
+                <span>Coordonnée</span>
+                <select value={k} onChange={(x) => setK(Number(x.target.value))}>
+                  {e.coordonnees.map((c, j) => (
+                    <option key={c} value={j}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>Origine ({e.uniteLongueur})</span>
+                <input value={origine} onChange={(x) => setOrigine(x.target.value)} title="Nouvelle coordonnée = ± (ancienne − origine)" />
+              </label>
+            </div>
+            <label className="chip">
+              <input type="checkbox" checked={signe} onChange={(x) => setSigne(x.target.checked)} />
+              Changer le sens
+            </label>
             <button
               type="button"
               onClick={() => {
                 const o = nombre(origine);
                 if (!Number.isFinite(o)) return alerte("Origine : un nombre.");
-                remplacer(changerRepere(e, k, { facteur: signe ? -1 : 1, origine: o }));
+                transformer({ genre: "repere", k, facteur: signe ? -1 : 1, origine: o });
               }}
             >
               Appliquer
             </button>
-            {e.repere ? (
-              <button
-                type="button"
-                title="Revenir aux coordonnées du fichier"
-                onClick={() => {
-                  let r = e;
-                  // inverse de nouvelle = f (v − o) : v = (1/f) (nouvelle + f o)
-                  for (const [j, t] of Object.entries(e.repere ?? {})) r = changerRepere(r, Number(j), { facteur: 1 / t.facteur, origine: -t.facteur * t.origine });
-                  remplacer({ ...r, repere: undefined });
-                }}
-              >
-                Repère d'origine
-              </button>
-            ) : null}
-          </div>
+          </details>
+          {e.repere ? (
+            <button type="button" className="lien" title="Revenir aux coordonnées du fichier" onClick={repereOrigine}>
+              Revenir au repère du fichier
+            </button>
+          ) : null}
         </>
       ) : null}
     </div>

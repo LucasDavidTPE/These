@@ -921,3 +921,139 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
 - [ ] Graphes : le panneau COMSOL n'a plus qu'un bouton vers l'atelier ; « Ouvrir des données… » sur un export COMSOL l'envoie
       dans l'atelier.
 
+## COMSOL : études reproductibles (1.29.0)
+
+- [ ] Ouvrir les exports (dans OneDrive) : chaque carte dit « ✓ retrouvé sur les deux PC (onedrive) ». Un fichier sur le bureau :
+      « hors OneDrive ».
+- [ ] ƒ → « z → profondeur », « Centrer y sur l'extremum de εzz » ; tracer une carte ; titre d'étude ; Enregistrer →
+      `_comsol/etudes/<titre>.json` dans la bibliothèque.
+- [ ] « Continuer dans Graphes » → bouton « ↻ Régénérer depuis COMSOL » ; retoucher (palette, titres), Enregistrer.
+- [ ] Relancer un calcul COMSOL et réexporter le même fichier : l'atelier le relit tout seul (bandeau « relu ») ; dans Graphes,
+      « Régénérer » : nouvelles valeurs, retouches gardées.
+- [ ] Sur **l'autre PC** : rouvrir l'étude → fichiers retrouvés, transformations rejouées, recettes listées ; régénérer la figure.
+- [ ] Glisser des `.txt` depuis l'Explorateur sur la page COMSOL : ils s'ajoutent.
+- [ ] Manuscrits : rien n'a changé pour les sources communes (espace:, onedrive:) après le déplacement du code dans le noyau.
+
+## COMSOL : déclinaison et régénération en série (1.30.0)
+
+- [ ] Ouvrir les 9 à 12 coupes de l'article ; Carte d'une coupe (εzz, isolignes) → « Décliner pour tous les plans » : lignes =
+      matériau, colonnes = empreinte ; matrice d'aperçu juste ; « Créer » → N figures + planche ; titres de lignes / colonnes
+      traduits ; même échelle de couleurs ; compilation LaTeX de la planche (titres tournés à gauche).
+- [ ] Retoucher une des figures dans Graphes (titre d'axe, palette), Enregistrer ; réexporter un cas dans COMSOL ;
+      « ↻ Régénérer toute l'étude » → figures et planche à jour, retouche gardée ; une figure ouverte sur l'autre PC est
+      signalée et non touchée.
+
+## COMSOL : critères de dimensionnement (1.31.0)
+
+- [ ] Ouvrir les coupes x-z (EL, VE) et un profil vertical ; tuile « Critères de dimensionnement » : εt et εz cohérents avec
+      les valeurs lues sur la carte à la cote de l'interface (survol d'une case : position, variable, cote).
+- [ ] « Régler les critères et les lois… » : mettre les cotes, ε6, b, k et A, e de l'étude ; Enregistrer ; sur l'autre PC,
+      les mêmes critères sont proposés.
+- [ ] Trafic 2e6 : dommage D affiché (orange > 1) ; vérifier un N à la main (fatigue et sol).
+- [ ] Diagramme « rapporté à un cas de référence » (EL) ; Continuer dans Graphes, Enregistrer ; « ↻ Régénérer » après un
+      nouvel export.
+- [ ] Copier le tableau LaTeX (booktabs) et compiler.
+
+## COMSOL : instants, sonde, épingles (1.32.0)
+
+- [ ] Exporter un plan de coupe VE **à tous les instants** (Résultats → Export → Données, Temps : tous) ; l'ouvrir : fiche
+      « ⏱ N valeurs de t » ; vérifier l'en-tête réel de COMSOL 6.4 en français (`@ t=…` ou `@ n: Temps=… s`).
+- [ ] Carte : curseur, ▶ (défilement), enveloppe |max| ; comparer une valeur à celle lue dans COMSOL au même instant.
+- [ ] Sonde au survol avec EL et VE ouverts : mêmes points, valeurs plausibles ; clic → épingle écrite sur la carte ;
+      Continuer dans Graphes, Enregistrer ; réexporter, « ↻ Régénérer » → valeur épinglée mise à jour.
+- [ ] « ∿ signal » sur une épingle → tuile « Signal dans le temps » : pic et décalage ; rouvrir l'étude sur l'autre PC,
+      le signal est recalculé.
+- [ ] Décliner sur les instants (EL et VE, 4 instants) → planche, même échelle, compilation LaTeX.
+- [ ] Critères de dimensionnement sur l'enveloppe |max| d'une charge roulante.
+
+## COMSOL : rapport LaTeX (1.33.0)
+
+- [ ] Étude de l'article enregistrée, figures déclinées ; « Rapport LaTeX… » : figures listées, cas de référence EL ;
+      phrases justes au regard des tableaux (relire chaque chiffre une fois).
+- [ ] Exporter .tex, `\input` dans l'article (préambule booktabs + figurine, `\cheminFigures` adapté) : compilation
+      pdflatex sans erreur (grec, µ, signe moins), figures trouvées, `\ref{tab:…}` et `\ref{fig:FIG-…}` résolus.
+- [ ] Version anglaise : en-têtes, phrases, point décimal.
+
+## COMSOL : bassin de déflexion, convergence du maillage (1.34.0)
+
+- [ ] Exporter une ligne de surface (z = 0, le long de x, passant par le centre de la charge) avec w ; tuile « Bassin de
+      déflexion » : D0 et D300 conformes à COMSOL ; SCI, BDI, BCI, AREA, R vérifiés à la main sur un cas.
+- [ ] Coller le bassin d'un essai HWD (µm, normalisé à la même charge) : points sur le graphe, RMS plausible ; Continuer
+      dans Graphes ; régénérer après un nouveau calcul.
+- [ ] Ouvrir `…_EL_het` et `…_EL-fin_het` : paire trouvée, écarts (pic, pire point, L2) ; ajouter une paire à la main.
+- [ ] Rapport LaTeX : sections bassin et maillage, compilation.
+
+## COMSOL : segments, lissage, animation (1.35.0)
+
+- [ ] Profils dans une coupe → Segments quelconques : deux clics, profil cohérent avec la carte ; Continuer, régénérer.
+- [ ] Carte : lissage × 4 ; Continuer dans Graphes, Enregistrer ; compilation pgfplots (taille du fichier acceptable).
+- [ ] Export VE à tous les instants → « Animer les instants » : GIF lu dans PowerPoint (lecture en boucle), couleurs fidèles ;
+      archive Beamer : `\input` du .tex avec `animate`, animation dans Adobe Reader.
+
+## COMSOL : sensibilité, Excel (1.36.0)
+
+- [ ] Balayage paramétrique exporté en un fichier (`@ E=…`) : tuile « Sensibilité », courbe du pic en fonction de E ; valeur
+      en un point d'une coupe.
+- [ ] Trois fichiers lc=1, 2, 3 (EL et VE) : « d'un fichier à l'autre », deux courbes VE=0 / VE=1.
+- [ ] « Excel… » sur une carte, des profils, une synthèse, des critères : classeur lisible dans Excel, valeurs justes.
+
+## COMSOL : mesures superposées, vérification (1.37.0)
+
+- [ ] Coller depuis Excel le signal d'une jauge (temps, µε) sous « Signal dans le temps » : tracé en noir, écarts plausibles ;
+      recaler les pics ; Continuer, régénérer : la mesure reste.
+- [ ] Profil vertical mesuré (profondeur positive en mm, valeur) superposé aux profils COMSOL.
+- [ ] « Vérifier » sur l'ensemble des fichiers de l'article : constats justes (unités, cas manquants, pics au bord).
+
+## COMSOL : vue d'ensemble, grandeurs dérivées (1.38.0)
+
+- [ ] Les 12 coupes de l'article : « Vue d'ensemble » εzz, matrice matériau × empreinte, même échelle ; clic → carte en grand.
+- [ ] Lignes verticales : petits profils aux mêmes axes.
+- [ ] « Transformer » d'une coupe avec exx, ezz, exz : « + ε1 (x-z) » pour tous les fichiers ; valeur vérifiée à la main en un
+      point ; rouvrir l'étude : la colonne est rejouée.
+
+## COMSOL : gros exports (1.38.1)
+
+- [ ] Ouvrir un vrai export de plusieurs dizaines de Mo (plan de coupe fin, tous les instants) : lecture en moins de
+      quelques secondes ; survol de la carte (sonde) fluide ; changer d'instant avec le curseur sans attente pénible.
+
+## COMSOL : pistes (1.39.0)
+
+- [ ] Ouvrir les fichiers de l'article : les pistes proposées ont du sens ; chacune mène au bon endroit ; « masquer ».
+- [ ] Les tuiles restent lisibles sur l'écran du PC portable (3 colonnes) comme sur le grand écran (4 colonnes).
+
+## COMSOL : conversions d'unité (1.40.0)
+
+- [ ] Un export où εzz est sans facteur 1e6 : « Vérifier » le signale ; « Transformer » → « + εzz (µdef) » pour ce fichier ;
+      la courbe se superpose aux autres.
+
+## COMSOL : jeu d'exemple et visite guidée (1.41.0)
+
+- [ ] Atelier vide → « Essayer avec le jeu d'exemple » : 16 fichiers, visite guidée ouverte ; chaque « Essayer → » ouvre une
+      tuile qui trace quelque chose ; « Copier le bassin HWD d'exemple » puis coller : écart au calcul affiché.
+- [ ] « Nouvelle étude » : l'exemple disparaît, les vrais exports s'ouvrent normalement.
+
+## Quoi de neuf (1.42.0)
+
+- [ ] Après la mise à jour vers 1.42.0 : le panneau « Quoi de neuf » s'ouvre au démarrage, avec toutes les nouveautés
+      depuis 1.25 ; « Lancer la visite → » ouvre Figures → COMSOL avec le jeu d'exemple et la visite guidée.
+- [ ] Relancer Thèse : le panneau ne revient pas ; « Nouveautés » (en bas de la barre) et Ctrl+K « nouveautés » le rouvrent.
+- [ ] Sur l'autre PC : le panneau s'ouvre une fois aussi (mémoire propre à chaque poste).
+
+## COMSOL : rapport Word (1.43.0)
+
+- [ ] Rapport LaTeX… → « Word (.docx)… » : le fichier s'ouvre dans Word sans réparation ; titres en « Titre 1/2 »,
+      ε et indices corrects, tableaux lisibles (Maximum / Minimum fusionnés), figures de l'étude en images.
+- [ ] Copier le contenu dans un chapitre de la thèse, Ctrl+A puis F9 : les légendes se renumérotent dans la suite.
+
+## COMSOL : place pour les tracés (1.43.1)
+
+- [ ] Visite guidée ouverte puis « Rapport… » : pas de défilement de la page, la visite tient sur une bande, le rapport
+      occupe toute la hauteur ; « ← Retour aux tracés » ramène la tuile.
+- [ ] Sur l'écran du portable : la tuile choisie et son graphe restent visibles sous les tuiles compactes.
+
+## Thème sombre et rapidité de l'atelier COMSOL (1.43.2)
+
+- [ ] Windows en thème sombre : atelier COMSOL (visite, pistes, fichiers, aperçu), Graphes, Accueil, Traitement — aucun
+      texte clair sur fond blanc ; boutons bleus lisibles.
+- [ ] Gros exports réels (plusieurs coupes, un fichier à plusieurs instants) : changer de tuile, glisser le curseur des
+      instants, survoler la carte, taper dans le titre — sans attente visible.

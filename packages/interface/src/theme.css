@@ -942,3 +942,84 @@ details.carte-texte > .carte-actions {
   color: var(--discret);
   text-decoration: line-through;
 }
+
+/* ---- Quoi de neuf ---- */
+.nouveautes {
+  width: min(760px, 94vw);
+  max-height: 76vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--texte);
+  border: 1px solid var(--bordure);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+.nouveautes-tete {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px 18px 10px;
+  border-bottom: 1px solid var(--bordure);
+}
+.nouveautes-tete h2 {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+}
+.nouveautes-tete p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+.nouveautes-liste {
+  overflow: auto;
+  padding: 4px 18px 16px;
+}
+.nouveautes-liste h3 {
+  margin: 14px 0 6px;
+  font-size: 0.8rem;
+  color: var(--discret);
+  font-weight: 600;
+}
+.nouveautes-liste ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.nouveautes-liste li {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--surface-2);
+}
+.nouveautes-liste li p {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: var(--discret);
+}
+.nouveautes-liste li button {
+  flex-shrink: 0;
+}
+.nouveautes-module {
+  margin-left: 8px;
+  font-size: 0.75rem;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--info-fond);
+  color: var(--info);
+}
+.pastille-nouveau {
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}

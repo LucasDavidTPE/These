@@ -369,10 +369,18 @@
 }
 
 .tr-puce {
-  border: 1px solid;
+  border: 1px solid var(--serie, currentColor);
   border-radius: 999px;
   padding: 0 8px;
   font-weight: 600;
+  color: var(--serie, inherit);
+}
+
+/* couleur de la série éclaircie sur fond sombre */
+@media (prefers-color-scheme: dark) {
+  .tr-puce {
+    color: color-mix(in srgb, var(--serie, currentColor) 45%, white);
+  }
 }
 
 .tr-voile {
