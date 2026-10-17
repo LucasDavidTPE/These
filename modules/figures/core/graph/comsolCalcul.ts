@@ -94,17 +94,33 @@ const cle = (e: ExportComsol, i: number) => e.valeurs.slice(0, e.coordonnees.len
  * Opération point à point entre deux exports de même grille (mêmes coordonnées, dans n'importe quel ordre), sur
  * les expressions communes (ou celles demandées). Refus explicite si les grilles diffèrent.
  */
+/** Mêmes points dans le même ordre (cas courant : deux exports du même maillage) : rien à apparier. */
+export function memesCoordonnees(a: ExportComsol, b: ExportComsol): boolean {
+  if (a.lignes !== b.lignes || a.coordonnees.join() !== b.coordonnees.join()) return false;
+  return a.coordonnees.every((_, k) => {
+    const x = a.valeurs[k]!;
+    const y = b.valeurs[k]!;
+    if (x === y) return true;
+    for (let i = 0; i < a.lignes; i++) if (x[i] !== y[i]) return false;
+    return true;
+  });
+}
+
 export function combiner(a: ExportComsol, b: ExportComsol, op: Operation, o: { expressions?: string[]; nomA?: string; nomB?: string } = {}): ExportComsol {
   if ((a.nature ?? "donnees") !== (b.nature ?? "donnees") || a.coordonnees.join() !== b.coordonnees.join())
     throw new Error(`Grilles différentes : ${a.nom} (${a.coordonnees.join(", ")}) et ${b.nom} (${b.coordonnees.join(", ")}) n'ont pas les mêmes coordonnées.`);
-  const index = new Map<string, number>();
-  for (let i = 0; i < b.lignes; i++) index.set(cle(b, i), i);
   const lignesB: number[] = [];
   const absents: number[] = [];
-  for (let i = 0; i < a.lignes; i++) {
-    const j = index.get(cle(a, i));
-    if (j === undefined) absents.push(i);
-    else lignesB.push(j);
+  if (memesCoordonnees(a, b)) for (let i = 0; i < a.lignes; i++) lignesB.push(i);
+  else {
+    // points dans un autre ordre : appariés par leurs coordonnées
+    const index = new Map<string, number>();
+    for (let i = 0; i < b.lignes; i++) index.set(cle(b, i), i);
+    for (let i = 0; i < a.lignes; i++) {
+      const j = index.get(cle(a, i));
+      if (j === undefined) absents.push(i);
+      else lignesB.push(j);
+    }
   }
   if (absents.length || a.lignes !== b.lignes) {
     const ex = absents[0] !== undefined ? ` (par exemple ${a.coordonnees.map((c, k) => `${c} = ${fr(a.valeurs[k]![absents[0]!]!)}`).join(", ")})` : "";
@@ -154,6 +170,25 @@ export function combiner(a: ExportComsol, b: ExportComsol, op: Operation, o: { e
 // ---- Profils interpolés dans une coupe ----
 
 /**
+ * Ligne de chaque nœud d'une coupe (valeur fixe ; valeur de l'autre coordonnée), gardée par colonnes de
+ * coordonnées : les critères et les profils d'une coupe la redemandent pour chaque profil.
+ */
+const index = new WeakMap<Float64Array, WeakMap<Float64Array, Map<string, number>>>();
+
+function indexNoeuds(f: Float64Array, a: Float64Array, lignes: number): Map<string, number> {
+  let parA = index.get(f);
+  if (!parA) index.set(f, (parA = new WeakMap()));
+  let idx = parA.get(a);
+  if (!idx) {
+    const r10 = (v: number) => Number(v.toPrecision(10));
+    idx = new Map<string, number>();
+    for (let i = 0; i < lignes; i++) idx.set(`${r10(f[i]!)};${r10(a[i]!)}`, i);
+    parA.set(a, idx);
+  }
+  return idx;
+}
+
+/**
  * Profils le long d'une coupe régulière, à des valeurs choisies de la coordonnée `fixe` (unité du fichier),
  * interpolés linéairement entre les deux lignes de grille voisines (exact sur une ligne de la grille). Un profil
  * hors de la coupe est refusé.
@@ -166,10 +201,7 @@ export function profilsInterpoles(e: ExportComsol, fixe: number, valeurs: readon
   const gf = g.grilles[pos]!;
   const ga = g.grilles[1 - pos]!;
   const nc = e.coordonnees.length;
-  const r10 = (v: number) => Number(v.toPrecision(10));
-  // ligne de chaque nœud (valeur fixe, valeur de l'autre coordonnée)
-  const idx = new Map<string, number>();
-  for (let i = 0; i < e.lignes; i++) idx.set(`${r10(e.valeurs[fixe]![i]!)};${r10(e.valeurs[autre]![i]!)}`, i);
+  const idx = indexNoeuds(e.valeurs[fixe]!, e.valeurs[autre]!, e.lignes);
   return valeurs.map((v) => {
     if (!(v >= gf[0]! - 1e-12 && v <= gf.at(-1)! + 1e-12)) throw new Error(`${e.coordonnees[fixe]} = ${fr(v)} ${e.uniteLongueur} est hors de la coupe (${fr(gf[0]!)} à ${fr(gf.at(-1)!)}).`);
     let k = gf.findIndex((x, i) => i + 1 < gf.length && v >= x && v <= gf[i + 1]!);

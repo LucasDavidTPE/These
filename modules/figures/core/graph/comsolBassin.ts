@@ -42,10 +42,18 @@ export function versMetre(unite: string): number | null {
           : null;
 }
 
+type LigneSurface = { s: number[]; k: number; ligne: ExportComsol } | null;
+
+/** Lignes de surface déjà extraites, par export (un export ne change pas ; à lire seulement). */
+const surfaces = new WeakMap<ExportComsol, LigneSurface>();
+
 /** Ligne de surface d'un export : profil horizontal tel quel, ou ligne la plus haute d'une coupe contenant z. */
-export function ligneSurface(
-  e: ExportComsol,
-): { s: number[]; k: number; ligne: ExportComsol } | null {
+export function ligneSurface(e: ExportComsol): LigneSurface {
+  if (!surfaces.has(e)) surfaces.set(e, extraireSurface(e));
+  return surfaces.get(e)!;
+}
+
+function extraireSurface(e: ExportComsol): LigneSurface {
   const g = geometrie(e);
   const kz = e.coordonnees.findIndex((x) => /^z$/i.test(x));
   if (g.genre === "profil" && g.varient[0] !== kz) {

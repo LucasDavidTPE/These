@@ -35,6 +35,7 @@ npm run test && npm run lint && npm run typecheck
 cd src-tauri && cargo test && cargo clippy --all-targets
 npm run dev                      # démo navigateur ; ?scenario=complet pour « À régler »
 npm run construire -- <produit>  # these | figurine | traitement
+npm run audit:sombre             # contraste page par page, thème sombre (-- --clair : thème clair)
 ```
 Sous Linux, `cargo test` demande les bibliothèques WebKitGTK (`libwebkit2gtk-4.1-dev`).
 

@@ -233,10 +233,38 @@ export interface Geometrie {
   reguliere: boolean;
 }
 
-const distinctes = (v: Float64Array) => [...new Set([...v].filter(Number.isFinite).map((x) => Number(x.toPrecision(10))))].sort((a, b) => a - b);
+/** Valeurs distinctes (à 10 chiffres près), triées : tri d'une copie typée, puis une passe. */
+function distinctes(v: Float64Array): number[] {
+  const out: number[] = [];
+  let avant = NaN;
+  for (const x of Float64Array.from(v).sort()) {
+    if (!Number.isFinite(x)) continue;
+    const r = Number(x.toPrecision(10));
+    if (r !== avant) out.push((avant = r));
+  }
+  return out;
+}
+
+/**
+ * Géométrie déjà calculée, par tableau de valeurs (les valeurs d'un export ne changent jamais une fois lues ; une
+ * copie `{ ...e, legende }` les partage) puis par lecture imposée. Appelée à chaque rendu par les légendes, les
+ * pistes, les tuiles : sans ce cache, elle recompte les coordonnées distinctes de chaque fichier à chaque fois.
+ */
+const geometries = new WeakMap<Float64Array[], Map<string, Geometrie>>();
 
 export function geometrie(e: ExportComsol): Geometrie {
   if (e.nature === "table") return { varient: [0], genre: "serie", grilles: [], reguliere: false };
+  const cle = `${e.lignes}|${(e.forcer ?? []).join(",")}`;
+  let parLecture = geometries.get(e.valeurs);
+  if (!parLecture) geometries.set(e.valeurs, (parLecture = new Map()));
+  const deja = parLecture.get(cle);
+  if (deja) return deja;
+  const g = calculerGeometrie(e);
+  parLecture.set(cle, g);
+  return g;
+}
+
+function calculerGeometrie(e: ExportComsol): Geometrie {
   const forcees = (e.forcer ?? []).filter((k, i, t) => k >= 0 && k < e.coordonnees.length && t.indexOf(k) === i);
   const varient = forcees.length ? forcees : e.coordonnees.map((_, k) => k).filter((k) => {
     let mn = Infinity;
@@ -489,12 +517,39 @@ export function extraireProfil(e: ExportComsol, fixe: number, valeur: number): E
 // ---- Carte d'une coupe ----
 
 /** Grille d'une coupe régulière : nœuds (unité de longueur choisie) et valeurs [ligne y][colonne x] (null : absente). */
-export function grilleCoupe(e: ExportComsol, expression: string, longueur: UniteLongueur): { x: number[]; y: number[]; v: (number | null)[][]; nomX: string; nomY: string } {
+type Grille = { x: number[]; y: number[]; v: (number | null)[][]; nomX: string; nomY: string };
+
+/**
+ * Grilles déjà construites, par colonne de valeurs puis par colonnes de coordonnées (partagées par les vues d'un
+ * export à un instant, `vueEtape`) : la sonde, le curseur des instants et l'aperçu redemandent les mêmes à chaque
+ * rendu. À lire seulement.
+ */
+const grillesConstruites = new WeakMap<Float64Array, WeakMap<Float64Array, WeakMap<Float64Array, Map<string, Grille>>>>();
+
+export function grilleCoupe(e: ExportComsol, expression: string, longueur: UniteLongueur): Grille {
   const g = geometrie(e);
   if (g.genre !== "coupe" || !g.reguliere) throw new Error("Carte possible seulement pour une coupe sur grille régulière (sinon, choisir une autre lecture du fichier).");
   const j = e.colonnes.findIndex((c) => c.expression === expression);
   if (j < 0) throw new Error(`Expression absente : ${expression}.`);
   const [kx, ky] = g.varient as [number, number];
+  const niveau = <K extends object, V>(m: WeakMap<K, V>, k: K, nouveau: () => V): V => {
+    if (!m.has(k)) m.set(k, nouveau());
+    return m.get(k)!;
+  };
+  const parCle = niveau(
+    niveau(niveau(grillesConstruites, e.valeurs[e.coordonnees.length + j]!, () => new WeakMap()), e.valeurs[kx]!, () => new WeakMap()),
+    e.valeurs[ky]!,
+    () => new Map<string, Grille>(),
+  );
+  const cle = `${kx},${ky}|${longueur}|${e.uniteLongueur}|${e.lignes}|${e.coordonnees[kx]}|${e.coordonnees[ky]}`;
+  const deja = parCle.get(cle);
+  if (deja) return deja;
+  const grille = construireGrille(e, g, j, kx, ky, longueur);
+  parCle.set(cle, grille);
+  return grille;
+}
+
+function construireGrille(e: ExportComsol, g: Geometrie, j: number, kx: number, ky: number, longueur: UniteLongueur): Grille {
   const f = FACTEUR_LONGUEUR[longueur]! / (FACTEUR_LONGUEUR[e.uniteLongueur] ?? 1);
   const gx = g.grilles[0]!;
   const gy = g.grilles[1]!;

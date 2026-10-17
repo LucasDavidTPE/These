@@ -146,7 +146,8 @@ button:disabled {
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  /* texte sur l'accent : sombre en thème sombre (accent clair), blanc en thème clair */
+  color: var(--accent-texte);
 }
 
 button.warn {
@@ -499,6 +500,14 @@ code {
   background-position: 0 0, 0 10px, 10px -10px, -10px 0;
 }
 
+@media (prefers-color-scheme: dark) {
+  .checker {
+    background-color: #2a2a2a;
+    background-image: linear-gradient(45deg, #333 25%, transparent 25%), linear-gradient(-45deg, #333 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #333 75%), linear-gradient(-45deg, transparent 75%, #333 75%);
+  }
+}
+
 .cutout-view canvas {
   max-width: 100%;
   max-height: 100%;
@@ -749,7 +758,7 @@ code {
 
 button.small-btn.actif {
   background: var(--accent);
-  color: white;
+  color: var(--accent-texte);
   border-color: var(--accent);
 }
 
@@ -882,7 +891,7 @@ button.small-btn.actif {
 }
 
 .erreur-texte {
-  color: #b3261e;
+  color: var(--erreur);
 }
 
 .data-preview {
@@ -1144,6 +1153,12 @@ button.small-btn.actif {
   background: repeating-conic-gradient(#f2f2f2 0% 25%, #fafafa 0% 50%) 0 0 / 16px 16px;
 }
 
+@media (prefers-color-scheme: dark) {
+  .planche-apercu {
+    background: repeating-conic-gradient(#262626 0% 25%, #2c2c2c 0% 50%) 0 0 / 16px 16px;
+  }
+}
+
 .planche-svg {
   background: #fff;
   display: block;
@@ -1301,8 +1316,8 @@ button.small-btn.actif {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--accent, #2f5d8a);
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-texte);
   font-size: 12px;
 }
 
@@ -1372,8 +1387,8 @@ button.small-btn.actif {
 
 .atelier-legende:hover,
 .atelier-legende:focus {
-  border-color: var(--border, #ccc);
-  background: #fff;
+  border-color: var(--border);
+  background: var(--input-bg);
 }
 
 .atelier-forme {
@@ -1392,12 +1407,12 @@ button.small-btn.actif {
   font-size: 11.5px;
   padding: 1px 6px;
   border-radius: 9px;
-  background: var(--chip, #eef2f7);
+  background: var(--surface-2);
 }
 
 .atelier-avert {
   font-size: 12px;
-  color: #8a6100;
+  color: var(--attention);
 }
 
 .atelier-fichier-actions {
@@ -1562,6 +1577,12 @@ button.lien {
   gap: 10px;
 }
 
+@media (prefers-color-scheme: dark) {
+  .atelier-resultat {
+    background: repeating-conic-gradient(#262626 0% 25%, #2c2c2c 0% 50%) 0 0 / 16px 16px;
+  }
+}
+
 .atelier-apercu {
   display: flex;
   flex-direction: column;
@@ -1571,12 +1592,12 @@ button.lien {
 .atelier-apercu.vide {
   padding: 24px;
   color: var(--muted, #777);
-  background: #fff;
+  background: var(--surface);
   border-radius: 6px;
 }
 
 .atelier-apercu.vide.erreur {
-  color: #a32020;
+  color: var(--erreur);
 }
 
 .atelier-svg {
@@ -1647,7 +1668,7 @@ button.lien {
 }
 
 .atelier-suivi {
-  color: #2c7a3f;
+  color: var(--ok);
 }
 
 .atelier-declinaison summary {
@@ -1727,7 +1748,7 @@ button.lien {
 .atelier-sonde {
   flex-shrink: 0;
   min-height: 64px;
-  background: var(--panel, #fff);
+  background: var(--surface);
   border: 1px solid var(--border, #ddd);
   border-radius: 4px;
   padding: 4px 8px;
@@ -1845,7 +1866,7 @@ button.lien {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--border, #ddd);
   border-radius: 4px;
   padding: 3px;
@@ -1879,7 +1900,7 @@ button.lien {
 .atelier-piste {
   border: 1px solid var(--border, #ddd);
   border-radius: 12px;
-  background: var(--panel, #fff);
+  background: var(--surface);
   padding: 2px 10px;
   font-size: 12px;
   max-width: 100%;
@@ -1898,7 +1919,7 @@ button.lien {
   flex-shrink: 0;
   padding: 6px 16px;
   border-bottom: 1px solid var(--border, #ddd);
-  background: var(--panel, #fff);
+  background: var(--surface);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1940,7 +1961,7 @@ button.lien {
 .atelier-visite-pastilles button.actif {
   background: var(--accent, #2a5c8a);
   border-color: var(--accent, #2a5c8a);
-  color: #fff;
+  color: var(--accent-texte);
 }
 
 .atelier-visite-texte {

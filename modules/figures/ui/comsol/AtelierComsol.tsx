@@ -3,9 +3,9 @@
  * 3. l'aperçu en direct, puis « Continuer dans Graphes ». Le tout dans une **étude** enregistrée (fichiers suivis,
  * transformations, recettes), qui se rouvre sur l'autre PC et régénère ses figures quand COMSOL réexporte.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useContexte } from "@interface/contexte";
-import { MODES, modesDisponibles, pistes, type ActionPiste, type ModeAtelier, type SourceLegende, type UniteLongueur } from "../../core/graph";
+import { legendesDe, MODES, modesDisponibles, pistes, type ActionPiste, type ModeAtelier, type SourceLegende, type UniteLongueur } from "../../core/graph";
 import { useReglagesComsol } from "../graph/useReglagesComsol";
 import { getBackend } from "../platform/backend";
 import { AtelierFichiers } from "./AtelierFichiers";
@@ -18,7 +18,7 @@ import { ModeBassin, ModeMaillage, ModeSensibilite } from "./ModesIngenierie";
 import { ReglagesPartages } from "./Outils";
 import { RapportEtude } from "./RapportEtude";
 import { VisiteGuidee } from "./Visite";
-import { useLegende } from "./hooks";
+import { useContexteTrace } from "./hooks";
 import { useAtelier } from "./useAtelier";
 
 const ICONES: Record<ModeAtelier, string> = { profils: "⫼", carte: "▦", "coupe-profils": "▥", temps: "∿", comparer: "÷", synthese: "▤", criteres: "⚖", bassin: "◡", maillage: "⊞", sensibilite: "↗" };
@@ -122,10 +122,16 @@ function RegenererTout({ id, titre }: { id: string; titre: string }) {
 /** Ce que l'atelier peut faire des fichiers ouverts, en clair, chaque piste menant à sa tuile. */
 function Pistes() {
   const a = useAtelier();
-  const legende = useLegende();
+  const c = useContexteTrace();
   const [masquees, setMasquees] = useState(false);
   const [toutes, setToutes] = useState(false);
-  const p = pistes(a.exports, { legende, longueur: a.cadre.longueur });
+  // recalculées quand les fichiers ou les légendes changent, pas à chaque rendu de l'atelier
+  const { exports, cadre, noms, correspondances } = c;
+  const p = useMemo(
+    () => pistes(exports, { legende: legendesDe({ ...c, exports, cadre, noms, correspondances }), longueur: cadre.longueur }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [exports, cadre, noms, correspondances],
+  );
   if (!p.length || masquees) return null;
   const vues = toutes ? p : p.slice(0, 3);
   const agir = (x: ActionPiste) => {
@@ -187,7 +193,7 @@ export function AtelierComsol() {
   const setRapport = (v: boolean) => a.set({ rapport: v });
   const ensemble = a.ensemble;
   const setEnsemble = (v: boolean) => a.set({ ensemble: v });
-  const dispo = modesDisponibles(a.exports);
+  const dispo = useMemo(() => modesDisponibles(a.exports), [a.exports]);
   // mode choisi, ou le premier possible
   const mode = a.mode && !dispo[a.mode] ? a.mode : (MODES.find((m) => !dispo[m.id])?.id ?? null);
   return (

@@ -31,6 +31,12 @@ const COMSOL = (page = "comsol", exemple = true): Essai => ({
 /** Les plus récentes d'abord. */
 export const NOUVEAUTES: readonly Nouveaute[] = [
   {
+    version: "1.43.2",
+    titre: "Thème sombre et atelier COMSOL plus rapide",
+    detail: "Plus de texte clair sur fond blanc en thème sombre (un test le vérifie désormais) ; atelier COMSOL 5 à 30 fois plus réactif sur de gros exports (changement de tuile, curseur des instants, sonde, saisie).",
+    essayer: { libelle: "Essayer sur l'exemple", action: "figures.aller", charge: { page: "comsol", exemple: true } },
+  },
+  {
     version: "1.43.1",
     module: "figures",
     titre: "COMSOL : plus de place pour les tracés",

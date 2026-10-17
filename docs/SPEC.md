@@ -133,6 +133,15 @@ les classe (`noyau/recherche.ts`). Un résultat ouvre son élément par une acti
 quand le module en offre une (`chausspec.ouvrir-cas`, `bibliotheque.ouvrir`, `etudes.ouvrir`, `campagnes.ouvrir`, `figures.ouvrir`), sinon la page du module. La palette
 propose aussi les pages (Réglages, Diagnostic…). Rien n'est lu tant qu'elle n'est pas ouverte.
 
+### 3.0 ter Thème sombre (1.43.2)
+L'application suit le thème de Windows (`prefers-color-scheme`). Règles, vérifiées par `tests/theme.test.ts` à chaque
+`npm run test` : toute variable CSS utilisée est définie (sinon son repli devient la couleur dans les deux thèmes) ;
+toute variable de couleur claire a sa valeur sombre ; pas de fond clair ni de texte foncé écrit en dur sans variante
+sombre, sauf les zones « papier » listées dans le test (aperçus de figures, vignettes, pages PDF : blanches comme la
+figure exportée) ; le texte posé sur `--accent` utilise `--accent-texte`. Le contraste réel, page par page (thème
+sombre ou clair, seuil 3:1), se vérifie avec `npm run audit:sombre` (`outils/audit-sombre.mjs`, Playwright sur la
+démo ; sous Windows, Edge).
+
 ### 3.0 bis Quoi de neuf (1.42.0)
 `noyau/nouveautes.ts` tient la liste des nouveautés (version, module, titre, une phrase, et de quoi
 l'essayer : une destination ou une action du registre, par exemple `figures.aller { page: "comsol",
@@ -444,6 +453,11 @@ Ajouts permis par l'intégration :
   `jeuExemple()` → 16 exports synthétiques au format COMSOL (champs analytiques d'une chaussée BB/GB/GRH, roue
   en x = 0,9 m), `mesureExemple()` et `bassinExemple()` (textes à coller) ; test : toutes les tuiles tracent, aucun
   point d'attention. Visite : étapes qui posent la recette d'une tuile (`majTrace`) et l'ouvrent.
+- **rapidité** (1.43.2) : les calculs redemandés à chaque rendu sont gardés, par objet (un export, ses colonnes
+  de valeurs, ne changent jamais une fois lus) : `geometrie` (coordonnées distinctes), `grilleCoupe`,
+  `ligneSurface`, `comparables` (par couple), index des nœuds de `profilsInterpoles` ; deux exports aux mêmes
+  coordonnées dans le même ordre se combinent sans index. Les pistes et les tuiles disponibles ne sont recalculées
+  que si les fichiers changent. Une carte est dessinée en un chemin SVG par palier (au plus `niveaux` éléments).
 - **rapport Word** (1.43.0, `noyau/formats/docx-ecriture.ts`, `core/graph/comsolWord.ts`) : `ecrireDocx(blocs)`
   écrit un .docx déterministe (titres, paragraphes à morceaux gras / italique / indice / exposant / chasse
   fixe, tableaux à `gridSpan`, images PNG, légendes `SEQ`, styles intégrés `heading n` et `caption`) ;

@@ -181,7 +181,7 @@
   padding: 10px 12px;
   border: 1px solid currentColor;
   border-radius: 8px;
-  background: var(--fond-carte, transparent);
+  background: transparent;
 }
 .cs-schema-fleche {
   font-size: 20px;

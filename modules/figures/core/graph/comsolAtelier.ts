@@ -4,7 +4,7 @@
  * le sont pas, fichiers comparables point à point, passage d'un clic sur l'aperçu aux valeurs des données.
  */
 import { FACTEUR_LONGUEUR, geometrie, libelleColonne, parametresDe, type ExportComsol, type UniteLongueur } from "./comsol";
-import { combiner } from "./comsolCalcul";
+import { combiner, memesCoordonnees } from "./comsolCalcul";
 import { avecCote, avecSurface, sourcesSensibilite } from "./comsolEtude";
 import { parametresVariables } from "./comsolInstants";
 import type { GraphLayout } from "./layout";
@@ -139,9 +139,22 @@ export function modesDisponibles(exports: readonly ExportComsol[]): Record<ModeA
   };
 }
 
+/** Réponses déjà connues, par couple d'exports (la vérification calcule toute la différence). */
+const paires = new WeakMap<ExportComsol, WeakMap<ExportComsol, string | null>>();
+
 /** Peut-on calculer A ∘ B point à point ? null si oui, sinon la raison (grilles différentes…). */
 export function comparables(a: ExportComsol, b: ExportComsol): string | null {
+  let pourA = paires.get(a);
+  if (!pourA) paires.set(a, (pourA = new WeakMap()));
+  if (!pourA.has(b)) pourA.set(b, verifierComparables(a, b));
+  return pourA.get(b)!;
+}
+
+function verifierComparables(a: ExportComsol, b: ExportComsol): string | null {
   if (a === b) return "A et B sont le même fichier.";
+  // même maillage, mêmes points dans le même ordre : comparables dès qu'une expression est commune
+  if ((a.nature ?? "donnees") === (b.nature ?? "donnees") && memesCoordonnees(a, b))
+    return a.colonnes.some((c) => b.colonnes.some((d) => d.expression === c.expression)) ? null : "Aucune expression commune aux deux fichiers.";
   try {
     combiner(a, b, "difference");
     return null;

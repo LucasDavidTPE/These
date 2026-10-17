@@ -1050,3 +1050,10 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
 - [ ] Visite guidée ouverte puis « Rapport… » : pas de défilement de la page, la visite tient sur une bande, le rapport
       occupe toute la hauteur ; « ← Retour aux tracés » ramène la tuile.
 - [ ] Sur l'écran du portable : la tuile choisie et son graphe restent visibles sous les tuiles compactes.
+
+## Thème sombre et rapidité de l'atelier COMSOL (1.43.2)
+
+- [ ] Windows en thème sombre : atelier COMSOL (visite, pistes, fichiers, aperçu), Graphes, Accueil, Traitement — aucun
+      texte clair sur fond blanc ; boutons bleus lisibles.
+- [ ] Gros exports réels (plusieurs coupes, un fichier à plusieurs instants) : changer de tuile, glisser le curseur des
+      instants, survoler la carte, taper dans le titre — sans attente visible.
