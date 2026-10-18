@@ -1,14 +1,24 @@
 /**
  * Colonne « À lire » de la vue Semaine : les références que la Bibliothèque conseille de lire
  * (meilleur score d'abord). On les glisse sur un créneau, ou « Placer » les met au premier
- * créneau libre ; une lecture déjà planifiée affiche sa date.
+ * créneau libre ; une lecture déjà planifiée affiche sa date. Une barre de recherche (titre,
+ * citation, auteurs via le détail affiché) retrouve un article précis au-delà des 60 affichées.
  */
 import { useState } from "react";
+import { chercher, type EntreeRecherche } from "@noyau/recherche";
 import type { Barre } from "../core/gantt";
 import { libelleJour } from "../core/semaine";
 import { TYPE_LECTURE, type Lecture } from "./Semaine";
 
 const PRESSANT = new Set(["EN RETARD", "Ce mois-ci"]);
+
+/** Classe les lectures par pertinence à la requête (titre, citation) ; toutes si la requête est vide. */
+function filtrer(lectures: Lecture[], requete: string): Lecture[] {
+  if (!requete.trim()) return lectures;
+  const entrees: EntreeRecherche[] = lectures.map((l) => ({ id: l.id, module: "lecture", genre: "", titre: l.titre, detail: l.citation }));
+  const parId = new Map(lectures.map((l) => [l.id, l]));
+  return chercher(entrees, requete, 200).map((e) => parId.get(e.id)!);
+}
 
 function heures(h: number): string {
   return h ? `≈ ${String(Math.round(h * 10) / 10).replace(".", ",")} h` : "";
@@ -32,8 +42,11 @@ export function ALire({
   fermer(): void;
 }) {
   const [tout, setTout] = useState(false);
+  const [requete, setRequete] = useState("");
   const pressantes = lectures.filter((l) => PRESSANT.has(l.etat));
-  const liste = tout || !pressantes.length ? lectures : pressantes;
+  // une recherche porte sur toute la bibliothèque, pas seulement « ce mois-ci »
+  const base = requete.trim() || tout || !pressantes.length ? lectures : pressantes;
+  const liste = filtrer(base, requete);
   const nonPrevues = liste.filter((l) => !prevues.has(l.id));
   return (
     <aside className="alire">
@@ -44,15 +57,24 @@ export function ALire({
           ×
         </button>
       </div>
+      <input
+        type="search"
+        className="alire-recherche"
+        placeholder="Chercher un article (titre, citation)…"
+        value={requete}
+        onChange={(e) => setRequete(e.target.value)}
+        aria-label="Chercher un article à ajouter au planning"
+      />
       <span className="segmente petit">
-        <button type="button" className={!tout ? "actif" : undefined} onClick={() => setTout(false)} disabled={!pressantes.length} title="En retard et prévues ce mois-ci dans le plan de lecture">
+        <button type="button" className={!tout ? "actif" : undefined} onClick={() => setTout(false)} disabled={!pressantes.length || !!requete.trim()} title="En retard et prévues ce mois-ci dans le plan de lecture">
           Ce mois-ci
         </button>
-        <button type="button" className={tout ? "actif" : undefined} onClick={() => setTout(true)}>
+        <button type="button" className={tout ? "actif" : undefined} onClick={() => setTout(true)} disabled={!!requete.trim()}>
           Toutes
         </button>
       </span>
       <p className="discret petit">Glissez une lecture sur un créneau de la semaine, ou « Placer » au premier créneau libre (9 h – 18 h, en semaine).</p>
+      {requete.trim() && !liste.length ? <p className="discret petit">Rien ne correspond à « {requete.trim()} ».</p> : null}
       <ul>
         {liste.slice(0, 60).map((l) => {
           const p = prevues.get(l.id);

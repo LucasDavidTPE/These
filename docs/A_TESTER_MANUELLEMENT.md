@@ -1057,3 +1057,9 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
       texte clair sur fond blanc ; boutons bleus lisibles.
 - [ ] Gros exports réels (plusieurs coupes, un fichier à plusieurs instants) : changer de tuile, glisser le curseur des
       instants, survoler la carte, taper dans le titre — sans attente visible.
+
+## Planning : recherche dans « À lire » (1.43.3)
+
+- [ ] Planning → Semaine → « À lire » → taper un mot du titre ou de la citation d'un article pas « en retard » ni
+      « ce mois-ci » : il apparaît, se glisse sur un créneau ou se place avec « Placer » comme les autres.
+- [ ] Recherche sans résultat : « Rien ne correspond à… » ; effacer le champ revient à « Ce mois-ci » / « Toutes ».

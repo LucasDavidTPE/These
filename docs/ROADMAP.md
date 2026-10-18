@@ -263,3 +263,5 @@ lancent tous les tests automatiques sous Windows.
       à côté de l'original (1.26.0)
 - [x] Manuscrits M1 bis (1.14.0) : numérotation automatique de Word lue dans le plan ; retours reçus (`.docx` relu ou PDF annoté),
       remarques extraites avec état (à traiter / traitée / refusée), compteur par partie, rangés avec les versions
+- [x] Planning : barre de recherche dans la colonne **À lire** (titre, citation), pour retrouver un article précis au-delà
+      des lectures en retard / de ce mois-ci et l'ajouter au planning sans défiler (1.43.3)
