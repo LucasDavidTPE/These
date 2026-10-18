@@ -25,3 +25,12 @@ reportée dans `SPEC.md` et la question est supprimée d'ici.
    `.docx` n'importe où (racines par poste), fusion native, Sources LaTeX retiré, Présentations gardé.
    Numérotation automatique de Word et corrections en `.docx` / PDF annotés : tranchés (1.14.0).
    Reste : export PDF depuis l'appli (nécessite Word).
+7. **Article MAIRE INFRA27 : un module dédié dans Thèse, ou l'atelier COMSOL tel quel ?**
+   `docs/COMSOL_ARTICLE_MAIREINFRA27_2026-10-18.md` propose (§8) un modèle Étude / Cas / Export / Grandeur / Valeur
+   propre à cet article (études `std_*`, paramètres `lc`/`VE`/`mlev`/`mod_f`, 922 valeurs dérivées, pipeline Python
+   externe qui écrirait un `valeurs.json`) et des vues de comparaison dédiées (matrice empreinte × loi, convergence,
+   module équivalent, signal de jauge). C'est un travail propre à un article, pas à la thèse entière : avant de le
+   coder, trancher si Thèse doit savoir lire ce `valeurs.json` (un module d'import générique, cohérent avec « pas de
+   Python dans l'appli » puisque `build_article.py` resterait un script externe), ou si l'atelier COMSOL §1-§7
+   suffit pour ses coupes/courbes (le pipeline Python gardant pour lui les grandeurs dérivées et les contrôles).
+   Les fichiers réels (~1,5 Go) sont sur OneDrive, hors du dépôt : rien n'a pu être ingéré ni testé pour l'instant.
