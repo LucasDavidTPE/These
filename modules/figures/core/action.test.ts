@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { actionRegeneration, enregistrerImage, origineDe, remplacerImage } from "./action";
+import { actionRegeneration, dimensionsSvg, enregistrerImage, enregistrerSvg, origineDe, remplacerImage } from "./action";
 import { MemoryFs, validateMeta } from "./library";
 
 describe("figures régénérables", () => {
@@ -119,5 +119,29 @@ describe("schémas envoyés par un module", () => {
       await expect(enregistrerSchema(fs, { titre: t, source: "T", schema: schema(t) }, async () => new Uint8Array([1]), "2026-09-28T10:00:00+02:00", "PC")).resolves.toMatch(/^FIG-/);
     }
     await expect(enregistrerSchema(fs, { titre: "x", source: "T", schema: schema("inconnu") }, async () => new Uint8Array([1]), "2026-09-28T10:00:00+02:00", "PC")).rejects.toThrow("Schéma invalide");
+  });
+});
+
+describe("SVG importés", () => {
+  it("dimensions : width/height avec unités, sinon viewBox, sinon rien", () => {
+    expect(dimensionsSvg('<svg width="100mm" height="50mm"/>')).toEqual({ largeurMm: 100, hauteurMm: 50 });
+    const px = dimensionsSvg('<svg width="96" height="192" xmlns="x">')!;
+    expect(px.largeurMm).toBeCloseTo(25.4);
+    expect(px.hauteurMm).toBeCloseTo(50.8);
+    const vb = dimensionsSvg('<svg viewBox="0 0 200 100"/>')!;
+    expect(vb.largeurMm / vb.hauteurMm).toBeCloseTo(2);
+    expect(dimensionsSvg('<svg width="10cm" viewBox="0 0 200 100"/>')).toEqual({ largeurMm: 100, hauteurMm: 50 });
+    expect(dimensionsSvg("<svg/>")).toBeNull();
+    expect(dimensionsSvg("pas un svg")).toBeNull();
+  });
+
+  it("enregistre le SVG tel quel avec son PNG ; refuse un autre fichier", async () => {
+    const fs = new MemoryFs();
+    const svg = '<svg width="10mm" height="10mm"><rect/></svg>';
+    const dossier = await enregistrerSvg(fs, { titre: "Schéma importé", svg, png: new Uint8Array([9]), tags: ["import"] }, "2026-10-20T10:00:00+02:00", "PC");
+    expect(fs.get(`${dossier}/export.svg`)).toBe(svg);
+    expect(fs.getBytes(`${dossier}/export.png`)).toEqual(new Uint8Array([9]));
+    expect(validateMeta(JSON.parse(fs.get(`${dossier}/meta.json`)!)).ok).toBe(true);
+    await expect(enregistrerSvg(fs, { titre: "x", svg: "<html/>", png: new Uint8Array() }, "2026-10-20T10:00:00+02:00", "PC")).rejects.toThrow("pas un SVG");
   });
 });

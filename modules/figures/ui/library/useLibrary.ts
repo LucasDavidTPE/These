@@ -20,7 +20,7 @@ import {
   type LibraryIndex,
   type LibrarySort,
 } from "../../core/library";
-import { regenerer, type Rendu } from "../../core/action";
+import { dimensionsSvg, enregistrerSvg, regenerer, type Rendu } from "../../core/action";
 import { exportGraphSvg } from "../../core/graph";
 import { svgToPng } from "../editor/raster";
 import { parseSettings, serializeSettings } from "../../core/settings";
@@ -63,6 +63,8 @@ interface LibraryState {
   cleanTemp(folder: string, file: string): Promise<void>;
   /** Remplace l'image d'une figure refaite par le module d'origine. */
   regenerate(folder: string, rendu: Rendu): Promise<void>;
+  /** Importe des fichiers .svg comme figures ; renvoie les dossiers créés. */
+  importSvg(fichiers: { nom: string; texte: string }[]): Promise<void>;
   readText(path: string): Promise<string>;
   imageUrl(path: string): string;
 }
@@ -207,6 +209,22 @@ export const useLibrary = create<LibraryState>()((set, get) => {
         const { backend, root } = need();
         await regenerer(backend.fs(root), folder, rendu, (doc) => svgToPng(exportGraphSvg(doc), doc.width, doc.height, 300), nowIso(), get().host);
         await get().rescan();
+      }),
+
+    importSvg: async (fichiers) =>
+      guard(async () => {
+        const { backend, root } = need();
+        const fs = backend.fs(root);
+        let dernier: string | null = null;
+        for (const f of fichiers) {
+          const d = dimensionsSvg(f.texte) ?? { largeurMm: 100, hauteurMm: 100 };
+          // vignette et collage : PNG à 300 dpi, taille plafonnée (un SVG géant ne doit pas saturer la mémoire)
+          const k = Math.min(1, 400 / Math.max(d.largeurMm, d.hauteurMm));
+          const png = await svgToPng(f.texte, d.largeurMm * k, d.hauteurMm * k, 300);
+          dernier = await enregistrerSvg(fs, { titre: f.nom.replace(/\.svg$/i, ""), svg: f.texte, png, source: `Import SVG (${f.nom})` }, nowIso(), get().host);
+        }
+        await get().rescan();
+        if (dernier) await get().select(dernier);
       }),
 
     readText: async (path) => {

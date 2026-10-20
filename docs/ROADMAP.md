@@ -265,3 +265,5 @@ lancent tous les tests automatiques sous Windows.
       remarques extraites avec état (à traiter / traitée / refusée), compteur par partie, rangés avec les versions
 - [x] Planning : barre de recherche dans la colonne **À lire** (titre, citation), pour retrouver un article précis au-delà
       des lectures en retard / de ce mois-ci et l'ajouter au planning sans défiler (1.43.3)
+- [x] Figures : **import de SVG** dans la bibliothèque (figure « image », `export.svg` + PNG de vignette), **Copier en SVG** et
+      **Enregistrer en SVG…** sur la fiche de toute figure qui a un `export.svg` (1.43.4)

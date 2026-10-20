@@ -15,6 +15,9 @@ import {
   type MetaForm,
   type ValidationError,
 } from "../../core/library";
+import { dimensionsSvg } from "../../core/action";
+import { svgToPng } from "../editor/raster";
+import { getBackend } from "../platform/backend";
 import { useCrop } from "../crop/useCrop";
 import { useEditor } from "../editor/useEditor";
 import { useGraph } from "../graph/useGraph";
@@ -126,12 +129,56 @@ export function MetaPanel({ entry }: { entry: FigureEntry }) {
           Recadrer
         </button>
       )}
+      {entry.files.includes("export.svg") && !isEditing && <ExportSvg entry={entry} />}
       {!isEditing && <Regenerer entry={entry} />}
       {entry.meta?.derived_from && <p className="muted small">D'après {entry.meta.derived_from}.</p>}
       <p className="muted small">
         Dossier : <code>{entry.folder}</code>
       </p>
     </aside>
+  );
+}
+
+/** Copier la figure en SVG (collage vectoriel dans Word / PowerPoint / Inkscape) ou l'enregistrer en .svg. */
+function ExportSvg({ entry }: { entry: FigureEntry }) {
+  const readText = useLibrary((s) => s.readText);
+  const [etat, setEtat] = useState("");
+  const nom = `${entry.id}${entry.meta?.title ? ` ${entry.meta.title}` : ""}`.replace(/[\\/:*?"<>|]+/g, "_");
+  const svg = () => readText(`${entry.folder}/export.svg`);
+  return (
+    <div className="rangee-boutons">
+      <button
+        type="button"
+        title="Copie le SVG dans le presse-papiers (vectoriel pour Word, PowerPoint, Inkscape ; image PNG en repli)"
+        onClick={async () => {
+          try {
+            const backend = await getBackend();
+            const s = await svg();
+            const d = dimensionsSvg(s) ?? { largeurMm: 100, hauteurMm: 100 };
+            const k = Math.min(1, 400 / Math.max(d.largeurMm, d.hauteurMm));
+            await backend.copySvg(s, await svgToPng(s, d.largeurMm * k, d.hauteurMm * k, 300));
+            setEtat("SVG copié.");
+          } catch (e) {
+            setEtat(e instanceof Error ? e.message : String(e));
+          }
+        }}
+      >
+        Copier en SVG
+      </button>
+      <button
+        type="button"
+        onClick={async () => {
+          try {
+            if (await (await getBackend()).saveTextAs(await svg(), `${nom}.svg`, "svg")) setEtat("SVG enregistré.");
+          } catch (e) {
+            setEtat(e instanceof Error ? e.message : String(e));
+          }
+        }}
+      >
+        Enregistrer en SVG…
+      </button>
+      {etat && <span className="muted small">{etat}</span>}
+    </div>
   );
 }
 

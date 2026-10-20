@@ -48,6 +48,23 @@ export function LibraryPage() {
             <option value="id">Par numéro</option>
             <option value="title">Par titre</option>
           </select>
+          <button
+            type="button"
+            title="Ajouter des fichiers .svg à la bibliothèque (ils se retrouvent par la recherche et se copient en SVG)"
+            onClick={() => {
+              const input = document.createElement("input");
+              input.type = "file";
+              input.accept = ".svg,image/svg+xml";
+              input.multiple = true;
+              input.onchange = async () => {
+                const fichiers = await Promise.all([...(input.files ?? [])].map(async (f) => ({ nom: f.name, texte: await f.text() })));
+                if (fichiers.length) await s.importSvg(fichiers);
+              };
+              input.click();
+            }}
+          >
+            Importer un SVG…
+          </button>
           <button type="button" onClick={() => s.rescan()} disabled={s.scanning} title="Relire le dossier">
             {s.scanning ? "…" : "Actualiser"}
           </button>

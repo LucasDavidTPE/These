@@ -1063,3 +1063,9 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
 - [ ] Planning → Semaine → « À lire » → taper un mot du titre ou de la citation d'un article pas « en retard » ni
       « ce mois-ci » : il apparaît, se glisse sur un créneau ou se place avec « Placer » comme les autres.
 - [ ] Recherche sans résultat : « Rien ne correspond à… » ; effacer le champ revient à « Ce mois-ci » / « Toutes ».
+
+## Figures : SVG (1.43.4)
+
+- [ ] Figures → Bibliothèque → « Importer un SVG… » : le SVG apparaît (vignette, recherche par son nom) ; sa fiche propose
+      « Copier en SVG » : coller dans Word / PowerPoint donne une image vectorielle (« Convertir en forme » possible).
+- [ ] « Enregistrer en SVG… » sur un graphe ou un schéma de la bibliothèque : le .svg s'ouvre dans Inkscape / le navigateur.

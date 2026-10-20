@@ -178,3 +178,44 @@ export async function regenerer(fs: LibraryFs, dossier: string, r: Rendu, rendu:
   if (v.ok && v.meta.kind === "graph" && r.graphe !== undefined) return remplacerGraphe(fs, dossier, r.graphe, rendu, now, host);
   return remplacerImage(fs, dossier, r, now, host);
 }
+
+// ---- SVG ----
+
+/** Taille d'un SVG en millimètres (attributs width / height, sinon viewBox ; 96 px = 1 pouce) ; null si illisible. */
+export function dimensionsSvg(svg: string): { largeurMm: number; hauteurMm: number } | null {
+  const racine = /<svg\b[^>]*>/i.exec(svg)?.[0];
+  if (!racine) return null;
+  const attr = (n: string) => new RegExp(`\\s${n}\\s*=\\s*["']([^"']+)["']`, "i").exec(racine)?.[1];
+  const versMm = (v: string | undefined): number | null => {
+    const m = /^\s*([\d.]+)\s*(mm|cm|in|pt|px)?\s*$/i.exec(v ?? "");
+    if (!m) return null;
+    const x = Number(m[1]);
+    const u = (m[2] ?? "px").toLowerCase();
+    return x * (u === "mm" ? 1 : u === "cm" ? 10 : u === "in" ? 25.4 : u === "pt" ? 25.4 / 72 : 25.4 / 96);
+  };
+  let l = versMm(attr("width"));
+  let h = versMm(attr("height"));
+  if (l === null || h === null) {
+    const vb = attr("viewBox")?.trim().split(/[\s,]+/).map(Number);
+    if (!vb || vb.length !== 4 || !(vb[2]! > 0) || !(vb[3]! > 0)) return null;
+    const ratio = vb[2]! / vb[3]!;
+    l = l ?? (h !== null ? h * ratio : (vb[2]! * 25.4) / 96);
+    h = h ?? l / ratio;
+  }
+  return l > 0 && h > 0 ? { largeurMm: l, hauteurMm: h } : null;
+}
+
+export interface DemandeSvg {
+  titre: string;
+  svg: string;
+  /** Rendu PNG (vignette et collage) fourni par l'interface. */
+  png: Uint8Array;
+  source?: string;
+  tags?: string[];
+}
+
+/** Importe un SVG dans la bibliothèque : figure « image » dont export.svg est le fichier lui-même. */
+export async function enregistrerSvg(fs: LibraryFs, d: DemandeSvg, now: string, host: string): Promise<string> {
+  if (!/<svg\b/i.test(d.svg)) throw new Error("Ce fichier n'est pas un SVG.");
+  return enregistrerImage(fs, { titre: d.titre, png: d.png, svg: d.svg, source: d.source ?? "Import SVG", ...(d.tags ? { tags: d.tags } : {}) }, now, host);
+}
