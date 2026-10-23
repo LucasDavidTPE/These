@@ -2,6 +2,9 @@ import { lockStatus, thumbnailFile, type FigureEntry } from "../../core/library"
 import { KIND_LABELS } from "./labels";
 import { useLibrary } from "./useLibrary";
 
+/** Adresse d'une vignette, rechargée quand la figure change (une adresse blob: n'accepte pas de paramètre). */
+const versionnee = (url: string, modifiee: string | undefined) => (modifiee && !url.startsWith("blob:") ? `${url}?v=${encodeURIComponent(modifiee)}` : url);
+
 /** Type MIME du glisser-déposer d'une figure vers un projet. */
 export const GLISSE_FIGURE = "application/x-these-figure";
 
@@ -32,7 +35,7 @@ export function FigureGrid({ entries }: { entries: FigureEntry[] }) {
               }}
             >
               <div className="thumb">
-                {thumb ? <img src={`${imageUrl(`${e.folder}/${thumb}`)}${e.meta ? `?v=${encodeURIComponent(e.meta.modified)}` : ""}`} alt="" loading="lazy" /> : <span>Pas d'aperçu</span>}
+                {thumb ? <img src={versionnee(imageUrl(`${e.folder}/${thumb}`), e.meta?.modified)} alt="" loading="lazy" /> : <span>Pas d'aperçu</span>}
               </div>
               <div className="card-id">
                 {e.id}

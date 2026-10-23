@@ -2099,3 +2099,38 @@ button.lien {
   border-radius: 10px;
   background: var(--surface);
 }
+
+.projet-fichiers > li.classeur {
+  display: block;
+}
+
+.classeur-tete,
+.classeur-graphique {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.classeur-tete .link {
+  text-align: left;
+}
+
+.classeur-corps {
+  padding: 4px 0 6px 16px;
+}
+
+.classeur-corps > ul {
+  list-style: none;
+  margin: 0 0 4px;
+  padding: 0;
+}
+
+.classeur-corps > ul > li {
+  padding: 3px 0;
+}
+
+.avertissements {
+  margin: 2px 0 0 12px;
+  padding-left: 12px;
+}

@@ -84,7 +84,11 @@ export async function remplacerGraphe(fs: LibraryFs, dossier: string, nouveau: u
       const a = ancien.series.find((x) => x.name === sr.name);
       return a ? { ...sr, type: a.type, legend: a.legend, color: a.color ?? sr.color, mark: a.mark, dash: a.dash } : sr;
     });
-    doc = { ...ancien, series, x: { ...ancien.x, log: neuf.x.log }, y: { ...ancien.y, log: neuf.y.log } };
+    // les catégories sont des données : elles suivent la source
+    const x = { ...ancien.x, log: neuf.x.log };
+    if (neuf.x.categories) x.categories = neuf.x.categories;
+    else delete x.categories;
+    doc = { ...ancien, series, x, y: { ...ancien.y, log: neuf.y.log } };
   } catch {
     // pas de graph.json lisible : on repart du graphe neuf
   }

@@ -33,3 +33,4 @@ export * from "./comsolDiagnostic";
 export * from "./comsolEnsemble";
 export * from "./comsolPistes";
 export * from "./comsolExemple";
+export * from "./excelGraphiques";

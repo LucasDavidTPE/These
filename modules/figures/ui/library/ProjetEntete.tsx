@@ -6,7 +6,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useContexte } from "@interface/contexte";
 import { absolu } from "@noyau/stockage";
 import { DOSSIERS_PROJET, cheminProjet, fichiersProjet, type FichiersProjet, type Projet } from "../../core/projets";
+import { ClasseurExcel } from "./ClasseurExcel";
 import { useLibrary } from "./useLibrary";
+import modeleClasseur from "./modele-figure.xlsx?url";
 
 export function ProjetEntete({ projet }: { projet: Projet }) {
   const ctx = useContexte();
@@ -35,19 +37,42 @@ export function ProjetEntete({ projet }: { projet: Projet }) {
     }
   };
 
-  const ajouterClasseur = async () => {
-    const f = await ctx.plateforme.ouvrirFichier("Classeur Excel à ranger dans le projet", ["xlsx", "xlsm"]);
-    if (!f || !s.backend || !s.root) return;
-    const fs = s.backend.fs(s.root);
+  /** Écrit un classeur dans excel/ sous un nom libre (« Fig 2 (2).xlsx » si pris) ; renvoie le nom retenu. */
+  const deposer = async (nomVoulu: string, octets: Uint8Array) => {
+    const fs = s.backend!.fs(s.root!);
     const dossier = cheminProjet(projet.slug, DOSSIERS_PROJET.excel);
     await fs.createDir(dossier).catch(() => undefined);
     const existants = new Set((await fs.listDir(dossier)).map((e) => e.name.toLowerCase()));
-    const [base, ext] = /^(.*?)(\.[^.]+)?$/.exec(f.nom)!.slice(1) as [string, string | undefined];
-    let nom = f.nom;
+    const [base, ext] = /^(.*?)(\.[^.]+)?$/.exec(nomVoulu)!.slice(1) as [string, string | undefined];
+    let nom = nomVoulu;
     for (let n = 2; existants.has(nom.toLowerCase()); n++) nom = `${base} (${n})${ext ?? ""}`;
-    await fs.writeBytesAtomic(`${dossier}/${nom}`, f.octets);
-    setEtat(`« ${nom} » copié dans le projet : modifiez désormais cette copie (Ouvrir dans Excel).`);
+    await fs.writeBytesAtomic(`${dossier}/${nom}`, octets);
     relire();
+    return nom;
+  };
+
+  const ajouterClasseur = async () => {
+    try {
+      const f = await ctx.plateforme.ouvrirFichier("Classeur Excel à ranger dans le projet", ["xlsx", "xlsm"]);
+      if (!f || !s.backend || !s.root) return;
+      const nom = await deposer(f.nom, f.octets);
+      setEtat(`« ${nom} » copié dans le projet : modifiez désormais cette copie (Ouvrir dans Excel).`);
+    } catch (e) {
+      setEtat(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  const nouveauClasseur = async () => {
+    const saisi = window.prompt("Nom du classeur (une figure, par exemple « Fig 3 module complexe ») :", "");
+    if (!saisi?.trim() || !s.backend || !s.root) return;
+    try {
+      const octets = new Uint8Array(await (await fetch(modeleClasseur)).arrayBuffer());
+      const nom = await deposer(`${saisi.trim().replace(/[\\/:*?"<>|]+/g, "_").replace(/\.xlsx$/i, "")}.xlsx`, octets);
+      setEtat(`« ${nom} » créé : remplissez la feuille Données, enregistrez, puis dépliez-le ici pour l'ajouter à Figures.`);
+      await ouvrir(abs(DOSSIERS_PROJET.excel, nom));
+    } catch (e) {
+      setEtat(e instanceof Error ? e.message : String(e));
+    }
   };
 
   return (
@@ -111,18 +136,18 @@ export function ProjetEntete({ projet }: { projet: Projet }) {
           ) : (
             <ul className="projet-fichiers">
               {fichiers.classeurs.map((c) => (
-                <li key={c}>
-                  <span className="grow">{c}</span>
-                  <button type="button" onClick={() => void ouvrir(abs(DOSSIERS_PROJET.excel, c))}>
-                    Ouvrir dans Excel
-                  </button>
-                </li>
+                <ClasseurExcel key={c} projet={projet.slug} classeur={c} ouvrir={() => void ouvrir(abs(DOSSIERS_PROJET.excel, c))} />
               ))}
             </ul>
           )}
-          <button type="button" className="link" onClick={() => void ajouterClasseur()}>
-            + Ajouter un classeur…
-          </button>
+          <div className="rangee-boutons">
+            <button type="button" className="link" onClick={() => void nouveauClasseur()} title="Classeur prêt à remplir : une feuille Données et un nuage de points">
+              + Nouveau classeur
+            </button>
+            <button type="button" className="link" onClick={() => void ajouterClasseur()} title="Copie un classeur existant dans le projet">
+              + Ajouter un classeur existant…
+            </button>
+          </div>
         </div>
         <div className="projet-bloc">
           <h3>Scripts Python</h3>

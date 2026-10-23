@@ -21,11 +21,16 @@ import {
   type LibrarySort,
 } from "../../core/library";
 import { dimensionsSvg, enregistrerSvg, regenerer, type Rendu } from "../../core/action";
-import { exportGraphSvg } from "../../core/graph";
+import { exportGraphSvg, type GraphDoc } from "../../core/graph";
 import { svgToPng } from "../editor/raster";
 import { parseSettings, serializeSettings } from "../../core/settings";
+import { importerGraphique, regenererGraphique, type OrigineExcel } from "../../core/excelFigures";
+import type { GraphiqueExcel } from "../../core/graph";
 import { ajouterAuProjet, creerProjet, listerProjets, modifierProjet, retirerDuProjet, supprimerProjet, type ListeProjets, type Projet } from "../../core/projets";
 import { getBackend, type Backend } from "../platform/backend";
+
+/** PNG d'un graphe à 300 dpi (vignette, collage). */
+const rendreGraphe = (doc: GraphDoc) => svgToPng(exportGraphSvg(doc), doc.width, doc.height, 300);
 
 export function nowIso(): string {
   const d = new Date();
@@ -74,6 +79,9 @@ interface LibraryState {
   /** Range des figures dans un projet (glisser-déposer, fiche). */
   ajouterAuProjet(dossiers: string[], slug: string): Promise<void>;
   retirerDuProjet(dossier: string, slug: string): Promise<void>;
+  /** Graphiques Excel d'un projet → figures liées (PJ2). */
+  importerGraphiques(projet: string, classeur: string, graphiques: GraphiqueExcel[]): Promise<void>;
+  regenererExcel(dossier: string, origine: OrigineExcel): Promise<void>;
   readText(path: string): Promise<string>;
   imageUrl(path: string): string;
 }
@@ -222,7 +230,7 @@ export const useLibrary = create<LibraryState>()((set, get) => {
     regenerate: async (folder, rendu) =>
       guard(async () => {
         const { backend, root } = need();
-        await regenerer(backend.fs(root), folder, rendu, (doc) => svgToPng(exportGraphSvg(doc), doc.width, doc.height, 300), nowIso(), get().host);
+        await regenerer(backend.fs(root), folder, rendu, rendreGraphe, nowIso(), get().host);
         await get().rescan();
       }),
 
@@ -282,6 +290,20 @@ export const useLibrary = create<LibraryState>()((set, get) => {
         await retirerDuProjet(backend.fs(root), dossier, slug, nowIso(), get().host);
         await get().rescan();
       }),
+
+    importerGraphiques: async (projet, classeur, graphiques) =>
+      guard(async () => {
+        const { backend, root } = need();
+        const fs = backend.fs(root);
+        for (const g of graphiques) await importerGraphique(fs, projet, classeur, g, rendreGraphe, nowIso(), get().host);
+        await get().rescan();
+      }),
+
+    regenererExcel: async (dossier, origine) => {
+      const { backend, root } = need();
+      await regenererGraphique(backend.fs(root), dossier, origine, rendreGraphe, nowIso(), get().host);
+      await get().rescan();
+    },
 
     readText: async (path) => {
       const { backend, root } = need();
