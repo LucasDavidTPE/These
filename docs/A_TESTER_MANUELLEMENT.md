@@ -1114,3 +1114,11 @@ Python
       vignette et « Copier en SVG » suivent ; titre, tags, légende de la fiche inchangés.
 - [ ] Enregistrer un nouveau dessin depuis VectorArt directement dans `svg\` : il apparaît avec « Ajouter à Figures ».
 - [ ] Projet ouvert → « Importer un SVG… » (barre du haut) : même résultat ; sans projet ouvert, import simple comme avant.
+
+## Projets de figures : VectorCraft (1.44.2)
+
+- [ ] Enregistrer `Coupe.vectorcraft` dans `_projets\<projet>\svg\` sans l'exporter : la ligne « pas encore exporté »
+      apparaît avec « Ouvrir dans VectorCraft » (VectorCraft s'ouvre bien sur ce document ?).
+- [ ] Exporter en SVG au même endroit, sous `Coupe.svg` : « Ajouter à Figures », bouton « Ouvrir dans VectorCraft » sur la ligne.
+- [ ] Retoucher, réexporter, « Actualiser » : « Mettre à jour » reprend le dessin. Le SVG de VectorCraft s'affiche-t-il
+      fidèlement (textes, polices, dégradés) dans la vignette et une fois collé dans Word ?

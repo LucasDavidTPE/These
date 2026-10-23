@@ -506,7 +506,8 @@ appartenir à plusieurs projets, ou à aucun.
   scripts/*.py         scripts de tracé ; scripts/these_figures.py fourni par l'application
   sorties/<script>/    ce que produit chaque script : *.graphe.json, *.png, *.jpg, *.svg, *.pdf
   excel/*.xlsx|xlsm    classeurs, un par figure le plus souvent
-  svg/*.svg            dessins vectoriels (logiciel de dessin, schémas exportés) (1.44.1)
+  svg/*.svg            dessins vectoriels (export SVG de VectorCraft, schémas exportés) (1.44.1)
+  svg/*.vectorcraft    documents de travail VectorCraft, à côté de leur export de même nom (1.44.2)
 <Espace>/figures/_projets/_corbeille/<slug>-<date>/   projet retiré (rien n'est effacé)
 ```
 
@@ -572,6 +573,12 @@ SVG… » (et « Importer un SVG… » de la barre quand un projet est ouvert) c
 directement dans `svg/` (logiciel de dessin) apparaît avec « Ajouter à Figures ». Retouché, il est « à
 mettre à jour » : export.svg et la vignette sont remplacés, la fiche reste. « Ouvrir » le
 donne au programme associé aux .svg.
+
+**VectorCraft (1.44.2).** Le logiciel de dessin de l'utilisateur est VectorCraft (libre, Rust ;
+document natif `.vectorcraft`, JSON). Dans `svg/`, `coupe.vectorcraft` et `coupe.svg` (même nom,
+casse ignorée) vont ensemble : Figures lit le SVG exporté, « Ouvrir dans VectorCraft » ouvre le
+document de travail ; un document sans export est listé avec la marche à suivre. L'export reste
+un geste dans VectorCraft (son canal de commande JSON / MCP pourrait l'automatiser plus tard).
 
 **Hors champ (pour l'instant).** Liens vers Manuscrits, Campagnes ou Bibliothèque ;
 environnements virtuels Python gérés par l'application ; macros VBA ; exécution automatique

@@ -1,9 +1,13 @@
-/** Dessins SVG d'un projet (dossier svg/) : état dans la bibliothèque, ouverture dans le logiciel de dessin, mise à jour. */
+/**
+ * Dessins d'un projet (dossier svg/) : document VectorCraft (`.vectorcraft`, ouvert pour retoucher)
+ * et son export SVG de même nom (ce que Figures lit) ; état dans la bibliothèque, mise à jour.
+ */
 import { useEffect, useState } from "react";
 import { cheminSvg, etatSvg, origineSvg, type EtatSvg } from "../../core/svgProjet";
+import { sourceDe, sourcesSansExport } from "../../core/projets";
 import { useLibrary } from "./useLibrary";
 
-export function SvgsProjet({ projet, fichiers, ouvrir }: { projet: string; fichiers: string[]; ouvrir: (fichier: string) => void }) {
+export function SvgsProjet({ projet, fichiers, sources, ouvrir }: { projet: string; fichiers: string[]; sources: string[]; ouvrir: (fichier: string) => void }) {
   const s = useLibrary();
   const [etats, setEtats] = useState<Record<string, EtatSvg | null>>({});
   const [occupe, setOccupe] = useState(false);
@@ -74,12 +78,28 @@ export function SvgsProjet({ projet, fichiers, ouvrir }: { projet: string; fichi
                   {e.etat === "a-jour" ? " ✓" : ""}
                 </button>
               )}
-              <button type="button" onClick={() => ouvrir(f)} title="Ouvre le dessin dans le programme associé aux .svg sur ce PC (VectorArt…)">
-                Ouvrir
-              </button>
+              {sourceDe(f, sources) ? (
+                <button type="button" onClick={() => ouvrir(sourceDe(f, sources)!)} title={`Ouvre ${sourceDe(f, sources)} dans VectorCraft ; après la retouche, réexporter en SVG sous le même nom, puis « Mettre à jour »`}>
+                  Ouvrir dans VectorCraft
+                </button>
+              ) : (
+                <button type="button" onClick={() => ouvrir(f)} title="Ouvre le SVG dans le programme associé aux .svg sur ce PC">
+                  Ouvrir
+                </button>
+              )}
             </li>
           );
         })}
+        {sourcesSansExport(fichiers, sources).map((src) => (
+          <li key={src}>
+            <span className="grow">
+              {src} <span className="muted small">— pas encore exporté : dans VectorCraft, exporter en SVG ici, sous le nom « {src.replace(/\.vectorcraft$/i, ".svg")} »</span>
+            </span>
+            <button type="button" onClick={() => ouvrir(src)}>
+              Ouvrir dans VectorCraft
+            </button>
+          </li>
+        ))}
       </ul>
       {(nouveaux.length > 1 || perimes.length > 1) && (
         <div className="rangee-boutons">

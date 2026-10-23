@@ -18,7 +18,7 @@ export function ProjetEntete({ projet }: { projet: Projet }) {
   const ctx = useContexte();
   const s = useLibrary();
   const [edition, setEdition] = useState<{ titre: string; description: string } | null>(null);
-  const [fichiers, setFichiers] = useState<FichiersProjet>({ scripts: [], classeurs: [], svgs: [] });
+  const [fichiers, setFichiers] = useState<FichiersProjet>({ scripts: [], classeurs: [], svgs: [], sourcesVectorielles: [] });
   const [etat, setEtat] = useState("");
 
   const [version, setVersion] = useState(0);
@@ -198,11 +198,11 @@ export function ProjetEntete({ projet }: { projet: Projet }) {
           </div>
         </div>
         <div className="projet-bloc">
-          <h3>Dessins SVG</h3>
-          {fichiers.svgs.length === 0 ? (
-            <p className="muted small">Aucun SVG dans {DOSSIERS_PROJET.svg}/ (dessins de votre logiciel vectoriel, schémas exportés…).</p>
+          <h3>Dessins (VectorCraft, SVG)</h3>
+          {fichiers.svgs.length === 0 && fichiers.sourcesVectorielles.length === 0 ? (
+            <p className="muted small">Aucun dessin dans {DOSSIERS_PROJET.svg}/ : enregistrez-y vos documents VectorCraft et leur export SVG (même nom).</p>
           ) : (
-            <SvgsProjet projet={projet.slug} fichiers={fichiers.svgs} ouvrir={(f) => void ouvrir(abs(DOSSIERS_PROJET.svg, f))} />
+            <SvgsProjet projet={projet.slug} fichiers={fichiers.svgs} sources={fichiers.sourcesVectorielles} ouvrir={(f) => void ouvrir(abs(DOSSIERS_PROJET.svg, f))} />
           )}
           <div className="rangee-boutons">
             <button type="button" className="link" onClick={ajouterSvg} title="Copie les .svg dans le projet et les ajoute à Figures, liés : une retouche dans votre logiciel de dessin se reprend avec « Mettre à jour »">

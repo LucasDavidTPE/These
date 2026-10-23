@@ -31,6 +31,13 @@ const COMSOL = (page = "comsol", exemple = true): Essai => ({
 /** Les plus récentes d'abord. */
 export const NOUVEAUTES: readonly Nouveaute[] = [
   {
+    version: "1.44.2",
+    module: "figures",
+    titre: "Projets de figures : dessins VectorCraft",
+    detail: "Dans le dossier svg/ d'un projet, un document .vectorcraft et son export SVG de même nom vont ensemble : « Ouvrir dans VectorCraft » pour retoucher, réexporter en SVG, puis « Mettre à jour ». Un document pas encore exporté est signalé.",
+    essayer: { libelle: "Ouvrir Figures", vers: "figures" },
+  },
+  {
     version: "1.44.1",
     module: "figures",
     titre: "Projets de figures : dessins SVG",

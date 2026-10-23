@@ -173,6 +173,22 @@ export interface FichiersProjet {
   classeurs: string[];
   /** Dessins vectoriels (`svg/*.svg` : logiciel de dessin, schémas…). */
   svgs: string[];
+  /** Fichiers de travail de VectorCraft (`svg/*.vectorcraft`), exportés en SVG à côté. */
+  sourcesVectorielles: string[];
+}
+
+/** Extension des documents de VectorCraft (JSON documenté), le logiciel de dessin de l'utilisateur. */
+export const EXTENSION_SOURCE = ".vectorcraft";
+const base = (f: string) => f.replace(/\.[^.]+$/, "").toLowerCase();
+
+/** Document VectorCraft de même nom qu'un SVG exporté (« coupe.svg » ↔ « coupe.vectorcraft »). */
+export function sourceDe(svg: string, sources: readonly string[]): string | undefined {
+  return sources.find((s) => base(s) === base(svg));
+}
+
+/** Documents VectorCraft pas encore exportés en SVG dans le dossier. */
+export function sourcesSansExport(svgs: readonly string[], sources: readonly string[]): string[] {
+  return sources.filter((s) => !svgs.some((v) => base(v) === base(s)));
 }
 
 const nomsDans = async (fs: LibraryFs, dossier: string, ext: RegExp) =>
@@ -187,5 +203,6 @@ export async function fichiersProjet(fs: LibraryFs, slug: string): Promise<Fichi
   const scripts = (await nomsDans(fs, cheminProjet(slug, DOSSIERS_PROJET.scripts), /\.py$/i)).filter((n) => n !== BIBLIOTHEQUE_PYTHON);
   const classeurs = await nomsDans(fs, cheminProjet(slug, DOSSIERS_PROJET.excel), /\.xls[xm]$/i);
   const svgs = await nomsDans(fs, cheminProjet(slug, DOSSIERS_PROJET.svg), /\.svg$/i);
-  return { scripts, classeurs, svgs };
+  const sourcesVectorielles = await nomsDans(fs, cheminProjet(slug, DOSSIERS_PROJET.svg), /\.vectorcraft$/i);
+  return { scripts, classeurs, svgs, sourcesVectorielles };
 }

@@ -10,6 +10,8 @@ import {
   projetsDe,
   retirerDuProjet,
   slugifier,
+  sourceDe,
+  sourcesSansExport,
   supprimerProjet,
 } from "./projets";
 
@@ -77,7 +79,16 @@ describe("projets de figures", () => {
       "_projets/p/excel/~$Fig 2.xlsx": "",
       "_projets/p/excel/ancien.xlsm": "",
     });
-    expect(await fichiersProjet(fs, "p")).toEqual({ scripts: ["trace.py"], classeurs: ["ancien.xlsm", "Fig 2.xlsx"], svgs: [] });
-    expect(await fichiersProjet(fs, "absent")).toEqual({ scripts: [], classeurs: [], svgs: [] });
+    expect(await fichiersProjet(fs, "p")).toEqual({ scripts: ["trace.py"], classeurs: ["ancien.xlsm", "Fig 2.xlsx"], svgs: [], sourcesVectorielles: [] });
+    expect(await fichiersProjet(fs, "absent")).toEqual({ scripts: [], classeurs: [], svgs: [], sourcesVectorielles: [] });
+  });
+
+  it("dessins VectorCraft : document de travail associé à son export SVG", async () => {
+    const fs = new MemoryFs({ "_projets/p/svg/Coupe.vectorcraft": "{}", "_projets/p/svg/coupe.svg": "<svg/>", "_projets/p/svg/Plan.vectorcraft": "{}", "_projets/p/svg/seul.svg": "<svg/>" });
+    const f = await fichiersProjet(fs, "p");
+    expect(f.sourcesVectorielles).toEqual(["Coupe.vectorcraft", "Plan.vectorcraft"]);
+    expect(sourceDe("coupe.svg", f.sourcesVectorielles)).toBe("Coupe.vectorcraft");
+    expect(sourceDe("seul.svg", f.sourcesVectorielles)).toBeUndefined();
+    expect(sourcesSansExport(f.svgs, f.sourcesVectorielles)).toEqual(["Plan.vectorcraft"]);
   });
 });
