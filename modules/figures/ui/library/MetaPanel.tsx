@@ -229,7 +229,7 @@ function AspectExcel({ entry }: { entry: FigureEntry }) {
   );
 }
 
-/** Copier la figure en SVG (collage vectoriel dans Word / PowerPoint / Inkscape) ou l'enregistrer en .svg. */
+/** Copier la figure en SVG (collage vectoriel dans Word, PowerPoint, un logiciel de dessin) ou l'enregistrer en .svg. */
 function ExportSvg({ entry }: { entry: FigureEntry }) {
   const readText = useLibrary((s) => s.readText);
   const [etat, setEtat] = useState("");
@@ -239,7 +239,7 @@ function ExportSvg({ entry }: { entry: FigureEntry }) {
     <div className="rangee-boutons">
       <button
         type="button"
-        title="Copie le SVG dans le presse-papiers (vectoriel pour Word, PowerPoint, Inkscape ; image PNG en repli)"
+        title="Copie le SVG dans le presse-papiers (vectoriel pour Word, PowerPoint, logiciels de dessin ; image PNG en repli)"
         onClick={async () => {
           try {
             const backend = await getBackend();
@@ -371,7 +371,7 @@ function RegenererScript({ entry }: { entry: FigureEntry }) {
   );
 }
 
-/** Dessin SVG d'un projet : reprendre le fichier retouché (Inkscape…), la fiche reste. */
+/** Dessin SVG d'un projet : reprendre le fichier retouché (logiciel de dessin), la fiche reste. */
 function RegenererSvg({ entry }: { entry: FigureEntry }) {
   const regenerer = useLibrary((s) => s.regenererSvg);
   const [etat, setEtat] = useState<string | null>(null);
@@ -380,7 +380,7 @@ function RegenererSvg({ entry }: { entry: FigureEntry }) {
     <>
       <button
         type="button"
-        title="Reprend le fichier SVG du projet tel qu'il est maintenant (après une retouche dans Inkscape, par exemple)"
+        title="Reprend le fichier SVG du projet tel qu'il est maintenant (après une retouche dans votre logiciel de dessin)"
         onClick={async () => {
           setEtat("Lecture du SVG…");
           try {

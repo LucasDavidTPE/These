@@ -171,7 +171,7 @@ export interface FichiersProjet {
   scripts: string[];
   /** Classeurs (`excel/*.xlsx|xlsm`). */
   classeurs: string[];
-  /** Dessins vectoriels (`svg/*.svg` : Inkscape, schémas…). */
+  /** Dessins vectoriels (`svg/*.svg` : logiciel de dessin, schémas…). */
   svgs: string[];
 }
 

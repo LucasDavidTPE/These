@@ -34,7 +34,7 @@ export const NOUVEAUTES: readonly Nouveaute[] = [
     version: "1.44.1",
     module: "figures",
     titre: "Projets de figures : dessins SVG",
-    detail: "Un projet a aussi ses dessins SVG (dossier svg/, Inkscape…) : « Ajouter des SVG… » les range dans le projet, liés ; après une retouche, « Mettre à jour » reprend le dessin. « Importer un SVG… » range dans le projet ouvert.",
+    detail: "Un projet a aussi ses dessins SVG (dossier svg/, votre logiciel de dessin) : « Ajouter des SVG… » les range dans le projet, liés ; après une retouche, « Mettre à jour » reprend le dessin. « Importer un SVG… » range dans le projet ouvert.",
     essayer: { libelle: "Ouvrir Figures", vers: "figures" },
   },
   {

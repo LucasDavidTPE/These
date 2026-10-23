@@ -1110,7 +1110,7 @@ Python
 ## Projets de figures : dessins SVG (1.44.1)
 
 - [ ] Projet → « + Ajouter des SVG… » : le fichier est copié dans `_projets\<projet>\svg\`, la figure apparaît dans le projet (✓).
-- [ ] « Ouvrir » → Inkscape (ou le programme des .svg) ; modifier, enregistrer, « Actualiser » : « Mettre à jour » →
+- [ ] « Ouvrir » → VectorArt (programme associé aux .svg) ; modifier, enregistrer, « Actualiser » : « Mettre à jour » →
       vignette et « Copier en SVG » suivent ; titre, tags, légende de la fiche inchangés.
-- [ ] Enregistrer un nouveau dessin depuis Inkscape directement dans `svg\` : il apparaît avec « Ajouter à Figures ».
+- [ ] Enregistrer un nouveau dessin depuis VectorArt directement dans `svg\` : il apparaît avec « Ajouter à Figures ».
 - [ ] Projet ouvert → « Importer un SVG… » (barre du haut) : même résultat ; sans projet ouvert, import simple comme avant.

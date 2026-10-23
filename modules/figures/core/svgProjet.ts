@@ -1,8 +1,8 @@
 /**
- * Dessins SVG d'un projet (SPEC §6.1) : `svg/*.svg` (Inkscape, schémas exportés…). Chaque fichier
+ * Dessins SVG d'un projet (SPEC §6.1) : `svg/*.svg` (dessins de votre logiciel vectoriel, schémas exportés…). Chaque fichier
  * devient une figure « image » dont export.svg est le dessin, liée au fichier
  * (`{ module: "figures", genre: "svg", projet, fichier, empreinte }`) : quand on le retouche
- * dans Inkscape, la figure est « à mettre à jour ». Pur : le rendu PNG est passé en paramètre.
+ * dans le logiciel de dessin, la figure est « à mettre à jour ». Pur : le rendu PNG est passé en paramètre.
  */
 import { enregistrerSvg, origineDe, remplacerImage, type Origine } from "./action";
 import { joinPath, saveMeta, validateMeta, type FigureEntry, type FigureMeta, type LibraryFs } from "./library";

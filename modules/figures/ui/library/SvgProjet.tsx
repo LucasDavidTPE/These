@@ -1,4 +1,4 @@
-/** Dessins SVG d'un projet (dossier svg/) : état dans la bibliothèque, ouverture dans Inkscape, mise à jour. */
+/** Dessins SVG d'un projet (dossier svg/) : état dans la bibliothèque, ouverture dans le logiciel de dessin, mise à jour. */
 import { useEffect, useState } from "react";
 import { cheminSvg, etatSvg, origineSvg, type EtatSvg } from "../../core/svgProjet";
 import { useLibrary } from "./useLibrary";
@@ -74,7 +74,7 @@ export function SvgsProjet({ projet, fichiers, ouvrir }: { projet: string; fichi
                   {e.etat === "a-jour" ? " ✓" : ""}
                 </button>
               )}
-              <button type="button" onClick={() => ouvrir(f)} title="Ouvre le dessin dans le programme associé aux .svg (Inkscape…)">
+              <button type="button" onClick={() => ouvrir(f)} title="Ouvre le dessin dans le programme associé aux .svg sur ce PC (VectorArt…)">
                 Ouvrir
               </button>
             </li>

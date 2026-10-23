@@ -506,7 +506,7 @@ appartenir à plusieurs projets, ou à aucun.
   scripts/*.py         scripts de tracé ; scripts/these_figures.py fourni par l'application
   sorties/<script>/    ce que produit chaque script : *.graphe.json, *.png, *.jpg, *.svg, *.pdf
   excel/*.xlsx|xlsm    classeurs, un par figure le plus souvent
-  svg/*.svg            dessins vectoriels (Inkscape, schémas exportés) (1.44.1)
+  svg/*.svg            dessins vectoriels (logiciel de dessin, schémas exportés) (1.44.1)
 <Espace>/figures/_projets/_corbeille/<slug>-<date>/   projet retiré (rien n'est effacé)
 ```
 
@@ -569,7 +569,7 @@ lance celui **du poste**, sur un clic (QUESTIONS 8). `poste.json` → `python` :
 SVG… » (et « Importer un SVG… » de la barre quand un projet est ouvert) copie les fichiers dans
 `svg/` et en fait des figures « image » (export.svg = le dessin) rangées dans le projet et liées
 (`{ module: "figures", genre: "svg", projet, fichier, empreinte }`) ; un SVG enregistré
-directement dans `svg/` (Inkscape) apparaît avec « Ajouter à Figures ». Retouché, il est « à
+directement dans `svg/` (logiciel de dessin) apparaît avec « Ajouter à Figures ». Retouché, il est « à
 mettre à jour » : export.svg et la vignette sont remplacés, la fiche reste. « Ouvrir » le
 donne au programme associé aux .svg.
 

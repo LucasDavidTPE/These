@@ -200,15 +200,15 @@ export function ProjetEntete({ projet }: { projet: Projet }) {
         <div className="projet-bloc">
           <h3>Dessins SVG</h3>
           {fichiers.svgs.length === 0 ? (
-            <p className="muted small">Aucun SVG dans {DOSSIERS_PROJET.svg}/ (Inkscape, schémas exportés…).</p>
+            <p className="muted small">Aucun SVG dans {DOSSIERS_PROJET.svg}/ (dessins de votre logiciel vectoriel, schémas exportés…).</p>
           ) : (
             <SvgsProjet projet={projet.slug} fichiers={fichiers.svgs} ouvrir={(f) => void ouvrir(abs(DOSSIERS_PROJET.svg, f))} />
           )}
           <div className="rangee-boutons">
-            <button type="button" className="link" onClick={ajouterSvg} title="Copie les .svg dans le projet et les ajoute à Figures, liés : une retouche dans Inkscape se reprend avec « Mettre à jour »">
+            <button type="button" className="link" onClick={ajouterSvg} title="Copie les .svg dans le projet et les ajoute à Figures, liés : une retouche dans votre logiciel de dessin se reprend avec « Mettre à jour »">
               + Ajouter des SVG…
             </button>
-            <button type="button" className="link" onClick={() => void ouvrir(abs(DOSSIERS_PROJET.svg))} title="Pour y enregistrer vos dessins depuis Inkscape">
+            <button type="button" className="link" onClick={() => void ouvrir(abs(DOSSIERS_PROJET.svg))} title="Pour y enregistrer vos dessins depuis votre logiciel de dessin">
               Ouvrir le dossier svg
             </button>
           </div>
