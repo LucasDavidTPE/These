@@ -269,10 +269,11 @@ lancent tous les tests automatiques sous Windows.
       **Enregistrer en SVG…** sur la fiche de toute figure qui a un `export.svg` (1.43.4)
 
 ## 1.44 — Projets de figures (SPEC §6.1)
-- [ ] PJ1 Cœur et bibliothèque : `projets/<slug>/projet.json`, champ `projets` des métadonnées, colonne Projets
-      (Tous / Sans projet / projet), glisser une figure sur un projet, puces sur la fiche, page de projet, Ctrl+K (1.44.0)
-- [ ] PJ2 Excel, graphe refait : lecture des graphiques d'un `.xlsx` (séries, plages, axes, log, tendances), création
-      et régénération des figures liées, état « à mettre à jour », trame « Nouveau classeur » (1.45.0)
-- [ ] PJ3 Excel, aspect fidèle : capture par Excel (COM, Windows), `excel.png`, choix de rendu Figures / Excel (1.46.0)
-- [ ] PJ4 Python : chemin de Python du poste (détection, réglages), commande Rust d'exécution restreinte (console,
-      arrêt, délai), `these_figures.py` (Graphe, depuis_matplotlib), sorties → figures, régénération (1.47.0)
+- [x] PJ1 Cœur et bibliothèque : `_projets/<slug>/projet.json`, champ `projets` des métadonnées, colonne Projets
+      (Toutes / Sans projet / projet), glisser une figure sur un projet, puces sur la fiche, en-tête de projet, Ctrl+K
+- [x] PJ2 Excel, graphe refait : lecture des graphiques d'un `.xlsx` (séries, plages, axes, log, tendances), création
+      et mise à jour des figures liées (empreinte), « Nouveau classeur »
+- [x] PJ3 Excel, aspect fidèle : capture par Excel (COM, Windows), `excel.png` (PDF rendu à 300 dpi) + `excel.pdf`,
+      rendu Figures / Excel au choix sur la fiche
+- [x] PJ4 Python : Python du poste (détection, Réglages), commande Rust d'exécution restreinte (console en direct,
+      Arrêter, 10 min), `these_figures.py` (Graphe, barres, depuis_matplotlib), sorties → figures, mise à jour

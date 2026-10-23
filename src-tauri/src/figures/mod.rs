@@ -14,3 +14,4 @@ pub mod dib;
 pub mod excel;
 pub mod model;
 pub mod pipeline;
+pub mod python;

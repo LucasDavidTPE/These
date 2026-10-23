@@ -489,100 +489,84 @@ Ajouts permis par l'intégration :
   hors plage (extrapolation), et le ou les x pour un y (`fitInverse` : formule directe pour les
   formes monotones, recherche de racines sur la plage pour le polynôme).
 
-### 6.1 Projets de figures (à venir, 1.44.0 →)
+### 6.1 Projets de figures (1.44.0)
 
-Besoin : ranger les figures par **projet** (un article, un chapitre, une présentation),
-ou ne pas les ranger du tout. Dans un projet, on trouve ses scripts Python de tracé et
-leurs sorties, ainsi que ses classeurs Excel (en général un par figure, qui contient les
-données et un ou plusieurs graphiques). Tout cela est branché sur la bibliothèque et sur
-la page Graphes.
+Ranger les figures par **projet** (un article, un chapitre, une présentation), ou pas du tout ;
+dans un projet, ses scripts Python de tracé et ses classeurs Excel (souvent un par figure : les
+données et un ou plusieurs graphiques), branchés sur la bibliothèque et sur Graphes.
 
-**Sur le disque.** Un projet est un vrai dossier de l'espace. La figure, elle, reste dans
-la bibliothèque (`figures/`) : elle peut appartenir à plusieurs projets, ou à aucun.
+**Sur le disque.** Un projet est un vrai dossier, rangé dans la bibliothèque comme `_comsol/` et
+`_styles-graphes/` (donc aussi dans Figurine seul) ; la figure reste dans la bibliothèque et peut
+appartenir à plusieurs projets, ou à aucun.
 
 ```
-<Espace>/projets/<slug>/
+<Espace>/figures/_projets/<slug>/
   projet.json          { "format": 1, "titre": "Article MAIRE INFRA27", "description": "…",
-                         "cree": "…", "modifie": "…" }
-  scripts/*.py         scripts de tracé (exécutés avec le Python du poste)
-  scripts/these_figures.py   petite bibliothèque fournie par l'application (voir plus bas)
-  sorties/<script>/    ce que produit chaque script : *.graphe.json, *.png, *.svg, *.pdf
-  excel/*.xlsx         classeurs, un par figure le plus souvent
+                         "cree": "…", "modifie": "…" }   (champs inconnus gardés)
+  scripts/*.py         scripts de tracé ; scripts/these_figures.py fourni par l'application
+  sorties/<script>/    ce que produit chaque script : *.graphe.json, *.png, *.jpg, *.svg, *.pdf
+  excel/*.xlsx|xlsm    classeurs, un par figure le plus souvent
+<Espace>/figures/_projets/_corbeille/<slug>-<date>/   projet retiré (rien n'est effacé)
 ```
 
-- Appartenance : champ facultatif `projets: string[]` (slugs) dans le `meta.json` de la
-  figure, comme `rattachements`. Ajouter ou retirer une figure n'écrit que cette figure.
-  « Sans projet » regroupe les figures dont la liste est vide.
-- Un projet supprimé dans l'application ne supprime ni ses figures ni son dossier sur le
-  disque : le dossier est seulement renommé `_corbeille/<slug>-<date>`.
-- Les chemins des sources d'une figure (script, classeur) restent relatifs à l'espace.
+- Appartenance : champ facultatif `projets: string[]` (slugs) du `meta.json` de la figure
+  (comme `rattachements`) : ranger ou retirer une figure n'écrit qu'elle. Un slug inconnu
+  (projet retiré) est ignoré.
+- Bibliothèque : colonne **Projets** (Toutes · Sans projet · un projet, avec le nombre de
+  figures), création en ligne, **glisser une figure sur un projet** ; puces « Projets » sur la
+  fiche (✕ pour retirer, liste pour ajouter) ; Ctrl+K trouve les projets.
+- Projet choisi : en-tête au-dessus de la grille (titre, description, Ouvrir le dossier,
+  Renommer, Retirer le projet) avec les blocs **Classeurs Excel** et **Scripts Python**.
 
-**Bibliothèque.** Une colonne « Projets » (Tous · Sans projet · un projet) filtre la
-grille. On glisse une figure sur un projet pour l'y ajouter. La fiche porte des puces
-« Projets » qu'on peut ajouter ou retirer. Ctrl+K trouve les projets.
+**Excel — graphe refait, lié (1.44.0).** `core/graph/excelGraphiques.ts` lit chaque graphique
+(`xl/drawings` → `xl/charts/chartN.xml`, feuilles et feuilles graphiques) : titre ; nuage de
+points, courbes, barres (aires et 3D refaites en 2D) ; par série le nom et les plages
+`xVal`/`yVal` ou `cat`/`val` relues **dans les cellules** (le cache du graphique en secours),
+catégories texte ; titres d'axes, échelle log, bornes, sens inversé (l'ordre des axes du groupe
+fait foi, pas `axPos`) ; couleur, marque, tirets, trait absent ; légende, quadrillage ; courbes
+de tendance (linéaire, par l'origine, polynôme, puissance, exponentielle, log) → régressions de
+Figures. Non repris, **signalé** sans refuser : axe secondaire, barres d'erreur, lissage,
+barres empilées ou horizontales, secteurs, radar, bulles, moyenne mobile.
+Chaque graphique → figure « graph » rangée dans le projet, origine
+`{ module: "figures", genre: "excel", projet, classeur, graphique: "Feuille/Nom de l'objet",
+empreinte }`. L'**empreinte** (FNV-1a des séries, catégories, échelles) dit « à mettre à jour »
+quand le classeur a changé ; « Mettre à jour » relit les plages et garde la mise en forme faite
+dans Figures (`remplacerGraphe` ; les catégories suivent la source). « Nouveau classeur » : une
+trame (feuille Données, nuage de points) ; « Ajouter un classeur existant… » le copie dans
+`excel/` (c'est la copie qu'on modifie ensuite).
 
-**Page d'un projet** (dans Figures). Elle a trois blocs et un bouton « Ouvrir le dossier ».
-1. *Figures* : la grille filtrée sur le projet.
-2. *Scripts Python* : un script par ligne, avec trois boutons (« Exécuter », « Ouvrir dans
-   l'éditeur », « Nouveau script » depuis un modèle) et une console qui montre stdout et
-   stderr. Les sorties de la dernière exécution sont listées avec leur état (nouvelle,
-   déjà dans Figures, à mettre à jour).
-3. *Classeurs Excel* : chaque classeur montre ses graphiques détectés, avec les boutons
-   « Ouvrir dans Excel » et « Ajouter / Mettre à jour dans Figures ».
+**Excel — aspect fidèle (1.44.0, Windows, Excel installé).** « Capturer l'aspect Excel » :
+Excel lui-même, par COM (`src-tauri/src/com.rs`, partagé avec la conversion Word), ouvre le
+classeur en lecture seule sans fenêtre, exporte chaque graphique en PNG (`Chart.Export`) et en PDF
+(`ExportAsFixedFormat`, s'il le peut), ne ferme jamais un classeur ni un Excel que l'utilisateur
+avait ouverts. Le PDF est rendu à 300 dpi par pdf.js, marges blanches retirées → `excel.png` ;
+le PDF est gardé (`excel.pdf`, pour `\includegraphics`). Champ `rendu: "excel"` du meta.json
+(absent = graphe de Figures) : il décide de la vignette ; la fiche propose le choix, « Copier
+l'image Excel » et « Enregistrer le PDF d'Excel… ». Le graphe refait reste là et modifiable.
 
-**Python (lancer + graphes modifiables).** L'application n'embarque ni n'exige Python
-(voir QUESTIONS 8). Elle lance le Python **du poste**, seulement quand on clique.
-- Le chemin est dans `poste.json` → `python`. Il est détecté (`py -3`, `python` du PATH,
-  Anaconda) et modifiable dans les réglages. Les dépendances (numpy, matplotlib…) restent
-  l'affaire de l'utilisateur.
-- Une commande Rust lance un script. Elle n'accepte qu'un `.py` situé sous
-  `projets/*/scripts/`. Le dossier de travail est celui du projet, et
-  `THESE_SORTIES=sorties/<script>/` est fourni à l'environnement. La sortie est diffusée en
-  direct, on peut arrêter le script, et l'exécution s'arrête après 10 min.
-- `these_figures.py` est écrit en Python pur, sans dépendance obligatoire, et la version
-  est dans l'en-tête. Il écrit des graphes au format `graph.json` de Figures :
-  ```python
-  import these_figures as tf
-  g = tf.Graphe("Module complexe", x="Fréquence (Hz)", y="|E*| (MPa)", log_x=True, log_y=True)
-  g.serie("15 °C", f, e, type="points")
-  g.enregistrer("module")            # → sorties/<script>/module.graphe.json
-  tf.depuis_matplotlib(fig, "fatigue")  # reprend courbes, noms, échelles et titres d'axes
-  ```
-  Toute image enregistrée dans `THESE_SORTIES` (plt.savefig…) est aussi une sortie.
-- Une sortie `*.graphe.json` donne une figure « graph » **modifiable**. Sa source vaut
-  `{ type: "script", projet, script, sortie }`. Une sortie image donne une figure image.
-- Après une nouvelle exécution, une figure déjà importée est signalée « à mettre à jour ».
-  « Régénérer » remplace les données (séries, x, y, noms) et garde la mise en forme choisie
-  dans Figures (style, couleurs, bornes imposées, repères, annotations). C'est le même
-  principe que les graphes régénérés depuis un essai.
-
-**Excel (graphe refait + aspect Excel).**
-- *Graphe refait, lié* : le cœur TS lit `xl/drawings` → `xl/charts/chartN.xml`, ce qui
-  donne pour chaque graphique :
-  - le titre, et le type (nuage de points, courbes, barres) ;
-  - par série, le nom (`c:tx`) et les plages `c:xVal`/`c:yVal` ou `c:cat`/`c:val`
-    (`Feuil1!$A$2:$A$40`), relues dans les cellules (le cache du graphique sert de
-    secours) ;
-  - les titres d'axes, `c:logBase`, les bornes imposées, le marqueur et le trait ;
-  - les courbes de tendance (linéaire, polynomiale, puissance, exponentielle, log), qui
-    deviennent des régressions de Figures.
-  Chaque graphique donne une figure « graph » de source
-  `{ type: "excel", projet, classeur, graphique }`, où `graphique` est le nom du graphique
-  et, en secours, la feuille et le numéro. Quand le classeur a changé, la figure est « à
-  mettre à jour » ; « Régénérer » relit les plages et garde la mise en forme de Figures.
-  Ce qui n'est pas traduit (axe secondaire, barres d'erreur, graphiques combinés, 3D) est
-  listé dans un message, la figure n'est pas refusée.
-- *Aspect Excel* (Windows, Excel installé) : « Capturer l'aspect Excel » fait exporter
-  chaque graphique par Excel lui-même, sans fenêtre (PowerShell → COM →
-  `Chart.Export`, en PNG haute définition). La capture est rangée dans la même figure
-  (`excel.png`). Sur la fiche, un choix par figure, « Rendu : Figures | Excel », décide de
-  ce que donnent la vignette, Copier et les exports. Sans Excel, le bouton est grisé et
-  son infobulle donne la raison.
-- « Nouveau classeur » crée `excel/<nom>.xlsx` à partir d'une trame qui contient une
-  feuille Données et un nuage de points.
+**Python — lancer + graphes modifiables (1.44.0).** L'application n'embarque pas Python : elle
+lance celui **du poste**, sur un clic (QUESTIONS 8). `poste.json` → `python` : vide = détection
+(`py -3`, puis `python`, `python3`) ; Réglages du poste → Python (Tester).
+- Commande Rust `python_executer` : seul un `.py` de `…/_projets/<p>/scripts/` ; dossier de
+  travail `scripts/` ; `THESE_SORTIES=<p>/sorties/<script>/`, `PYTHONUTF8=1`, `MPLBACKEND=Agg`
+  (un `plt.show()` ne bloque pas) ; console diffusée ligne à ligne (canal Tauri), « Arrêter »,
+  arrêt d'office après 10 min ; pas de fenêtre de console.
+- `these_figures.py` (`modules/figures/python/`, Python pur 3.8+, `__version__`) est (ré)installé
+  dans `scripts/` avant chaque exécution s'il manque ou s'il est plus ancien. `tf.Graphe(...)`,
+  `.serie(...)`, `.barres(...)`, `.enregistrer(nom, titre)` → `<nom>.graphe.json`
+  (`{ "format": "these-figures-sortie/1", "titre", "graphe": <graph.json> }`, points non finis
+  écartés) ; `tf.depuis_matplotlib(fig, nom)` reprend courbes, nuages, barres, noms, couleurs,
+  marques, tirets, log, bornes imposées, légende, titre ; `tf.sortie("x.png")` pour `savefig`.
+  Lancé à la main, il écrit dans `../sorties/<script>/`.
+- Sorties : graphe → figure « graph » modifiable ; PNG/JPEG, SVG, PDF (rendu pdf.js) → figure
+  image ; origine `{ module: "figures", genre: "script", projet, script, sortie, empreinte }`
+  (empreinte des données, ou des octets d'une image) ; après une nouvelle exécution, « à mettre
+  à jour », mise en forme de Figures gardée. « Nouveau script » : un modèle prêt à lancer.
+  « Modifier » ouvre le script dans VS Code (sinon le dossier : ouvrir un `.py` l'exécuterait).
 
 **Hors champ (pour l'instant).** Liens vers Manuscrits, Campagnes ou Bibliothèque ;
-environnements virtuels Python gérés par l'application ; macros VBA.
+environnements virtuels Python gérés par l'application ; macros VBA ; exécution automatique
+d'un script quand ses données changent.
 
 ## 7. Module Traitement 2S2P1D
 

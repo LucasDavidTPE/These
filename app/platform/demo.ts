@@ -176,6 +176,7 @@ export function plateformeDemo(scenario: string | null): Plateforme {
       figures: `${ONEDRIVE}\\Figurine`,
       racines: { essais: "E:\\", "biblio-pdf": BIBLIO, recherche: RECHERCHE, manuscrits: `${ONEDRIVE}\\Thèse\\Rédaction` },
       zotero: null,
+      python: null,
     });
     const espace = dossier(ESPACE);
     espace.poser("espace.json", '{\n  "format": 1,\n  "cree": "2026-09-26T10:00:00+02:00",\n  "creePar": "LGCB-AA03956"\n}\n');

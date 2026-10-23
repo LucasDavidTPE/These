@@ -2,11 +2,11 @@
  * Implémentation Tauri : appels aux commandes Rust (src-tauri/src/fichiers, poste.rs, figures/).
  * Aucune logique ici : uniquement des `invoke` et la conversion des erreurs.
  */
-import { convertFileSrc, invoke } from "@tauri-apps/api/core";
+import { Channel, convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { libraryErrorFromIpc, type DirEntry, type LockInfo } from "../../core/library";
-import type { Backend, LockAcquired } from "./backend";
+import type { Backend, FinPython, LignePython, LockAcquired } from "./backend";
 
 /** Commande à corps binaire ; les paramètres texte passent en en-têtes encodés. */
 async function callRaw<T>(cmd: string, bytes: Uint8Array, headers: Record<string, string> = {}, path = ""): Promise<T> {
@@ -113,6 +113,13 @@ export function tauriBackend(): Backend {
       const r = await call<{ feuille: string; nom: string; feuille_graphique: boolean; png: number[]; pdf: number[] | null }[]>("excel_capturer_graphiques", { classeur });
       return r.map((c) => ({ ...c, png: new Uint8Array(c.png), pdf: c.pdf ? new Uint8Array(c.pdf) : null }));
     },
+    executerPython: (id, script, python, ligne) => {
+      const canal = new Channel<LignePython>();
+      canal.onmessage = ligne;
+      return call<FinPython>("python_executer", { id, script, python, canal }, script);
+    },
+    arreterPython: (id) => call<boolean>("python_arreter", { id }),
+    detecterPython: (python) => call<string>("python_detecter", { python }),
     readDataPath: async (path) => asBytes(await call<ArrayBuffer>("file_read_data", { path }, path)),
     readDroppedFile: async (path) => asBytes(await call<ArrayBuffer>("file_read_image", { path }, path)),
     onFileDrop: async (handler) =>

@@ -4,6 +4,7 @@ import { actionRegeneration, origineDe, type Rendu } from "../../core/action";
 import { ciblesDeOrigine, rattachementsDe } from "../../core/rattachement";
 import { projetsDe } from "../../core/projets";
 import { origineExcel } from "../../core/excelFigures";
+import { origineScript } from "../../core/sortiesPython";
 import {
   LICENSE_SUGGESTIONS,
   SOURCE_TYPES,
@@ -282,6 +283,7 @@ function Regenerer({ entry }: { entry: FigureEntry }) {
   if (!origine) return null;
   const excel = origineExcel(entry.meta);
   if (excel) return <RegenererExcel entry={entry} />;
+  if (origineScript(entry.meta)) return <RegenererScript entry={entry} />;
   const action = actionRegeneration(origine);
   if (!ctx.registre.aAction(action)) return <p className="muted small">Produite par le module « {origine.module} », absent de cette version : elle ne peut pas être refaite ici.</p>;
   return (
@@ -331,6 +333,36 @@ function RegenererExcel({ entry }: { entry: FigureEntry }) {
       </button>
       <p className="muted small">
         Source : {o.classeur} › {o.graphique.replace("/", " › ")}
+      </p>
+      {etat && <p className="muted small">{etat}</p>}
+    </>
+  );
+}
+
+/** Figure issue d'une sortie de script Python : reprendre la dernière sortie (mise en forme gardée). */
+function RegenererScript({ entry }: { entry: FigureEntry }) {
+  const regenerer = useLibrary((s) => s.regenererScript);
+  const [etat, setEtat] = useState<string | null>(null);
+  const o = origineScript(entry.meta)!;
+  return (
+    <>
+      <button
+        type="button"
+        title="Reprend la dernière sortie du script (sans le relancer) ; titres, style et couleurs choisis dans Figures sont gardés"
+        onClick={async () => {
+          setEtat("Lecture de la sortie…");
+          try {
+            await regenerer(entry.folder, o);
+            setEtat(`Mise à jour le ${new Date().toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}.`);
+          } catch (e) {
+            setEtat(`Impossible de la mettre à jour : ${e instanceof Error ? e.message : String(e)}`);
+          }
+        }}
+      >
+        Mettre à jour depuis le script
+      </button>
+      <p className="muted small">
+        Source : {o.script} › {o.sortie}
       </p>
       {etat && <p className="muted small">{etat}</p>}
     </>

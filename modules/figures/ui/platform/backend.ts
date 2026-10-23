@@ -61,10 +61,32 @@ export interface Backend {
   onFileDrop(handler: (paths: string[]) => void): Promise<() => void>;
   /** Aspect Excel (SPEC §6.1) : Excel exporte lui-même les graphiques du classeur (chemin absolu) ; Windows. */
   capturerExcel(classeur: string): Promise<CaptureExcel[]>;
+  /**
+   * Scripts Python d'un projet (SPEC §6.1) : lance `script` (chemin absolu, dans `_projets/<p>/scripts/`)
+   * avec le Python du poste ; la console arrive ligne à ligne. `id` sert à l'arrêter.
+   */
+  executerPython(id: string, script: string, python: string | null, ligne: (l: LignePython) => void): Promise<FinPython>;
+  arreterPython(id: string): Promise<boolean>;
+  /** « Python 3.12.1 — py -3 », ou une erreur claire si Python est introuvable. */
+  detecterPython(python: string | null): Promise<string>;
   /** Boîte « Enregistrer sous » puis écriture du PNG ; false si annulé. */
   savePngAs(png: Uint8Array, defaultName: string): Promise<boolean>;
   /** Idem pour un fichier texte .svg, .tex ou .sty. */
   saveTextAs(content: string, defaultName: string, extension: "svg" | "tex" | "sty"): Promise<boolean>;
+}
+
+export interface LignePython {
+  flux: "stdout" | "stderr";
+  texte: string;
+}
+
+export interface FinPython {
+  /** Code de sortie ; null si le script a été arrêté. */
+  code: number | null;
+  arrete: boolean;
+  depasse: boolean;
+  duree_ms: number;
+  python: string;
 }
 
 export interface PastedImage {

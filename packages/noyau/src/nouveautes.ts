@@ -31,6 +31,14 @@ const COMSOL = (page = "comsol", exemple = true): Essai => ({
 /** Les plus récentes d'abord. */
 export const NOUVEAUTES: readonly Nouveaute[] = [
   {
+    version: "1.44.0",
+    module: "figures",
+    titre: "Figures : projets, classeurs Excel et scripts Python",
+    detail:
+      "Colonne « Projets » dans la Bibliothèque (un article, un chapitre… ; une figure dans plusieurs projets ou dans aucun, glisser pour ranger). Dans un projet : les graphiques de vos classeurs Excel deviennent des graphes modifiables, liés au classeur (« Mettre à jour » quand il change), avec en plus l'aspect Excel exact ; vos scripts Python s'exécutent depuis l'application et leurs graphes (these_figures, matplotlib) arrivent modifiables dans Figures.",
+    essayer: { libelle: "Ouvrir Figures", vers: "figures" },
+  },
+  {
     version: "1.43.4",
     module: "figures",
     titre: "Figures : importer des SVG et les copier en SVG",

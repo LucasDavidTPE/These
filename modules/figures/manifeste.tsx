@@ -11,6 +11,7 @@ import { detacher, figuresDe, rattacher, type Cible } from "./core/rattachement"
 import { scanLibrary } from "./core/library";
 import { listerProjets } from "./core/projets";
 import { useLibrary } from "./ui/library/useLibrary";
+import { getBackend } from "./ui/platform/backend";
 import { chargerExemple } from "./ui/comsol/exemple";
 import { PAGES, useNavigation, type PageId } from "./ui/navigation";
 import { FiguresPage } from "./ui/FiguresPage";
@@ -135,6 +136,11 @@ const figures: Manifeste = {
       const { ctx, dossier } = charge as { ctx: Contexte; dossier: string };
       useNavigation.getState().ouvrir(dossier);
       ctx.naviguer("figures");
+    },
+    /** Réglages du poste → Python : version trouvée (« Python 3.12.1 — py -3 ») ; charge : { python }. */
+    "figures.python-detecter": async (charge) => {
+      const { python } = charge as { python: string | null };
+      return (await getBackend()).detecterPython(python);
     },
     /** Ouvre un projet de figures dans la bibliothèque ; charge : { ctx, slug }. */
     "figures.ouvrir-projet": async (charge) => {

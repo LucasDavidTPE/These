@@ -16,6 +16,11 @@ export interface ReglagesPoste {
    * l'espace, pour qu'elle ne parte pas avec un zip de l'espace.
    */
   zotero: CompteZoteroPoste | null;
+  /**
+   * Python de ce poste pour les scripts des projets de figures (commande ou chemin de
+   * python.exe) ; null : détection automatique (`py -3`, puis `python`).
+   */
+  python: string | null;
 }
 
 export interface CompteZoteroPoste {
@@ -25,7 +30,7 @@ export interface CompteZoteroPoste {
   nom: string;
 }
 
-export const REGLAGES_PAR_DEFAUT: ReglagesPoste = { version: 1, espace: null, figures: null, racines: {}, zotero: null };
+export const REGLAGES_PAR_DEFAUT: ReglagesPoste = { version: 1, espace: null, figures: null, racines: {}, zotero: null, python: null };
 
 function compteZotero(v: unknown): CompteZoteroPoste | null {
   if (typeof v !== "object" || v === null) return null;
@@ -63,12 +68,12 @@ export function lireReglages(texte: string | null): ReglagesPoste {
       if (estNomRacine(nom) && c) racines[nom] = c;
     }
   }
-  return { version: 1, espace: cheminOuNull(r.espace), figures: cheminOuNull(r.figures), racines, zotero: compteZotero(r.zotero) };
+  return { version: 1, espace: cheminOuNull(r.espace), figures: cheminOuNull(r.figures), racines, zotero: compteZotero(r.zotero), python: cheminOuNull(r.python) };
 }
 
 export function ecrireReglages(r: ReglagesPoste): string {
   const racines = Object.fromEntries(Object.entries(r.racines).sort(([a], [b]) => (a < b ? -1 : 1)));
-  return JSON.stringify({ version: 1, espace: r.espace, figures: r.figures, racines, ...(r.zotero ? { zotero: r.zotero } : {}) }, null, 2) + "\n";
+  return JSON.stringify({ version: 1, espace: r.espace, figures: r.figures, racines, ...(r.zotero ? { zotero: r.zotero } : {}), ...(r.python ? { python: r.python } : {}) }, null, 2) + "\n";
 }
 
 function sous(base: string, ...parts: string[]): string {

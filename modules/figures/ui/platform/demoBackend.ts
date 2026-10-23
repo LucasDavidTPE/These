@@ -232,6 +232,14 @@ export function demoBackend(): Backend {
     capturerExcel: async () => {
       throw new Error("Démonstration : l'aspect Excel est capturé par Excel lui-même, dans l'application sous Windows.");
     },
+    executerPython: async (_id, script, _python, ligne) => {
+      // démonstration : pas de Python dans le navigateur ; on fait comme si le script avait tourné
+      ligne({ flux: "stdout", texte: `(démonstration) python ${script.split(/[\\/]/).pop()}` });
+      ligne({ flux: "stderr", texte: "Dans l'application, le script tourne avec le Python du poste." });
+      return { code: 0, arrete: false, depasse: false, duree_ms: 1, python: "démonstration" };
+    },
+    arreterPython: async () => false,
+    detecterPython: async () => "Démonstration : Python est détecté dans l'application, sous Windows.",
     readDataPath: async (path) => {
       const b = fichiersDemo.get(path);
       if (!b) throw new Error(`Démonstration : pas d'accès au disque (${path}).`);

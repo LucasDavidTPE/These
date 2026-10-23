@@ -207,6 +207,8 @@ export function ReglagesPage() {
         </div>
       </Section>
 
+      {ctx.registre.aAction("figures.python-detecter") && <ReglagePython />}
+
       {!ctx.espace ? (
         <Section titre="Bibliothèque de figures">
           <div className="carte">
@@ -219,5 +221,37 @@ export function ReglagesPage() {
         </Section>
       ) : null}
     </Page>
+  );
+}
+
+/** Python du poste, pour les scripts des projets de figures (Figures → projet → Scripts Python). */
+function ReglagePython() {
+  const ctx = useContexte();
+  const [saisie, setSaisie] = useState(ctx.reglages.python ?? "");
+  const [resultat, setResultat] = useState<{ ok: boolean; texte: string } | null>(null);
+  const tester = async (python: string) => {
+    setResultat({ ok: true, texte: "Recherche…" });
+    try {
+      setResultat({ ok: true, texte: String(await ctx.registre.executer("figures.python-detecter", { python: python.trim() || null })) });
+    } catch (e) {
+      setResultat({ ok: false, texte: e instanceof Error ? e.message : String(e) });
+    }
+  };
+  return (
+    <Section titre="Python (scripts des projets de figures)">
+      <div className="carte">
+        <p className="discret">Vide : détection automatique (« py -3 », puis « python » du PATH). Sinon, la commande ou le chemin de python.exe (un environnement conda, par exemple).</p>
+        <div className="rangee">
+          <input type="text" aria-label="Python de ce poste" placeholder="automatique" value={saisie} onChange={(e) => setSaisie(e.target.value)} style={{ minWidth: 320 }} />
+          <button type="button" disabled={(ctx.reglages.python ?? "") === saisie.trim()} onClick={() => void ctx.enregistrerReglages({ ...ctx.reglages, python: saisie.trim() || null })}>
+            Enregistrer
+          </button>
+          <button type="button" onClick={() => void tester(saisie)}>
+            Tester
+          </button>
+        </div>
+        {resultat && <Message niveau={resultat.ok ? "info" : "erreur"}>{resultat.texte}</Message>}
+      </div>
+    </Section>
   );
 }

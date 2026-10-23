@@ -26,12 +26,34 @@ import { svgToPng } from "../editor/raster";
 import { parseSettings, serializeSettings } from "../../core/settings";
 import { captureDe, choisirRendu, enregistrerAspectExcel, etatGraphique, importerGraphique, lireGraphiques, regenererGraphique, type OrigineExcel, type Rendu as RenduFigure } from "../../core/excelFigures";
 import { pdfEnPng } from "./pdfEnPng";
+import { importerSortie, regenererSortie, type OrigineScript, type RendusSortie, type Sortie } from "../../core/sortiesPython";
 import type { GraphiqueExcel } from "../../core/graph";
 import { ajouterAuProjet, creerProjet, listerProjets, modifierProjet, retirerDuProjet, supprimerProjet, type ListeProjets, type Projet } from "../../core/projets";
 import { getBackend, type Backend } from "../platform/backend";
 
 /** PNG d'un graphe à 300 dpi (vignette, collage). */
 const rendreGraphe = (doc: GraphDoc) => svgToPng(exportGraphSvg(doc), doc.width, doc.height, 300);
+
+/** PNG d'une image quelconque (JPEG…) ; un PNG passe tel quel. */
+async function versPng(octets: Uint8Array, fichier: string): Promise<Uint8Array> {
+  if (/\.png$/i.test(fichier)) return octets;
+  const bitmap = await createImageBitmap(new Blob([octets.slice()]));
+  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+  canvas.getContext("2d")!.drawImage(bitmap, 0, 0);
+  return new Uint8Array(await (await canvas.convertToBlob({ type: "image/png" })).arrayBuffer());
+}
+
+/** Rendus des sorties de scripts (graphe, SVG, PDF, images) : il faut un navigateur. */
+const rendusSortie: RendusSortie = {
+  graphe: rendreGraphe,
+  svg: async (svg) => {
+    const d = dimensionsSvg(svg) ?? { largeurMm: 100, hauteurMm: 100 };
+    const k = Math.min(1, 400 / Math.max(d.largeurMm, d.hauteurMm));
+    return svgToPng(svg, d.largeurMm * k, d.hauteurMm * k, 300);
+  },
+  pdf: (octets) => pdfEnPng(octets),
+  image: versPng,
+};
 
 export function nowIso(): string {
   const d = new Date();
@@ -86,6 +108,9 @@ interface LibraryState {
   /** Aspect Excel (PJ3) des graphiques du classeur déjà dans Figures ; renvoie le nombre de figures mises à jour. */
   capturerAspectExcel(projet: string, classeur: string, cheminAbsolu: string): Promise<number>;
   choisirRendu(dossier: string, rendu: RenduFigure): Promise<void>;
+  /** Sorties d'un script Python → figures (PJ4). */
+  importerSorties(projet: string, script: string, sorties: Sortie[]): Promise<void>;
+  regenererScript(dossier: string, origine: OrigineScript): Promise<void>;
   readText(path: string): Promise<string>;
   imageUrl(path: string): string;
 }
@@ -334,6 +359,20 @@ export const useLibrary = create<LibraryState>()((set, get) => {
         await choisirRendu(backend.fs(root), dossier, rendu, nowIso(), get().host);
         await get().rescan();
       }),
+
+    importerSorties: async (projet, script, sorties) =>
+      guard(async () => {
+        const { backend, root } = need();
+        const fs = backend.fs(root);
+        for (const so of sorties) await importerSortie(fs, projet, script, so, rendusSortie, nowIso(), get().host);
+        await get().rescan();
+      }),
+
+    regenererScript: async (dossier, origine) => {
+      const { backend, root } = need();
+      await regenererSortie(backend.fs(root), dossier, origine, rendusSortie, nowIso(), get().host);
+      await get().rescan();
+    },
 
     readText: async (path) => {
       const { backend, root } = need();

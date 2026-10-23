@@ -7,6 +7,9 @@ import { useContexte } from "@interface/contexte";
 import { absolu } from "@noyau/stockage";
 import { DOSSIERS_PROJET, cheminProjet, fichiersProjet, type FichiersProjet, type Projet } from "../../core/projets";
 import { ClasseurExcel } from "./ClasseurExcel";
+import { ScriptPython } from "./ScriptPython";
+import { installerBibliotheque, modeleScript } from "../../core/sortiesPython";
+import bibliothequePython from "../../python/these_figures.py?raw";
 import { useLibrary } from "./useLibrary";
 import modeleClasseur from "./modele-figure.xlsx?url";
 
@@ -57,6 +60,36 @@ export function ProjetEntete({ projet }: { projet: Projet }) {
       if (!f || !s.backend || !s.root) return;
       const nom = await deposer(f.nom, f.octets);
       setEtat(`« ${nom} » copié dans le projet : modifiez désormais cette copie (Ouvrir dans Excel).`);
+    } catch (e) {
+      setEtat(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  /** VS Code si installé ; sinon le dossier (ouvrir un .py par défaut l'exécuterait). */
+  const editer = async (chemin: string) => {
+    try {
+      await ctx.plateforme.ouvrirVSCode(chemin);
+    } catch {
+      setEtat("VS Code introuvable : ouvrez le script avec votre éditeur (Spyder, IDLE…) depuis le dossier.");
+      await ouvrir(abs(DOSSIERS_PROJET.scripts));
+    }
+  };
+
+  const nouveauScript = async () => {
+    const saisi = window.prompt("Nom du script (par exemple « fig3_module ») :", "");
+    if (!saisi?.trim() || !s.backend || !s.root) return;
+    try {
+      const fs = s.backend.fs(s.root);
+      const base = saisi.trim().replace(/\.py$/i, "").replace(/[^\w-]+/g, "_");
+      const dossier = cheminProjet(projet.slug, DOSSIERS_PROJET.scripts);
+      await installerBibliotheque(fs, projet.slug, bibliothequePython);
+      const existants = new Set((await fs.listDir(dossier)).map((e) => e.name.toLowerCase()));
+      let nom = `${base}.py`;
+      for (let n = 2; existants.has(nom.toLowerCase()); n++) nom = `${base}_${n}.py`;
+      await fs.writeTextAtomic(`${dossier}/${nom}`, modeleScript(base));
+      relire();
+      setEtat(`« ${nom} » créé : modifiez-le, puis « Exécuter ».`);
+      await editer(abs(DOSSIERS_PROJET.scripts, nom));
     } catch (e) {
       setEtat(e instanceof Error ? e.message : String(e));
     }
@@ -156,15 +189,18 @@ export function ProjetEntete({ projet }: { projet: Projet }) {
           ) : (
             <ul className="projet-fichiers">
               {fichiers.scripts.map((sc) => (
-                <li key={sc}>
-                  <span className="grow">{sc}</span>
-                </li>
+                <ScriptPython key={sc} projet={projet.slug} script={sc} chemin={abs(DOSSIERS_PROJET.scripts, sc)} editer={() => void editer(abs(DOSSIERS_PROJET.scripts, sc))} />
               ))}
             </ul>
           )}
-          <button type="button" className="link" onClick={() => void ouvrir(abs(DOSSIERS_PROJET.scripts))}>
-            Ouvrir le dossier des scripts
-          </button>
+          <div className="rangee-boutons">
+            <button type="button" className="link" onClick={() => void nouveauScript()} title="Script prêt à lancer, avec la bibliothèque these_figures">
+              + Nouveau script
+            </button>
+            <button type="button" className="link" onClick={() => void ouvrir(abs(DOSSIERS_PROJET.scripts))} title="Pour y déposer vos scripts .py existants">
+              Ouvrir le dossier des scripts
+            </button>
+          </div>
         </div>
       </div>
       {etat && <p className="muted small">{etat}</p>}

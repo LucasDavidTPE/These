@@ -2134,3 +2134,21 @@ button.lien {
   margin: 2px 0 0 12px;
   padding-left: 12px;
 }
+
+.console-python {
+  max-height: 220px;
+  overflow: auto;
+  margin: 4px 0;
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.console-python .stderr {
+  color: var(--error-fg);
+}

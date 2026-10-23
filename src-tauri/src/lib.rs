@@ -57,7 +57,8 @@ pub fn run() {
     let builder = {
         use figures::commands::*;
         use figures::excel::excel_capturer_graphiques;
-        builder.invoke_handler(commandes![
+        use figures::python::{python_arreter, python_detecter, python_executer, Executions};
+        builder.manage(Executions::default()).invoke_handler(commandes![
             cutout_segment,
             clipboard_read_image,
             clipboard_read_html,
@@ -68,7 +69,10 @@ pub fn run() {
             file_write_png,
             file_write_text,
             figures_autoriser_images,
-            excel_capturer_graphiques
+            excel_capturer_graphiques,
+            python_executer,
+            python_arreter,
+            python_detecter
         ])
     };
     #[cfg(not(feature = "figures"))]

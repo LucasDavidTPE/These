@@ -1069,3 +1069,40 @@ Fichiers d'exemple : `modules/figures/core/graph/fixtures/grille_XZ_*.txt` et `t
 - [ ] Figures → Bibliothèque → « Importer un SVG… » : le SVG apparaît (vignette, recherche par son nom) ; sa fiche propose
       « Copier en SVG » : coller dans Word / PowerPoint donne une image vectorielle (« Convertir en forme » possible).
 - [ ] « Enregistrer en SVG… » sur un graphe ou un schéma de la bibliothèque : le .svg s'ouvre dans Inkscape / le navigateur.
+
+## Figures : projets, Excel, Python (1.44.0)
+
+Projets
+- [ ] Bibliothèque → « + Nouveau projet » « Article test » : le dossier `figures\_projets\article-test\` (scripts, sorties,
+      excel) apparaît dans OneDrive ; le projet est choisi, son en-tête s'affiche.
+- [ ] Glisser une figure sur le projet : compteur + 1, puce « Projets » sur sa fiche ; ✕ la retire ; « + Ajouter à… »
+      la range dans un second projet. « Sans projet » ne la montre plus.
+- [ ] Ctrl+K « Article test » → ouvre le projet. Renommer, puis « Retirer le projet » : les figures restent, le dossier
+      part dans `_projets\_corbeille\`.
+- [ ] Sur l'autre PC (après synchro OneDrive) : mêmes projets, mêmes figures rangées.
+
+Excel (graphe refait)
+- [ ] « + Nouveau classeur » « Fig 3 » : Excel s'ouvre sur la trame ; changer des valeurs, enregistrer. Déplier
+      « Fig 3.xlsx » → « Relire le classeur » → « Ajouter à Figures » : graphe modifiable, titres d'axes et séries d'Excel.
+- [ ] Un de vos vrais classeurs (« + Ajouter un classeur existant… ») avec log, courbe de tendance, plusieurs séries,
+      couleurs : comparer avec Excel ; les avertissements (axe secondaire, barres d'erreur…) sont justes.
+- [ ] Modifier le classeur dans Excel, enregistrer, « Relire » : « à mettre à jour » → « Mettre à jour » : les données
+      changent, un titre d'axe retouché dans Graphes est gardé. Même chose depuis la fiche (« Mettre à jour depuis Excel »).
+
+Excel (aspect fidèle, Windows + Excel)
+- [ ] Classeur déplié → « Capturer l'aspect Excel » (Excel fermé, puis Excel ouvert sur un autre classeur, puis sur ce
+      classeur même) : la vignette devient l'image d'Excel, nette ; aucun classeur de l'utilisateur n'est fermé ;
+      Excel ne reste pas ouvert en tâche de fond (Gestionnaire des tâches) s'il ne l'était pas.
+- [ ] Fiche → « Rendu » Figures / Excel : la vignette suit. « Copier l'image Excel » → coller dans Word.
+      « Enregistrer le PDF d'Excel… » : le PDF (page entière ou juste le graphique ?) — le noter.
+- [ ] Feuille graphique (graphique sur son propre onglet) : capturée aussi.
+
+Python
+- [ ] Réglages du poste → Python → « Tester » : « Python 3.x — py -3 » (ou python) sur les deux PC.
+- [ ] Projet → « + Nouveau script » « fig_module » : VS Code s'ouvre sur le modèle ; « Exécuter » : console, « Terminé » ;
+      sortie « fig_module.graphe.json » → « Ajouter à Figures » : graphe modifiable.
+- [ ] Un vrai script matplotlib : ajouter `import these_figures as tf` puis `tf.depuis_matplotlib(fig, "nom")` et
+      `fig.savefig(tf.sortie("nom.png"), dpi=300)` : graphe modifiable fidèle (couleurs, marques, log, légende) + image.
+- [ ] Script en erreur (faute de frappe) : message « Erreur (code 1) », console ouverte, trace en rouge.
+- [ ] Script long (`time.sleep(60)`) → « Arrêter » : « Arrêté. » ; aucune fenêtre noire de console à aucun moment.
+- [ ] Changer les données, relancer : sortie « à mettre à jour » → « Tout mettre à jour » ; style choisi dans Graphes gardé.
