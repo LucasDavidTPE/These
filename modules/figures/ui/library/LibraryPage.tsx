@@ -4,6 +4,8 @@ import { FigureGrid } from "./FigureGrid";
 import { IssuesPanel } from "./IssuesPanel";
 import { KIND_LABELS } from "./labels";
 import { MetaPanel } from "./MetaPanel";
+import { ProjetEntete } from "./ProjetEntete";
+import { ProjetsColonne } from "./ProjetsColonne";
 import { SettingsPanel } from "./SettingsDialog";
 import { SetupScreen } from "./SetupScreen";
 import { useLibrary } from "./useLibrary";
@@ -29,11 +31,13 @@ export function LibraryPage() {
 
   const issueCount = (s.index?.issues.length ?? 0) + (s.index?.rootConflicts.length ?? 0);
   const selectedEntry = s.index?.figures.find((f) => f.folder === s.selected);
+  const projet = s.projets.projets.find((p) => p.slug === s.filter.projet);
   const toggleKind = (k: FigureKind) =>
     s.setFilter({ kinds: s.filter.kinds.includes(k) ? s.filter.kinds.filter((x) => x !== k) : [...s.filter.kinds, k] });
 
   return (
     <div className="library">
+      <ProjetsColonne />
       <div className="library-main">
         <header className="toolbar">
           <input
@@ -102,6 +106,7 @@ export function LibraryPage() {
             </button>
           </p>
         )}
+        {projet && <ProjetEntete key={projet.slug} projet={projet} />}
         <FigureGrid entries={visible} />
       </div>
       {side === "issues" ? (

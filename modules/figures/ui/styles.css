@@ -1968,3 +1968,134 @@ button.lien {
   flex: 1 1 420px;
   min-width: 0;
 }
+
+/* ---- Projets (SPEC §6.1) ---- */
+.projets-colonne {
+  width: 200px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  padding: 12px 8px;
+  overflow: auto;
+  background: var(--sidebar-bg);
+}
+
+.projets-titre {
+  font-weight: 600;
+  padding: 0 6px 6px;
+}
+
+.projets-colonne ul {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.projet-ligne {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 6px;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.projet-ligne.actif {
+  background: var(--sidebar-active);
+  font-weight: 600;
+}
+
+.library-main .toolbar {
+  flex-wrap: wrap;
+}
+
+.library-main .toolbar input[type="search"] {
+  min-width: 180px;
+}
+
+.projet-ligne.survol {
+  border-color: var(--accent);
+  border-style: dashed;
+}
+
+.projet-nom {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projet-nouveau input {
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.projets-aide {
+  margin-top: 12px;
+}
+
+.projet-entete {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background: var(--card-bg);
+}
+
+.projet-tete {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.projet-tete h2 {
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+
+.projet-blocs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.projet-bloc h3 {
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+.projet-fichiers {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+}
+
+.projet-fichiers li {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.projets-figure {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.puce-projet {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}

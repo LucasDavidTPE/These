@@ -2,6 +2,9 @@ import { lockStatus, thumbnailFile, type FigureEntry } from "../../core/library"
 import { KIND_LABELS } from "./labels";
 import { useLibrary } from "./useLibrary";
 
+/** Type MIME du glisser-déposer d'une figure vers un projet. */
+export const GLISSE_FIGURE = "application/x-these-figure";
+
 export function FigureGrid({ entries }: { entries: FigureEntry[] }) {
   const selected = useLibrary((s) => s.selected);
   const select = useLibrary((s) => s.select);
@@ -21,7 +24,12 @@ export function FigureGrid({ entries }: { entries: FigureEntry[] }) {
               type="button"
               className={`card${selected === e.folder ? " selected" : ""}`}
               onClick={() => select(e.folder)}
-              title={e.folder}
+              title={`${e.folder} — glisser sur un projet pour l'y ranger`}
+              draggable
+              onDragStart={(ev) => {
+                ev.dataTransfer.setData(GLISSE_FIGURE, e.folder);
+                ev.dataTransfer.effectAllowed = "link";
+              }}
             >
               <div className="thumb">
                 {thumb ? <img src={`${imageUrl(`${e.folder}/${thumb}`)}${e.meta ? `?v=${encodeURIComponent(e.meta.modified)}` : ""}`} alt="" loading="lazy" /> : <span>Pas d'aperçu</span>}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useContexte } from "@interface/contexte";
 import { actionRegeneration, origineDe, type Rendu } from "../../core/action";
 import { ciblesDeOrigine, rattachementsDe } from "../../core/rattachement";
+import { projetsDe } from "../../core/projets";
 import {
   LICENSE_SUGGESTIONS,
   SOURCE_TYPES,
@@ -70,6 +71,7 @@ export function MetaPanel({ entry }: { entry: FigureEntry }) {
       ) : (
         <MetaView meta={entry.meta} onEdit={lock === "other" ? undefined : () => startEdit(false)} />
       )}
+      {entry.meta && !isEditing && <ProjetsFigure entry={entry} />}
       {entry.meta?.kind === "schema" && entry.files.includes("figure.json") && !isEditing && (
         <button
           type="button"
@@ -136,6 +138,45 @@ export function MetaPanel({ entry }: { entry: FigureEntry }) {
         Dossier : <code>{entry.folder}</code>
       </p>
     </aside>
+  );
+}
+
+/** Puces des projets de la figure : retirer (✕), ajouter (liste). */
+function ProjetsFigure({ entry }: { entry: FigureEntry }) {
+  const projets = useLibrary((s) => s.projets.projets);
+  const ajouter = useLibrary((s) => s.ajouterAuProjet);
+  const retirer = useLibrary((s) => s.retirerDuProjet);
+  const siens = projetsDe(entry.meta).flatMap((slug) => projets.filter((p) => p.slug === slug));
+  const autres = projets.filter((p) => !siens.includes(p));
+  if (projets.length === 0) return null;
+  return (
+    <div className="projets-figure">
+      <span className="muted small">Projets :</span>
+      {siens.map((p) => (
+        <span key={p.slug} className="puce-projet">
+          {p.titre}
+          <button type="button" className="link" aria-label={`Retirer du projet ${p.titre}`} title="Retirer de ce projet (la figure reste dans la bibliothèque)" onClick={() => void retirer(entry.folder, p.slug)}>
+            ✕
+          </button>
+        </span>
+      ))}
+      {autres.length > 0 && (
+        <select
+          value=""
+          aria-label="Ajouter à un projet"
+          onChange={(e) => {
+            if (e.target.value) void ajouter([entry.folder], e.target.value);
+          }}
+        >
+          <option value="">+ Ajouter à…</option>
+          {autres.map((p) => (
+            <option key={p.slug} value={p.slug}>
+              {p.titre}
+            </option>
+          ))}
+        </select>
+      )}
+    </div>
   );
 }
 

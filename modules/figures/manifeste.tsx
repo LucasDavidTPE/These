@@ -9,6 +9,8 @@ import { svgToPng } from "./ui/editor/raster";
 import { figuresRecentes } from "./core/recentes";
 import { detacher, figuresDe, rattacher, type Cible } from "./core/rattachement";
 import { scanLibrary } from "./core/library";
+import { listerProjets } from "./core/projets";
+import { useLibrary } from "./ui/library/useLibrary";
 import { chargerExemple } from "./ui/comsol/exemple";
 import { PAGES, useNavigation, type PageId } from "./ui/navigation";
 import { FiguresPage } from "./ui/FiguresPage";
@@ -21,8 +23,12 @@ const figures: Manifeste = {
   Page: FiguresPage,
   indexer: async (ctx) => {
     if (!ctx.dossierFigures) return [];
-    const { figures } = await scanLibrary(ctx.plateforme.fichiers(ctx.dossierFigures));
-    return figures.flatMap((f) => (f.meta ? [{ id: f.id, module: "figures", genre: "Figure", titre: f.meta.title, detail: f.id, mots: f.meta.tags.join(" "), ouvrir: { action: "figures.ouvrir", charge: { dossier: f.folder } } }] : []));
+    const fs = ctx.plateforme.fichiers(ctx.dossierFigures);
+    const [{ figures }, { projets }] = await Promise.all([scanLibrary(fs), listerProjets(fs)]);
+    return [
+      ...projets.map((p) => ({ id: `projet:${p.slug}`, module: "figures", genre: "Projet de figures", titre: p.titre, detail: p.description ?? p.slug, ouvrir: { action: "figures.ouvrir-projet", charge: { slug: p.slug } } })),
+      ...figures.flatMap((f) => (f.meta ? [{ id: f.id, module: "figures", genre: "Figure", titre: f.meta.title, detail: f.id, mots: f.meta.tags.join(" "), ouvrir: { action: "figures.ouvrir", charge: { dossier: f.folder } } }] : [])),
+    ];
   },
   actions: {
     /** Une image d'un autre module devient une figure de la bibliothèque ; renvoie son dossier. */
@@ -128,6 +134,13 @@ const figures: Manifeste = {
     "figures.ouvrir": async (charge) => {
       const { ctx, dossier } = charge as { ctx: Contexte; dossier: string };
       useNavigation.getState().ouvrir(dossier);
+      ctx.naviguer("figures");
+    },
+    /** Ouvre un projet de figures dans la bibliothèque ; charge : { ctx, slug }. */
+    "figures.ouvrir-projet": async (charge) => {
+      const { ctx, slug } = charge as { ctx: Contexte; slug: string };
+      useNavigation.getState().goTo("library");
+      useLibrary.getState().setFilter({ projet: slug });
       ctx.naviguer("figures");
     },
   },

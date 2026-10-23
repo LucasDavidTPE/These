@@ -11,11 +11,16 @@ export interface LibraryFilter {
   kinds: FigureKind[];
   /** Seulement les figures sans source ou sans licence (préparation d'un manuscrit). */
   missingSourceOrLicense: boolean;
+  /** Slug d'un projet (SPEC §6.1), SANS_PROJET pour les figures rangées nulle part ; null = toutes. */
+  projet: string | null;
 }
+
+/** Filtre « Sans projet ». */
+export const SANS_PROJET = "";
 
 export type LibrarySort = "modified" | "id" | "title";
 
-export const EMPTY_FILTER: LibraryFilter = { query: "", kinds: [], missingSourceOrLicense: false };
+export const EMPTY_FILTER: LibraryFilter = { query: "", kinds: [], missingSourceOrLicense: false, projet: null };
 
 /** Minuscules, sans accents, espaces normalisés. */
 export function normalizeText(s: string): string {
@@ -57,6 +62,10 @@ export function lacksSourceOrLicense(entry: FigureEntry): boolean {
 export function matchesFilter(entry: FigureEntry, filter: LibraryFilter): boolean {
   if (filter.kinds.length > 0 && (!entry.meta || !filter.kinds.includes(entry.meta.kind))) return false;
   if (filter.missingSourceOrLicense && !lacksSourceOrLicense(entry)) return false;
+  if (filter.projet !== null) {
+    const p = Array.isArray(entry.meta?.projets) ? (entry.meta.projets as unknown[]).filter((x) => typeof x === "string" && x !== "") : [];
+    if (filter.projet === SANS_PROJET ? p.length > 0 : !p.includes(filter.projet)) return false;
+  }
   const words = normalizeText(filter.query).split(" ").filter(Boolean);
   if (words.length === 0) return true;
   const text = searchableText(entry);

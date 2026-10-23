@@ -24,6 +24,7 @@ import { dimensionsSvg, enregistrerSvg, regenerer, type Rendu } from "../../core
 import { exportGraphSvg } from "../../core/graph";
 import { svgToPng } from "../editor/raster";
 import { parseSettings, serializeSettings } from "../../core/settings";
+import { ajouterAuProjet, creerProjet, listerProjets, modifierProjet, retirerDuProjet, supprimerProjet, type ListeProjets, type Projet } from "../../core/projets";
 import { getBackend, type Backend } from "../platform/backend";
 
 export function nowIso(): string {
@@ -43,6 +44,8 @@ interface LibraryState {
   ready: boolean;
   root: string | null;
   index: LibraryIndex | null;
+  /** Projets de la bibliothèque (`_projets/`), relus avec l'index. */
+  projets: ListeProjets;
   scanning: boolean;
   error: string | null;
   filter: LibraryFilter;
@@ -65,6 +68,12 @@ interface LibraryState {
   regenerate(folder: string, rendu: Rendu): Promise<void>;
   /** Importe des fichiers .svg comme figures ; renvoie les dossiers créés. */
   importSvg(fichiers: { nom: string; texte: string }[]): Promise<void>;
+  creerProjet(titre: string, description?: string): Promise<Projet | null>;
+  modifierProjet(slug: string, patch: { titre?: string; description?: string }): Promise<void>;
+  supprimerProjet(slug: string): Promise<void>;
+  /** Range des figures dans un projet (glisser-déposer, fiche). */
+  ajouterAuProjet(dossiers: string[], slug: string): Promise<void>;
+  retirerDuProjet(dossier: string, slug: string): Promise<void>;
   readText(path: string): Promise<string>;
   imageUrl(path: string): string;
 }
@@ -89,6 +98,7 @@ export const useLibrary = create<LibraryState>()((set, get) => {
     ready: false,
     root: null,
     index: null,
+    projets: { projets: [], problemes: [] },
     scanning: false,
     error: null,
     filter: EMPTY_FILTER,
@@ -127,7 +137,12 @@ export const useLibrary = create<LibraryState>()((set, get) => {
         const { backend, root } = need();
         set({ scanning: true });
         try {
-          set({ index: await scanLibrary(backend.fs(root)), error: null });
+          const fs = backend.fs(root);
+          const [index, projets] = await Promise.all([scanLibrary(fs), listerProjets(fs)]);
+          const filtre = get().filter.projet;
+          // projet supprimé (ou retiré par l'autre poste) : retour à toutes les figures
+          const garde = filtre === null || filtre === "" || projets.projets.some((p) => p.slug === filtre);
+          set({ index, projets, error: null, ...(garde ? {} : { filter: { ...get().filter, projet: null } }) });
         } finally {
           set({ scanning: false });
         }
@@ -225,6 +240,47 @@ export const useLibrary = create<LibraryState>()((set, get) => {
         }
         await get().rescan();
         if (dernier) await get().select(dernier);
+      }),
+
+    creerProjet: async (titre, description) => {
+      let cree: Projet | null = null;
+      await guard(async () => {
+        const { backend, root } = need();
+        cree = await creerProjet(backend.fs(root), { titre, ...(description ? { description } : {}) }, nowIso());
+        set({ filter: { ...get().filter, projet: cree.slug } });
+        await get().rescan();
+      });
+      return cree;
+    },
+
+    modifierProjet: async (slug, patch) =>
+      guard(async () => {
+        const { backend, root } = need();
+        await modifierProjet(backend.fs(root), slug, patch, nowIso());
+        await get().rescan();
+      }),
+
+    supprimerProjet: async (slug) =>
+      guard(async () => {
+        const { backend, root } = need();
+        await supprimerProjet(backend.fs(root), slug, nowIso());
+        set({ filter: { ...get().filter, projet: null } });
+        await get().rescan();
+      }),
+
+    ajouterAuProjet: async (dossiers, slug) =>
+      guard(async () => {
+        const { backend, root } = need();
+        const fs = backend.fs(root);
+        for (const d of dossiers) await ajouterAuProjet(fs, d, slug, nowIso(), get().host);
+        await get().rescan();
+      }),
+
+    retirerDuProjet: async (dossier, slug) =>
+      guard(async () => {
+        const { backend, root } = need();
+        await retirerDuProjet(backend.fs(root), dossier, slug, nowIso(), get().host);
+        await get().rescan();
       }),
 
     readText: async (path) => {
