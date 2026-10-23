@@ -26,6 +26,7 @@ import { svgToPng } from "../editor/raster";
 import { parseSettings, serializeSettings } from "../../core/settings";
 import { captureDe, choisirRendu, enregistrerAspectExcel, etatGraphique, importerGraphique, lireGraphiques, regenererGraphique, type OrigineExcel, type Rendu as RenduFigure } from "../../core/excelFigures";
 import { pdfEnPng } from "./pdfEnPng";
+import { deposerSvg, importerSvgProjet, regenererSvgProjet, type OrigineSvg } from "../../core/svgProjet";
 import { importerSortie, regenererSortie, type OrigineScript, type RendusSortie, type Sortie } from "../../core/sortiesPython";
 import type { GraphiqueExcel } from "../../core/graph";
 import { ajouterAuProjet, creerProjet, listerProjets, modifierProjet, retirerDuProjet, supprimerProjet, type ListeProjets, type Projet } from "../../core/projets";
@@ -94,7 +95,7 @@ interface LibraryState {
   cleanTemp(folder: string, file: string): Promise<void>;
   /** Remplace l'image d'une figure refaite par le module d'origine. */
   regenerate(folder: string, rendu: Rendu): Promise<void>;
-  /** Importe des fichiers .svg comme figures ; renvoie les dossiers créés. */
+  /** Importe des fichiers .svg comme figures ; projet ouvert : copiés dans son dossier svg/ et liés. */
   importSvg(fichiers: { nom: string; texte: string }[]): Promise<void>;
   creerProjet(titre: string, description?: string): Promise<Projet | null>;
   modifierProjet(slug: string, patch: { titre?: string; description?: string }): Promise<void>;
@@ -111,6 +112,9 @@ interface LibraryState {
   /** Sorties d'un script Python → figures (PJ4). */
   importerSorties(projet: string, script: string, sorties: Sortie[]): Promise<void>;
   regenererScript(dossier: string, origine: OrigineScript): Promise<void>;
+  /** SVG du dossier svg/ d'un projet → figures liées. */
+  importerSvgsProjet(projet: string, fichiers: string[]): Promise<void>;
+  regenererSvg(dossier: string, origine: OrigineSvg): Promise<void>;
   readText(path: string): Promise<string>;
   imageUrl(path: string): string;
 }
@@ -268,7 +272,13 @@ export const useLibrary = create<LibraryState>()((set, get) => {
         const { backend, root } = need();
         const fs = backend.fs(root);
         let dernier: string | null = null;
+        const projet = get().projets.projets.find((p) => p.slug === get().filter.projet)?.slug;
         for (const f of fichiers) {
+          if (projet) {
+            const nom = await deposerSvg(fs, projet, f.nom, f.texte);
+            dernier = await importerSvgProjet(fs, projet, nom, rendusSortie.svg, nowIso(), get().host);
+            continue;
+          }
           const d = dimensionsSvg(f.texte) ?? { largeurMm: 100, hauteurMm: 100 };
           // vignette et collage : PNG à 300 dpi, taille plafonnée (un SVG géant ne doit pas saturer la mémoire)
           const k = Math.min(1, 400 / Math.max(d.largeurMm, d.hauteurMm));
@@ -371,6 +381,20 @@ export const useLibrary = create<LibraryState>()((set, get) => {
     regenererScript: async (dossier, origine) => {
       const { backend, root } = need();
       await regenererSortie(backend.fs(root), dossier, origine, rendusSortie, nowIso(), get().host);
+      await get().rescan();
+    },
+
+    importerSvgsProjet: async (projet, fichiers) =>
+      guard(async () => {
+        const { backend, root } = need();
+        const fs = backend.fs(root);
+        for (const f of fichiers) await importerSvgProjet(fs, projet, f, rendusSortie.svg, nowIso(), get().host);
+        await get().rescan();
+      }),
+
+    regenererSvg: async (dossier, origine) => {
+      const { backend, root } = need();
+      await regenererSvgProjet(backend.fs(root), dossier, origine, rendusSortie.svg, nowIso(), get().host);
       await get().rescan();
     },
 

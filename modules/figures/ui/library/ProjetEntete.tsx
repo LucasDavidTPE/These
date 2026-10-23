@@ -8,6 +8,7 @@ import { absolu } from "@noyau/stockage";
 import { DOSSIERS_PROJET, cheminProjet, fichiersProjet, type FichiersProjet, type Projet } from "../../core/projets";
 import { ClasseurExcel } from "./ClasseurExcel";
 import { ScriptPython } from "./ScriptPython";
+import { SvgsProjet } from "./SvgProjet";
 import { installerBibliotheque, modeleScript } from "../../core/sortiesPython";
 import bibliothequePython from "../../python/these_figures.py?raw";
 import { useLibrary } from "./useLibrary";
@@ -17,7 +18,7 @@ export function ProjetEntete({ projet }: { projet: Projet }) {
   const ctx = useContexte();
   const s = useLibrary();
   const [edition, setEdition] = useState<{ titre: string; description: string } | null>(null);
-  const [fichiers, setFichiers] = useState<FichiersProjet>({ scripts: [], classeurs: [] });
+  const [fichiers, setFichiers] = useState<FichiersProjet>({ scripts: [], classeurs: [], svgs: [] });
   const [etat, setEtat] = useState("");
 
   const [version, setVersion] = useState(0);
@@ -93,6 +94,20 @@ export function ProjetEntete({ projet }: { projet: Projet }) {
     } catch (e) {
       setEtat(e instanceof Error ? e.message : String(e));
     }
+  };
+
+  const ajouterSvg = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".svg,image/svg+xml";
+    input.multiple = true;
+    input.onchange = async () => {
+      const liste = await Promise.all([...(input.files ?? [])].map(async (f) => ({ nom: f.name, texte: await f.text() })));
+      // projet ouvert : importSvg les copie dans svg/ et les lie
+      if (liste.length) await s.importSvg(liste);
+      relire();
+    };
+    input.click();
   };
 
   const nouveauClasseur = async () => {
@@ -179,6 +194,22 @@ export function ProjetEntete({ projet }: { projet: Projet }) {
             </button>
             <button type="button" className="link" onClick={() => void ajouterClasseur()} title="Copie un classeur existant dans le projet">
               + Ajouter un classeur existant…
+            </button>
+          </div>
+        </div>
+        <div className="projet-bloc">
+          <h3>Dessins SVG</h3>
+          {fichiers.svgs.length === 0 ? (
+            <p className="muted small">Aucun SVG dans {DOSSIERS_PROJET.svg}/ (Inkscape, schémas exportés…).</p>
+          ) : (
+            <SvgsProjet projet={projet.slug} fichiers={fichiers.svgs} ouvrir={(f) => void ouvrir(abs(DOSSIERS_PROJET.svg, f))} />
+          )}
+          <div className="rangee-boutons">
+            <button type="button" className="link" onClick={ajouterSvg} title="Copie les .svg dans le projet et les ajoute à Figures, liés : une retouche dans Inkscape se reprend avec « Mettre à jour »">
+              + Ajouter des SVG…
+            </button>
+            <button type="button" className="link" onClick={() => void ouvrir(abs(DOSSIERS_PROJET.svg))} title="Pour y enregistrer vos dessins depuis Inkscape">
+              Ouvrir le dossier svg
             </button>
           </div>
         </div>

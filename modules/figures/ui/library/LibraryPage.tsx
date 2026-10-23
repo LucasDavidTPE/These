@@ -54,7 +54,7 @@ export function LibraryPage() {
           </select>
           <button
             type="button"
-            title="Ajouter des fichiers .svg à la bibliothèque (ils se retrouvent par la recherche et se copient en SVG)"
+            title="Ajouter des fichiers .svg à la bibliothèque ; un projet ouvert : copiés dans son dossier svg et liés (mise à jour après retouche)"
             onClick={() => {
               const input = document.createElement("input");
               input.type = "file";

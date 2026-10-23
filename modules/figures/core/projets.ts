@@ -11,7 +11,7 @@ export const PROJETS_DIR = "_projets";
 export const PROJET_FILE = "projet.json";
 export const PROJET_FORMAT = 1;
 /** Sous-dossiers créés avec chaque projet. */
-export const DOSSIERS_PROJET = { scripts: "scripts", sorties: "sorties", excel: "excel" } as const;
+export const DOSSIERS_PROJET = { scripts: "scripts", sorties: "sorties", excel: "excel", svg: "svg" } as const;
 const CORBEILLE = "_corbeille";
 
 export interface Projet {
@@ -171,6 +171,8 @@ export interface FichiersProjet {
   scripts: string[];
   /** Classeurs (`excel/*.xlsx|xlsm`). */
   classeurs: string[];
+  /** Dessins vectoriels (`svg/*.svg` : Inkscape, schémas…). */
+  svgs: string[];
 }
 
 const nomsDans = async (fs: LibraryFs, dossier: string, ext: RegExp) =>
@@ -184,5 +186,6 @@ export const BIBLIOTHEQUE_PYTHON = "these_figures.py";
 export async function fichiersProjet(fs: LibraryFs, slug: string): Promise<FichiersProjet> {
   const scripts = (await nomsDans(fs, cheminProjet(slug, DOSSIERS_PROJET.scripts), /\.py$/i)).filter((n) => n !== BIBLIOTHEQUE_PYTHON);
   const classeurs = await nomsDans(fs, cheminProjet(slug, DOSSIERS_PROJET.excel), /\.xls[xm]$/i);
-  return { scripts, classeurs };
+  const svgs = await nomsDans(fs, cheminProjet(slug, DOSSIERS_PROJET.svg), /\.svg$/i);
+  return { scripts, classeurs, svgs };
 }

@@ -506,6 +506,7 @@ appartenir à plusieurs projets, ou à aucun.
   scripts/*.py         scripts de tracé ; scripts/these_figures.py fourni par l'application
   sorties/<script>/    ce que produit chaque script : *.graphe.json, *.png, *.jpg, *.svg, *.pdf
   excel/*.xlsx|xlsm    classeurs, un par figure le plus souvent
+  svg/*.svg            dessins vectoriels (Inkscape, schémas exportés) (1.44.1)
 <Espace>/figures/_projets/_corbeille/<slug>-<date>/   projet retiré (rien n'est effacé)
 ```
 
@@ -563,6 +564,14 @@ lance celui **du poste**, sur un clic (QUESTIONS 8). `poste.json` → `python` :
   (empreinte des données, ou des octets d'une image) ; après une nouvelle exécution, « à mettre
   à jour », mise en forme de Figures gardée. « Nouveau script » : un modèle prêt à lancer.
   « Modifier » ouvre le script dans VS Code (sinon le dossier : ouvrir un `.py` l'exécuterait).
+
+**Dessins SVG (1.44.1).** Bloc « Dessins SVG » du projet (`core/svgProjet.ts`) : « + Ajouter des
+SVG… » (et « Importer un SVG… » de la barre quand un projet est ouvert) copie les fichiers dans
+`svg/` et en fait des figures « image » (export.svg = le dessin) rangées dans le projet et liées
+(`{ module: "figures", genre: "svg", projet, fichier, empreinte }`) ; un SVG enregistré
+directement dans `svg/` (Inkscape) apparaît avec « Ajouter à Figures ». Retouché, il est « à
+mettre à jour » : export.svg et la vignette sont remplacés, la fiche reste. « Ouvrir » le
+donne au programme associé aux .svg.
 
 **Hors champ (pour l'instant).** Liens vers Manuscrits, Campagnes ou Bibliothèque ;
 environnements virtuels Python gérés par l'application ; macros VBA ; exécution automatique

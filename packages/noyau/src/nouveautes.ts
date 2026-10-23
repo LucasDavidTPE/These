@@ -31,6 +31,13 @@ const COMSOL = (page = "comsol", exemple = true): Essai => ({
 /** Les plus récentes d'abord. */
 export const NOUVEAUTES: readonly Nouveaute[] = [
   {
+    version: "1.44.1",
+    module: "figures",
+    titre: "Projets de figures : dessins SVG",
+    detail: "Un projet a aussi ses dessins SVG (dossier svg/, Inkscape…) : « Ajouter des SVG… » les range dans le projet, liés ; après une retouche, « Mettre à jour » reprend le dessin. « Importer un SVG… » range dans le projet ouvert.",
+    essayer: { libelle: "Ouvrir Figures", vers: "figures" },
+  },
+  {
     version: "1.44.0",
     module: "figures",
     titre: "Figures : projets, classeurs Excel et scripts Python",

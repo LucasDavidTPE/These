@@ -5,6 +5,7 @@ import { ciblesDeOrigine, rattachementsDe } from "../../core/rattachement";
 import { projetsDe } from "../../core/projets";
 import { origineExcel } from "../../core/excelFigures";
 import { origineScript } from "../../core/sortiesPython";
+import { origineSvg } from "../../core/svgProjet";
 import {
   LICENSE_SUGGESTIONS,
   SOURCE_TYPES,
@@ -284,6 +285,7 @@ function Regenerer({ entry }: { entry: FigureEntry }) {
   const excel = origineExcel(entry.meta);
   if (excel) return <RegenererExcel entry={entry} />;
   if (origineScript(entry.meta)) return <RegenererScript entry={entry} />;
+  if (origineSvg(entry.meta)) return <RegenererSvg entry={entry} />;
   const action = actionRegeneration(origine);
   if (!ctx.registre.aAction(action)) return <p className="muted small">Produite par le module « {origine.module} », absent de cette version : elle ne peut pas être refaite ici.</p>;
   return (
@@ -364,6 +366,34 @@ function RegenererScript({ entry }: { entry: FigureEntry }) {
       <p className="muted small">
         Source : {o.script} › {o.sortie}
       </p>
+      {etat && <p className="muted small">{etat}</p>}
+    </>
+  );
+}
+
+/** Dessin SVG d'un projet : reprendre le fichier retouché (Inkscape…), la fiche reste. */
+function RegenererSvg({ entry }: { entry: FigureEntry }) {
+  const regenerer = useLibrary((s) => s.regenererSvg);
+  const [etat, setEtat] = useState<string | null>(null);
+  const o = origineSvg(entry.meta)!;
+  return (
+    <>
+      <button
+        type="button"
+        title="Reprend le fichier SVG du projet tel qu'il est maintenant (après une retouche dans Inkscape, par exemple)"
+        onClick={async () => {
+          setEtat("Lecture du SVG…");
+          try {
+            await regenerer(entry.folder, o);
+            setEtat(`Mise à jour le ${new Date().toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}.`);
+          } catch (e) {
+            setEtat(`Impossible de la mettre à jour : ${e instanceof Error ? e.message : String(e)}`);
+          }
+        }}
+      >
+        Mettre à jour depuis le SVG
+      </button>
+      <p className="muted small">Source : svg/{o.fichier}</p>
       {etat && <p className="muted small">{etat}</p>}
     </>
   );

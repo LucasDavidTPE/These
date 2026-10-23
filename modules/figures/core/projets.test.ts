@@ -77,7 +77,7 @@ describe("projets de figures", () => {
       "_projets/p/excel/~$Fig 2.xlsx": "",
       "_projets/p/excel/ancien.xlsm": "",
     });
-    expect(await fichiersProjet(fs, "p")).toEqual({ scripts: ["trace.py"], classeurs: ["ancien.xlsm", "Fig 2.xlsx"] });
-    expect(await fichiersProjet(fs, "absent")).toEqual({ scripts: [], classeurs: [] });
+    expect(await fichiersProjet(fs, "p")).toEqual({ scripts: ["trace.py"], classeurs: ["ancien.xlsm", "Fig 2.xlsx"], svgs: [] });
+    expect(await fichiersProjet(fs, "absent")).toEqual({ scripts: [], classeurs: [], svgs: [] });
   });
 });
