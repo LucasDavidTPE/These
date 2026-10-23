@@ -7,13 +7,14 @@ import { etatGraphique, lireGraphiques, type EtatGraphique, origineExcel } from 
 import type { GraphiqueExcel } from "../../core/graph";
 import { useLibrary } from "./useLibrary";
 
-export function ClasseurExcel({ projet, classeur, ouvrir }: { projet: string; classeur: string; ouvrir: () => void }) {
+export function ClasseurExcel({ projet, classeur, chemin, ouvrir }: { projet: string; classeur: string; chemin: string; ouvrir: () => void }) {
   const s = useLibrary();
   const [deplie, setDeplie] = useState(false);
   const [graphiques, setGraphiques] = useState<GraphiqueExcel[] | null>(null);
   const [erreur, setErreur] = useState("");
   const [occupe, setOccupe] = useState(false);
   const [version, setVersion] = useState(0);
+  const [info, setInfo] = useState("");
 
   useEffect(() => {
     if (!deplie || !s.backend || !s.root) return;
@@ -65,6 +66,7 @@ export function ClasseurExcel({ projet, classeur, ouvrir }: { projet: string; cl
       {deplie && (
         <div className="classeur-corps">
           {erreur && <p className="error small">{erreur}</p>}
+          {info && <p className="muted small">{info}</p>}
           {graphiques === null && !erreur && <p className="muted small">Lecture…</p>}
           {graphiques?.length === 0 && <p className="muted small">Aucun graphique dans ce classeur. Insérez-en un dans Excel (nuage de points, courbes, barres), enregistrez, puis « Relire ».</p>}
           <ul>
@@ -109,6 +111,22 @@ export function ClasseurExcel({ projet, classeur, ouvrir }: { projet: string; cl
             {nouveaux.length > 1 && (
               <button type="button" disabled={occupe} onClick={() => void action(() => s.importerGraphiques(projet, classeur, nouveaux))}>
                 Tout ajouter ({nouveaux.length})
+              </button>
+            )}
+            {etats.some(([, e]) => "figure" in e) && (
+              <button
+                type="button"
+                disabled={occupe}
+                title="Excel exporte lui-même ses graphiques (Windows, Excel installé) ; chaque figure garde aussi le graphe refait, au choix sur sa fiche"
+                onClick={() =>
+                  void action(async () => {
+                    setInfo("Excel exporte les graphiques…");
+                    const n = await s.capturerAspectExcel(projet, classeur, chemin);
+                    setInfo(n ? `Aspect Excel capturé pour ${n} figure${n > 1 ? "s" : ""} (rendu « Excel » choisi ; modifiable sur la fiche).` : "Aucun graphique de ce classeur n'est encore dans Figures.");
+                  }).finally(() => setInfo((i) => (i === "Excel exporte les graphiques…" ? "" : i)))
+                }
+              >
+                Capturer l'aspect Excel
               </button>
             )}
             {perimes.length > 1 && (

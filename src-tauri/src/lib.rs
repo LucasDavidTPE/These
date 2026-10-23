@@ -3,6 +3,8 @@
 //! essais) derrière des *features* Cargo, pour les installeurs d'un seul module.
 
 pub mod archive;
+#[cfg(windows)]
+pub mod com;
 pub mod copie;
 pub mod fichiers;
 #[cfg(feature = "figures")]
@@ -54,6 +56,7 @@ pub fn run() {
     #[cfg(feature = "figures")]
     let builder = {
         use figures::commands::*;
+        use figures::excel::excel_capturer_graphiques;
         builder.invoke_handler(commandes![
             cutout_segment,
             clipboard_read_image,
@@ -64,7 +67,8 @@ pub fn run() {
             file_read_data,
             file_write_png,
             file_write_text,
-            figures_autoriser_images
+            figures_autoriser_images,
+            excel_capturer_graphiques
         ])
     };
     #[cfg(not(feature = "figures"))]

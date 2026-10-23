@@ -24,7 +24,8 @@ import { dimensionsSvg, enregistrerSvg, regenerer, type Rendu } from "../../core
 import { exportGraphSvg, type GraphDoc } from "../../core/graph";
 import { svgToPng } from "../editor/raster";
 import { parseSettings, serializeSettings } from "../../core/settings";
-import { importerGraphique, regenererGraphique, type OrigineExcel } from "../../core/excelFigures";
+import { captureDe, choisirRendu, enregistrerAspectExcel, etatGraphique, importerGraphique, lireGraphiques, regenererGraphique, type OrigineExcel, type Rendu as RenduFigure } from "../../core/excelFigures";
+import { pdfEnPng } from "./pdfEnPng";
 import type { GraphiqueExcel } from "../../core/graph";
 import { ajouterAuProjet, creerProjet, listerProjets, modifierProjet, retirerDuProjet, supprimerProjet, type ListeProjets, type Projet } from "../../core/projets";
 import { getBackend, type Backend } from "../platform/backend";
@@ -82,6 +83,9 @@ interface LibraryState {
   /** Graphiques Excel d'un projet → figures liées (PJ2). */
   importerGraphiques(projet: string, classeur: string, graphiques: GraphiqueExcel[]): Promise<void>;
   regenererExcel(dossier: string, origine: OrigineExcel): Promise<void>;
+  /** Aspect Excel (PJ3) des graphiques du classeur déjà dans Figures ; renvoie le nombre de figures mises à jour. */
+  capturerAspectExcel(projet: string, classeur: string, cheminAbsolu: string): Promise<number>;
+  choisirRendu(dossier: string, rendu: RenduFigure): Promise<void>;
   readText(path: string): Promise<string>;
   imageUrl(path: string): string;
 }
@@ -304,6 +308,32 @@ export const useLibrary = create<LibraryState>()((set, get) => {
       await regenererGraphique(backend.fs(root), dossier, origine, rendreGraphe, nowIso(), get().host);
       await get().rescan();
     },
+
+    capturerAspectExcel: async (projet, classeur, cheminAbsolu) => {
+      const { backend, root } = need();
+      const fs = backend.fs(root);
+      const [graphiques, captures] = await Promise.all([lireGraphiques(fs, projet, classeur), backend.capturerExcel(cheminAbsolu)]);
+      const figures = get().index?.figures ?? [];
+      let n = 0;
+      for (const g of graphiques) {
+        const e = etatGraphique(g, projet, classeur, figures);
+        const c = captureDe(g, captures);
+        if (!("figure" in e) || !c) continue;
+        // PDF vectoriel d'Excel rendu à 300 dpi ; sinon l'image exportée (résolution d'écran)
+        const png = c.pdf ? await pdfEnPng(c.pdf).catch(() => c.png) : c.png;
+        await enregistrerAspectExcel(fs, e.figure.folder, png, c.pdf, nowIso(), get().host);
+        n++;
+      }
+      await get().rescan();
+      return n;
+    },
+
+    choisirRendu: async (dossier, rendu) =>
+      guard(async () => {
+        const { backend, root } = need();
+        await choisirRendu(backend.fs(root), dossier, rendu, nowIso(), get().host);
+        await get().rescan();
+      }),
 
     readText: async (path) => {
       const { backend, root } = need();

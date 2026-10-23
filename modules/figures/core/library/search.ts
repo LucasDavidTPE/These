@@ -95,8 +95,14 @@ function cmp<T extends string | number>(a: T, b: T): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-/** Fichier à afficher en vignette : export.png, sinon export.svg, sinon original.png. */
+/** Rendu choisi pour une figure qui a aussi l'aspect Excel (`rendu` du meta.json, SPEC §6.1). */
+export function renduExcel(entry: FigureEntry): boolean {
+  return entry.meta?.rendu === "excel" && entry.files.includes("excel.png");
+}
+
+/** Fichier à afficher en vignette : excel.png si ce rendu est choisi, sinon export.png, export.svg, original.png. */
 export function thumbnailFile(entry: FigureEntry): string | null {
+  if (renduExcel(entry)) return "excel.png";
   for (const f of ["export.png", "export.svg", "original.png"]) if (entry.files.includes(f)) return f;
   return null;
 }

@@ -229,6 +229,9 @@ export function demoBackend(): Backend {
           );
         input.click();
       }),
+    capturerExcel: async () => {
+      throw new Error("Démonstration : l'aspect Excel est capturé par Excel lui-même, dans l'application sous Windows.");
+    },
     readDataPath: async (path) => {
       const b = fichiersDemo.get(path);
       if (!b) throw new Error(`Démonstration : pas d'accès au disque (${path}).`);

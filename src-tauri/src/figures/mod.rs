@@ -11,5 +11,6 @@
 pub mod clipboard;
 pub mod commands;
 pub mod dib;
+pub mod excel;
 pub mod model;
 pub mod pipeline;

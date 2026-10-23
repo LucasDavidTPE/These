@@ -136,7 +136,7 @@ export function ProjetEntete({ projet }: { projet: Projet }) {
           ) : (
             <ul className="projet-fichiers">
               {fichiers.classeurs.map((c) => (
-                <ClasseurExcel key={c} projet={projet.slug} classeur={c} ouvrir={() => void ouvrir(abs(DOSSIERS_PROJET.excel, c))} />
+                <ClasseurExcel key={c} projet={projet.slug} classeur={c} chemin={abs(DOSSIERS_PROJET.excel, c)} ouvrir={() => void ouvrir(abs(DOSSIERS_PROJET.excel, c))} />
               ))}
             </ul>
           )}

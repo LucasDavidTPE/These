@@ -5,6 +5,7 @@
  *   (`npm run dev`), pour développer et tester l'UI sans Tauri.
  */
 import type { LibraryFs, LockInfo } from "../../core/library";
+import type { CaptureExcel } from "../../core/excelFigures";
 
 export type LockAcquired =
   | { outcome: "new" }
@@ -58,6 +59,8 @@ export interface Backend {
   readDroppedFile(path: string): Promise<Uint8Array>;
   /** Abonnement aux fichiers déposés sur la fenêtre (Tauri) ; renvoie le désabonnement. */
   onFileDrop(handler: (paths: string[]) => void): Promise<() => void>;
+  /** Aspect Excel (SPEC §6.1) : Excel exporte lui-même les graphiques du classeur (chemin absolu) ; Windows. */
+  capturerExcel(classeur: string): Promise<CaptureExcel[]>;
   /** Boîte « Enregistrer sous » puis écriture du PNG ; false si annulé. */
   savePngAs(png: Uint8Array, defaultName: string): Promise<boolean>;
   /** Idem pour un fichier texte .svg, .tex ou .sty. */

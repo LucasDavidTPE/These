@@ -109,6 +109,10 @@ export function tauriBackend(): Backend {
       for (const path of liste) out.push({ name: path.split(/[\\/]/).pop() ?? path, bytes: asBytes(await call<ArrayBuffer>("file_read_data", { path }, path)), path });
       return out;
     },
+    capturerExcel: async (classeur) => {
+      const r = await call<{ feuille: string; nom: string; feuille_graphique: boolean; png: number[]; pdf: number[] | null }[]>("excel_capturer_graphiques", { classeur });
+      return r.map((c) => ({ ...c, png: new Uint8Array(c.png), pdf: c.pdf ? new Uint8Array(c.pdf) : null }));
+    },
     readDataPath: async (path) => asBytes(await call<ArrayBuffer>("file_read_data", { path }, path)),
     readDroppedFile: async (path) => asBytes(await call<ArrayBuffer>("file_read_image", { path }, path)),
     onFileDrop: async (handler) =>

@@ -7,7 +7,7 @@
  */
 import { enregistrerGraphe, origineDe, remplacerGraphe, type Origine, type RenduGraphe } from "./action";
 import { graphiquesDuClasseur, type GraphDoc, type GraphiqueExcel } from "./graph";
-import { saveMeta, validateMeta, joinPath, type FigureEntry, type LibraryFs } from "./library";
+import { saveMeta, validateMeta, joinPath, type FigureEntry, type FigureMeta, type LibraryFs } from "./library";
 import { cheminProjet, DOSSIERS_PROJET } from "./projets";
 
 export interface OrigineExcel extends Origine {
@@ -97,4 +97,39 @@ export async function regenererGraphique(fs: LibraryFs, dossier: string, o: Orig
   const r = await relireGraphique(fs, o);
   await remplacerGraphe(fs, dossier, r.graphe, rendu, now, host);
   await noterEmpreinte(fs, dossier, r.origine, now, host);
+}
+
+// ---- Aspect Excel (PJ3) ----
+
+/** Graphique exporté par Excel lui-même (commande native, Windows). */
+export interface CaptureExcel {
+  feuille: string;
+  nom: string;
+  /** Feuille graphique : un seul graphique, repéré par la feuille. */
+  feuille_graphique: boolean;
+  png: Uint8Array;
+  pdf: Uint8Array | null;
+}
+
+/** La capture d'un graphique du classeur (même feuille et même nom d'objet ; feuille graphique : même feuille). */
+export function captureDe(g: GraphiqueExcel, captures: readonly CaptureExcel[]): CaptureExcel | undefined {
+  return captures.find((c) => c.feuille === g.feuille && (c.feuille_graphique || c.nom === g.nom));
+}
+
+/** Range l'aspect Excel dans la figure (excel.png, excel.pdf) et choisit ce rendu. */
+export async function enregistrerAspectExcel(fs: LibraryFs, dossier: string, png: Uint8Array, pdf: Uint8Array | null, now: string, host: string): Promise<void> {
+  await fs.writeBytesAtomic(joinPath(dossier, "excel.png"), png);
+  if (pdf) await fs.writeBytesAtomic(joinPath(dossier, "excel.pdf"), pdf);
+  await choisirRendu(fs, dossier, "excel", now, host);
+}
+
+export type Rendu = "figures" | "excel";
+
+/** Vignette, copie et exports : le graphe refait par Figures, ou l'aspect Excel capturé. */
+export async function choisirRendu(fs: LibraryFs, dossier: string, rendu: Rendu, now: string, host: string): Promise<void> {
+  const v = validateMeta(JSON.parse(await fs.readText(joinPath(dossier, "meta.json"))));
+  if (!v.ok) throw new Error(`meta.json invalide dans ${dossier}.`);
+  const meta: FigureMeta = { ...v.meta, rendu };
+  if (rendu === "figures") delete meta.rendu;
+  await saveMeta(fs, dossier, meta, { now, host });
 }

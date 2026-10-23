@@ -45,3 +45,31 @@ describe("graphiques Excel d'un projet → figures liées", () => {
     await expect(regenererGraphique(fs, dossier, { ...origineExcel(meta)!, classeur: "absent.xlsx" }, rendu, T, "PC")).rejects.toThrow(/introuvable/);
   });
 });
+
+describe("aspect Excel", () => {
+  it("capture associée au graphique, rangée dans la figure, rendu au choix", async () => {
+    const { captureDe, choisirRendu, enregistrerAspectExcel } = await import("./excelFigures");
+    const { thumbnailFile } = await import("./library");
+    const fs = new MemoryFs();
+    const p = await creerProjet(fs, { titre: "A" }, T);
+    await fs.writeBytesAtomic(`_projets/${p.slug}/excel/F.xlsx`, classeur);
+    const [g1, g2] = await lireGraphiques(fs, p.slug, "F.xlsx");
+    const captures = [
+      { feuille: "Barres", nom: "Chart 1", feuille_graphique: false, png: new Uint8Array([2]), pdf: null },
+      { feuille: "Mes données", nom: "Chart 1", feuille_graphique: false, png: new Uint8Array([3]), pdf: new Uint8Array([4]) },
+    ];
+    expect(captureDe(g1!, captures)?.png).toEqual(new Uint8Array([3]));
+    expect(captureDe(g2!, captures)?.png).toEqual(new Uint8Array([2]));
+    expect(captureDe(g1!, [{ feuille: "Mes données", nom: "Graph", feuille_graphique: true, png: new Uint8Array([5]), pdf: null }])?.png).toEqual(new Uint8Array([5]));
+
+    const d = await importerGraphique(fs, p.slug, "F.xlsx", g1!, rendu, T, "PC");
+    await enregistrerAspectExcel(fs, d, new Uint8Array([3]), new Uint8Array([4]), T, "PC");
+    let f = (await scanLibrary(fs)).figures.find((e) => e.folder === d)!;
+    expect(f.files).toEqual(expect.arrayContaining(["excel.png", "excel.pdf"]));
+    expect(thumbnailFile(f)).toBe("excel.png");
+    await choisirRendu(fs, d, "figures", T, "PC");
+    f = (await scanLibrary(fs)).figures.find((e) => e.folder === d)!;
+    expect("rendu" in f.meta!).toBe(false);
+    expect(thumbnailFile(f)).toBe("export.png");
+  });
+});

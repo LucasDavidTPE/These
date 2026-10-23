@@ -18,6 +18,9 @@ export const FIGURE_FILES = [
   "export.tex",
   "export.svg",
   "export.png",
+  // aspect Excel d'un graphe refait depuis un classeur (SPEC §6.1)
+  "excel.png",
+  "excel.pdf",
 ] as const;
 
 /** Fichier de préférences partagées à la racine. */

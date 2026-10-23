@@ -132,6 +132,7 @@ export function MetaPanel({ entry }: { entry: FigureEntry }) {
           Recadrer
         </button>
       )}
+      {entry.files.includes("excel.png") && !isEditing && <AspectExcel entry={entry} />}
       {entry.files.includes("export.svg") && !isEditing && <ExportSvg entry={entry} />}
       {!isEditing && <Regenerer entry={entry} />}
       {entry.meta?.derived_from && <p className="muted small">D'après {entry.meta.derived_from}.</p>}
@@ -177,6 +178,51 @@ function ProjetsFigure({ entry }: { entry: FigureEntry }) {
           ))}
         </select>
       )}
+    </div>
+  );
+}
+
+/** Graphe refait depuis Excel qui a aussi l'aspect Excel capturé : choix du rendu, copie, PDF d'Excel. */
+function AspectExcel({ entry }: { entry: FigureEntry }) {
+  const ctx = useContexte();
+  const choisir = useLibrary((s) => s.choisirRendu);
+  const [etat, setEtat] = useState("");
+  const rendu = entry.meta?.rendu === "excel" ? "excel" : "figures";
+  const nom = `${entry.id}${entry.meta?.title ? ` ${entry.meta.title}` : ""}`.replace(/[\\/:*?"<>|]+/g, "_");
+  const octets = async (f: string) => {
+    const { backend, root } = useLibrary.getState();
+    return backend!.fs(root!).readBytes(`${entry.folder}/${f}`);
+  };
+  const faire = (fn: () => Promise<string>) => async () => {
+    try {
+      setEtat(await fn());
+    } catch (e) {
+      setEtat(e instanceof Error ? e.message : String(e));
+    }
+  };
+  return (
+    <div className="aspect-excel">
+      <label className="field">
+        <span>Rendu (vignette, copie)</span>
+        <select value={rendu} onChange={(e) => void choisir(entry.folder, e.target.value as "figures" | "excel")}>
+          <option value="figures">Graphe refait par Figures (modifiable, pgfplots)</option>
+          <option value="excel">Aspect Excel (image exportée par Excel)</option>
+        </select>
+      </label>
+      <div className="rangee-boutons">
+        <button type="button" onClick={faire(async () => (await (await getBackend()).copyPng(await octets("excel.png")), "Image Excel copiée."))}>
+          Copier l'image Excel
+        </button>
+        <button type="button" onClick={faire(async () => ((await ctx.plateforme.enregistrerSous(`${nom}.png`, await octets("excel.png"))) ? "Image enregistrée." : ""))}>
+          Enregistrer l'image…
+        </button>
+        {entry.files.includes("excel.pdf") && (
+          <button type="button" title="PDF vectoriel exporté par Excel (\includegraphics dans LaTeX)" onClick={faire(async () => ((await ctx.plateforme.enregistrerSous(`${nom}.pdf`, await octets("excel.pdf"))) ? "PDF enregistré." : ""))}>
+            Enregistrer le PDF d'Excel…
+          </button>
+        )}
+      </div>
+      {etat && <p className="muted small">{etat}</p>}
     </div>
   );
 }
