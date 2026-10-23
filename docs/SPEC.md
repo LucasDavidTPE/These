@@ -489,6 +489,101 @@ Ajouts permis par l'intégration :
   hors plage (extrapolation), et le ou les x pour un y (`fitInverse` : formule directe pour les
   formes monotones, recherche de racines sur la plage pour le polynôme).
 
+### 6.1 Projets de figures (à venir, 1.44.0 →)
+
+Besoin : ranger les figures par **projet** (un article, un chapitre, une présentation),
+ou ne pas les ranger du tout. Dans un projet, on trouve ses scripts Python de tracé et
+leurs sorties, ainsi que ses classeurs Excel (en général un par figure, qui contient les
+données et un ou plusieurs graphiques). Tout cela est branché sur la bibliothèque et sur
+la page Graphes.
+
+**Sur le disque.** Un projet est un vrai dossier de l'espace. La figure, elle, reste dans
+la bibliothèque (`figures/`) : elle peut appartenir à plusieurs projets, ou à aucun.
+
+```
+<Espace>/projets/<slug>/
+  projet.json          { "format": 1, "titre": "Article MAIRE INFRA27", "description": "…",
+                         "cree": "…", "modifie": "…" }
+  scripts/*.py         scripts de tracé (exécutés avec le Python du poste)
+  scripts/these_figures.py   petite bibliothèque fournie par l'application (voir plus bas)
+  sorties/<script>/    ce que produit chaque script : *.graphe.json, *.png, *.svg, *.pdf
+  excel/*.xlsx         classeurs, un par figure le plus souvent
+```
+
+- Appartenance : champ facultatif `projets: string[]` (slugs) dans le `meta.json` de la
+  figure, comme `rattachements`. Ajouter ou retirer une figure n'écrit que cette figure.
+  « Sans projet » regroupe les figures dont la liste est vide.
+- Un projet supprimé dans l'application ne supprime ni ses figures ni son dossier sur le
+  disque : le dossier est seulement renommé `_corbeille/<slug>-<date>`.
+- Les chemins des sources d'une figure (script, classeur) restent relatifs à l'espace.
+
+**Bibliothèque.** Une colonne « Projets » (Tous · Sans projet · un projet) filtre la
+grille. On glisse une figure sur un projet pour l'y ajouter. La fiche porte des puces
+« Projets » qu'on peut ajouter ou retirer. Ctrl+K trouve les projets.
+
+**Page d'un projet** (dans Figures). Elle a trois blocs et un bouton « Ouvrir le dossier ».
+1. *Figures* : la grille filtrée sur le projet.
+2. *Scripts Python* : un script par ligne, avec trois boutons (« Exécuter », « Ouvrir dans
+   l'éditeur », « Nouveau script » depuis un modèle) et une console qui montre stdout et
+   stderr. Les sorties de la dernière exécution sont listées avec leur état (nouvelle,
+   déjà dans Figures, à mettre à jour).
+3. *Classeurs Excel* : chaque classeur montre ses graphiques détectés, avec les boutons
+   « Ouvrir dans Excel » et « Ajouter / Mettre à jour dans Figures ».
+
+**Python (lancer + graphes modifiables).** L'application n'embarque ni n'exige Python
+(voir QUESTIONS 8). Elle lance le Python **du poste**, seulement quand on clique.
+- Le chemin est dans `poste.json` → `python`. Il est détecté (`py -3`, `python` du PATH,
+  Anaconda) et modifiable dans les réglages. Les dépendances (numpy, matplotlib…) restent
+  l'affaire de l'utilisateur.
+- Une commande Rust lance un script. Elle n'accepte qu'un `.py` situé sous
+  `projets/*/scripts/`. Le dossier de travail est celui du projet, et
+  `THESE_SORTIES=sorties/<script>/` est fourni à l'environnement. La sortie est diffusée en
+  direct, on peut arrêter le script, et l'exécution s'arrête après 10 min.
+- `these_figures.py` est écrit en Python pur, sans dépendance obligatoire, et la version
+  est dans l'en-tête. Il écrit des graphes au format `graph.json` de Figures :
+  ```python
+  import these_figures as tf
+  g = tf.Graphe("Module complexe", x="Fréquence (Hz)", y="|E*| (MPa)", log_x=True, log_y=True)
+  g.serie("15 °C", f, e, type="points")
+  g.enregistrer("module")            # → sorties/<script>/module.graphe.json
+  tf.depuis_matplotlib(fig, "fatigue")  # reprend courbes, noms, échelles et titres d'axes
+  ```
+  Toute image enregistrée dans `THESE_SORTIES` (plt.savefig…) est aussi une sortie.
+- Une sortie `*.graphe.json` donne une figure « graph » **modifiable**. Sa source vaut
+  `{ type: "script", projet, script, sortie }`. Une sortie image donne une figure image.
+- Après une nouvelle exécution, une figure déjà importée est signalée « à mettre à jour ».
+  « Régénérer » remplace les données (séries, x, y, noms) et garde la mise en forme choisie
+  dans Figures (style, couleurs, bornes imposées, repères, annotations). C'est le même
+  principe que les graphes régénérés depuis un essai.
+
+**Excel (graphe refait + aspect Excel).**
+- *Graphe refait, lié* : le cœur TS lit `xl/drawings` → `xl/charts/chartN.xml`, ce qui
+  donne pour chaque graphique :
+  - le titre, et le type (nuage de points, courbes, barres) ;
+  - par série, le nom (`c:tx`) et les plages `c:xVal`/`c:yVal` ou `c:cat`/`c:val`
+    (`Feuil1!$A$2:$A$40`), relues dans les cellules (le cache du graphique sert de
+    secours) ;
+  - les titres d'axes, `c:logBase`, les bornes imposées, le marqueur et le trait ;
+  - les courbes de tendance (linéaire, polynomiale, puissance, exponentielle, log), qui
+    deviennent des régressions de Figures.
+  Chaque graphique donne une figure « graph » de source
+  `{ type: "excel", projet, classeur, graphique }`, où `graphique` est le nom du graphique
+  et, en secours, la feuille et le numéro. Quand le classeur a changé, la figure est « à
+  mettre à jour » ; « Régénérer » relit les plages et garde la mise en forme de Figures.
+  Ce qui n'est pas traduit (axe secondaire, barres d'erreur, graphiques combinés, 3D) est
+  listé dans un message, la figure n'est pas refusée.
+- *Aspect Excel* (Windows, Excel installé) : « Capturer l'aspect Excel » fait exporter
+  chaque graphique par Excel lui-même, sans fenêtre (PowerShell → COM →
+  `Chart.Export`, en PNG haute définition). La capture est rangée dans la même figure
+  (`excel.png`). Sur la fiche, un choix par figure, « Rendu : Figures | Excel », décide de
+  ce que donnent la vignette, Copier et les exports. Sans Excel, le bouton est grisé et
+  son infobulle donne la raison.
+- « Nouveau classeur » crée `excel/<nom>.xlsx` à partir d'une trame qui contient une
+  feuille Données et un nuage de points.
+
+**Hors champ (pour l'instant).** Liens vers Manuscrits, Campagnes ou Bibliothèque ;
+environnements virtuels Python gérés par l'application ; macros VBA.
+
 ## 7. Module Traitement 2S2P1D
 
 Toutes les fonctions actuelles du site (voir le README du dépôt d'origine) :

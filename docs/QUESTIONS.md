@@ -34,3 +34,8 @@ reportée dans `SPEC.md` et la question est supprimée d'ici.
    Python dans l'appli » puisque `build_article.py` resterait un script externe), ou si l'atelier COMSOL §1-§7
    suffit pour ses coupes/courbes (le pipeline Python gardant pour lui les grandeurs dérivées et les contrôles).
    Les fichiers réels (~1,5 Go) sont sur OneDrive, hors du dépôt : rien n'a pu être ingéré ni testé pour l'instant.
+8. **Projets de figures : Python lancé par l'application (SPEC §6.1).** CLAUDE.md dit « pas de Python ». J'ai
+   compris que cela vise l'application elle-même : pas de Python embarqué, aucun module qui en dépend, rien qui
+   tourne en tâche de fond. Lancer *le* Python installé sur le poste, sur un script du projet et sur un clic, ne
+   contredirait pas cette règle. C'est facultatif : sans Python, le bloc Scripts est grisé et tout le reste
+   fonctionne. À confirmer avant PJ4.
